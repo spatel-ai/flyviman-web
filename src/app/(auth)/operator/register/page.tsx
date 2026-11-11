@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { OperatorRegisterForm } from "@/features/auth/operator-register-form";
+import { TicketDivider } from "@/features/auth/ticket-divider";
 
 export const metadata: Metadata = { title: "Register as an operator" };
 
@@ -17,7 +18,8 @@ export default function Page() {
       <Suspense fallback={<Skeleton className="h-64" />}>
         <OperatorRegisterForm />
       </Suspense>
-      <p className="mt-6 border-t border-border/60 pt-6 text-center text-body-sm text-muted">
+      <TicketDivider />
+      <p className="text-center text-body-sm text-muted">
         Already have an account?{" "}
         <Link href="/login" className="text-accent hover:underline">
           Sign in

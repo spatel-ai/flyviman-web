@@ -13,6 +13,7 @@ import type { User } from "@/lib/api/types";
 import { destinationAfterLogin } from "@/lib/auth/roles";
 import { FormAlert } from "@/components/shared/form-alert";
 import { codeSchema, type CodeValues } from "./schema";
+import { TicketDivider } from "./ticket-divider";
 import { useSubmit } from "./use-submit";
 
 export function VerifyForm() {
@@ -109,7 +110,8 @@ export function VerifyForm() {
           Verify
         </Button>
       </form>
-      <div className="mt-6 flex flex-col items-center gap-2 border-t border-border/60 pt-6">
+      <TicketDivider />
+      <div className="flex flex-col items-center gap-2">
         <Button
           variant="ghost"
           size="sm"

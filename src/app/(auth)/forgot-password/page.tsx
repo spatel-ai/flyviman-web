@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ForgotPasswordForm } from "@/features/auth/forgot-password-form";
+import { TicketDivider } from "@/features/auth/ticket-divider";
 
 export const metadata: Metadata = { title: "Forgot password" };
 
@@ -17,7 +18,8 @@ export default function Page() {
       <Suspense fallback={<Skeleton className="h-64" />}>
         <ForgotPasswordForm />
       </Suspense>
-      <p className="mt-6 border-t border-border/60 pt-6 text-center text-body-sm text-muted">
+      <TicketDivider />
+      <p className="text-center text-body-sm text-muted">
         <Link href="/login" className="text-accent hover:underline">
           Back to sign in
         </Link>
