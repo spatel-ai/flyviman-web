@@ -26,8 +26,15 @@ async function OperatorShell({ children }: { children: React.ReactNode }) {
     await serverGet<Schemas["OperatorProfileResponseDto"]>("operator/profile");
 
   // Until the organisation is approved, only its application is available.
+  // A suspended operator keeps the fleet so it can still ground an aircraft
+  // (D-058); the API refuses anything that would add to the fleet.
+  const fleet: NavItem = { href: "/operator/aircraft", label: "Fleet" };
   const nav =
-    operator.status === "APPROVED" ? [DASHBOARD, APPLICATION] : [APPLICATION];
+    operator.status === "APPROVED"
+      ? [DASHBOARD, fleet, APPLICATION]
+      : operator.status === "SUSPENDED"
+        ? [fleet, APPLICATION]
+        : [APPLICATION];
   return (
     <AppShell
       surface="Operator"

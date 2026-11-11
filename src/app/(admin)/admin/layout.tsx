@@ -17,6 +17,7 @@ const INTERNAL: Role[] = ["OPS", "FINANCE_ADMIN", "SUPER_ADMIN"];
 const NAV: (NavItem & { roles: Role[] })[] = [
   { href: "/admin", label: "Dashboard", roles: INTERNAL },
   { href: "/admin/operators", label: "Operators", roles: INTERNAL },
+  { href: "/admin/aircraft", label: "Aircraft", roles: ["OPS", "SUPER_ADMIN"] },
   {
     href: "/admin/locations",
     label: "Locations",

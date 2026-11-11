@@ -835,6 +835,251 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/admin/aircraft": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** List aircraft for review */
+    get: operations["AdminAircraftController_list"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/admin/aircraft/{id}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Aircraft detail for review */
+    get: operations["AdminAircraftController_detail"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/admin/aircraft/{id}/approve": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Approve an aircraft listing
+     * @description Required documents must be verified and unexpired. Audited. The operator is notified.
+     */
+    post: operations["AdminAircraftController_approve"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/admin/aircraft/{id}/reject": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Reject an aircraft listing */
+    post: operations["AdminAircraftController_reject"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/admin/aircraft/{id}/suspend": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Suspend an approved aircraft */
+    post: operations["AdminAircraftController_suspend"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/admin/aircraft/{id}/reinstate": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Reinstate a suspended aircraft */
+    post: operations["AdminAircraftController_reinstate"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/admin/aircraft/{id}/release-registration": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Release a registration mark claimed in error
+     * @description Deletes a draft or rejected aircraft so the mark can be reused. Cannot be undone; a reason is required and audited.
+     */
+    post: operations["AdminAircraftController_release"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/admin/aircraft/documents/{documentId}/verify": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Verify or reject an aircraft document */
+    post: operations["AdminAircraftController_verifyDocument"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/operator/availability/conflicts": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Overlapping soft holds on this operator's aircraft */
+    get: operations["AvailabilityController_conflicts"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/operator/aircraft/{id}/availability": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Slots and blocks overlapping a date range */
+    get: operations["AvailabilityController_calendar"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/operator/aircraft/{id}/availability/slots": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Add an availability or departure slot */
+    post: operations["AvailabilityController_addSlot"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/operator/aircraft/{id}/availability/slots/{slotId}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    /** Remove a slot */
+    delete: operations["AvailabilityController_removeSlot"];
+    options?: never;
+    head?: never;
+    /** Change a slot */
+    patch: operations["AvailabilityController_updateSlot"];
+    trace?: never;
+  };
+  "/api/v1/operator/aircraft/{id}/availability/blocks": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Block time (maintenance, blackout, soft hold) */
+    post: operations["AvailabilityController_addBlock"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/operator/aircraft/{id}/availability/blocks/{blockId}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    /** Remove a block that is not a booking hold */
+    delete: operations["AvailabilityController_removeBlock"];
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/v1/locations": {
     parameters: {
       query?: never;
@@ -1548,6 +1793,127 @@ export interface components {
       issuedAt?: string | null;
       /** @example 2030-12-31 */
       expiresAt?: string | null;
+    };
+    AdminAircraftSummaryDto: {
+      /** Format: uuid */
+      id: string;
+      registration: string;
+      manufacturer: string;
+      model: string;
+      category: components["schemas"]["AircraftCategory"];
+      passengerCapacity: number;
+      availabilityStatus: components["schemas"]["AircraftAvailabilityStatus"];
+      listingStatus: components["schemas"]["AircraftListingStatus"];
+      /** Format: uuid */
+      homeBaseId?: string | null;
+      operatorName: string;
+      /** Format: uuid */
+      operatorId: string;
+    };
+    AdminAircraftDetailDto: {
+      /** Format: uuid */
+      id: string;
+      /** Format: uuid */
+      operatorId: string;
+      registration: string;
+      manufacturer: string;
+      model: string;
+      category: components["schemas"]["AircraftCategory"];
+      wingType: components["schemas"]["WingType"];
+      passengerCapacity: number;
+      baggageCapacityKg?: number | null;
+      rangeKm?: number | null;
+      cruiseSpeedKmh?: number | null;
+      /** Format: uuid */
+      homeBaseId?: string | null;
+      /** Format: uuid */
+      currentLocationId?: string | null;
+      operatingRegions: string[];
+      restrictions?: Record<string, never> | null;
+      availabilityStatus: components["schemas"]["AircraftAvailabilityStatus"];
+      listingStatus: components["schemas"]["AircraftListingStatus"];
+      pricingModel: components["schemas"]["AircraftPricingModel"];
+      specifications?: Record<string, never> | null;
+      medicalEquipment?: Record<string, never> | null;
+      submittedAt?: string | null;
+      reviewNote?: string | null;
+      /** @description Missing fields for submit. */
+      missing: string[];
+      media: components["schemas"]["AircraftMediaResponseDto"][];
+      documents: components["schemas"]["AircraftDocumentResponseDto"][];
+      createdAt: string;
+      updatedAt: string;
+      operatorName: string;
+    };
+    AircraftReasonDto: {
+      reason: string;
+    };
+    VerifyAircraftDocumentDto: {
+      /** @enum {string} */
+      decision: "VERIFIED" | "REJECTED";
+      reason?: string;
+    };
+    /** @enum {string} */
+    AvailabilityBlockReason:
+      "MAINTENANCE" | "BLACKOUT" | "SOFT_HOLD" | "BOOKING" | "OTHER";
+    BlockResponseDto: {
+      /** Format: uuid */
+      id: string;
+      /** Format: uuid */
+      aircraftId: string;
+      startsAt: string;
+      endsAt: string;
+      reason: components["schemas"]["AvailabilityBlockReason"];
+      /** Format: uuid */
+      bookingId?: string | null;
+      expiresAt?: string | null;
+      note?: string | null;
+    };
+    SoftHoldConflictDto: {
+      /** Format: uuid */
+      aircraftId: string;
+      hold: components["schemas"]["BlockResponseDto"];
+      overlaps: components["schemas"]["BlockResponseDto"];
+    };
+    /** @enum {string} */
+    AvailabilitySlotKind: "OPEN" | "DEPARTURE_SLOT";
+    SlotResponseDto: {
+      /** Format: uuid */
+      id: string;
+      /** Format: uuid */
+      aircraftId: string;
+      startsAt: string;
+      endsAt: string;
+      kind: components["schemas"]["AvailabilitySlotKind"];
+      /** Format: uuid */
+      originId?: string | null;
+    };
+    CalendarResponseDto: {
+      slots: components["schemas"]["SlotResponseDto"][];
+      blocks: components["schemas"]["BlockResponseDto"][];
+    };
+    CreateSlotDto: {
+      startsAt: string;
+      endsAt: string;
+      kind: components["schemas"]["AvailabilitySlotKind"];
+      /** Format: uuid */
+      originId?: Record<string, never> | null;
+    };
+    UpdateSlotDto: {
+      startsAt?: string;
+      endsAt?: string;
+      kind?: components["schemas"]["AvailabilitySlotKind"];
+      /** Format: uuid */
+      originId?: Record<string, never> | null;
+    };
+    CreateBlockDto: {
+      startsAt: string;
+      endsAt: string;
+      /** @enum {string} */
+      reason: "MAINTENANCE" | "BLACKOUT" | "SOFT_HOLD" | "OTHER";
+      /** @description Required for a soft hold. When the hold lapses. */
+      expiresAt?: string;
+      note?: string;
     };
     /** @enum {string} */
     LocationType: "AIRPORT" | "HELIPORT" | "CITY" | "LANDING_SITE";
@@ -2806,6 +3172,350 @@ export interface operations {
       path: {
         id: string;
         documentId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  AdminAircraftController_list: {
+    parameters: {
+      query?: {
+        page?: number;
+        pageSize?: number;
+        listingStatus?: components["schemas"]["AircraftListingStatus"];
+        operatorId?: string;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["AdminAircraftSummaryDto"][];
+        };
+      };
+    };
+  };
+  AdminAircraftController_detail: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["AdminAircraftDetailDto"];
+        };
+      };
+    };
+  };
+  AdminAircraftController_approve: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["AdminAircraftDetailDto"];
+        };
+      };
+    };
+  };
+  AdminAircraftController_reject: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["AircraftReasonDto"];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["AdminAircraftDetailDto"];
+        };
+      };
+    };
+  };
+  AdminAircraftController_suspend: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["AircraftReasonDto"];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["AdminAircraftDetailDto"];
+        };
+      };
+    };
+  };
+  AdminAircraftController_reinstate: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["AdminAircraftDetailDto"];
+        };
+      };
+    };
+  };
+  AdminAircraftController_release: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["AircraftReasonDto"];
+      };
+    };
+    responses: {
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  AdminAircraftController_verifyDocument: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        documentId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["VerifyAircraftDocumentDto"];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["AircraftDocumentResponseDto"];
+        };
+      };
+    };
+  };
+  AvailabilityController_conflicts: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["SoftHoldConflictDto"][];
+        };
+      };
+    };
+  };
+  AvailabilityController_calendar: {
+    parameters: {
+      query: {
+        from: string;
+        to: string;
+      };
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["CalendarResponseDto"];
+        };
+      };
+    };
+  };
+  AvailabilityController_addSlot: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["CreateSlotDto"];
+      };
+    };
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["SlotResponseDto"];
+        };
+      };
+    };
+  };
+  AvailabilityController_removeSlot: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+        slotId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  AvailabilityController_updateSlot: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+        slotId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["UpdateSlotDto"];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["SlotResponseDto"];
+        };
+      };
+    };
+  };
+  AvailabilityController_addBlock: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["CreateBlockDto"];
+      };
+    };
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["BlockResponseDto"];
+        };
+      };
+    };
+  };
+  AvailabilityController_removeBlock: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+        blockId: string;
       };
       cookie?: never;
     };

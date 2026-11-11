@@ -10,4 +10,9 @@ export const queryKeys = {
   adminOperator: (id: string) => ["admin", "operators", id] as const,
   adminUsers: (filter: object) => ["admin", "users", filter] as const,
   adminLocations: (filter: object) => ["admin", "locations", filter] as const,
+  operatorAircraft: ["operator", "aircraft"] as const,
+  operatorAircraftDetail: (id: string) => ["operator", "aircraft", id] as const,
+  adminAircraft: (status: string) => ["admin", "aircraft", status] as const,
+  adminAircraftDetail: (id: string) => ["admin", "aircraft", id] as const,
+  locationSearch: (q: string) => ["locations", "search", q] as const,
 };

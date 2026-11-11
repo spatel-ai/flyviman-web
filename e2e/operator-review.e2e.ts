@@ -1,15 +1,16 @@
-import { expect, test, type Browser, type Page } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 import {
   expectNoSidewaysScroll,
-  latestCode,
-  PASSWORD,
   SEEDED_OPERATOR,
   signIn,
   unique,
   uniqueEmail,
 } from "./support/api";
-
-const PDF = Buffer.from("%PDF-1.7\n1 0 obj\n<<>>\nendobj\n%%EOF\n");
+import {
+  asStaff,
+  completeApplication,
+  registerOperator,
+} from "./support/operators";
 
 test("the operator registration form explains missing and invalid fields", async ({
   page,
@@ -43,80 +44,6 @@ test("the operator registration form explains missing and invalid fields", async
   ).toBeVisible();
   await expect(page).toHaveURL("/operator/register");
 });
-
-async function registerOperator(page: Page, legalName: string, email: string) {
-  await page.goto("/operator/register");
-  await page
-    .getByRole("textbox", { name: "Company's registered name" })
-    .fill(legalName);
-  await page.getByRole("textbox", { name: "Your name" }).fill("Meera Nair");
-  await page.getByRole("textbox", { name: "Work email" }).fill(email);
-  await page.getByRole("textbox", { name: "Password" }).fill(PASSWORD);
-  await page
-    .getByRole("checkbox", { name: /I accept the terms of use/ })
-    .click();
-  await page.getByRole("button", { name: "Register company" }).click();
-
-  await expect(page).toHaveURL(/\/verify\?id=/);
-  await page
-    .getByRole("textbox", { name: "Verification code" })
-    .fill(await latestCode(page.request, email));
-  await page.getByRole("button", { name: "Verify" }).click();
-  // A new operator is taken straight to its application.
-  await expect(page).toHaveURL("/operator/onboarding");
-}
-
-async function addDocument(page: Page, type: string, fileName: string) {
-  await page.getByRole("combobox", { name: "Document type" }).click();
-  await page.getByRole("option", { name: type }).click();
-  await page.getByLabel("File").setInputFiles({
-    name: fileName,
-    mimeType: "application/pdf",
-    buffer: PDF,
-  });
-  await page.getByLabel("Expiry date (optional)").fill("2030-12-31");
-  await page.getByRole("button", { name: "Add document" }).click();
-  await expect(
-    page.getByRole("list", { name: "Documents" }).getByText(fileName),
-  ).toBeVisible();
-  // The list can update from a background refresh a moment before the form
-  // clears itself; wait for the form to finish, or its reset could wipe the
-  // next document's choices.
-  await expect(
-    page.getByRole("combobox", { name: "Document type" }),
-  ).toHaveText(/Choose a type/);
-}
-
-async function completeApplication(page: Page) {
-  await page
-    .getByRole("textbox", { name: "Registration number" })
-    .fill("U62200MH2015PTC123456");
-  await page
-    .getByRole("textbox", { name: "Address line 1" })
-    .fill("Hangar 4, Juhu Aerodrome");
-  await page.getByRole("textbox", { name: "City" }).fill("Mumbai");
-  await page.getByRole("textbox", { name: "State" }).fill("Maharashtra");
-  await page.getByRole("textbox", { name: "Postal code" }).fill("400049");
-  await page.getByRole("checkbox", { name: "Private charter" }).click();
-  await page.getByRole("button", { name: "Save details" }).click();
-  await expect(
-    page.getByText("Details saved", { exact: true }).first(),
-  ).toBeVisible();
-
-  await addDocument(page, "Air operator certificate", "aoc.pdf");
-  await addDocument(page, "Insurance certificate", "insurance.pdf");
-}
-
-async function asStaff(
-  browser: Browser,
-  account: "ops" | "superAdmin" = "ops",
-) {
-  const context = await browser.newContext();
-  const page = await context.newPage();
-  await signIn(page, account);
-  await expect(page).toHaveURL("/admin");
-  return { context, page };
-}
 
 test("an operator registers, completes its application, and operations approve it", async ({
   page,
