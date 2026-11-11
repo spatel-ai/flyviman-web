@@ -111,11 +111,13 @@ for (const scheme of ["light", "dark"] as const) {
 
 /**
  * The full-page shots above use reduced motion, so they show the story
- * section's final state. This one captures the pinned story itself, halfway
- * through, on a wide screen (it is a plain section on phones).
+ * section's final state. This one captures the pinned story itself, part way
+ * through (markers 1 and 2 filled, the arc half drawn), on a wide screen; it is
+ * a plain section on phones. 0.45 sits between two steps, so a pixel of
+ * rounding in the scroll position changes nothing.
  */
 for (const scheme of ["light", "dark"] as const) {
-  test(`home story, halfway, ${scheme}, matches`, async ({ page }, info) => {
+  test(`home story, part way, ${scheme}, matches`, async ({ page }, info) => {
     test.skip(
       info.project.name !== "desktop",
       "The story is pinned only on wide screens.",
@@ -128,14 +130,24 @@ for (const scheme of ["light", "dark"] as const) {
       const el = document.querySelector(".route-story") as HTMLElement;
       const top = el.getBoundingClientRect().top + window.scrollY;
       window.scrollTo({
-        top: top + (el.offsetHeight - window.innerHeight) / 2,
+        top: top + (el.offsetHeight - window.innerHeight) * 0.45,
       });
     });
-    // Let the reveals inside the pinned stage finish rising in.
-    await expect(
-      page.locator('.route-story [data-reveal="waiting"]'),
-    ).toHaveCount(0);
-    await page.waitForTimeout(1000);
+    // Wait until every reveal inside the pinned stage has finished rising in.
+    await expect
+      .poll(() =>
+        page.locator(".route-story [data-reveal]").evaluateAll((elements) =>
+          elements.every((el) => {
+            const style = getComputedStyle(el);
+            return (
+              el.getAttribute("data-reveal") !== "waiting" &&
+              style.opacity === "1" &&
+              style.transform === "none"
+            );
+          }),
+        ),
+      )
+      .toBe(true);
     // "allow": the default would fast-forward the scroll-driven animations
     // to their end, a frame the visitor never sees.
     await expect(page).toHaveScreenshot(`home-story-${scheme}.png`, {

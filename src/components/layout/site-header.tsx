@@ -52,7 +52,7 @@ export function SiteHeader() {
   return (
     <header className="site-header material-bar sticky top-0 z-40 border-b">
       <HeaderScrollState />
-      <div className="mx-auto flex h-12 max-w-wide items-center justify-between px-4 md:px-6 lg:px-8">
+      <div className="mx-auto flex h-(--header-height) max-w-wide items-center justify-between px-4 md:px-6 lg:px-8">
         <Link
           href="/"
           className="text-title tracking-tight"

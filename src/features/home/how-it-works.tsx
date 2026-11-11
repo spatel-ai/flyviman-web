@@ -63,7 +63,7 @@ function RouteArc() {
 
 /**
  * From search to flight in four steps. The home page's story section (motion
- * level 5): pinned on wide screens while the arc draws and the steps light up
+ * level 5): pinned on wide screens while the arc draws and each step's marker fills
  * in turn (globals.css, `.route-story`); a plain section everywhere else.
  */
 export function HowItWorks() {
@@ -80,6 +80,11 @@ export function HowItWorks() {
           {STEPS.map((step, index) => (
             <li key={step.name} className="route-story__step">
               <Reveal index={index}>
+                {/* Fills as the story reaches this step; full otherwise. */}
+                <div
+                  aria-hidden="true"
+                  className="route-story__mark mb-4 h-0.5 rounded-full bg-accent"
+                />
                 <p className="text-overline text-accent tabular-nums">
                   {String(index + 1).padStart(2, "0")}
                 </p>

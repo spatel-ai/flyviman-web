@@ -188,6 +188,8 @@ body {
  * duration. Scale and rules: docs/frontend/motion-design.md.
  */
 :root {
+  /* Height of the customer and portal headers; pinned content sits below it. */
+  --header-height: 3rem;
   --duration-reveal: 700ms;
   --distance-reveal: 24px;
   --stagger-reveal: 80ms;
@@ -221,60 +223,62 @@ body {
 /*
  * Motion level 5 (Story): the home page's "From search to sky" section
  * (features/home/how-it-works.tsx). The section is pinned while the visitor
- * scrolls through it: the route arc draws from origin to destination and the
- * four steps light up in turn, then stay lit. It follows the scroll, so
- * scrolling back undoes it. Only on wide screens, only where scroll-driven
- * animations exist, and never under reduced motion; everywhere else the
- * section shows its final state. Only opacity and transform animate.
+ * scrolls through it: the route arc draws from origin to destination and each
+ * step's marker fills in turn, then stays filled. The words never dim. It
+ * follows the scroll, so scrolling back undoes it. Only on screens (not in
+ * print) at least 1024 px wide and 720 px tall, where the pinned stage fits;
+ * only where scroll-driven animations exist; never under reduced motion.
+ * Everywhere else the section shows its final state. Only transform animates.
  */
 .route-story__wipe {
   display: none;
 }
 
-@media (min-width: 64rem) and (prefers-reduced-motion: no-preference) {
+@media screen and (min-width: 64rem) and (min-height: 45rem) and (prefers-reduced-motion: no-preference) {
   @supports (animation-timeline: view()) {
     .route-story {
-      height: 260vh;
+      height: 220svh;
       view-timeline-name: --route-story;
     }
 
     .route-story__stage {
       position: sticky;
-      top: 3rem; /* below the header (h-12) */
+      top: var(--header-height);
       display: flex;
-      min-height: calc(100vh - 3rem);
+      min-height: calc(100svh - var(--header-height));
       flex-direction: column;
       justify-content: center;
       padding-block: 2rem;
     }
 
     /* A cover in the section's colour that shrinks towards the destination,
-       uncovering the arc. */
+       uncovering the arc. It exists only here, where the timeline drives it. */
     .route-story__wipe {
       display: block;
       transform-box: fill-box;
       transform-origin: right;
       animation: route-wipe linear both;
       animation-timeline: --route-story;
-      animation-range: contain 0% contain 70%;
+      animation-range: contain 0% contain 90%;
     }
 
-    .route-story__step {
-      animation: route-step linear both;
+    .route-story__mark {
+      transform-origin: left;
+      animation: route-mark linear both;
       animation-timeline: --route-story;
     }
 
-    .route-story__step:nth-child(1) {
-      animation-range: contain 0% contain 10%;
+    .route-story__step:nth-child(1) .route-story__mark {
+      animation-range: contain 0% contain 15%;
     }
-    .route-story__step:nth-child(2) {
-      animation-range: contain 20% contain 30%;
+    .route-story__step:nth-child(2) .route-story__mark {
+      animation-range: contain 25% contain 40%;
     }
-    .route-story__step:nth-child(3) {
-      animation-range: contain 40% contain 50%;
+    .route-story__step:nth-child(3) .route-story__mark {
+      animation-range: contain 50% contain 65%;
     }
-    .route-story__step:nth-child(4) {
-      animation-range: contain 60% contain 70%;
+    .route-story__step:nth-child(4) .route-story__mark {
+      animation-range: contain 75% contain 90%;
     }
   }
 }
@@ -288,12 +292,12 @@ body {
   }
 }
 
-@keyframes route-step {
+@keyframes route-mark {
   from {
-    opacity: 0.4;
+    transform: scaleX(0);
   }
   to {
-    opacity: 1;
+    transform: scaleX(1);
   }
 }
 

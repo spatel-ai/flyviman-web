@@ -145,17 +145,32 @@ test.describe("story section (From search to sky)", () => {
     page.locator("section", {
       has: page.getByRole("heading", { level: 2, name: "From search to sky" }),
     });
-  const steps = (page: Page) => section(page).locator(".route-story__step");
-  const opacities = (page: Page) =>
-    steps(page).evaluateAll((elements) =>
-      elements.map(
-        (el) => Math.round(Number(getComputedStyle(el).opacity) * 10) / 10,
-      ),
-    );
+  /** How far each step's marker has filled, 0 to 1, to one decimal. */
+  const marks = (page: Page) =>
+    section(page)
+      .locator(".route-story__mark")
+      .evaluateAll((elements) =>
+        elements.map(
+          (el) =>
+            Math.round(new DOMMatrix(getComputedStyle(el).transform).a * 10) /
+            10,
+        ),
+      );
+  /** The steps' words are never dimmed. */
+  const stepOpacities = (page: Page) =>
+    section(page)
+      .locator(".route-story__step")
+      .evaluateAll((elements) =>
+        elements.map((el) => getComputedStyle(el).opacity),
+      );
   const wipeScale = (page: Page) =>
     section(page)
       .locator(".route-story__wipe")
       .evaluate((el) => new DOMMatrix(getComputedStyle(el).transform).a);
+  const isPinned = (page: Page) =>
+    section(page)
+      .locator(".route-story__stage")
+      .evaluate((el) => getComputedStyle(el).position === "sticky");
 
   /** Scrolls so that `progress` (0 to 1) of the pinned range has passed. */
   async function scrollThrough(page: Page, progress: number) {
@@ -167,7 +182,7 @@ test.describe("story section (From search to sky)", () => {
     }, progress);
   }
 
-  test("on a wide screen it is pinned while the arc draws and the steps light up in turn", async ({
+  test("on a wide screen it is pinned while the arc draws and the step markers fill in turn", async ({
     page,
   }) => {
     await page.setViewportSize({ width: 1280, height: 800 });
@@ -175,45 +190,57 @@ test.describe("story section (From search to sky)", () => {
 
     await scrollThrough(page, 0);
     await expect.poll(() => wipeScale(page)).toBeGreaterThan(0.9);
-    await expect.poll(() => opacities(page)).toEqual([0.4, 0.4, 0.4, 0.4]);
+    await expect.poll(() => marks(page)).toEqual([0, 0, 0, 0]);
 
-    await scrollThrough(page, 0.35);
-    await expect
-      .poll(async () => (await opacities(page)).map((o) => o === 1))
-      .toEqual([true, true, false, false]);
-    const heading = section(page).getByRole("heading", { level: 2 });
-    await expect(heading).toBeInViewport();
+    await scrollThrough(page, 0.45);
+    await expect.poll(() => marks(page)).toEqual([1, 1, 0, 0]);
+    await expect(
+      section(page).getByRole("heading", { level: 2 }),
+    ).toBeInViewport();
+    expect(new Set(await stepOpacities(page))).toEqual(new Set(["1"]));
 
     await scrollThrough(page, 1);
     await expect.poll(() => wipeScale(page)).toBeLessThan(0.05);
-    await expect.poll(() => opacities(page)).toEqual([1, 1, 1, 1]);
+    await expect.poll(() => marks(page)).toEqual([1, 1, 1, 1]);
 
     // Scrolling back undoes it.
     await scrollThrough(page, 0);
-    await expect.poll(() => opacities(page)).toEqual([0.4, 0.4, 0.4, 0.4]);
+    await expect.poll(() => marks(page)).toEqual([0, 0, 0, 0]);
   });
 
-  test("on a phone it is a plain section with everything shown", async ({
-    page,
-  }) => {
-    await page.setViewportSize({ width: 390, height: 844 });
-    await page.goto("/");
-    await expect(section(page).locator(".route-story__wipe")).toBeHidden();
-    await section(page).scrollIntoViewIfNeeded();
-    await expect.poll(() => opacities(page)).toEqual([1, 1, 1, 1]);
-  });
+  for (const [label, size] of [
+    ["on a phone", { width: 390, height: 844 }],
+    ["on a wide but short window", { width: 1280, height: 650 }],
+  ] as const) {
+    test(`${label} it is a plain section with everything shown`, async ({
+      page,
+    }) => {
+      await page.setViewportSize(size);
+      await page.goto("/");
+      expect(await isPinned(page)).toBe(false);
+      await expect(section(page).locator(".route-story__wipe")).toBeHidden();
+      await section(page).scrollIntoViewIfNeeded();
+      await expect.poll(() => marks(page)).toEqual([1, 1, 1, 1]);
+    });
+  }
 
-  test("with reduced motion it shows its final state and is not pinned", async ({
+  test("with reduced motion, and in print, it shows its final state and is not pinned", async ({
     page,
   }) => {
-    await page.emulateMedia({ reducedMotion: "reduce" });
     await page.setViewportSize({ width: 1280, height: 800 });
-    await page.goto("/");
-    await expect(section(page).locator(".route-story__wipe")).toBeHidden();
-    const height = await section(page).evaluate(
-      (el) => (el as HTMLElement).offsetHeight,
-    );
-    expect(height).toBeLessThan(800 * 1.5);
-    await expect.poll(() => opacities(page)).toEqual([1, 1, 1, 1]);
+    for (const media of [
+      { reducedMotion: "reduce" },
+      { reducedMotion: "no-preference", media: "print" },
+    ] as const) {
+      await page.emulateMedia(media);
+      await page.goto("/");
+      expect(await isPinned(page)).toBe(false);
+      await expect(section(page).locator(".route-story__wipe")).toBeHidden();
+      const height = await section(page).evaluate(
+        (el) => (el as HTMLElement).offsetHeight,
+      );
+      expect(height).toBeLessThan(800 * 1.5);
+      await expect.poll(() => marks(page)).toEqual([1, 1, 1, 1]);
+    }
   });
 });
