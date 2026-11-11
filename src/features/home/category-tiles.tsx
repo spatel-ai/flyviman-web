@@ -1,0 +1,104 @@
+import Image from "next/image";
+import { IMAGES, type SiteImageName } from "@/content/image-credits";
+import { cn } from "@/lib/utils";
+
+interface Category {
+  name: string;
+  description: string;
+  image: SiteImageName;
+  /** Shown under the description; never animated or hidden. */
+  notice?: string;
+  /** The first two tiles are wide; the rest sit three to a row. */
+  wide?: boolean;
+}
+
+const CATEGORIES: Category[] = [
+  {
+    name: "Scheduled airlines",
+    description: "Compare live fares across airlines.",
+    image: "scheduled",
+    wide: true,
+  },
+  {
+    name: "Private charter",
+    description: "Aircraft matched to your route, with a clear estimate.",
+    image: "charter",
+    wide: true,
+  },
+  {
+    name: "Helicopter",
+    description: "Point-to-point travel between heliports and airports.",
+    image: "helicopter",
+  },
+  {
+    name: "Empty-leg deals",
+    description: "Repositioning flights offered at reduced prices.",
+    image: "emptyLeg",
+  },
+  {
+    name: "Air ambulance",
+    description: "Medical transfers coordinated by our operations team.",
+    image: "airAmbulance",
+    notice: "In an emergency, call 112 or your local emergency services first.",
+  },
+];
+
+/** The five ways to travel, each with a photograph. */
+export function CategoryTiles() {
+  return (
+    <section
+      id="ways-to-fly"
+      aria-labelledby="categories-heading"
+      className="mx-auto max-w-wide scroll-mt-16 px-4 py-16 md:px-6 md:py-24 lg:px-8"
+    >
+      <h2 id="categories-heading" className="text-h2">
+        Choose how you travel
+      </h2>
+      <ul className="mt-8 grid gap-4 md:grid-cols-6">
+        {CATEGORIES.map((category) => {
+          const image = IMAGES[category.image];
+          return (
+            <li
+              key={category.name}
+              className={cn(
+                "flex flex-col overflow-hidden rounded-xl bg-surface",
+                category.wide ? "md:col-span-3" : "md:col-span-2",
+              )}
+            >
+              <div
+                className={cn(
+                  "relative aspect-3/2",
+                  category.wide ? "md:aspect-video" : "md:aspect-4/3",
+                )}
+              >
+                <Image
+                  src={image.src}
+                  alt={image.alt}
+                  fill
+                  placeholder="blur"
+                  sizes={
+                    category.wide
+                      ? "(min-width: 768px) 50vw, 100vw"
+                      : "(min-width: 768px) 33vw, 100vw"
+                  }
+                  className="object-cover"
+                />
+              </div>
+              <div className="flex flex-1 flex-col p-6">
+                <h3 className="text-title">{category.name}</h3>
+                <p className="mt-2 text-body-sm text-muted">
+                  {category.description}
+                </p>
+                {category.notice ? (
+                  <p className="mt-3 text-body-sm font-medium text-foreground">
+                    {category.notice}
+                  </p>
+                ) : null}
+              </div>
+            </li>
+          );
+        })}
+      </ul>
+    </section>
+  );
+}

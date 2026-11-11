@@ -113,6 +113,18 @@ const NO_REFRESH =
 // for the same rotation, because each refresh token works only once.
 let refreshing: Promise<boolean> | null = null;
 
+async function isCsrfMismatch(response: Response): Promise<boolean> {
+  if (response.status !== 403) return false;
+  const payload = (await response
+    .clone()
+    .json()
+    .catch(() => null)) as ErrorEnvelope | null;
+  return payload?.error?.code === "CSRF_TOKEN_INVALID";
+}
+
+/** How long to wait for a competing refresh's cookies to arrive. */
+const RACE_WAIT_MS = 500;
+
 function refreshSession(): Promise<boolean> {
   refreshing ??= send("auth/refresh", { method: "POST" })
     .then((response) => response.ok)
@@ -143,7 +155,23 @@ export async function apiFetch<T>(
     response.status === 401 &&
     typeof window !== "undefined" &&
     !NO_REFRESH.test(path.replace(/^\/+/, ""));
-  if (canRefresh && (await refreshSession())) {
+  if (canRefresh) {
+    const refreshed = await refreshSession();
+    response = await send(path, init);
+    // Each refresh token works once, so a refused refresh may simply have
+    // lost a race with another one (the web server renewing the session for
+    // a page load, or another tab). The winner's cookies can still be on
+    // their way to the browser, so wait briefly and repeat once more before
+    // accepting that the session is over.
+    if (!refreshed && response.status === 401) {
+      await new Promise((resolve) => setTimeout(resolve, RACE_WAIT_MS));
+      response = await send(path, init);
+    }
+  }
+
+  // The CSRF cookie can be replaced by a session refresh in the instant
+  // between reading it and sending the request. Read it again and repeat.
+  if (typeof window !== "undefined" && (await isCsrfMismatch(response))) {
     response = await send(path, init);
   }
 

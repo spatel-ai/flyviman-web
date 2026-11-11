@@ -154,8 +154,61 @@ describe("apiFetch session handling", () => {
       status: 401,
       code: "UNAUTHENTICATED",
     });
-    // The request, one refresh attempt, and no repeat.
-    expect(fetchMock).toHaveBeenCalledTimes(2);
+    // The request, one refresh attempt, and two repeats (the second after
+    // a short wait, in case a competing refresh's cookies were on their way).
+    expect(fetchMock).toHaveBeenCalledTimes(4);
+  });
+
+  it("repeats the request when its refresh lost a race with another one", async () => {
+    // Another refresher (the web server, or another tab) has already set
+    // new cookies, so this refresh is refused but the repeat succeeds.
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(unauthenticated())
+      .mockResolvedValueOnce(unauthenticated())
+      .mockResolvedValueOnce(ok({ id: "1" }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(apiFetch("me")).resolves.toMatchObject({ data: { id: "1" } });
+  });
+
+  it("repeats once when the CSRF cookie changed while the request was sent", async () => {
+    const csrfMismatch = () =>
+      new Response(
+        JSON.stringify({
+          error: { code: "CSRF_TOKEN_INVALID", message: "Invalid CSRF token." },
+        }),
+        { status: 403, headers: { "Content-Type": "application/json" } },
+      );
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(csrfMismatch())
+      .mockResolvedValueOnce(ok({ id: "1" }))
+      .mockResolvedValueOnce(csrfMismatch())
+      .mockResolvedValueOnce(csrfMismatch());
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(
+      apiFetch("me", { method: "PATCH", body: {} }),
+    ).resolves.toMatchObject({ data: { id: "1" } });
+    // A mismatch that persists is returned, not retried for ever.
+    await expect(
+      apiFetch("me", { method: "PATCH", body: {} }),
+    ).rejects.toMatchObject({ status: 403, code: "CSRF_TOKEN_INVALID" });
+    expect(fetchMock).toHaveBeenCalledTimes(4);
+  });
+
+  it("waits and repeats once more when the new cookies arrive late", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(unauthenticated())
+      .mockResolvedValueOnce(unauthenticated())
+      .mockResolvedValueOnce(unauthenticated())
+      .mockResolvedValueOnce(ok({ id: "1" }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(apiFetch("me")).resolves.toMatchObject({ data: { id: "1" } });
+    expect(fetchMock).toHaveBeenCalledTimes(4);
   });
 
   it("does not try to refresh for a failed sign-in", async () => {

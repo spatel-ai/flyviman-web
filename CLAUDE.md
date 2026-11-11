@@ -49,7 +49,8 @@ Run from this directory.
 ```
 src/
   app/
-    (customer)/            customer site: home, account/ (profile, passengers, notifications), legal/[slug]
+    (customer)/            customer site: home, account/ (profile, passengers, notifications), legal/[slug],
+                           legal/image-credits
     (auth)/                login, register, verify, forgot-password, reset-password, operator/register
     (operator)/operator/   operator portal: dashboard, onboarding
     (admin)/admin/         admin portal: dashboard, operators, operators/[id], users
@@ -61,7 +62,8 @@ src/
     shared/                cross-feature pieces (PriceLabel, StatusBadge, EmptyState, FormAlert, LoadError)
     layout/                SiteHeader, SiteFooter, AppShell, NavLinks, MobileNav, UserMenu
     theme/                 ThemeScript, ThemeSwitch
-  features/<feature>/      feature UI, hooks, schemas (auth, account, operator-onboarding,
+  content/                 site photographs (images/) and image-credits.ts
+  features/<feature>/      feature UI, hooks, schemas (auth, account, home, operator-onboarding,
                            admin-operators, admin-users)
   lib/
     api/                   apiFetch, ApiError, messages by error code, query keys, generated types
@@ -90,6 +92,8 @@ Full structure and the page map: `../docs/frontend/frontend-design.md`.
 - **Never cache** prices, availability or statuses beyond the validity the API returns.
 - **Portal navigation:** add an item to a portal's `NAV` in the same change as its page, never before.
 - **Environment:** only `NEXT_PUBLIC_` values, declared in `src/lib/env.ts` and `.env.example`. Secrets live in the API.
+- **Photographs** come only from `src/content/image-credits.ts`, where each has alt text, photographer, source and licence. Rules for choosing one: `../docs/frontend/motion-design.md`.
+- **Visual baseline:** `e2e/visual.e2e.ts` compares screenshots of the main pages. After an intended visual change run `npm run test:e2e -- visual --update-snapshots` and commit the new images.
 - **No tokens in `localStorage` or `sessionStorage`.** The session is the API's `HttpOnly` cookies. (The theme preference is stored there; it is not a credential.)
 
 ## Testing
