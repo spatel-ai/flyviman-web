@@ -178,6 +178,40 @@ body {
   }
 }
 
+/*
+ * Motion scale, level 4 (Reveal): a section rises into view once.
+ * Levels 1 to 3 use Tailwind's duration-150/250/450 with ease-standard and
+ * ease-emphasis. Level 5 (Story) follows the scroll position, so it has no
+ * duration. Scale and rules: docs/frontend/motion-design.md.
+ */
+:root {
+  --duration-reveal: 700ms;
+  --distance-reveal: 24px;
+  --stagger-reveal: 80ms;
+}
+
+/* Set by <Reveal>. Content is never hidden without JavaScript, under reduced
+   motion, or once it has been shown. */
+[data-reveal] {
+  transition:
+    opacity var(--duration-reveal) var(--ease-emphasis),
+    transform var(--duration-reveal) var(--ease-emphasis);
+  transition-delay: calc(var(--reveal-index, 0) * var(--stagger-reveal));
+}
+
+[data-reveal="waiting"] {
+  opacity: 0;
+  transform: translateY(var(--distance-reveal));
+  transition: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-reveal] {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

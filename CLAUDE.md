@@ -61,6 +61,7 @@ src/
                            Dialog and ConfirmDialog, Sheet, Tabs, Toast, Skeleton, Table and Pagination)
     shared/                cross-feature pieces (PriceLabel, StatusBadge, EmptyState, FormAlert, LoadError)
     layout/                SiteHeader, SiteFooter, AppShell, NavLinks, MobileNav, UserMenu
+    motion/                Reveal (motion level 4)
     theme/                 ThemeScript, ThemeSwitch
   content/                 site photographs (images/) and image-credits.ts
   features/<feature>/      feature UI, hooks, schemas (auth, account, home, operator-onboarding,
