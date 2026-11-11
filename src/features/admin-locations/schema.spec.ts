@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { locationSchema, toCreateBody, toUpdateBody } from "./schema";
+import {
+  locationSchema,
+  paiseToRupees,
+  rupeesToPaise,
+  toCreateBody,
+  toUpdateBody,
+} from "./schema";
 
 const base = {
   type: "LANDING_SITE" as const,
@@ -56,5 +62,79 @@ describe("locationSchema", () => {
     );
     const values = locationSchema.parse({ ...base, hasCharges: false });
     expect(toCreateBody(values).charges).toBeNull();
+  });
+
+  it("converts rupees to paise from the text, without floating point", () => {
+    expect(rupeesToPaise("0.29")).toBe(29);
+    expect(rupeesToPaise("1.1")).toBe(110);
+    expect(rupeesToPaise("2500.50")).toBe(250_050);
+    expect(rupeesToPaise(" ")).toBeNull();
+    expect(rupeesToPaise("1.234")).toBeUndefined();
+    expect(rupeesToPaise("-5")).toBeUndefined();
+    expect(paiseToRupees(250_050)).toBe("2500.50");
+    expect(paiseToRupees(500_000)).toBe("5000");
+    expect(paiseToRupees(29)).toBe("0.29");
+  });
+
+  it("writes no row for a category whose amounts are blank", () => {
+    const helicopter = {
+      category: "HELICOPTER" as const,
+      landingMinor: 500_000,
+      parkingMinor: 0,
+      handlingMinor: 0,
+    };
+    const values = locationSchema.parse({
+      ...base,
+      chargeCategory: "LIGHT_JET",
+      landingRupees: "",
+      parkingRupees: "",
+      handlingRupees: "",
+    });
+    expect(toUpdateBody(values, [helicopter]).charges).toEqual({
+      currency: "INR",
+      categories: [helicopter],
+    });
+    expect(toUpdateBody(values, []).charges).toBeNull();
+  });
+
+  it("keeps the other categories and replaces only the one on screen", () => {
+    const values = locationSchema.parse({
+      ...base,
+      chargeCategory: "LIGHT_JET",
+      landingRupees: "40000",
+      parkingRupees: "",
+      handlingRupees: "",
+    });
+    const body = toUpdateBody(values, [
+      {
+        category: "HELICOPTER",
+        landingMinor: 500_000,
+        parkingMinor: 0,
+        handlingMinor: 0,
+      },
+      {
+        category: "LIGHT_JET",
+        landingMinor: 1,
+        parkingMinor: 1,
+        handlingMinor: 1,
+      },
+    ]);
+    expect(body.charges).toEqual({
+      currency: "INR",
+      categories: [
+        {
+          category: "LIGHT_JET",
+          landingMinor: 4_000_000,
+          parkingMinor: 0,
+          handlingMinor: 0,
+        },
+        {
+          category: "HELICOPTER",
+          landingMinor: 500_000,
+          parkingMinor: 0,
+          handlingMinor: 0,
+        },
+      ],
+    });
   });
 });

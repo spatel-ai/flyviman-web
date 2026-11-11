@@ -24,8 +24,11 @@ import type { Schemas } from "@/lib/api/types";
 import { CATEGORY_OPTIONS, TYPE_OPTIONS } from "./labels";
 import {
   locationSchema,
+  paiseToRupees,
+  rupeesToPaise,
   toCreateBody,
   toUpdateBody,
+  type ChargeRow,
   type LocationInput,
   type LocationValues,
 } from "./schema";
@@ -55,6 +58,56 @@ const FIELD_PATHS = [
   "isActive",
 ] as const;
 
+type Category = LocationValues["chargeCategory"];
+/** Amounts as typed, per aircraft category; blank means no charge set. */
+type ChargeDraft = { landing: string; parking: string; handling: string };
+const BLANK: ChargeDraft = { landing: "", parking: "", handling: "" };
+const AMOUNT_FIELDS = [
+  "landingRupees",
+  "parkingRupees",
+  "handlingRupees",
+] as const;
+
+function storedDrafts(
+  location?: Location,
+): Partial<Record<Category, ChargeDraft>> {
+  const drafts: Partial<Record<Category, ChargeDraft>> = {};
+  for (const row of location?.charges?.categories ?? []) {
+    drafts[row.category] = {
+      landing: paiseToRupees(row.landingMinor),
+      parking: paiseToRupees(row.parkingMinor),
+      handling: paiseToRupees(row.handlingMinor),
+    };
+  }
+  return drafts;
+}
+
+/** Draft rows for every category except the one on screen. */
+function otherRows(
+  drafts: Partial<Record<Category, ChargeDraft>>,
+  onScreen: Category,
+): ChargeRow[] {
+  const rows: ChargeRow[] = [];
+  for (const [category, draft] of Object.entries(drafts) as [
+    Category,
+    ChargeDraft,
+  ][]) {
+    if (category === onScreen) continue;
+    const landing = rupeesToPaise(draft.landing);
+    const parking = rupeesToPaise(draft.parking);
+    const handling = rupeesToPaise(draft.handling);
+    // Drafts are validated before the category changes; skip blank rows.
+    if (landing == null && parking == null && handling == null) continue;
+    rows.push({
+      category,
+      landingMinor: landing ?? 0,
+      parkingMinor: parking ?? 0,
+      handlingMinor: handling ?? 0,
+    });
+  }
+  return rows;
+}
+
 function defaults(location?: Location): LocationInput {
   const charge = location?.charges?.categories[0];
   return {
@@ -79,9 +132,9 @@ function defaults(location?: Location): LocationInput {
     isActive: location?.isActive ?? true,
     hasCharges: Boolean(charge),
     chargeCategory: charge?.category ?? "HELICOPTER",
-    landingRupees: charge ? charge.landingMinor / 100 : 0,
-    parkingRupees: charge ? charge.parkingMinor / 100 : 0,
-    handlingRupees: charge ? charge.handlingMinor / 100 : 0,
+    landingRupees: charge ? paiseToRupees(charge.landingMinor) : "",
+    parkingRupees: charge ? paiseToRupees(charge.parkingMinor) : "",
+    handlingRupees: charge ? paiseToRupees(charge.handlingMinor) : "",
   };
 }
 
@@ -147,12 +200,37 @@ function LocationForm({
     handleSubmit,
     setError,
     setValue,
+    getValues,
+    trigger,
     formState: { errors, isSubmitting },
   } = useForm<LocationInput, unknown, LocationValues>({
     resolver: zodResolver(locationSchema),
     defaultValues: defaults(location),
   });
   const hasCharges = useWatch({ control, name: "hasCharges" });
+  // Every category's amounts, so switching category neither copies one
+  // category's figures to another nor loses what was typed.
+  const [drafts, setDrafts] = useState(() => storedDrafts(location));
+
+  async function switchCategory(next: Category) {
+    const current = getValues("chargeCategory");
+    if (next === current) return;
+    if (!(await trigger([...AMOUNT_FIELDS]))) return;
+    const [landing, parking, handling] = getValues([...AMOUNT_FIELDS]);
+    setDrafts((previous) => ({
+      ...previous,
+      [current]: {
+        landing: String(landing ?? ""),
+        parking: String(parking ?? ""),
+        handling: String(handling ?? ""),
+      },
+    }));
+    const draft = drafts[next] ?? BLANK;
+    setValue("chargeCategory", next);
+    setValue("landingRupees", draft.landing);
+    setValue("parkingRupees", draft.parking);
+    setValue("handlingRupees", draft.handling);
+  }
 
   async function onSubmit(values: LocationValues) {
     setFormError(null);
@@ -160,13 +238,17 @@ function LocationForm({
       if (editing && location) {
         await apiFetch<Location>(`admin/locations/${location.id}`, {
           method: "PATCH",
-          body: toUpdateBody(values, location.charges),
+          body: toUpdateBody(
+            values,
+            otherRows(drafts, values.chargeCategory),
+            location.charges,
+          ),
         });
         toast({ title: "Location updated", tone: "success" });
       } else {
         await apiFetch<Location>("admin/locations", {
           method: "POST",
-          body: toCreateBody(values),
+          body: toCreateBody(values, otherRows(drafts, values.chargeCategory)),
         });
         toast({ title: "Location added", tone: "success" });
       }
@@ -338,6 +420,7 @@ function LocationForm({
           render={({ field }) => (
             <Checkbox
               label="Set default landing, parking and handling charges"
+              hint="Leave an amount blank when it is not set. Unticking removes the charges for every aircraft category."
               checked={field.value}
               onCheckedChange={(checked) => field.onChange(checked === true)}
               name={field.name}
@@ -355,18 +438,9 @@ function LocationForm({
                   options={CATEGORY_OPTIONS}
                   name={field.name}
                   value={field.value}
-                  onValueChange={(category) => {
-                    field.onChange(category);
-                    const row = location?.charges?.categories.find(
-                      (charge) => charge.category === category,
-                    );
-                    setValue("landingRupees", row ? row.landingMinor / 100 : 0);
-                    setValue("parkingRupees", row ? row.parkingMinor / 100 : 0);
-                    setValue(
-                      "handlingRupees",
-                      row ? row.handlingMinor / 100 : 0,
-                    );
-                  }}
+                  onValueChange={(category) =>
+                    void switchCategory(category as Category)
+                  }
                   className="h-10"
                   error={errors.chargeCategory?.message}
                 />
@@ -375,24 +449,21 @@ function LocationForm({
             <div className="grid gap-4 sm:grid-cols-3">
               <Input
                 label="Landing (₹)"
-                type="number"
-                step="0.01"
+                inputMode="decimal"
                 className="h-10"
                 error={errors.landingRupees?.message}
                 {...register("landingRupees")}
               />
               <Input
                 label="Parking (₹)"
-                type="number"
-                step="0.01"
+                inputMode="decimal"
                 className="h-10"
                 error={errors.parkingRupees?.message}
                 {...register("parkingRupees")}
               />
               <Input
                 label="Handling (₹)"
-                type="number"
-                step="0.01"
+                inputMode="decimal"
                 className="h-10"
                 error={errors.handlingRupees?.message}
                 {...register("handlingRupees")}
