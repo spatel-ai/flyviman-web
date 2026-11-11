@@ -9,5 +9,7 @@ export type Schemas = components["schemas"];
 export type Role = Schemas["Role"];
 export type UserStatus = Schemas["UserStatus"];
 export type OperatorStatus = Schemas["OperatorStatus"];
+export type LocationType = Schemas["LocationType"];
+export type AircraftCategory = Schemas["AircraftCategory"];
 export type Me = Schemas["MeResponseDto"];
 export type User = Schemas["UserResponseDto"];

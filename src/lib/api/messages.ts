@@ -21,6 +21,7 @@ const MESSAGES: Record<string, string> = {
     "This request was refused because it did not come from the Flyviman site.",
   UNAUTHENTICATED: "Your session has ended. Sign in again.",
   FORBIDDEN: "You do not have access to this.",
+  LOCATION_CODE_IN_USE: "Another location already has this code.",
   INTERNAL_ERROR: "Something went wrong on our side. Please try again.",
 };
 

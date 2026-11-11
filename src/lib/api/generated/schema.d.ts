@@ -722,6 +722,51 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/admin/locations": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * List locations
+     * @description Active and inactive, with charges, by name.
+     */
+    get: operations["AdminLocationsController_list"];
+    put?: never;
+    /**
+     * Add a location
+     * @description Audited. IATA and ICAO codes are stored in capitals and must be unique (409 `LOCATION_CODE_IN_USE`).
+     */
+    post: operations["AdminLocationsController_create"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/admin/locations/{id}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** One location, with charges */
+    get: operations["AdminLocationsController_detail"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    /**
+     * Change a location, its capabilities or charges
+     * @description Send only the fields to change. Audited with the values before and after. `isActive: false` hides the location from search and from new trips.
+     */
+    patch: operations["AdminLocationsController_update"];
+    trace?: never;
+  };
   "/api/v1/admin/audit-logs": {
     parameters: {
       query?: never;
@@ -1233,6 +1278,120 @@ export interface components {
        */
       timeZone: string;
       capabilities: components["schemas"]["LocationCapabilitiesDto"];
+    };
+    /** @enum {string} */
+    AircraftCategory:
+      | "TURBOPROP"
+      | "LIGHT_JET"
+      | "MIDSIZE_JET"
+      | "HEAVY_JET"
+      | "HELICOPTER"
+      | "AIR_AMBULANCE_FIXED"
+      | "AIR_AMBULANCE_ROTARY";
+    CategoryChargeResponseDto: {
+      category: components["schemas"]["AircraftCategory"];
+      landingMinor: number;
+      parkingMinor: number;
+      handlingMinor: number;
+    };
+    LocationChargesResponseDto: {
+      /** @example INR */
+      currency: string;
+      categories: components["schemas"]["CategoryChargeResponseDto"][];
+    };
+    AdminLocationResponseDto: {
+      /** Format: uuid */
+      id: string;
+      type: components["schemas"]["LocationType"];
+      /** @example Chhatrapati Shivaji Maharaj International Airport */
+      name: string;
+      /** @example BOM */
+      iata: string | null;
+      /** @example VABB */
+      icao: string | null;
+      /** @example Mumbai */
+      city: string | null;
+      /** @example Maharashtra */
+      state: string | null;
+      /**
+       * @description ISO 3166-1 alpha-2.
+       * @example IN
+       */
+      country: string;
+      latitude: number;
+      longitude: number;
+      /**
+       * @description IANA time zone.
+       * @example Asia/Kolkata
+       */
+      timeZone: string;
+      capabilities: components["schemas"]["LocationCapabilitiesDto"];
+      charges: components["schemas"]["LocationChargesResponseDto"] | null;
+      isActive: boolean;
+      /** @description Source of a seeded row, for example `ourairports:VABB`. */
+      externalRef: string | null;
+      /** Format: date-time */
+      createdAt: string;
+      /** Format: date-time */
+      updatedAt: string;
+    };
+    LocationCapabilitiesInputDto: {
+      runwayLengthM: number | null;
+      nightOperations: boolean | null;
+      helicopterApproved: boolean;
+    };
+    CategoryChargeDto: {
+      category: components["schemas"]["AircraftCategory"];
+      /** @description Per landing, in paise. */
+      landingMinor: number;
+      /** @description Per stop, in paise. */
+      parkingMinor: number;
+      /** @description Per stop, in paise. */
+      handlingMinor: number;
+    };
+    LocationChargesDto: {
+      /**
+       * @example INR
+       * @enum {string}
+       */
+      currency: "INR";
+      categories: components["schemas"]["CategoryChargeDto"][];
+    };
+    CreateLocationDto: {
+      type: components["schemas"]["LocationType"];
+      /** @example Kedarnath Helipad */
+      name: string;
+      /** @example BOM */
+      iata?: string | null;
+      /** @example VABB */
+      icao?: string | null;
+      city?: string | null;
+      state?: string | null;
+      /** @example IN */
+      country: string;
+      /** @example 30.7346 */
+      latitude: number;
+      /** @example 79.0669 */
+      longitude: number;
+      /** @example Asia/Kolkata */
+      timeZone: string;
+      capabilities: components["schemas"]["LocationCapabilitiesInputDto"];
+      charges?: components["schemas"]["LocationChargesDto"] | null;
+    };
+    UpdateLocationDto: {
+      type?: components["schemas"]["LocationType"];
+      name?: string;
+      iata?: string | null;
+      icao?: string | null;
+      city?: string | null;
+      state?: string | null;
+      country?: string;
+      latitude?: number;
+      longitude?: number;
+      timeZone?: string;
+      capabilities?: components["schemas"]["LocationCapabilitiesInputDto"];
+      charges?: components["schemas"]["LocationChargesDto"] | null;
+      isActive?: boolean;
     };
     AuditLogResponseDto: {
       /** Format: uuid */
@@ -2176,6 +2335,101 @@ export interface operations {
         };
         content: {
           "application/json": components["schemas"]["LocationResponseDto"];
+        };
+      };
+    };
+  };
+  AdminLocationsController_list: {
+    parameters: {
+      query?: {
+        page?: number;
+        pageSize?: number;
+        /** @description Part of a name or city, or a code. */
+        q?: string;
+        type?: components["schemas"]["LocationType"];
+        isActive?: boolean;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["AdminLocationResponseDto"][];
+        };
+      };
+    };
+  };
+  AdminLocationsController_create: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["CreateLocationDto"];
+      };
+    };
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["AdminLocationResponseDto"];
+        };
+      };
+    };
+  };
+  AdminLocationsController_detail: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["AdminLocationResponseDto"];
+        };
+      };
+    };
+  };
+  AdminLocationsController_update: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["UpdateLocationDto"];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["AdminLocationResponseDto"];
         };
       };
     };
