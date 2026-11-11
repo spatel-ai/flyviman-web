@@ -685,6 +685,156 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/operator/aircraft": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** List this operator's aircraft */
+    get: operations["OperatorAircraftController_list"];
+    put?: never;
+    /** Create an aircraft profile */
+    post: operations["OperatorAircraftController_create"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/operator/aircraft/{id}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Aircraft detail */
+    get: operations["OperatorAircraftController_get"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    /**
+     * Update an aircraft profile
+     * @description Editing a material field on an approved aircraft returns it to PENDING_REVIEW. Photos and specifications do not.
+     */
+    patch: operations["OperatorAircraftController_update"];
+    trace?: never;
+  };
+  "/api/v1/operator/aircraft/{id}/submit": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Submit an aircraft for approval
+     * @description Only an approved operator can submit. Needs a home base, range and the required documents (registration, airworthiness, insurance).
+     */
+    post: operations["OperatorAircraftController_submit"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/operator/aircraft/{id}/availability-status": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    /** Set available, unavailable or maintenance */
+    patch: operations["OperatorAircraftController_setAvailability"];
+    trace?: never;
+  };
+  "/api/v1/operator/aircraft/{id}/media": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Add a photo or floor plan
+     * @description Upload first with `POST /uploads/presign` using purpose AIRCRAFT_PHOTO or AIRCRAFT_FLOOR_PLAN.
+     */
+    post: operations["OperatorAircraftController_addMedia"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/operator/aircraft/{id}/media/{mediaId}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    /** Remove a photo or floor plan */
+    delete: operations["OperatorAircraftController_removeMedia"];
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/operator/aircraft/{id}/documents": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Add an aircraft document
+     * @description Upload first with `POST /uploads/presign` using purpose AIRCRAFT_DOCUMENT. Adding a document to an approved aircraft returns it to PENDING_REVIEW.
+     */
+    post: operations["OperatorAircraftController_addDocument"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/operator/aircraft/{id}/documents/{documentId}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    /** Remove an aircraft document */
+    delete: operations["OperatorAircraftController_removeDocument"];
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/v1/locations": {
     parameters: {
       query?: never;
@@ -1206,7 +1356,11 @@ export interface components {
       reason?: string;
     };
     /** @enum {string} */
-    FilePurpose: "OPERATOR_DOCUMENT";
+    FilePurpose:
+      | "OPERATOR_DOCUMENT"
+      | "AIRCRAFT_PHOTO"
+      | "AIRCRAFT_FLOOR_PLAN"
+      | "AIRCRAFT_DOCUMENT";
     PresignUploadDto: {
       purpose: components["schemas"]["FilePurpose"];
       /** @example air-operator-certificate.pdf */
@@ -1241,6 +1395,159 @@ export interface components {
       url: string;
       /** Format: date-time */
       expiresAt: string;
+    };
+    /** @enum {string} */
+    AircraftListingStatus:
+      "DRAFT" | "PENDING_REVIEW" | "APPROVED" | "REJECTED" | "SUSPENDED";
+    /** @enum {string} */
+    AircraftCategory:
+      | "TURBOPROP"
+      | "LIGHT_JET"
+      | "MIDSIZE_JET"
+      | "HEAVY_JET"
+      | "HELICOPTER"
+      | "AIR_AMBULANCE_FIXED"
+      | "AIR_AMBULANCE_ROTARY";
+    /** @enum {string} */
+    AircraftAvailabilityStatus: "AVAILABLE" | "UNAVAILABLE" | "MAINTENANCE";
+    AircraftSummaryResponseDto: {
+      /** Format: uuid */
+      id: string;
+      registration: string;
+      manufacturer: string;
+      model: string;
+      category: components["schemas"]["AircraftCategory"];
+      passengerCapacity: number;
+      availabilityStatus: components["schemas"]["AircraftAvailabilityStatus"];
+      listingStatus: components["schemas"]["AircraftListingStatus"];
+      /** Format: uuid */
+      homeBaseId?: string | null;
+    };
+    /** @enum {string} */
+    WingType: "FIXED_WING" | "HELICOPTER";
+    /** @enum {string} */
+    AircraftPricingModel: "HOURLY" | "SECTOR" | "FIXED_ROUTE";
+    CreateAircraftDto: {
+      /** @example VT-ABC */
+      registration: string;
+      /** @example Cessna */
+      manufacturer: string;
+      /** @example Citation CJ3+ */
+      model: string;
+      category: components["schemas"]["AircraftCategory"];
+      wingType: components["schemas"]["WingType"];
+      /** @example 8 */
+      passengerCapacity: number;
+      baggageCapacityKg?: number | null;
+      rangeKm?: number | null;
+      cruiseSpeedKmh?: number | null;
+      /** Format: uuid */
+      homeBaseId?: string | null;
+      /** Format: uuid */
+      currentLocationId?: string | null;
+      operatingRegions?: string[];
+      restrictions?: Record<string, never> | null;
+      pricingModel?: components["schemas"]["AircraftPricingModel"];
+      specifications?: Record<string, never> | null;
+      medicalEquipment?: Record<string, never> | null;
+    };
+    /** @enum {string} */
+    AircraftMediaKind: "PHOTO" | "FLOOR_PLAN";
+    AircraftMediaResponseDto: {
+      /** Format: uuid */
+      id: string;
+      /** Format: uuid */
+      fileId: string;
+      fileName: string;
+      kind: components["schemas"]["AircraftMediaKind"];
+      sortOrder: number;
+    };
+    /** @enum {string} */
+    AircraftDocumentType:
+      "REGISTRATION" | "AIRWORTHINESS" | "INSURANCE" | "OTHER";
+    AircraftDocumentResponseDto: {
+      /** Format: uuid */
+      id: string;
+      type: components["schemas"]["AircraftDocumentType"];
+      /** Format: uuid */
+      fileId: string;
+      fileName: string;
+      issuedAt?: string | null;
+      expiresAt?: string | null;
+      verificationStatus: components["schemas"]["DocumentVerificationStatus"];
+    };
+    AircraftResponseDto: {
+      /** Format: uuid */
+      id: string;
+      /** Format: uuid */
+      operatorId: string;
+      registration: string;
+      manufacturer: string;
+      model: string;
+      category: components["schemas"]["AircraftCategory"];
+      wingType: components["schemas"]["WingType"];
+      passengerCapacity: number;
+      baggageCapacityKg?: number | null;
+      rangeKm?: number | null;
+      cruiseSpeedKmh?: number | null;
+      /** Format: uuid */
+      homeBaseId?: string | null;
+      /** Format: uuid */
+      currentLocationId?: string | null;
+      operatingRegions: string[];
+      restrictions?: Record<string, never> | null;
+      availabilityStatus: components["schemas"]["AircraftAvailabilityStatus"];
+      listingStatus: components["schemas"]["AircraftListingStatus"];
+      pricingModel: components["schemas"]["AircraftPricingModel"];
+      specifications?: Record<string, never> | null;
+      medicalEquipment?: Record<string, never> | null;
+      submittedAt?: string | null;
+      reviewNote?: string | null;
+      /** @description Missing fields for submit. */
+      missing: string[];
+      media: components["schemas"]["AircraftMediaResponseDto"][];
+      documents: components["schemas"]["AircraftDocumentResponseDto"][];
+      createdAt: string;
+      updatedAt: string;
+    };
+    UpdateAircraftDto: {
+      registration?: string;
+      manufacturer?: string;
+      model?: string;
+      category?: components["schemas"]["AircraftCategory"];
+      wingType?: components["schemas"]["WingType"];
+      passengerCapacity?: number;
+      baggageCapacityKg?: number | null;
+      rangeKm?: number | null;
+      cruiseSpeedKmh?: number | null;
+      /** Format: uuid */
+      homeBaseId?: string | null;
+      /** Format: uuid */
+      currentLocationId?: string | null;
+      operatingRegions?: string[];
+      restrictions?: Record<string, never> | null;
+      pricingModel?: components["schemas"]["AircraftPricingModel"];
+      specifications?: Record<string, never> | null;
+      medicalEquipment?: Record<string, never> | null;
+    };
+    SetAvailabilityStatusDto: {
+      status: components["schemas"]["AircraftAvailabilityStatus"];
+    };
+    AddAircraftMediaDto: {
+      /** Format: uuid */
+      fileId: string;
+      kind: components["schemas"]["AircraftMediaKind"];
+      /** @default 0 */
+      sortOrder: number;
+    };
+    AddAircraftDocumentDto: {
+      type: components["schemas"]["AircraftDocumentType"];
+      /** Format: uuid */
+      fileId: string;
+      /** @example 2024-01-15 */
+      issuedAt?: string | null;
+      /** @example 2030-12-31 */
+      expiresAt?: string | null;
     };
     /** @enum {string} */
     LocationType: "AIRPORT" | "HELIPORT" | "CITY" | "LANDING_SITE";
@@ -1279,15 +1586,6 @@ export interface components {
       timeZone: string;
       capabilities: components["schemas"]["LocationCapabilitiesDto"];
     };
-    /** @enum {string} */
-    AircraftCategory:
-      | "TURBOPROP"
-      | "LIGHT_JET"
-      | "MIDSIZE_JET"
-      | "HEAVY_JET"
-      | "HELICOPTER"
-      | "AIR_AMBULANCE_FIXED"
-      | "AIR_AMBULANCE_ROTARY";
     CategoryChargeResponseDto: {
       category: components["schemas"]["AircraftCategory"];
       landingMinor: number;
@@ -2290,6 +2588,234 @@ export interface operations {
         content: {
           "application/json": components["schemas"]["DownloadLinkResponseDto"];
         };
+      };
+    };
+  };
+  OperatorAircraftController_list: {
+    parameters: {
+      query?: {
+        page?: number;
+        pageSize?: number;
+        listingStatus?: components["schemas"]["AircraftListingStatus"];
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["AircraftSummaryResponseDto"][];
+        };
+      };
+    };
+  };
+  OperatorAircraftController_create: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["CreateAircraftDto"];
+      };
+    };
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["AircraftResponseDto"];
+        };
+      };
+    };
+  };
+  OperatorAircraftController_get: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["AircraftResponseDto"];
+        };
+      };
+    };
+  };
+  OperatorAircraftController_update: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["UpdateAircraftDto"];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["AircraftResponseDto"];
+        };
+      };
+    };
+  };
+  OperatorAircraftController_submit: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["AircraftResponseDto"];
+        };
+      };
+    };
+  };
+  OperatorAircraftController_setAvailability: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["SetAvailabilityStatusDto"];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["AircraftResponseDto"];
+        };
+      };
+    };
+  };
+  OperatorAircraftController_addMedia: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["AddAircraftMediaDto"];
+      };
+    };
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["AircraftMediaResponseDto"];
+        };
+      };
+    };
+  };
+  OperatorAircraftController_removeMedia: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+        mediaId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  OperatorAircraftController_addDocument: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["AddAircraftDocumentDto"];
+      };
+    };
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["AircraftDocumentResponseDto"];
+        };
+      };
+    };
+  };
+  OperatorAircraftController_removeDocument: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+        documentId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
       };
     };
   };
