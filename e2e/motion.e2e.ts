@@ -208,6 +208,26 @@ test.describe("story section (From search to sky)", () => {
     await expect.poll(() => marks(page)).toEqual([0, 0, 0, 0]);
   });
 
+  test("at the smallest size that pins it, the whole stage fits below the header", async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1024, height: 720 });
+    await page.goto("/");
+    expect(await isPinned(page)).toBe(true);
+    const fits = await section(page)
+      .locator(".route-story__stage")
+      .evaluate((el) => {
+        const header =
+          parseFloat(
+            getComputedStyle(document.documentElement).getPropertyValue(
+              "--header-height",
+            ),
+          ) * parseFloat(getComputedStyle(document.documentElement).fontSize);
+        return el.scrollHeight <= window.innerHeight - header;
+      });
+    expect(fits).toBe(true);
+  });
+
   for (const [label, size] of [
     ["on a phone", { width: 390, height: 844 }],
     ["on a wide but short window", { width: 1280, height: 650 }],

@@ -188,7 +188,8 @@ body {
  * duration. Scale and rules: docs/frontend/motion-design.md.
  */
 :root {
-  /* Height of the customer and portal headers; pinned content sits below it. */
+  /* Height of the customer site header; pinned content sits below it. (The
+     portal and sign-in headers are h-14 and have no pinned content.) */
   --header-height: 3rem;
   --duration-reveal: 700ms;
   --distance-reveal: 24px;
