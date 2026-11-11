@@ -685,6 +685,43 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/locations": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Search airports and heliports
+     * @description Active locations only. Without `q`, lists them by name, airports first.
+     */
+    get: operations["LocationsController_search"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/locations/{id}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** One location */
+    get: operations["LocationsController_detail"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/v1/admin/audit-logs": {
     parameters: {
       query?: never;
@@ -1159,6 +1196,43 @@ export interface components {
       url: string;
       /** Format: date-time */
       expiresAt: string;
+    };
+    /** @enum {string} */
+    LocationType: "AIRPORT" | "HELIPORT" | "CITY" | "LANDING_SITE";
+    LocationCapabilitiesDto: {
+      /** @description Longest usable runway in metres; null for heliports and where unknown. */
+      runwayLengthM: number | null;
+      /** @description Null where unknown. */
+      nightOperations: boolean | null;
+      helicopterApproved: boolean;
+    };
+    LocationResponseDto: {
+      /** Format: uuid */
+      id: string;
+      type: components["schemas"]["LocationType"];
+      /** @example Chhatrapati Shivaji Maharaj International Airport */
+      name: string;
+      /** @example BOM */
+      iata: string | null;
+      /** @example VABB */
+      icao: string | null;
+      /** @example Mumbai */
+      city: string | null;
+      /** @example Maharashtra */
+      state: string | null;
+      /**
+       * @description ISO 3166-1 alpha-2.
+       * @example IN
+       */
+      country: string;
+      latitude: number;
+      longitude: number;
+      /**
+       * @description IANA time zone.
+       * @example Asia/Kolkata
+       */
+      timeZone: string;
+      capabilities: components["schemas"]["LocationCapabilitiesDto"];
     };
     AuditLogResponseDto: {
       /** Format: uuid */
@@ -2056,6 +2130,52 @@ export interface operations {
         };
         content: {
           "application/json": components["schemas"]["DownloadLinkResponseDto"];
+        };
+      };
+    };
+  };
+  LocationsController_search: {
+    parameters: {
+      query?: {
+        page?: number;
+        pageSize?: number;
+        /** @description Part of a name or city, or an IATA or ICAO code. Exact codes rank first. */
+        q?: string;
+        type?: components["schemas"]["LocationType"];
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["LocationResponseDto"][];
+        };
+      };
+    };
+  };
+  LocationsController_detail: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["LocationResponseDto"];
         };
       };
     };
