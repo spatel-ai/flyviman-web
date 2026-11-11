@@ -1,4 +1,4 @@
-import { redirect } from "next/navigation";
+import { ClientRedirect } from "@/components/shared/client-redirect";
 import { Card } from "@/components/ui/card";
 import type { Schemas } from "@/lib/api/types";
 import { serverGet } from "@/lib/auth/server-api";
@@ -6,8 +6,17 @@ import { serverGet } from "@/lib/auth/server-api";
 export default async function OperatorDashboardPage() {
   const { data: operator } =
     await serverGet<Schemas["OperatorProfileResponseDto"]>("operator/profile");
-  // The dashboard opens once the organisation is approved.
-  if (operator.status !== "APPROVED") redirect("/operator/onboarding");
+  // The dashboard opens once the organisation is approved. Not redirect():
+  // this page streams, and a streamed redirect reloads the destination a
+  // moment later, wiping what the operator has started typing there.
+  if (operator.status !== "APPROVED") {
+    return (
+      <ClientRedirect
+        href="/operator/onboarding"
+        label="Continue to your application"
+      />
+    );
+  }
 
   return (
     <>

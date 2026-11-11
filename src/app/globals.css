@@ -218,6 +218,84 @@ body {
   }
 }
 
+/*
+ * Customer header (motion level 1): at the top of the page it blends into
+ * the page; once scrolled (data-scrolled, set by HeaderScrollState) a
+ * hairline appears beneath it. Its glass stays as .material-bar sets it, so
+ * the reduced-transparency fallback is untouched.
+ */
+.site-header {
+  border-color: transparent;
+  transition: border-color 150ms var(--ease-standard);
+}
+
+:root[data-scrolled] .site-header {
+  border-color: color-mix(in srgb, var(--border) 60%, transparent);
+}
+
+/*
+ * Page cross-fade (motion level 3, PageTransition). The header and footer
+ * have their own names and do not animate, so only the content changes.
+ * Old content fades out quickly; new content fades in, together 450 ms.
+ */
+.site-header {
+  view-transition-name: site-header;
+}
+
+.site-footer {
+  view-transition-name: site-footer;
+}
+
+::view-transition-group(site-header),
+::view-transition-group(site-footer) {
+  animation: none;
+  z-index: 100;
+}
+
+::view-transition-old(site-header),
+::view-transition-old(site-footer) {
+  display: none;
+}
+
+::view-transition-new(site-header),
+::view-transition-new(site-footer) {
+  animation: none;
+}
+
+::view-transition-old(.page-fade) {
+  animation: 150ms var(--ease-standard) both page-fade-out;
+}
+
+::view-transition-new(.page-fade) {
+  animation: 300ms var(--ease-emphasis) 150ms both page-fade-in;
+}
+
+@keyframes page-fade-out {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes page-fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+/* Clicks during a fade reach the live page. */
+::view-transition {
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(*),
+  ::view-transition-new(*),
+  ::view-transition-group(*) {
+    animation-duration: 0s !important;
+    animation-delay: 0s !important;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

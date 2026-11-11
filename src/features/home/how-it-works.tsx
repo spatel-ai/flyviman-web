@@ -1,3 +1,5 @@
+import { Reveal } from "@/components/motion/reveal";
+
 const STEPS = [
   {
     name: "Search",
@@ -62,17 +64,21 @@ export function HowItWorks() {
         <h2 id="how-heading" className="text-h2">
           From search to sky
         </h2>
-        <div className="mx-auto mt-10 max-w-content">
+        <Reveal className="mx-auto mt-10 max-w-content">
           <RouteArc />
-        </div>
+        </Reveal>
         <ol className="mt-10 grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
           {STEPS.map((step, index) => (
             <li key={step.name}>
-              <p className="text-overline text-accent tabular-nums">
-                {String(index + 1).padStart(2, "0")}
-              </p>
-              <h3 className="mt-2 text-title">{step.name}</h3>
-              <p className="mt-2 text-body-sm text-muted">{step.description}</p>
+              <Reveal index={index}>
+                <p className="text-overline text-accent tabular-nums">
+                  {String(index + 1).padStart(2, "0")}
+                </p>
+                <h3 className="mt-2 text-title">{step.name}</h3>
+                <p className="mt-2 text-body-sm text-muted">
+                  {step.description}
+                </p>
+              </Reveal>
             </li>
           ))}
         </ol>

@@ -1,5 +1,6 @@
 import Image from "next/image";
 import { IMAGES, type SiteImageName } from "@/content/image-credits";
+import { Reveal } from "@/components/motion/reveal";
 import { cn } from "@/lib/utils";
 
 interface Category {
@@ -55,46 +56,53 @@ export function CategoryTiles() {
         Choose how you travel
       </h2>
       <ul className="mt-8 grid gap-4 md:grid-cols-6">
-        {CATEGORIES.map((category) => {
+        {CATEGORIES.map((category, position) => {
           const image = IMAGES[category.image];
+          // Staggered per row: the two wide tiles, then the three narrow ones.
+          const index = category.wide ? position : position - 2;
+          // A tile with a safety notice (air ambulance) is never animated:
+          // it is simply there, like the notice itself.
+          const Tile = category.notice ? "div" : Reveal;
           return (
             <li
               key={category.name}
-              className={cn(
-                "flex flex-col overflow-hidden rounded-xl bg-surface",
-                category.wide ? "md:col-span-3" : "md:col-span-2",
-              )}
+              className={category.wide ? "md:col-span-3" : "md:col-span-2"}
             >
-              <div
-                className={cn(
-                  "relative aspect-3/2",
-                  category.wide ? "md:aspect-video" : "md:aspect-4/3",
-                )}
+              <Tile
+                index={category.notice ? undefined : index}
+                className="flex h-full flex-col overflow-hidden rounded-xl bg-surface"
               >
-                <Image
-                  src={image.src}
-                  alt={image.alt}
-                  fill
-                  placeholder="blur"
-                  sizes={
-                    category.wide
-                      ? "(min-width: 768px) 50vw, 100vw"
-                      : "(min-width: 768px) 33vw, 100vw"
-                  }
-                  className="object-cover"
-                />
-              </div>
-              <div className="flex flex-1 flex-col p-6">
-                <h3 className="text-title">{category.name}</h3>
-                <p className="mt-2 text-body-sm text-muted">
-                  {category.description}
-                </p>
-                {category.notice ? (
-                  <p className="mt-3 text-body-sm font-medium text-foreground">
-                    {category.notice}
+                <div
+                  className={cn(
+                    "relative aspect-3/2",
+                    category.wide ? "md:aspect-video" : "md:aspect-4/3",
+                  )}
+                >
+                  <Image
+                    src={image.src}
+                    alt={image.alt}
+                    fill
+                    placeholder="blur"
+                    sizes={
+                      category.wide
+                        ? "(min-width: 768px) 50vw, 100vw"
+                        : "(min-width: 768px) 33vw, 100vw"
+                    }
+                    className="object-cover"
+                  />
+                </div>
+                <div className="flex flex-1 flex-col p-6">
+                  <h3 className="text-title">{category.name}</h3>
+                  <p className="mt-2 text-body-sm text-muted">
+                    {category.description}
                   </p>
-                ) : null}
-              </div>
+                  {category.notice ? (
+                    <p className="mt-3 text-body-sm font-medium text-foreground">
+                      {category.notice}
+                    </p>
+                  ) : null}
+                </div>
+              </Tile>
             </li>
           );
         })}

@@ -46,6 +46,12 @@ async function addDocument(page: Page, type: string, fileName: string) {
   await expect(
     page.getByRole("list", { name: "Documents" }).getByText(fileName),
   ).toBeVisible();
+  // The list can update from a background refresh a moment before the form
+  // clears itself; wait for the form to finish, or its reset could wipe the
+  // next document's choices.
+  await expect(
+    page.getByRole("combobox", { name: "Document type" }),
+  ).toHaveText(/Choose a type/);
 }
 
 async function completeApplication(page: Page) {

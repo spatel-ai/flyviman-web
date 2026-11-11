@@ -6,6 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { apiFetch } from "@/lib/api/client";
 import { ApiError } from "@/lib/api/errors";
 import type { Schemas } from "@/lib/api/types";
+import { PageTransition } from "@/components/motion/page-transition";
 
 type Policy = Schemas["PolicyResponseDto"];
 
@@ -50,10 +51,12 @@ async function PolicyText({ params }: { params: Promise<{ slug: string }> }) {
 
 export default function LegalPage({ params }: PageProps<"/legal/[slug]">) {
   return (
-    <div className="mx-auto w-full max-w-reading px-4 py-12 md:px-6 md:py-16">
-      <Suspense fallback={<Skeleton className="h-96" />}>
-        <PolicyText params={params} />
-      </Suspense>
-    </div>
+    <PageTransition>
+      <div className="mx-auto w-full max-w-reading px-4 py-12 md:px-6 md:py-16">
+        <Suspense fallback={<Skeleton className="h-96" />}>
+          <PolicyText params={params} />
+        </Suspense>
+      </div>
+    </PageTransition>
   );
 }

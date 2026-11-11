@@ -1,3 +1,5 @@
+import { Reveal } from "@/components/motion/reveal";
+
 const POINTS = [
   {
     title: "Every price is labelled",
@@ -27,10 +29,14 @@ export function TrustStrip() {
         Clear at every step
       </h2>
       <ul className="mt-8 grid gap-8 md:grid-cols-3">
-        {POINTS.map((point) => (
-          <li key={point.title} className="border-t border-border pt-6">
-            <h3 className="text-title">{point.title}</h3>
-            <p className="mt-2 text-body-sm text-muted">{point.description}</p>
+        {POINTS.map((point, index) => (
+          <li key={point.title}>
+            <Reveal index={index} className="border-t border-border pt-6">
+              <h3 className="text-title">{point.title}</h3>
+              <p className="mt-2 text-body-sm text-muted">
+                {point.description}
+              </p>
+            </Reveal>
           </li>
         ))}
       </ul>
