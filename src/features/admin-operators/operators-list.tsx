@@ -193,7 +193,7 @@ function OperatorRow({ operator }: { operator: OperatorSummary }) {
           <span className="text-muted">Not submitted</span>
         )}
       </TableCell>
-      <TableCell>
+      <TableCell className="whitespace-nowrap">
         <StatusBadge kind="operator" status={operator.status} />
       </TableCell>
     </TableRow>

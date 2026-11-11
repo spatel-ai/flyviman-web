@@ -17,7 +17,7 @@ export default function LoginPage() {
       <p className="text-overline text-accent uppercase">Welcome back</p>
       <h1 className="mt-1 text-h2">Sign in</h1>
       <p className="mt-2 mb-6 text-muted">
-        Use the email and password for your Flyviman account.
+        Use your email and password, or a code sent to your mobile number.
       </p>
       <Suspense fallback={<Skeleton className="h-64" />}>
         <LoginForm />

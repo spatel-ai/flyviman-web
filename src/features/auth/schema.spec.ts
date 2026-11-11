@@ -71,8 +71,15 @@ describe("auth schemas", () => {
       acceptTerms: true,
     };
     expect(operatorRegisterSchema.safeParse(base).success).toBe(true);
-    expect(
-      operatorRegisterSchema.safeParse({ ...base, phone: "12345" }).success,
-    ).toBe(false);
+    const invalid = operatorRegisterSchema.safeParse({
+      ...base,
+      phone: "9876543210",
+    });
+    expect(invalid.success).toBe(false);
+    expect(invalid.error?.issues[0]).toMatchObject({
+      path: ["phone"],
+      message:
+        "Enter the number with its country code, for example +919876543210.",
+    });
   });
 });

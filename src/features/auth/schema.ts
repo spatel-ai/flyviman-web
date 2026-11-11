@@ -9,19 +9,26 @@ const newPassword = z
   .string()
   .min(PASSWORD_MIN_LENGTH, `Use at least ${PASSWORD_MIN_LENGTH} characters.`)
   .max(200);
+const PHONE_HINT =
+  "Enter the number with its country code, for example +919876543210.";
+
+const e164 = /^\+[1-9]\d{7,14}$/;
+
+function normalisedPhone() {
+  return z
+    .string()
+    .trim()
+    .transform((value) => value.replace(/[\s-]/g, ""));
+}
+
 /** E.164, as the API expects: +919876543210. */
-export const phone = z
-  .string()
-  .trim()
-  .transform((value) => value.replace(/[\s-]/g, ""))
-  .pipe(
-    z
-      .string()
-      .regex(
-        /^\+[1-9]\d{7,14}$/,
-        "Enter the number with its country code, for example +919876543210.",
-      ),
-  );
+export const phone = normalisedPhone().pipe(z.string().regex(e164, PHONE_HINT));
+
+/** Same as `phone`, but an empty field is allowed. */
+const optionalPhone = normalisedPhone().refine(
+  (value) => value === "" || e164.test(value),
+  PHONE_HINT,
+);
 const acceptTerms = z.boolean().refine((value) => value, {
   message: "Accept the terms and the privacy policy to continue.",
 });
@@ -79,7 +86,7 @@ export const operatorRegisterSchema = z.object({
     .max(200),
   contactName: z.string().trim().min(2, "Enter your name.").max(200),
   email,
-  phone: z.union([z.literal(""), phone]),
+  phone: optionalPhone,
   password: newPassword,
   acceptTerms,
 });

@@ -245,7 +245,7 @@ export function UsersList() {
                               ? ROLE_LABELS[user.role]
                               : user.role}
                           </TableCell>
-                          <TableCell>
+                          <TableCell className="whitespace-nowrap">
                             <StatusBadge kind="user" status={user.status} />
                           </TableCell>
                           <TableCell className="whitespace-nowrap">

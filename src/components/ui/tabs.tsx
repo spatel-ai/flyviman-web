@@ -48,8 +48,28 @@ export function TabsTrigger({ className, ...props }: TabsTriggerProps) {
   );
 }
 
-export type TabsContentProps = ComponentProps<typeof TabsPrimitive.Content>;
+export type TabsContentProps = ComponentProps<typeof TabsPrimitive.Content> & {
+  /**
+   * Fade and rise 8 px on entry (motion level 2). Opt in only where the
+   * motion catalogue allows it: the sign-in and registration method switch.
+   * Portal tabs leave this off.
+   */
+  animate?: boolean;
+};
 
-export function TabsContent({ className, ...props }: TabsContentProps) {
-  return <TabsPrimitive.Content className={className} {...props} />;
+export function TabsContent({
+  animate = false,
+  className,
+  ...props
+}: TabsContentProps) {
+  return (
+    <TabsPrimitive.Content
+      className={cn(
+        animate &&
+          "transition duration-250 ease-standard starting:translate-y-2 starting:opacity-0",
+        className,
+      )}
+      {...props}
+    />
+  );
 }

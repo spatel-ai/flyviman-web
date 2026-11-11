@@ -11,6 +11,39 @@ import {
 
 const PDF = Buffer.from("%PDF-1.7\n1 0 obj\n<<>>\nendobj\n%%EOF\n");
 
+test("the operator registration form explains missing and invalid fields", async ({
+  page,
+}) => {
+  await page.goto("/operator/register");
+  await page.getByRole("textbox", { name: "Work email" }).fill("not-an-email");
+  await page.getByRole("textbox", { name: "Password" }).fill("short");
+  await page
+    .getByRole("textbox", { name: "Phone number (optional)" })
+    .fill("9876543210");
+  await page.getByRole("button", { name: "Register company" }).click();
+
+  await expect(
+    page
+      .getByText("Enter the company's registered name.", { exact: true })
+      .first(),
+  ).toBeVisible();
+  await expect(
+    page.getByText("Enter a valid email address.", { exact: true }).first(),
+  ).toBeVisible();
+  await expect(
+    page.getByText("Use at least 12 characters.", { exact: true }).first(),
+  ).toBeVisible();
+  await expect(
+    page
+      .getByText(
+        "Enter the number with its country code, for example +919876543210.",
+        { exact: true },
+      )
+      .first(),
+  ).toBeVisible();
+  await expect(page).toHaveURL("/operator/register");
+});
+
 async function registerOperator(page: Page, legalName: string, email: string) {
   await page.goto("/operator/register");
   await page

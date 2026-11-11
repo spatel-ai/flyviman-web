@@ -65,4 +65,12 @@ describe("StatusBadge", () => {
 
     expect(screen.getByText("toString")).toHaveClass("text-muted");
   });
+
+  it("keeps a long label on one line", () => {
+    render(<StatusBadge kind="user" status="PENDING_VERIFICATION" />);
+
+    expect(screen.getByText("Verification pending")).toHaveClass(
+      "whitespace-nowrap",
+    );
+  });
 });

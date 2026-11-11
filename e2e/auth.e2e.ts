@@ -121,6 +121,57 @@ test.describe("signing in", () => {
     ).toBeVisible();
   });
 
+  test("switching to a mobile code keeps the card top still", async ({
+    page,
+  }) => {
+    await page.goto("/login");
+    const heading = page.getByRole("heading", { level: 1, name: "Sign in" });
+    await expect(heading).toBeVisible();
+    const before = await heading.boundingBox();
+    expect(before).toBeTruthy();
+
+    await page.getByRole("tab", { name: "Mobile number" }).click();
+    await expect(
+      page.getByRole("textbox", { name: "Mobile number" }),
+    ).toBeVisible();
+    await expect(page.getByRole("textbox", { name: "Email" })).toHaveCount(0);
+
+    const after = await heading.boundingBox();
+    expect(after).toBeTruthy();
+    expect(Math.abs(after!.y - before!.y)).toBeLessThan(2);
+  });
+
+  test("under reduced motion the mobile panel is fully visible at once", async ({
+    page,
+  }) => {
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await page.goto("/login");
+    await page.getByRole("tab", { name: "Mobile number" }).click();
+    const panel = page.getByRole("tabpanel");
+    await expect(panel).toBeVisible();
+    await expect(panel).toHaveCSS("opacity", "1");
+  });
+
+  test("a mobile number without a country code is explained under the field", async ({
+    page,
+  }) => {
+    await page.goto("/login");
+    await page.getByRole("tab", { name: "Mobile number" }).click();
+    await page
+      .getByRole("textbox", { name: "Mobile number" })
+      .fill("9876543210");
+    await page.getByRole("button", { name: "Send code" }).click();
+    await expect(
+      page
+        .getByText(
+          "Enter the number with its country code, for example +919876543210.",
+          { exact: true },
+        )
+        .first(),
+    ).toBeVisible();
+    await expect(page).toHaveURL(/\/login/);
+  });
+
   test("someone already signed in is taken past the sign-in page", async ({
     page,
   }) => {

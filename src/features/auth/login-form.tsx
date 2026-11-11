@@ -129,10 +129,10 @@ export function LoginForm() {
         <TabsTrigger value="email">Email</TabsTrigger>
         <TabsTrigger value="mobile">Mobile number</TabsTrigger>
       </TabsList>
-      <TabsContent value="email">
+      <TabsContent value="email" animate>
         <EmailSignIn next={next} />
       </TabsContent>
-      <TabsContent value="mobile">
+      <TabsContent value="mobile" animate>
         <MobileSignIn />
       </TabsContent>
     </Tabs>

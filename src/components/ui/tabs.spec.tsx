@@ -27,6 +27,25 @@ describe("Tabs", () => {
     expect(details).toHaveClass("aria-selected:border-accent");
     expect(screen.getByRole("tabpanel")).toHaveTextContent("Details panel");
     expect(screen.queryByText("Documents panel")).not.toBeInTheDocument();
+    expect(screen.getByRole("tabpanel")).not.toHaveClass("starting:opacity-0");
+  });
+
+  it("fades an incoming panel only when asked", () => {
+    render(
+      <Tabs defaultValue="email">
+        <TabsList aria-label="How to sign in">
+          <TabsTrigger value="email">Email</TabsTrigger>
+        </TabsList>
+        <TabsContent value="email" animate>
+          Email panel
+        </TabsContent>
+      </Tabs>,
+    );
+
+    expect(screen.getByRole("tabpanel")).toHaveClass(
+      "starting:translate-y-2",
+      "starting:opacity-0",
+    );
   });
 
   it("changes tab on click", async () => {

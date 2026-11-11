@@ -21,8 +21,8 @@ export default function AuthLayout({ children }: LayoutProps<"/">) {
       </header>
       <div className="mx-auto grid w-full max-w-wide flex-1 gap-8 px-4 pb-8 md:px-6 lg:grid-cols-2 lg:px-8 lg:pb-12">
         <AuthShowcase />
-        <main className="flex items-start justify-center py-8 md:items-center md:py-16">
-          <div className="w-full max-w-md rounded-xl bg-surface-raised p-6 shadow-md md:p-8">
+        <main className="flex items-start justify-center py-8 md:py-16">
+          <div className="w-full max-w-md self-start rounded-xl bg-surface-raised p-6 shadow-md md:p-8">
             {children}
           </div>
         </main>

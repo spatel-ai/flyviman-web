@@ -89,4 +89,8 @@ test("operations staff can search users but are offered no way to suspend them",
     page.getByRole("button", { name: "Add staff account" }),
   ).toHaveCount(0);
   await expectNoSidewaysScroll(page);
+
+  const status = page.locator('[data-status="ACTIVE"]').first();
+  await expect(status).toBeVisible();
+  await expect(status).toHaveCSS("white-space", "nowrap");
 });

@@ -63,6 +63,31 @@ test.describe("customer registration", () => {
     await expect(page).toHaveURL("/register");
   });
 
+  test("registering by mobile number explains a number without a country code", async ({
+    page,
+  }) => {
+    await page.goto("/register");
+    await page.getByRole("tab", { name: "Mobile number" }).click();
+    await page.getByRole("textbox", { name: "First name" }).fill("Asha");
+    await page.getByRole("textbox", { name: "Last name" }).fill("Rao");
+    await page
+      .getByRole("textbox", { name: "Mobile number" })
+      .fill("9876543210");
+    await page
+      .getByRole("checkbox", { name: /I accept the terms of use/ })
+      .click();
+    await page.getByRole("button", { name: "Create account" }).click();
+    await expect(
+      page
+        .getByText(
+          "Enter the number with its country code, for example +919876543210.",
+          { exact: true },
+        )
+        .first(),
+    ).toBeVisible();
+    await expect(page).toHaveURL("/register");
+  });
+
   test("a wrong code is refused, a new one can be sent, and the right one works", async ({
     page,
   }) => {
