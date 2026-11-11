@@ -139,3 +139,81 @@ test.describe("page cross-fade", () => {
     ).toBeVisible();
   });
 });
+
+test.describe("story section (From search to sky)", () => {
+  const section = (page: Page) =>
+    page.locator("section", {
+      has: page.getByRole("heading", { level: 2, name: "From search to sky" }),
+    });
+  const steps = (page: Page) => section(page).locator(".route-story__step");
+  const opacities = (page: Page) =>
+    steps(page).evaluateAll((elements) =>
+      elements.map(
+        (el) => Math.round(Number(getComputedStyle(el).opacity) * 10) / 10,
+      ),
+    );
+  const wipeScale = (page: Page) =>
+    section(page)
+      .locator(".route-story__wipe")
+      .evaluate((el) => new DOMMatrix(getComputedStyle(el).transform).a);
+
+  /** Scrolls so that `progress` (0 to 1) of the pinned range has passed. */
+  async function scrollThrough(page: Page, progress: number) {
+    await page.evaluate((p) => {
+      const el = document.querySelector(".route-story") as HTMLElement;
+      const top = el.getBoundingClientRect().top + window.scrollY;
+      const range = el.offsetHeight - window.innerHeight;
+      window.scrollTo({ top: top + range * p });
+    }, progress);
+  }
+
+  test("on a wide screen it is pinned while the arc draws and the steps light up in turn", async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.goto("/");
+
+    await scrollThrough(page, 0);
+    await expect.poll(() => wipeScale(page)).toBeGreaterThan(0.9);
+    await expect.poll(() => opacities(page)).toEqual([0.4, 0.4, 0.4, 0.4]);
+
+    await scrollThrough(page, 0.35);
+    await expect
+      .poll(async () => (await opacities(page)).map((o) => o === 1))
+      .toEqual([true, true, false, false]);
+    const heading = section(page).getByRole("heading", { level: 2 });
+    await expect(heading).toBeInViewport();
+
+    await scrollThrough(page, 1);
+    await expect.poll(() => wipeScale(page)).toBeLessThan(0.05);
+    await expect.poll(() => opacities(page)).toEqual([1, 1, 1, 1]);
+
+    // Scrolling back undoes it.
+    await scrollThrough(page, 0);
+    await expect.poll(() => opacities(page)).toEqual([0.4, 0.4, 0.4, 0.4]);
+  });
+
+  test("on a phone it is a plain section with everything shown", async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto("/");
+    await expect(section(page).locator(".route-story__wipe")).toBeHidden();
+    await section(page).scrollIntoViewIfNeeded();
+    await expect.poll(() => opacities(page)).toEqual([1, 1, 1, 1]);
+  });
+
+  test("with reduced motion it shows its final state and is not pinned", async ({
+    page,
+  }) => {
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.goto("/");
+    await expect(section(page).locator(".route-story__wipe")).toBeHidden();
+    const height = await section(page).evaluate(
+      (el) => (el as HTMLElement).offsetHeight,
+    );
+    expect(height).toBeLessThan(800 * 1.5);
+    await expect.poll(() => opacities(page)).toEqual([1, 1, 1, 1]);
+  });
+});

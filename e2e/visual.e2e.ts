@@ -108,3 +108,39 @@ for (const scheme of ["light", "dark"] as const) {
     }
   });
 }
+
+/**
+ * The full-page shots above use reduced motion, so they show the story
+ * section's final state. This one captures the pinned story itself, halfway
+ * through, on a wide screen (it is a plain section on phones).
+ */
+for (const scheme of ["light", "dark"] as const) {
+  test(`home story, halfway, ${scheme}, matches`, async ({ page }, info) => {
+    test.skip(
+      info.project.name !== "desktop",
+      "The story is pinned only on wide screens.",
+    );
+    await page.emulateMedia({ colorScheme: scheme });
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.goto("/");
+    await page.evaluate(() => document.fonts.ready);
+    await page.evaluate(() => {
+      const el = document.querySelector(".route-story") as HTMLElement;
+      const top = el.getBoundingClientRect().top + window.scrollY;
+      window.scrollTo({
+        top: top + (el.offsetHeight - window.innerHeight) / 2,
+      });
+    });
+    // Let the reveals inside the pinned stage finish rising in.
+    await expect(
+      page.locator('.route-story [data-reveal="waiting"]'),
+    ).toHaveCount(0);
+    await page.waitForTimeout(1000);
+    // "allow": the default would fast-forward the scroll-driven animations
+    // to their end, a frame the visitor never sees.
+    await expect(page).toHaveScreenshot(`home-story-${scheme}.png`, {
+      animations: "allow",
+      maxDiffPixelRatio: 0.01,
+    });
+  });
+}
