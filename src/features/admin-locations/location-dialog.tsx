@@ -146,6 +146,7 @@ function LocationForm({
     register,
     handleSubmit,
     setError,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<LocationInput, unknown, LocationValues>({
     resolver: zodResolver(locationSchema),
@@ -354,7 +355,18 @@ function LocationForm({
                   options={CATEGORY_OPTIONS}
                   name={field.name}
                   value={field.value}
-                  onValueChange={field.onChange}
+                  onValueChange={(category) => {
+                    field.onChange(category);
+                    const row = location?.charges?.categories.find(
+                      (charge) => charge.category === category,
+                    );
+                    setValue("landingRupees", row ? row.landingMinor / 100 : 0);
+                    setValue("parkingRupees", row ? row.parkingMinor / 100 : 0);
+                    setValue(
+                      "handlingRupees",
+                      row ? row.handlingMinor / 100 : 0,
+                    );
+                  }}
                   className="h-10"
                   error={errors.chargeCategory?.message}
                 />
