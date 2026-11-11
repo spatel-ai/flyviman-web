@@ -124,9 +124,9 @@ async function errorCode(response: Response): Promise<string | undefined> {
 }
 
 /**
- * The API's guards answer UNAUTHENTICATED when the session is missing or
- * expired, before any handler runs, so repeating such a request cannot do
- * its work twice. A handler that refuses for another reason (for example a
+ * The API answers UNAUTHENTICATED only when the session is missing or
+ * expired, and never after a side effect, so repeating such a request cannot
+ * do its work twice. A handler that refuses for another reason (for example a
  * future step-up check) must use a different code; see
  * docs/api/api-design.md.
  */
@@ -159,8 +159,14 @@ export async function apiFetch<T>(
   path: string,
   init: ApiRequestInit = {},
 ): Promise<ApiResult<T>> {
-  const sentCsrf = csrfToken();
-  let response = await send(path, init);
+  // The CSRF token each attempt was sent with, to tell later whether the
+  // cookie changed in flight.
+  let sentCsrf = csrfToken();
+  const attempt = () => {
+    sentCsrf = csrfToken();
+    return send(path, init);
+  };
+  let response = await attempt();
 
   const canRefresh =
     response.status === 401 &&
@@ -169,7 +175,7 @@ export async function apiFetch<T>(
     (await errorCode(response)) === SESSION_EXPIRED;
   if (canRefresh) {
     const refreshed = await refreshSession();
-    response = await send(path, init);
+    response = await attempt();
     // Each refresh token works once, so a refused refresh may simply have
     // lost a race with another one (the web server renewing the session for
     // a page load, or another tab). The winner's cookies can still be on
@@ -181,7 +187,7 @@ export async function apiFetch<T>(
       (await errorCode(response)) === SESSION_EXPIRED
     ) {
       await new Promise((resolve) => setTimeout(resolve, RACE_WAIT_MS));
-      response = await send(path, init);
+      response = await attempt();
     }
   }
 
@@ -194,7 +200,7 @@ export async function apiFetch<T>(
     (await errorCode(response)) === "CSRF_TOKEN_INVALID" &&
     csrfToken() !== sentCsrf
   ) {
-    response = await send(path, init);
+    response = await attempt();
   }
 
   return unwrap<T>(response);

@@ -82,6 +82,7 @@ for (const scheme of ["light", "dark"] as const) {
         // Photographs below the fold load lazily: bring each into view and
         // wait until every one has decoded, so the capture is never half-loaded.
         // Hidden photographs (such as the sign-in panel on phones) never load.
+        // Both use the same test: a rendered box with width and height.
         for (const image of await page.locator("img:visible").all()) {
           await image.scrollIntoViewIfNeeded();
         }
@@ -89,7 +90,9 @@ for (const scheme of ["light", "dark"] as const) {
           .poll(() =>
             page.evaluate(() =>
               Array.from(document.images)
-                .filter((image) => image.getClientRects().length > 0)
+                .filter(
+                  (image) => image.offsetWidth > 0 && image.offsetHeight > 0,
+                )
                 .every((image) => image.complete && image.naturalWidth > 0),
             ),
           )

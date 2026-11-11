@@ -57,15 +57,15 @@ src/
     layout.tsx             root: font, theme script, providers
     globals.css            design tokens
   components/
-    ui/                    design-system primitives (Button, Input, Select, Checkbox, Card, Badge,
+    ui/                    design-system primitives (Button and buttonClasses, Input, Select, Checkbox, Card, Badge,
                            Dialog and ConfirmDialog, Sheet, Tabs, Toast, Skeleton, Table and Pagination)
     shared/                cross-feature pieces (PriceLabel, StatusBadge, EmptyState, FormAlert, LoadError)
     layout/                SiteHeader, SiteFooter, AppShell, NavLinks, MobileNav, UserMenu
     motion/                Reveal (motion level 4)
     theme/                 ThemeScript, ThemeSwitch
   content/                 site photographs (images/) and image-credits.ts
-  features/<feature>/      feature UI, hooks, schemas (auth, account, home, operator-onboarding,
-                           admin-operators, admin-users)
+  features/<feature>/      feature UI, hooks, schemas (auth, account, home, legal,
+                           operator-onboarding, admin-operators, admin-users)
   lib/
     api/                   apiFetch, ApiError, messages by error code, query keys, generated types
     auth/                  session and server-side API reads (server only), roles

@@ -204,6 +204,28 @@ describe("apiFetch session handling", () => {
     expect(sent).toEqual(["old-token", "new-token"]);
   });
 
+  it("does not repeat a CSRF refusal after a renewal that did not change the cookie again", async () => {
+    document.cookie = "csrf_token=first-token";
+    const fetchMock = vi.fn(async (url: string) => {
+      const calls = fetchMock.mock.calls.length;
+      if (url.endsWith("/auth/refresh")) {
+        document.cookie = "csrf_token=renewed-token";
+        return new Response(null, { status: 204 });
+      }
+      return calls === 1
+        ? refused(401, "UNAUTHENTICATED")
+        : refused(403, "CSRF_TOKEN_INVALID");
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(
+      apiFetch("me", { method: "PATCH", body: {} }),
+    ).rejects.toMatchObject({ status: 403, code: "CSRF_TOKEN_INVALID" });
+    // The request, the refresh, and one repeat with the renewed token; no
+    // further CSRF repeat, because the cookie did not change after it.
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+  });
+
   it("does not repeat a CSRF refusal when the cookie has not changed", async () => {
     document.cookie = "csrf_token=same-token";
     const fetchMock = vi.fn(async () => refused(403, "CSRF_TOKEN_INVALID"));

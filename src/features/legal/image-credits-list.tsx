@@ -23,7 +23,7 @@ export function ImageCreditsList() {
               <a
                 href={image.sourceUrl}
                 rel="noreferrer"
-                aria-label={`${image.photographer}'s photograph on ${image.source}`}
+                aria-label={`${image.source}, ${image.photographer}'s photograph`}
                 className="text-accent hover:underline"
               >
                 {image.source}
@@ -32,7 +32,7 @@ export function ImageCreditsList() {
               <a
                 href={LICENCE_URLS[image.licence]}
                 rel="noreferrer"
-                aria-label={`${image.licence}, for ${image.photographer}'s photograph`}
+                aria-label={`${image.licence}, ${image.photographer}'s photograph`}
                 className="text-accent hover:underline"
               >
                 {image.licence}

@@ -74,6 +74,12 @@ describe("Reveal", () => {
     expect(callbacks).toHaveLength(0);
   });
 
+  it("leaves content alone that is above the screen at load (a restored scroll)", () => {
+    placeAt(-400);
+    render(<Reveal>Section</Reveal>);
+    expect(section()).toHaveAttribute("data-reveal", "visible");
+  });
+
   it("leaves content alone that only just peeks onto the screen", () => {
     placeAt(790);
     render(<Reveal>Section</Reveal>);
