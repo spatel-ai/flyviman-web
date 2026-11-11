@@ -62,7 +62,8 @@ src/
     shared/                cross-feature pieces (PriceLabel, StatusBadge, EmptyState, FormAlert, LoadError,
                            ClientRedirect)
     layout/                SiteHeader, SiteFooter, AppShell, NavLinks, MobileNav, UserMenu
-    motion/                Reveal (level 4), PageTransition (level 3)
+    motion/                Reveal (level 4), PageTransition (level 3); the level-5 route story is CSS only
+                           (.route-story in globals.css, used by features/home/how-it-works.tsx)
     theme/                 ThemeScript, ThemeSwitch
   content/                 site photographs (images/) and image-credits.ts
   features/<feature>/      feature UI, hooks, schemas (auth, account, home, legal,
@@ -94,7 +95,7 @@ Full structure and the page map: `../docs/frontend/frontend-design.md`.
 - **Never cache** prices, availability or statuses beyond the validity the API returns.
 - **Portal navigation:** add an item to a portal's `NAV` in the same change as its page, never before.
 - **Environment:** only `NEXT_PUBLIC_` values, declared in `src/lib/env.ts` and `.env.example`. Secrets live in the API.
-- **Motion** follows the five-level scale in `../docs/frontend/motion-design.md`. Wrap each new customer page's content in `PageTransition`; use `Reveal` only for content that starts below the first screen; never animate safety notices, prices, forms or status badges.
+- **Motion** follows the five-level scale in `../docs/frontend/motion-design.md`. Wrap each new customer page's content in `PageTransition`; use `Reveal` only for content that starts below the first screen; never animate safety notices, prices, forms or status badges. The home page has the site's one story section (level 5, scroll-driven CSS, wide and tall screens only); do not add another to the same page. Pinned content sits below `--header-height`.
 - **Redirecting into a page with a form** from a page that streams: use `ClientRedirect`, not `redirect()` (which also reloads the destination a moment later).
 - **Photographs** come only from `src/content/image-credits.ts`, where each has alt text, photographer, source and licence. Rules for choosing one: `../docs/frontend/motion-design.md`.
 - **Visual baseline:** `e2e/visual.e2e.ts` compares screenshots of the main pages. After an intended visual change run `npm run test:e2e -- visual --update-snapshots` and commit the new images.
