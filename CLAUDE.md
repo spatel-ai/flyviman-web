@@ -22,8 +22,9 @@ The framework's own documentation ships with the package at `node_modules/next/d
 | Styling | Tailwind CSS 4 with design tokens in `src/app/globals.css` |
 | Server state | TanStack Query |
 | Validation | Zod |
-| Forms | React Hook Form with Zod (install with the first form) |
-| Interactive primitives | Radix (install the specific package when first needed) |
+| Forms | React Hook Form with Zod (`@hookform/resolvers`) |
+| Interactive primitives | Radix, through the unified `radix-ui` package |
+| API types | Generated from the API's OpenAPI document with `openapi-typescript` |
 | Unit and component tests | Vitest with Testing Library, `*.spec.ts(x)` next to the code |
 | Browser tests | Playwright, `e2e/*.e2e.ts`, desktop and mobile projects |
 | Lint and format | ESLint (`eslint-config-next`), Prettier |
@@ -38,7 +39,8 @@ Run from this directory.
 | Lint | `npm run lint` |
 | Type check | `npm run typecheck` |
 | Unit and component tests | `npm test` |
-| Browser tests | `npm run test:e2e` (builds and starts the app itself; first run needs `npx playwright install chromium`) |
+| Browser tests | `npm run test:e2e` (starts the API and the app itself; needs `npm run db:up` in `flyviman-api`; first run needs `npx playwright install chromium`) |
+| Regenerate API types | `npm run api:types` (after `npm run openapi:export` in `flyviman-api`) |
 | Build | `npm run build` |
 | Format | `npm run format` |
 
@@ -47,24 +49,29 @@ Run from this directory.
 ```
 src/
   app/
-    (customer)/            customer site: layout, home, and later results, booking, trips, account
-    (auth)/                sign-in and registration (added in M0)
-    (operator)/operator/   operator portal
-    (admin)/admin/         admin portal
-    layout.tsx             root: font, providers
+    (customer)/            customer site: home, account/ (profile, passengers, notifications), legal/[slug]
+    (auth)/                login, register, verify, forgot-password, reset-password, operator/register
+    (operator)/operator/   operator portal: dashboard, onboarding
+    (admin)/admin/         admin portal: dashboard, operators, operators/[id], users
+    layout.tsx             root: font, theme script, providers
     globals.css            design tokens
   components/
-    ui/                    design-system primitives (Button, Input, Card, Badge)
-    shared/                cross-feature pieces (PriceLabel)
-    layout/                SiteHeader, SiteFooter, AppShell
-  features/<feature>/      feature UI, hooks, API calls, schemas, types (added per milestone)
+    ui/                    design-system primitives (Button, Input, Select, Checkbox, Card, Badge,
+                           Dialog and ConfirmDialog, Sheet, Tabs, Toast, Skeleton, Table and Pagination)
+    shared/                cross-feature pieces (PriceLabel, StatusBadge, EmptyState, FormAlert, LoadError)
+    layout/                SiteHeader, SiteFooter, AppShell, NavLinks, MobileNav, UserMenu
+    theme/                 ThemeScript, ThemeSwitch
+  features/<feature>/      feature UI, hooks, schemas (auth, account, operator-onboarding,
+                           admin-operators, admin-users)
   lib/
-    api/                   apiFetch and ApiError
+    api/                   apiFetch, ApiError, messages by error code, query keys, generated types
+    auth/                  session and server-side API reads (server only), roles
     format/                money and date formatting
     env.ts                 validated public environment
     utils.ts               cn()
   providers/               QueryProvider
-e2e/                       Playwright browser tests
+  proxy.ts                 first-line route protection and session rotation
+e2e/                       Playwright browser journeys; helpers in e2e/support
 ```
 
 Full structure and the page map: `../docs/frontend/frontend-design.md`.
@@ -75,12 +82,15 @@ Full structure and the page map: `../docs/frontend/frontend-design.md`.
 - **Apple-inspired, not copied.** Calm, spacious, typographic; one accent; one primary action per view. No Apple assets or trademarks.
 - **Pages compose; features hold logic.** Nothing but routing and composition in `app/`. Features do not import from each other.
 - **Server components by default.** `"use client"` only for state, effects or browser APIs, as low in the tree as possible.
-- **All API access goes through `apiFetch`.** Client-side data uses TanStack Query. Switch on `ApiError.code`, never on the message.
+- **All API access goes through `apiFetch`.** Client-side data uses TanStack Query with keys from `lib/api/query-keys.ts`. Switch on `ApiError.code`, never on the message; wording lives in `lib/api/messages.ts`. On the server use `serverGet` from `lib/auth/server-api.ts`. The one exception is sending a file to a signed upload URL, which is a plain `fetch` without credentials.
+- **Protected surfaces** are gated twice: `proxy.ts` turns away visitors with no session, and each protected layout calls `requireRole()` inside `<Suspense>` before rendering anything. Hiding a button by role is a convenience; the API decides.
+- **Types come from the API.** Use `Schemas["…"]` from `lib/api/types.ts`; do not hand-write request or response shapes.
+- **Forms:** React Hook Form with a Zod schema in the feature's `schema.ts`; `applyApiError` puts the API's field errors under the fields; `FormAlert` shows the form-level message.
 - **Prices render only through `PriceLabel`,** which requires a `priceType`. Booking status and payment status are always two separate badges.
 - **Never cache** prices, availability or statuses beyond the validity the API returns.
 - **Portal navigation:** add an item to a portal's `NAV` in the same change as its page, never before.
 - **Environment:** only `NEXT_PUBLIC_` values, declared in `src/lib/env.ts` and `.env.example`. Secrets live in the API.
-- **No tokens in `localStorage` or `sessionStorage`.** The session is the API's `HttpOnly` cookies.
+- **No tokens in `localStorage` or `sessionStorage`.** The session is the API's `HttpOnly` cookies. (The theme preference is stored there; it is not a credential.)
 
 ## Testing
 

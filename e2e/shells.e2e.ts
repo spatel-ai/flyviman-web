@@ -35,22 +35,6 @@ test.describe("customer home", () => {
   });
 });
 
-test.describe("portal shells", () => {
-  for (const { path, title } of [
-    { path: "/operator", title: "Operator portal · Flyviman" },
-    { path: "/admin", title: "Admin portal · Flyviman" },
-  ]) {
-    test(`${path} renders its dashboard`, async ({ page }) => {
-      await page.goto(path);
-
-      await expect(page).toHaveTitle(title);
-      await expect(
-        page.getByRole("heading", { level: 1, name: "Dashboard" }),
-      ).toBeVisible();
-    });
-  }
-});
-
 test.describe("themes", () => {
   for (const scheme of ["light", "dark"] as const) {
     test(`the page background follows the ${scheme} scheme`, async ({

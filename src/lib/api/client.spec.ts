@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { apiFetch } from "./client";
+import { apiFetch, apiUrl } from "./client";
 import { ApiError } from "./errors";
 
 function respond(status: number, body: unknown) {
@@ -77,5 +77,100 @@ describe("apiFetch", () => {
       status: 0,
       code: "NETWORK_ERROR",
     });
+  });
+});
+
+describe("apiFetch session handling", () => {
+  const ok = (data: unknown) =>
+    new Response(JSON.stringify({ data, meta: { requestId: "r" } }), {
+      status: 200,
+    });
+  const unauthenticated = () =>
+    new Response(
+      JSON.stringify({ error: { code: "UNAUTHENTICATED", message: "x" } }),
+      { status: 401 },
+    );
+
+  afterEach(() => {
+    document.cookie = "csrf_token=; Max-Age=0";
+    vi.unstubAllGlobals();
+  });
+
+  it("repeats the CSRF cookie in a header on state-changing requests only", async () => {
+    document.cookie = "csrf_token=token-123";
+    const fetchMock = vi.fn<
+      (url: string, init: RequestInit) => Promise<Response>
+    >(async () => ok({}));
+    vi.stubGlobal("fetch", fetchMock);
+
+    await apiFetch("me");
+    await apiFetch("me", { method: "PATCH", body: { firstName: "Asha" } });
+
+    const headers = fetchMock.mock.calls.map(
+      ([, init]) => init.headers as Record<string, string>,
+    );
+    expect(headers[0]["X-CSRF-Token"]).toBeUndefined();
+    expect(headers[1]["X-CSRF-Token"]).toBe("token-123");
+  });
+
+  it("refreshes the session once on a 401 and repeats the request", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(unauthenticated())
+      .mockResolvedValueOnce(new Response(null, { status: 204 }))
+      .mockResolvedValueOnce(ok({ id: "1" }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(apiFetch("me")).resolves.toMatchObject({ data: { id: "1" } });
+    expect(fetchMock.mock.calls.map(([url]) => String(url))).toEqual([
+      expect.stringMatching(/\/me$/),
+      expect.stringMatching(/\/auth\/refresh$/),
+      expect.stringMatching(/\/me$/),
+    ]);
+  });
+
+  it("shares one refresh between requests that fail together", async () => {
+    let refreshes = 0;
+    let refreshed = false;
+    const fetchMock = vi.fn(async (url: string) => {
+      if (url.endsWith("/auth/refresh")) {
+        refreshes += 1;
+        refreshed = true;
+        return new Response(null, { status: 204 });
+      }
+      return refreshed ? ok({}) : unauthenticated();
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    await Promise.all([apiFetch("me"), apiFetch("me/passengers")]);
+    expect(refreshes).toBe(1);
+  });
+
+  it("gives up with the 401 when the session cannot be refreshed", async () => {
+    const fetchMock = vi.fn(async () => unauthenticated());
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(apiFetch("me")).rejects.toMatchObject({
+      status: 401,
+      code: "UNAUTHENTICATED",
+    });
+    // The request, one refresh attempt, and no repeat.
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it("does not try to refresh for a failed sign-in", async () => {
+    const fetchMock = vi.fn(async () => unauthenticated());
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(
+      apiFetch("auth/login", { method: "POST", body: {} }),
+    ).rejects.toMatchObject({ status: 401 });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("leaves empty values out of the query string", () => {
+    expect(apiUrl("admin/users", { q: "", page: 2, role: undefined })).toMatch(
+      /\/admin\/users\?page=2$/,
+    );
   });
 });

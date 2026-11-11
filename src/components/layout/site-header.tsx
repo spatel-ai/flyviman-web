@@ -1,4 +1,50 @@
 import Link from "next/link";
+import { Suspense } from "react";
+import { getSession } from "@/lib/auth/session";
+import { homeFor, surfaceFor } from "@/lib/auth/roles";
+import { UserMenu } from "./user-menu";
+
+const LINK =
+  "flex h-9 items-center rounded-pill px-4 text-body-sm font-medium transition-colors duration-150 ease-standard";
+
+const CUSTOMER_LINKS = [
+  { href: "/account", label: "Profile" },
+  { href: "/account/passengers", label: "Saved passengers" },
+  { href: "/account/notifications", label: "Notifications" },
+];
+
+function SignedOut() {
+  return (
+    <div className="flex items-center gap-1">
+      <Link
+        href="/login"
+        className={`${LINK} text-foreground hover:bg-border/50`}
+      >
+        Sign in
+      </Link>
+      <Link
+        href="/register"
+        className={`${LINK} bg-accent text-accent-foreground hover:bg-accent-hover`}
+      >
+        Create account
+      </Link>
+    </div>
+  );
+}
+
+async function Account() {
+  // A public page must still render when the API cannot be reached.
+  const session = await getSession().catch(() => null);
+  if (!session) return <SignedOut />;
+
+  const name =
+    session.profile?.firstName ?? session.email ?? session.phone ?? "Account";
+  const links =
+    surfaceFor(session.role) === "customer"
+      ? CUSTOMER_LINKS
+      : [{ href: homeFor(session.role), label: "Open portal" }];
+  return <UserMenu name={name} role={session.role} links={links} />;
+}
 
 /** Customer-surface navigation: translucent, sticky, minimal. */
 export function SiteHeader() {
@@ -12,6 +58,10 @@ export function SiteHeader() {
         >
           Flyviman
         </Link>
+        {/* The page shell is static; the account area streams in. */}
+        <Suspense fallback={<div className="h-9 w-24" aria-hidden="true" />}>
+          <Account />
+        </Suspense>
       </div>
     </header>
   );

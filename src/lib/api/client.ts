@@ -25,27 +25,51 @@ interface ErrorEnvelope {
 export interface ApiRequestInit extends Omit<RequestInit, "body"> {
   /** Sent as JSON. */
   body?: unknown;
+  /** Query string values; `undefined` and empty strings are left out. */
+  query?: Record<string, string | number | undefined>;
 }
 
-/**
- * The only way the app talks to flyviman-api. Sends cookies, unwraps the
- * `{ data, meta }` envelope and throws `ApiError` for error responses.
- * Session refresh and the CSRF header are added with authentication (M0).
- */
-export async function apiFetch<T>(
-  path: string,
-  { body, headers, ...init }: ApiRequestInit = {},
-): Promise<ApiResult<T>> {
-  const url = `${env.NEXT_PUBLIC_API_URL}/${path.replace(/^\/+/, "")}`;
+export const CSRF_COOKIE = "csrf_token";
+export const CSRF_HEADER = "X-CSRF-Token";
 
-  let response: Response;
+const SAFE_METHODS = new Set(["GET", "HEAD", "OPTIONS"]);
+
+export function apiUrl(path: string, query?: ApiRequestInit["query"]): string {
+  const url = `${env.NEXT_PUBLIC_API_URL}/${path.replace(/^\/+/, "")}`;
+  const params = new URLSearchParams();
+  for (const [key, value] of Object.entries(query ?? {})) {
+    if (value !== undefined && value !== "") params.set(key, String(value));
+  }
+  const search = params.toString();
+  return search ? `${url}?${search}` : url;
+}
+
+/** The readable CSRF cookie, which state-changing requests must repeat. */
+function csrfToken(): string | undefined {
+  if (typeof document === "undefined") return undefined;
+  const entry = document.cookie
+    .split("; ")
+    .find((cookie) => cookie.startsWith(`${CSRF_COOKIE}=`));
+  return entry
+    ? decodeURIComponent(entry.slice(CSRF_COOKIE.length + 1))
+    : undefined;
+}
+
+async function send(
+  path: string,
+  { body, headers, query, ...init }: ApiRequestInit,
+): Promise<Response> {
+  const method = (init.method ?? "GET").toUpperCase();
+  const csrf = SAFE_METHODS.has(method) ? undefined : csrfToken();
   try {
-    response = await fetch(url, {
+    return await fetch(apiUrl(path, query), {
       ...init,
+      method,
       credentials: "include",
       headers: {
         Accept: "application/json",
         ...(body === undefined ? {} : { "Content-Type": "application/json" }),
+        ...(csrf ? { [CSRF_HEADER]: csrf } : {}),
         ...headers,
       },
       body: body === undefined ? undefined : JSON.stringify(body),
@@ -57,7 +81,9 @@ export async function apiFetch<T>(
       "We could not reach the server. Check your connection and try again.",
     );
   }
+}
 
+async function unwrap<T>(response: Response): Promise<ApiResult<T>> {
   if (response.status === 204) {
     return { data: null as T, meta: { requestId: null } };
   }
@@ -76,4 +102,50 @@ export async function apiFetch<T>(
   }
 
   return payload as ApiResult<T>;
+}
+
+// Routes where a 401 is an answer, not an expired session: refreshing itself,
+// and the public routes that sign in, register, verify or recover.
+const NO_REFRESH =
+  /^(auth\/(refresh|login|register|otp\/|email\/|password\/)|operator\/register)/;
+
+// One refresh at a time: every request that finds the session expired waits
+// for the same rotation, because each refresh token works only once.
+let refreshing: Promise<boolean> | null = null;
+
+function refreshSession(): Promise<boolean> {
+  refreshing ??= send("auth/refresh", { method: "POST" })
+    .then((response) => response.ok)
+    .catch(() => false)
+    .finally(() => {
+      refreshing = null;
+    });
+  return refreshing;
+}
+
+/**
+ * The only way the app talks to flyviman-api. Sends the session cookies,
+ * adds the CSRF header to state-changing requests, unwraps the
+ * `{ data, meta }` envelope and throws `ApiError` for error responses.
+ *
+ * In the browser, a 401 caused by an expired access token is repaired once:
+ * the session is refreshed and the request repeated. On the server, pass the
+ * incoming cookies in `headers` (see `lib/auth/session.ts`); the proxy has
+ * already refreshed the session if it needed it.
+ */
+export async function apiFetch<T>(
+  path: string,
+  init: ApiRequestInit = {},
+): Promise<ApiResult<T>> {
+  let response = await send(path, init);
+
+  const canRefresh =
+    response.status === 401 &&
+    typeof window !== "undefined" &&
+    !NO_REFRESH.test(path.replace(/^\/+/, ""));
+  if (canRefresh && (await refreshSession())) {
+    response = await send(path, init);
+  }
+
+  return unwrap<T>(response);
 }

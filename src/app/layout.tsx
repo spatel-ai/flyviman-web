@@ -1,5 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
+import { ThemeScript } from "@/components/theme/theme-script";
+import { ToastProvider } from "@/components/ui/toast";
 import { QueryProvider } from "@/providers/query-provider";
 import "./globals.css";
 
@@ -28,9 +30,20 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className={`${inter.variable} h-full`}>
+    // The theme script sets `data-theme` before React loads, so the
+    // attribute can differ from what the server rendered.
+    <html
+      lang="en"
+      className={`${inter.variable} h-full`}
+      suppressHydrationWarning
+    >
+      <head>
+        <ThemeScript />
+      </head>
       <body className="flex min-h-full flex-col">
-        <QueryProvider>{children}</QueryProvider>
+        <QueryProvider>
+          <ToastProvider>{children}</ToastProvider>
+        </QueryProvider>
       </body>
     </html>
   );
