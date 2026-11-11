@@ -52,7 +52,7 @@ export function SheetContent({
   const closeButton = useRef<HTMLButtonElement>(null);
   return (
     <SheetPrimitive.Portal>
-      <SheetPrimitive.Overlay className="fixed inset-0 z-50 bg-black/40 transition-opacity duration-250 ease-standard starting:opacity-0" />
+      <SheetPrimitive.Overlay className="fixed inset-0 z-50 bg-scrim transition-opacity duration-250 ease-standard starting:opacity-0" />
       <SheetPrimitive.Content
         // Radix warns when a dialog has no description; none is intended here.
         {...(description ? {} : { "aria-describedby": undefined })}

@@ -22,9 +22,10 @@ export interface RevealProps extends HTMLAttributes<HTMLDivElement> {
  * Motion level 4: content rises about 24 px and fades in, once, the first
  * time it scrolls into view. Customer site only.
  *
- * The server renders the content visible. After loading, content that is
- * still below the screen is hidden and waits to be scrolled to; content
- * already on screen is left alone, so nothing flashes. Without JavaScript,
+ * The server renders the content visible. After loading, content wholly
+ * below the screen is hidden and rises in when any part of it is scrolled
+ * into view; content already partly on screen is left alone, so nothing
+ * flashes. Without JavaScript,
  * without IntersectionObserver, or with reduced motion, nothing is hidden.
  */
 export function Reveal({ index = 0, style, children, ...props }: RevealProps) {
@@ -37,22 +38,19 @@ export function Reveal({ index = 0, style, children, ...props }: RevealProps) {
     if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) {
       return;
     }
+    // Any part already on screen (or above it) at load: leave it as
+    // rendered. Only content wholly below the screen waits to be revealed.
+    if (element.getBoundingClientRect().top < window.innerHeight) return;
 
-    let first = true;
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          // On screen at load: stay as rendered. Later: play the reveal.
-          if (!first) setState("shown");
-          observer.disconnect();
-        } else if (first) {
-          setState("waiting");
-        }
-        first = false;
-      },
-      // Start a little before the element is fully in view.
-      { rootMargin: "0px 0px -10% 0px" },
-    );
+    setState("waiting");
+    // Revealed as soon as any part enters the screen, so content can never
+    // be left hidden, even at the very end of a short page.
+    const observer = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting) {
+        setState("shown");
+        observer.disconnect();
+      }
+    });
     observer.observe(element);
     return () => observer.disconnect();
   }, []);

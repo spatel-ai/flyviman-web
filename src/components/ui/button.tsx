@@ -17,6 +17,25 @@ const SIZES: Record<Size, string> = {
   lg: "h-13 px-7 text-body-lg",
 };
 
+/**
+ * The button look, for a link that must be styled as a button (for example a
+ * page's primary action that navigates rather than submits).
+ */
+export function buttonClasses({
+  variant = "primary",
+  size = "md",
+  className,
+}: { variant?: Variant; size?: Size; className?: string } = {}): string {
+  return cn(
+    "inline-flex items-center justify-center gap-2 rounded-pill font-medium whitespace-nowrap",
+    "transition-colors duration-150 ease-standard",
+    "disabled:cursor-not-allowed disabled:opacity-50",
+    VARIANTS[variant],
+    SIZES[size],
+    className,
+  );
+}
+
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: Variant;
   size?: Size;
@@ -39,14 +58,7 @@ export function Button({
       type={type}
       disabled={disabled || loading}
       aria-busy={loading || undefined}
-      className={cn(
-        "inline-flex items-center justify-center gap-2 rounded-pill font-medium whitespace-nowrap",
-        "transition-colors duration-150 ease-standard",
-        "disabled:cursor-not-allowed disabled:opacity-50",
-        VARIANTS[variant],
-        SIZES[size],
-        className,
-      )}
+      className={buttonClasses({ variant, size, className })}
       {...props}
     >
       {loading ? (

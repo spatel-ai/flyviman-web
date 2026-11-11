@@ -113,14 +113,24 @@ const NO_REFRESH =
 // for the same rotation, because each refresh token works only once.
 let refreshing: Promise<boolean> | null = null;
 
-async function isCsrfMismatch(response: Response): Promise<boolean> {
-  if (response.status !== 403) return false;
+/** The error code of a refused response, without consuming its body. */
+async function errorCode(response: Response): Promise<string | undefined> {
+  if (response.ok) return undefined;
   const payload = (await response
     .clone()
     .json()
     .catch(() => null)) as ErrorEnvelope | null;
-  return payload?.error?.code === "CSRF_TOKEN_INVALID";
+  return payload?.error?.code;
 }
+
+/**
+ * The API's guards answer UNAUTHENTICATED when the session is missing or
+ * expired, before any handler runs, so repeating such a request cannot do
+ * its work twice. A handler that refuses for another reason (for example a
+ * future step-up check) must use a different code; see
+ * docs/api/api-design.md.
+ */
+const SESSION_EXPIRED = "UNAUTHENTICATED";
 
 /** How long to wait for a competing refresh's cookies to arrive. */
 const RACE_WAIT_MS = 500;
@@ -149,12 +159,14 @@ export async function apiFetch<T>(
   path: string,
   init: ApiRequestInit = {},
 ): Promise<ApiResult<T>> {
+  const sentCsrf = csrfToken();
   let response = await send(path, init);
 
   const canRefresh =
     response.status === 401 &&
     typeof window !== "undefined" &&
-    !NO_REFRESH.test(path.replace(/^\/+/, ""));
+    !NO_REFRESH.test(path.replace(/^\/+/, "")) &&
+    (await errorCode(response)) === SESSION_EXPIRED;
   if (canRefresh) {
     const refreshed = await refreshSession();
     response = await send(path, init);
@@ -163,15 +175,25 @@ export async function apiFetch<T>(
     // a page load, or another tab). The winner's cookies can still be on
     // their way to the browser, so wait briefly and repeat once more before
     // accepting that the session is over.
-    if (!refreshed && response.status === 401) {
+    if (
+      !refreshed &&
+      response.status === 401 &&
+      (await errorCode(response)) === SESSION_EXPIRED
+    ) {
       await new Promise((resolve) => setTimeout(resolve, RACE_WAIT_MS));
       response = await send(path, init);
     }
   }
 
-  // The CSRF cookie can be replaced by a session refresh in the instant
-  // between reading it and sending the request. Read it again and repeat.
-  if (typeof window !== "undefined" && (await isCsrfMismatch(response))) {
+  // A session refresh can replace the CSRF cookie in the instant between
+  // reading it and sending the request. Repeat once, and only if the cookie
+  // has really changed: otherwise the repeat could not succeed.
+  if (
+    typeof window !== "undefined" &&
+    response.status === 403 &&
+    (await errorCode(response)) === "CSRF_TOKEN_INVALID" &&
+    csrfToken() !== sentCsrf
+  ) {
     response = await send(path, init);
   }
 

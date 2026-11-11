@@ -74,7 +74,9 @@ test.describe("customer home, photography and footer", () => {
     ).toBeVisible();
     await expect(page.getByText(/Photograph by Ross Parmly/)).toBeVisible();
     await expect(
-      page.getByRole("link", { name: "Unsplash licence" }).first(),
+      page.getByRole("link", {
+        name: "Unsplash licence, for Ross Parmly's photograph",
+      }),
     ).toHaveAttribute("href", "https://unsplash.com/license");
   });
 

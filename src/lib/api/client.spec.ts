@@ -172,30 +172,67 @@ describe("apiFetch session handling", () => {
     await expect(apiFetch("me")).resolves.toMatchObject({ data: { id: "1" } });
   });
 
-  it("repeats once when the CSRF cookie changed while the request was sent", async () => {
-    const csrfMismatch = () =>
-      new Response(
-        JSON.stringify({
-          error: { code: "CSRF_TOKEN_INVALID", message: "Invalid CSRF token." },
-        }),
-        { status: 403, headers: { "Content-Type": "application/json" } },
-      );
-    const fetchMock = vi
-      .fn()
-      .mockResolvedValueOnce(csrfMismatch())
-      .mockResolvedValueOnce(ok({ id: "1" }))
-      .mockResolvedValueOnce(csrfMismatch())
-      .mockResolvedValueOnce(csrfMismatch());
+  const refused = (status: number, code: string) =>
+    new Response(JSON.stringify({ error: { code, message: "x" } }), {
+      status,
+    });
+
+  it("repeats once, with the new token, when the CSRF cookie changed in flight", async () => {
+    document.cookie = "csrf_token=old-token";
+    const fetchMock = vi.fn(async () => {
+      if (fetchMock.mock.calls.length === 1) {
+        // A refresh elsewhere replaced the cookie while this request was sent.
+        document.cookie = "csrf_token=new-token";
+        return refused(403, "CSRF_TOKEN_INVALID");
+      }
+      return ok({ id: "1" });
+    });
     vi.stubGlobal("fetch", fetchMock);
 
     await expect(
       apiFetch("me", { method: "PATCH", body: {} }),
     ).resolves.toMatchObject({ data: { id: "1" } });
-    // A mismatch that persists is returned, not retried for ever.
+    const sent = fetchMock.mock.calls.map(
+      (call) =>
+        (
+          (call as unknown as [string, RequestInit])[1].headers as Record<
+            string,
+            string
+          >
+        )["X-CSRF-Token"],
+    );
+    expect(sent).toEqual(["old-token", "new-token"]);
+  });
+
+  it("does not repeat a CSRF refusal when the cookie has not changed", async () => {
+    document.cookie = "csrf_token=same-token";
+    const fetchMock = vi.fn(async () => refused(403, "CSRF_TOKEN_INVALID"));
+    vi.stubGlobal("fetch", fetchMock);
+
     await expect(
       apiFetch("me", { method: "PATCH", body: {} }),
     ).rejects.toMatchObject({ status: 403, code: "CSRF_TOKEN_INVALID" });
-    expect(fetchMock).toHaveBeenCalledTimes(4);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not repeat a request refused for coming from another site", async () => {
+    const fetchMock = vi.fn(async () => refused(403, "CSRF_ORIGIN_REFUSED"));
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(
+      apiFetch("me", { method: "PATCH", body: {} }),
+    ).rejects.toMatchObject({ status: 403, code: "CSRF_ORIGIN_REFUSED" });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not refresh or repeat a 401 that is not an expired session", async () => {
+    const fetchMock = vi.fn(async () => refused(401, "AUTH_STEP_UP_REQUIRED"));
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(
+      apiFetch("payments", { method: "POST", body: {} }),
+    ).rejects.toMatchObject({ status: 401, code: "AUTH_STEP_UP_REQUIRED" });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
   it("waits and repeats once more when the new cookies arrive late", async () => {

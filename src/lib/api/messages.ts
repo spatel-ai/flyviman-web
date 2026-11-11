@@ -17,6 +17,8 @@ const MESSAGES: Record<string, string> = {
     "This link is not valid or has expired. Request a new one.",
   CSRF_TOKEN_INVALID:
     "Your session needs a refresh. Reload the page and try again.",
+  CSRF_ORIGIN_REFUSED:
+    "This request was refused because it did not come from the Flyviman site.",
   UNAUTHENTICATED: "Your session has ended. Sign in again.",
   FORBIDDEN: "You do not have access to this.",
   INTERNAL_ERROR: "Something went wrong on our side. Please try again.",

@@ -81,6 +81,9 @@
   --color-danger: var(--danger);
   --color-danger-foreground: var(--danger-foreground);
   --color-info: var(--info);
+  /* Theme-independent: a dimming layer, and text set on a photograph. */
+  --color-scrim: rgb(0 0 0 / 0.4);
+  --color-on-photo: #ffffff;
 
   /* San Francisco on Apple devices, Inter elsewhere. */
   --font-sans:
@@ -191,24 +194,27 @@ body {
 }
 
 /* Set by <Reveal>. Content is never hidden without JavaScript, under reduced
-   motion, or once it has been shown. */
-[data-reveal] {
-  transition:
-    opacity var(--duration-reveal) var(--ease-emphasis),
-    transform var(--duration-reveal) var(--ease-emphasis);
-  transition-delay: calc(var(--reveal-index, 0) * var(--stagger-reveal));
-}
-
-[data-reveal="waiting"] {
-  opacity: 0;
-  transform: translateY(var(--distance-reveal));
-  transition: none;
-}
-
-@media (prefers-reduced-motion: reduce) {
+   motion, in print, or once it has been shown. In the components layer, so a
+   utility class on the same element still wins. */
+@layer components {
   [data-reveal] {
-    opacity: 1 !important;
-    transform: none !important;
+    transition:
+      opacity var(--duration-reveal) var(--ease-emphasis),
+      transform var(--duration-reveal) var(--ease-emphasis);
+    transition-delay: calc(var(--reveal-index, 0) * var(--stagger-reveal));
+  }
+
+  [data-reveal="waiting"] {
+    opacity: 0;
+    transform: translateY(var(--distance-reveal));
+    transition: none;
+  }
+
+  @media (prefers-reduced-motion: reduce), print {
+    [data-reveal] {
+      opacity: 1 !important;
+      transform: none !important;
+    }
   }
 }
 

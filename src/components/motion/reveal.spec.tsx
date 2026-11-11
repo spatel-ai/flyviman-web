@@ -1,4 +1,5 @@
 import { act, render, screen } from "@testing-library/react";
+import { renderToString } from "react-dom/server";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { Reveal } from "./reveal";
 
@@ -34,6 +35,14 @@ function stubReducedMotion(reduce: boolean) {
   );
 }
 
+/** Where the element's top edge sits, in a 800 px tall window. */
+function placeAt(top: number) {
+  vi.stubGlobal("innerHeight", 800);
+  vi.spyOn(Element.prototype, "getBoundingClientRect").mockReturnValue({
+    top,
+  } as DOMRect);
+}
+
 function section() {
   return screen.getByText("Section").closest("[data-reveal]")!;
 }
@@ -43,27 +52,38 @@ beforeEach(() => {
   disconnects = 0;
   vi.stubGlobal("IntersectionObserver", ObserverStub);
   stubReducedMotion(false);
+  placeAt(1200);
 });
 
 afterEach(() => {
   vi.unstubAllGlobals();
+  vi.restoreAllMocks();
 });
 
 describe("Reveal", () => {
-  it("renders content visible before anything is observed", () => {
-    render(<Reveal>Section</Reveal>);
-    expect(section()).toHaveAttribute("data-reveal", "visible");
+  it("is rendered visible on the server, so it shows without JavaScript", () => {
+    expect(renderToString(<Reveal>Section</Reveal>)).toContain(
+      'data-reveal="visible"',
+    );
   });
 
   it("leaves content alone that is already on screen when the page loads", () => {
+    placeAt(100);
     render(<Reveal>Section</Reveal>);
-    report(true);
     expect(section()).toHaveAttribute("data-reveal", "visible");
-    expect(disconnects).toBeGreaterThan(0);
+    expect(callbacks).toHaveLength(0);
+  });
+
+  it("leaves content alone that only just peeks onto the screen", () => {
+    placeAt(790);
+    render(<Reveal>Section</Reveal>);
+    expect(section()).toHaveAttribute("data-reveal", "visible");
   });
 
   it("hides content below the screen, then reveals it once when scrolled to", () => {
     render(<Reveal>Section</Reveal>);
+    expect(section()).toHaveAttribute("data-reveal", "waiting");
+
     report(false);
     expect(section()).toHaveAttribute("data-reveal", "waiting");
 

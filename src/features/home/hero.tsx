@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { buttonClasses } from "@/components/ui/button";
 import { IMAGES } from "@/content/image-credits";
 
 /** Headline, one sentence, one action, one large photograph. */
@@ -18,7 +19,7 @@ export function Hero() {
         </p>
         <a
           href="#ways-to-fly"
-          className="mt-8 inline-flex h-13 items-center justify-center rounded-pill bg-accent px-7 text-body-lg font-medium text-accent-foreground transition-colors duration-150 ease-standard hover:bg-accent-hover"
+          className={buttonClasses({ size: "lg", className: "mt-8" })}
         >
           Explore ways to fly
         </a>

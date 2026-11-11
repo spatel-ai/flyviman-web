@@ -17,6 +17,8 @@ interface Shot {
   account?: AccountName;
   /** Visible once the page has its data. */
   ready: (page: Page) => ReturnType<Page["getByRole"]>;
+  /** Extra wait for data that loads after the first paint. */
+  loaded?: (page: Page) => Promise<void>;
 }
 
 const SHOTS: Shot[] = [
@@ -40,6 +42,11 @@ const SHOTS: Shot[] = [
     path: "/account",
     account: "customer",
     ready: (page) => page.getByRole("heading", { level: 1 }),
+    // The profile form fills in on the client after the heading appears.
+    loaded: (page) =>
+      expect(page.getByRole("textbox", { name: "First name" })).toHaveValue(
+        "Local",
+      ),
   },
   {
     name: "operator",
@@ -70,7 +77,24 @@ for (const scheme of ["light", "dark"] as const) {
           await page.goto(shot.path);
         }
         await expect(shot.ready(page)).toBeVisible();
+        await shot.loaded?.(page);
         await page.evaluate(() => document.fonts.ready);
+        // Photographs below the fold load lazily: bring each into view and
+        // wait until every one has decoded, so the capture is never half-loaded.
+        // Hidden photographs (such as the sign-in panel on phones) never load.
+        for (const image of await page.locator("img:visible").all()) {
+          await image.scrollIntoViewIfNeeded();
+        }
+        await expect
+          .poll(() =>
+            page.evaluate(() =>
+              Array.from(document.images)
+                .filter((image) => image.getClientRects().length > 0)
+                .every((image) => image.complete && image.naturalWidth > 0),
+            ),
+          )
+          .toBe(true);
+        await page.evaluate(() => window.scrollTo(0, 0));
 
         await expect(page).toHaveScreenshot(`${shot.name}-${scheme}.png`, {
           fullPage: true,

@@ -7,7 +7,10 @@ const entries = Object.values(IMAGES);
 
 describe("image credits", () => {
   it("credits every photograph stored with the site", () => {
-    const files = readdirSync(resolve(__dirname, "images"));
+    // Pictures only: macOS can add a .DS_Store to the folder.
+    const files = readdirSync(resolve(__dirname, "images")).filter((name) =>
+      /\.(jpe?g|png|webp|avif)$/i.test(name),
+    );
     expect(entries).toHaveLength(files.length);
   });
 

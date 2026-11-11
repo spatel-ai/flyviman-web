@@ -45,7 +45,7 @@ export function DialogContent({
   const closeButton = useRef<HTMLButtonElement>(null);
   return (
     <DialogPrimitive.Portal>
-      <DialogPrimitive.Overlay className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/40 p-4 transition-opacity duration-250 ease-standard starting:opacity-0">
+      <DialogPrimitive.Overlay className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-scrim p-4 transition-opacity duration-250 ease-standard starting:opacity-0">
         <DialogPrimitive.Content
           // Radix warns when a dialog has no description; none is intended here.
           {...(description ? {} : { "aria-describedby": undefined })}

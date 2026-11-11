@@ -20,7 +20,7 @@ export function AuthShowcase() {
         sizes="50vw"
         className="object-cover"
       />
-      <div className="absolute inset-x-0 bottom-0 bg-linear-to-t from-black/45 to-transparent p-10 pt-32 text-white">
+      <div className="absolute inset-x-0 bottom-0 bg-linear-to-t from-scrim to-transparent p-10 pt-32 text-on-photo">
         <svg viewBox="0 0 200 60" className="w-40" fill="none">
           <path
             d="M8 52 Q100 -12 192 52"
@@ -33,7 +33,7 @@ export function AuthShowcase() {
           <circle cx="192" cy="52" r="4" fill="currentColor" />
         </svg>
         <p className="mt-6 text-h2">Every way to fly.</p>
-        <p className="mt-2 text-body-lg text-white/85">
+        <p className="mt-2 text-body-lg text-on-photo/85">
           One account for flights, charters, helicopters and more.
         </p>
       </div>
