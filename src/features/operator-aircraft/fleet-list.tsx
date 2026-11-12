@@ -11,7 +11,7 @@ import { apiFetch } from "@/lib/api/client";
 import { messageFor } from "@/lib/api/messages";
 import { queryKeys } from "@/lib/api/query-keys";
 import type { Schemas } from "@/lib/api/types";
-import { useOperatorApproved } from "./use-operator-approved";
+import { useOperatorApproved } from "@/lib/operator";
 
 type Summary = Schemas["AircraftSummaryResponseDto"];
 
@@ -71,9 +71,18 @@ export function FleetList() {
                   <p className="text-body-sm text-muted">
                     {item.manufacturer} {item.model} · {item.passengerCapacity}{" "}
                     passengers
+                    {item.homeBase
+                      ? ` · ${item.homeBase.code ?? item.homeBase.name}`
+                      : ""}
                   </p>
                 </div>
-                <StatusBadge kind="operator" status={item.listingStatus} />
+                <div className="flex flex-wrap gap-2">
+                  <StatusBadge kind="aircraft" status={item.listingStatus} />
+                  <StatusBadge
+                    kind="availability"
+                    status={item.availabilityStatus}
+                  />
+                </div>
               </Card>
             </li>
           ))}

@@ -994,6 +994,26 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/operator/availability": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Every aircraft with its slots and blocks in a range
+     * @description For the fleet timeline. The range covers at most 42 days; at most 2,000 slots and 2,000 blocks are returned, with `truncated` set when cut.
+     */
+    get: operations["AvailabilityController_fleet"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/v1/operator/aircraft/{id}/availability": {
     parameters: {
       query?: never;
@@ -1655,6 +1675,15 @@ export interface components {
       | "AIR_AMBULANCE_ROTARY";
     /** @enum {string} */
     AircraftAvailabilityStatus: "AVAILABLE" | "UNAVAILABLE" | "MAINTENANCE";
+    HomeBaseSummaryDto: {
+      /** Format: uuid */
+      id: string;
+      name: string;
+      /** @description IATA code, else ICAO code */
+      code: string | null;
+      /** @example Asia/Kolkata */
+      timeZone: string;
+    };
     AircraftSummaryResponseDto: {
       /** Format: uuid */
       id: string;
@@ -1667,6 +1696,7 @@ export interface components {
       listingStatus: components["schemas"]["AircraftListingStatus"];
       /** Format: uuid */
       homeBaseId?: string | null;
+      homeBase: components["schemas"]["HomeBaseSummaryDto"] | null;
     };
     /** @enum {string} */
     WingType: "FIXED_WING" | "HELICOPTER";
@@ -1737,6 +1767,7 @@ export interface components {
       cruiseSpeedKmh?: number | null;
       /** Format: uuid */
       homeBaseId?: string | null;
+      homeBase: components["schemas"]["HomeBaseSummaryDto"] | null;
       /** Format: uuid */
       currentLocationId?: string | null;
       operatingRegions: string[];
@@ -1806,6 +1837,7 @@ export interface components {
       listingStatus: components["schemas"]["AircraftListingStatus"];
       /** Format: uuid */
       homeBaseId?: string | null;
+      homeBase: components["schemas"]["HomeBaseSummaryDto"] | null;
       operatorName: string;
       /** Format: uuid */
       operatorId: string;
@@ -1826,6 +1858,7 @@ export interface components {
       cruiseSpeedKmh?: number | null;
       /** Format: uuid */
       homeBaseId?: string | null;
+      homeBase: components["schemas"]["HomeBaseSummaryDto"] | null;
       /** Format: uuid */
       currentLocationId?: string | null;
       operatingRegions: string[];
@@ -1875,6 +1908,14 @@ export interface components {
       hold: components["schemas"]["BlockResponseDto"];
       overlaps: components["schemas"]["BlockResponseDto"];
     };
+    FleetAircraftDto: {
+      /** Format: uuid */
+      id: string;
+      registration: string;
+      listingStatus: components["schemas"]["AircraftListingStatus"];
+      availabilityStatus: components["schemas"]["AircraftAvailabilityStatus"];
+      homeBase: components["schemas"]["HomeBaseSummaryDto"] | null;
+    };
     /** @enum {string} */
     AvailabilitySlotKind: "OPEN" | "DEPARTURE_SLOT";
     SlotResponseDto: {
@@ -1888,6 +1929,13 @@ export interface components {
       /** Format: uuid */
       originId?: string | null;
     };
+    FleetCalendarResponseDto: {
+      aircraft: components["schemas"]["FleetAircraftDto"][];
+      slots: components["schemas"]["SlotResponseDto"][];
+      blocks: components["schemas"]["BlockResponseDto"][];
+      /** @description True when the range held more than 2000 slots or blocks and the list was cut short */
+      truncated: boolean;
+    };
     CalendarResponseDto: {
       slots: components["schemas"]["SlotResponseDto"][];
       blocks: components["schemas"]["BlockResponseDto"][];
@@ -1897,14 +1945,14 @@ export interface components {
       endsAt: string;
       kind: components["schemas"]["AvailabilitySlotKind"];
       /** Format: uuid */
-      originId?: Record<string, never> | null;
+      originId?: string | null;
     };
     UpdateSlotDto: {
       startsAt?: string;
       endsAt?: string;
       kind?: components["schemas"]["AvailabilitySlotKind"];
       /** Format: uuid */
-      originId?: Record<string, never> | null;
+      originId?: string | null;
     };
     CreateBlockDto: {
       startsAt: string;
@@ -3385,6 +3433,28 @@ export interface operations {
         };
         content: {
           "application/json": components["schemas"]["SoftHoldConflictDto"][];
+        };
+      };
+    };
+  };
+  AvailabilityController_fleet: {
+    parameters: {
+      query: {
+        from: string;
+        to: string;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["FleetCalendarResponseDto"];
         };
       };
     };

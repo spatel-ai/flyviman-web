@@ -90,7 +90,7 @@ export function AircraftReview({ id }: { id: string }) {
         </Link>
         <div className="mt-2 flex flex-wrap items-center gap-3">
           <h1 className="text-h2">{item.registration}</h1>
-          <StatusBadge kind="operator" status={item.listingStatus} />
+          <StatusBadge kind="aircraft" status={item.listingStatus} />
         </div>
         <p className="mt-2 text-muted">
           {item.operatorName} · {item.manufacturer} {item.model} ·{" "}

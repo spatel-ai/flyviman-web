@@ -29,11 +29,15 @@ async function OperatorShell({ children }: { children: React.ReactNode }) {
   // A suspended operator keeps the fleet so it can still ground an aircraft
   // (D-058); the API refuses anything that would add to the fleet.
   const fleet: NavItem = { href: "/operator/aircraft", label: "Fleet" };
+  const availability: NavItem = {
+    href: "/operator/availability",
+    label: "Availability",
+  };
   const nav =
     operator.status === "APPROVED"
-      ? [DASHBOARD, fleet, APPLICATION]
+      ? [DASHBOARD, fleet, availability, APPLICATION]
       : operator.status === "SUSPENDED"
-        ? [fleet, APPLICATION]
+        ? [fleet, availability, APPLICATION]
         : [APPLICATION];
   return (
     <AppShell

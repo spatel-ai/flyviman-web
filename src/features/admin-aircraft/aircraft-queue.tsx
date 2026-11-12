@@ -97,7 +97,7 @@ export function AircraftQueue() {
                     {item.manufacturer} {item.model}
                   </TableCell>
                   <TableCell className="whitespace-nowrap">
-                    <StatusBadge kind="operator" status={item.listingStatus} />
+                    <StatusBadge kind="aircraft" status={item.listingStatus} />
                   </TableCell>
                 </TableRow>
               ))}

@@ -15,4 +15,11 @@ export const queryKeys = {
   adminAircraft: (status: string) => ["admin", "aircraft", status] as const,
   adminAircraftDetail: (id: string) => ["admin", "aircraft", id] as const,
   locationSearch: (q: string) => ["locations", "search", q] as const,
+  /** Every availability key starts with this, so one invalidation covers all. */
+  availability: ["operator", "availability"] as const,
+  fleetAvailability: (from: string, to: string) =>
+    ["operator", "availability", "fleet", from, to] as const,
+  aircraftAvailability: (id: string, from: string, to: string) =>
+    ["operator", "availability", "aircraft", id, from, to] as const,
+  availabilityConflicts: ["operator", "availability", "conflicts"] as const,
 };

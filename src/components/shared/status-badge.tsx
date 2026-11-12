@@ -1,7 +1,13 @@
 import { Badge, type Tone } from "@/components/ui/badge";
 
 export type StatusKind =
-  "booking" | "payment" | "operator" | "document" | "user";
+  | "booking"
+  | "payment"
+  | "operator"
+  | "document"
+  | "user"
+  | "aircraft"
+  | "availability";
 
 export type BookingStatus =
   | "REQUESTED"
@@ -37,6 +43,13 @@ export type OperatorStatus =
   "DRAFT" | "PENDING_REVIEW" | "APPROVED" | "REJECTED" | "SUSPENDED";
 
 export type DocumentStatus = "PENDING" | "VERIFIED" | "REJECTED";
+
+/** An aircraft listing: same lifecycle and words as an operator's. */
+export type AircraftListingStatus = OperatorStatus;
+
+/** Whether the operator offers the aircraft at all, set by the operator. */
+export type AircraftAvailabilityStatus =
+  "AVAILABLE" | "UNAVAILABLE" | "MAINTENANCE";
 
 export type UserStatus = "PENDING_VERIFICATION" | "ACTIVE" | "SUSPENDED";
 
@@ -82,6 +95,14 @@ const OPERATOR: Record<OperatorStatus, Presentation> = {
   SUSPENDED: { label: "Suspended", tone: "danger" },
 };
 
+const AIRCRAFT: Record<AircraftListingStatus, Presentation> = OPERATOR;
+
+const AVAILABILITY: Record<AircraftAvailabilityStatus, Presentation> = {
+  AVAILABLE: { label: "Available", tone: "success" },
+  UNAVAILABLE: { label: "Unavailable", tone: "neutral" },
+  MAINTENANCE: { label: "Maintenance", tone: "warning" },
+};
+
 const DOCUMENT: Record<DocumentStatus, Presentation> = {
   PENDING: { label: "Under review", tone: "warning" },
   VERIFIED: { label: "Verified", tone: "success" },
@@ -100,6 +121,8 @@ const PRESENTATION: Record<StatusKind, Record<string, Presentation>> = {
   operator: OPERATOR,
   document: DOCUMENT,
   user: USER,
+  aircraft: AIRCRAFT,
+  availability: AVAILABILITY,
 };
 
 export interface StatusBadgeProps {

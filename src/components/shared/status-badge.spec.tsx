@@ -73,4 +73,21 @@ describe("StatusBadge", () => {
       "whitespace-nowrap",
     );
   });
+
+  it("names an aircraft's listing and availability", () => {
+    render(
+      <>
+        <StatusBadge kind="aircraft" status="PENDING_REVIEW" />
+        <StatusBadge kind="availability" status="MAINTENANCE" />
+      </>,
+    );
+    expect(screen.getByText("Under review")).toHaveAttribute(
+      "data-status",
+      "PENDING_REVIEW",
+    );
+    expect(screen.getByText("Maintenance")).toHaveAttribute(
+      "data-status",
+      "MAINTENANCE",
+    );
+  });
 });
