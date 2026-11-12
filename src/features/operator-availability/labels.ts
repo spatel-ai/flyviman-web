@@ -28,7 +28,7 @@ export const ENTRY_TONES: Record<EntryType, Tone> = {
   OPEN: "success",
   DEPARTURE_SLOT: "success",
   SOFT_HOLD: "warning",
-  MAINTENANCE: "danger",
+  MAINTENANCE: "warning",
   BLACKOUT: "danger",
   OTHER: "neutral",
   BOOKING: "info",

@@ -28,7 +28,8 @@ export interface LocationFieldProps {
 
 /**
  * Finds an active airport or heliport by name, city or code and reports the
- * chosen location's id. Searches the public location directory.
+ * chosen location's id. The current choice is named and kept until another
+ * is picked, so typing a search never clears it.
  */
 export function LocationField({
   label,
@@ -45,6 +46,11 @@ export function LocationField({
       apiFetch<Location[]>("locations", { query: { q: query, pageSize: 8 } }),
     enabled: query.length >= 2,
   });
+  const current = useQuery({
+    queryKey: queryKeys.location(value),
+    queryFn: () => apiFetch<Location>(`locations/${encodeURIComponent(value)}`),
+    enabled: Boolean(value),
+  });
   const options = (results.data?.data ?? []).map((location) => ({
     value: location.id,
     label: describe(location),
@@ -52,14 +58,19 @@ export function LocationField({
 
   return (
     <div className="flex flex-col gap-3">
+      <p className="text-body-sm" aria-live="polite">
+        <span className="text-muted">{label}: </span>
+        {value
+          ? current.data
+            ? describe(current.data.data)
+            : "…"
+          : "none chosen"}
+      </p>
       <Input
         label={searchLabel}
         hint="Type an airport or heliport name, city or code, for example BOM."
         value={term}
-        onChange={(event) => {
-          setTerm(event.target.value);
-          onChange("");
-        }}
+        onChange={(event) => setTerm(event.target.value)}
         autoComplete="off"
         error={query.length < 2 ? error : undefined}
       />
@@ -69,7 +80,9 @@ export function LocationField({
             label={label}
             placeholder="Choose a location"
             options={options}
-            value={value}
+            value={
+              options.some((option) => option.value === value) ? value : ""
+            }
             onValueChange={onChange}
             error={error}
           />

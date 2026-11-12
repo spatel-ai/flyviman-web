@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { expect, type Browser, type Page } from "@playwright/test";
 import {
   API_URL,
@@ -179,7 +180,7 @@ export async function approvedAircraft(page: Page, browser: Browser) {
     params: { q: "BOM", pageSize: 1 },
   });
   const homeBaseId = (await locations.json()).data[0].id as string;
-  const registration = `VT-${Date.now().toString(36).slice(-5).toUpperCase()}`;
+  const registration = `VT-${randomUUID().slice(0, 5).toUpperCase()}`;
   const created = await page.request.post(`${API_URL}operator/aircraft`, {
     headers,
     data: {

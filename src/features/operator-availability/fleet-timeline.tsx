@@ -37,7 +37,9 @@ type FleetAircraft = Fleet["aircraft"][number];
  */
 export function FleetTimeline() {
   const range = useCalendarRange(FLEET_ZONE, { grid: false });
-  const approved = useOperatorApproved() === true;
+  // Until the operator's status is known, nothing is offered for adding.
+  const approvedState = useOperatorApproved();
+  const approved = approvedState === true;
   const fleet = useQuery({
     queryKey: queryKeys.fleetAvailability(range.from, range.to),
     queryFn: () =>
@@ -79,7 +81,7 @@ export function FleetTimeline() {
         time only on an approved aircraft of an approved operator.
       </p>
       <ConflictsPanel registrations={registrations} zones={zones} />
-      {fleet.isPending ? (
+      {fleet.isPending || approvedState === undefined ? (
         <Skeleton className="h-64" />
       ) : fleet.isError ? (
         <LoadError
@@ -111,14 +113,11 @@ export function FleetTimeline() {
                 "flex flex-col",
                 range.view === "week" ? "min-w-3xl" : "min-w-7xl",
               )}
-              role="table"
               aria-label={`Fleet availability, ${range.label}`}
+              role="group"
             >
-              <div role="row" className="flex border-b border-border">
-                <div
-                  role="columnheader"
-                  className="sticky left-0 z-10 w-36 shrink-0 bg-surface-raised px-3 py-2 text-body-sm font-medium"
-                >
+              <div aria-hidden="true" className="flex border-b border-border">
+                <div className="sticky left-0 z-10 w-36 shrink-0 bg-surface-raised px-3 py-2 text-body-sm font-medium">
                   Aircraft
                 </div>
                 <div
@@ -130,7 +129,6 @@ export function FleetTimeline() {
                   {range.days.map((day) => (
                     <div
                       key={day}
-                      role="columnheader"
                       className={cn(
                         "truncate border-l border-border px-1 py-2 text-center text-caption",
                         day === today
@@ -172,6 +170,7 @@ export function FleetTimeline() {
           aircraftId={adding.aircraft.id}
           registration={adding.aircraft.registration}
           zone={FLEET_ZONE}
+          zoneNote="the fleet timeline's time"
           approved={approved}
           day={adding.day}
         />
@@ -183,6 +182,7 @@ export function FleetTimeline() {
           aircraftId={editing.aircraft.id}
           registration={editing.aircraft.registration}
           zone={FLEET_ZONE}
+          zoneNote="the fleet timeline's time"
           approved={approved}
           slot={editing.slot}
         />
@@ -228,13 +228,14 @@ function FleetRow({
     FLEET_ZONE,
   );
   return (
-    <div role="row" className="flex border-b border-border last:border-b-0">
-      <div
-        role="rowheader"
-        className="sticky left-0 z-10 flex w-36 shrink-0 flex-col gap-1 bg-surface-raised px-3 py-2"
-      >
+    <div
+      role="group"
+      aria-label={aircraft.registration}
+      className="flex border-b border-border last:border-b-0"
+    >
+      <div className="sticky left-0 z-10 flex w-36 shrink-0 flex-col gap-1 bg-surface-raised px-3 py-2">
         <Link
-          href={`/operator/availability/${aircraft.id}?view=${view}&date=${date}`}
+          href={`/operator/availability/${encodeURIComponent(aircraft.id)}?view=${view}&date=${date}`}
           className="font-medium text-accent hover:underline"
         >
           {aircraft.registration}
@@ -253,7 +254,6 @@ function FleetRow({
         )}
       </div>
       <div
-        role="cell"
         className="relative grid flex-1 gap-y-1 py-1"
         style={{
           gridTemplateColumns: `repeat(${days.length}, minmax(0, 1fr))`,

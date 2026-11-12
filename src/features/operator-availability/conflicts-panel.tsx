@@ -2,6 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
+import { LoadError } from "@/components/shared/load-error";
 import { Card } from "@/components/ui/card";
 import { apiFetch } from "@/lib/api/client";
 import { queryKeys } from "@/lib/api/query-keys";
@@ -26,6 +27,15 @@ export function ConflictsPanel({
     queryKey: queryKeys.availabilityConflicts,
     queryFn: () => apiFetch<Conflict[]>("operator/availability/conflicts"),
   });
+  if (conflicts.isError) {
+    return (
+      <LoadError
+        what="overlapping soft holds"
+        error={conflicts.error}
+        onRetry={() => void conflicts.refetch()}
+      />
+    );
+  }
   const pairs = conflicts.data?.data ?? [];
   if (pairs.length === 0) return null;
 
@@ -61,7 +71,7 @@ export function ConflictsPanel({
                   )}
                 </span>
                 <Link
-                  href={`/operator/availability/${pair.aircraftId}?view=week&date=${day}`}
+                  href={`/operator/availability/${encodeURIComponent(pair.aircraftId)}?view=week&date=${day}`}
                   className="text-accent hover:underline"
                 >
                   Open calendar

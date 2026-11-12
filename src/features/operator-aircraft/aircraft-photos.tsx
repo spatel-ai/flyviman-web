@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { apiFetch } from "@/lib/api/client";
 import { messageFor } from "@/lib/api/messages";
+import { queryKeys } from "@/lib/api/query-keys";
 import type { Schemas } from "@/lib/api/types";
 import { upload } from "./upload";
 
@@ -19,31 +20,45 @@ const KINDS = [
   { value: "FLOOR_PLAN", label: "Floor plan" },
 ];
 
-/** A short-lived link to one stored image; refetched when it lapses. */
+/** A short-lived link to one stored image; refetched before it lapses. */
 function Thumbnail({ media }: { media: Media }) {
+  const [failed, setFailed] = useState(0);
   const link = useQuery({
-    queryKey: ["files", media.fileId, "download"],
+    queryKey: queryKeys.fileDownload(media.fileId),
     queryFn: () =>
       apiFetch<Schemas["DownloadLinkResponseDto"]>(
         `documents/${encodeURIComponent(media.fileId)}/download`,
       ),
-    staleTime: 4 * 60_000,
+    // Refetch a little before the signed link lapses, whatever its lifetime.
+    staleTime: (query) => {
+      const expiresAt = query.state.data?.data.expiresAt;
+      return expiresAt
+        ? Math.max(0, Date.parse(expiresAt) - Date.now() - 30_000)
+        : 0;
+    },
   });
   const alt = `${media.kind === "FLOOR_PLAN" ? "Floor plan" : "Photo"}: ${media.fileName}`;
-  return link.data ? (
+  const frame =
+    "flex aspect-3/2 w-full items-center justify-center rounded-md bg-surface text-caption text-muted";
+  // A link that lapsed while the page was open is fetched once more; a
+  // second failure is shown rather than retried for ever.
+  if (link.isError || failed > 1) {
+    return <div className={frame}>Image could not be shown</div>;
+  }
+  if (!link.data) return <div className={frame}>Loading image</div>;
+  return (
     <Image
       src={link.data.data.url}
       alt={alt}
       width={240}
       height={160}
       unoptimized
+      loading="eager"
+      onError={() => {
+        setFailed((count) => count + 1);
+        if (failed === 0) void link.refetch();
+      }}
       className="aspect-3/2 w-full rounded-md bg-surface object-cover"
-    />
-  ) : (
-    <div
-      role="img"
-      aria-label={alt}
-      className="aspect-3/2 w-full rounded-md bg-surface"
     />
   );
 }

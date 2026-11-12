@@ -65,7 +65,9 @@ test("an operator offers time, holds it twice, resolves the overlap and opens th
   ).toBeVisible();
   await expect(page.getByText("Times in IST (Asia/Kolkata)")).toBeVisible();
   await expect(
-    page.getByRole("rowheader").getByRole("link", { name: registration }),
+    page
+      .getByRole("group", { name: registration })
+      .getByRole("link", { name: registration }),
   ).toBeVisible();
 
   // An open slot from a day cell.
@@ -116,7 +118,7 @@ test("an operator offers time, holds it twice, resolves the overlap and opens th
 
   // The aircraft's own calendar, in its home base's time.
   await page
-    .getByRole("rowheader")
+    .getByRole("group", { name: registration })
     .getByRole("link", { name: registration })
     .click();
   await expect(
@@ -144,8 +146,11 @@ test("the calendar does not let an operator create a booking", async ({
   await expect(page.getByRole("option", { name: "Booking" })).toHaveCount(0);
 });
 
-/** Minimal JPEG bytes: the storage mock checks the signature only. */
-const JPEG = Buffer.from([0xff, 0xd8, 0xff, 0xd9]);
+/** A real 1×1 PNG, so the thumbnail must actually load and decode. */
+const PNG = Buffer.from(
+  "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=",
+  "base64",
+);
 
 test("an operator adds and removes a photo and grounds an aircraft", async ({
   page,
@@ -160,22 +165,24 @@ test("an operator adds and removes a photo and grounds an aircraft", async ({
 
   // A photo is shown, then removed; the aircraft stays approved.
   await page.getByLabel("Image").setInputFiles({
-    name: "cabin.jpg",
-    mimeType: "image/jpeg",
-    buffer: JPEG,
+    name: "cabin.png",
+    mimeType: "image/png",
+    buffer: PNG,
   });
   await page.getByRole("button", { name: "Add image" }).click();
-  await expect(
-    page.getByRole("img", { name: "Photo: cabin.jpg" }),
-  ).toBeVisible();
-  await page.getByRole("button", { name: "Remove cabin.jpg" }).click();
+  const thumbnail = page.getByRole("img", { name: "Photo: cabin.png" });
+  await expect(thumbnail).toBeVisible();
+  await expect
+    .poll(() =>
+      thumbnail.evaluate((img) => (img as HTMLImageElement).naturalWidth),
+    )
+    .toBeGreaterThan(0);
+  await page.getByRole("button", { name: "Remove cabin.png" }).click();
   await page
     .getByRole("dialog", { name: "Remove this image?" })
     .getByRole("button", { name: "Remove" })
     .click();
-  await expect(page.getByRole("img", { name: "Photo: cabin.jpg" })).toHaveCount(
-    0,
-  );
+  await expect(thumbnail).toHaveCount(0);
   await expect(page.locator("h1 + [data-status]")).toHaveAttribute(
     "data-status",
     "APPROVED",

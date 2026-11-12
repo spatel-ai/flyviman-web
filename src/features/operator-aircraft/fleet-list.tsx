@@ -63,7 +63,7 @@ export function FleetList() {
               >
                 <div>
                   <Link
-                    href={`/operator/aircraft/${item.id}`}
+                    href={`/operator/aircraft/${encodeURIComponent(item.id)}`}
                     className="text-title text-accent hover:underline"
                   >
                     {item.registration}

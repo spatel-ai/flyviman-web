@@ -52,7 +52,11 @@ export function zoneOffsetMinutes(instant: Date, zone: string): number {
   return Math.round((asUtc - whole) / 60_000);
 }
 
-/** A wall-clock date and time in the zone, as a UTC ISO string. */
+/**
+ * A wall-clock date and time in the zone, as a UTC ISO string. A time that
+ * does not exist (skipped by a daylight-saving change) resolves to the hour
+ * before the change; India has no daylight saving, so this is accepted.
+ */
 export function localToUtc(date: string, time: string, zone: string): string {
   const [year, month, day] = date.split("-").map(Number);
   const [hour, minute] = time.split(":").map(Number);

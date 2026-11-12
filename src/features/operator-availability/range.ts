@@ -20,6 +20,13 @@ export type View = "week" | "month";
 /** The zone the fleet timeline is drawn in: India only at launch (D-061). */
 export const FLEET_ZONE = "Asia/Kolkata";
 
+/** A real calendar day: "2026-13-01" and "2026-02-30" are refused. */
+export function isCalendarDay(value: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const date = new Date(`${value}T00:00:00Z`);
+  return !Number.isNaN(date.getTime()) && date.toISOString().startsWith(value);
+}
+
 export interface CalendarRange {
   view: View;
   /** The day the range is anchored on (from the address, else today). */
@@ -51,9 +58,7 @@ export function useCalendarRange(
   const params = useSearchParams();
   const view: View = params.get("view") === "month" ? "month" : "week";
   const requested = params.get("date") ?? "";
-  const anchor = /^\d{4}-\d{2}-\d{2}$/.test(requested)
-    ? requested
-    : todayIn(zone);
+  const anchor = isCalendarDay(requested) ? requested : todayIn(zone);
 
   let days: string[];
   let label: string;

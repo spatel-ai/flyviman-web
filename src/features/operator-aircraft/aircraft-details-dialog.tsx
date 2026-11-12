@@ -40,7 +40,11 @@ const detailsSchema = z.object({
     z.literal(""),
     z.coerce.number().int().min(0).max(50_000),
   ]),
-  rangeKm: optionalWhole(20_000),
+  rangeKm: z.coerce
+    .number({ error: "Enter the range" })
+    .int()
+    .min(1, "Enter the range")
+    .max(20_000),
   cruiseSpeedKmh: optionalWhole(2000),
   homeBaseId: z.string(),
 });
@@ -85,9 +89,9 @@ function changes(values: DetailsValues, aircraft: Aircraft) {
     passengerCapacity: values.passengerCapacity,
     baggageCapacityKg:
       values.baggageCapacityKg === "" ? null : values.baggageCapacityKg,
-    rangeKm: values.rangeKm === "" ? null : values.rangeKm,
+    rangeKm: values.rangeKm,
     cruiseSpeedKmh: values.cruiseSpeedKmh === "" ? null : values.cruiseSpeedKmh,
-    homeBaseId: values.homeBaseId || aircraft.homeBaseId,
+    homeBaseId: values.homeBaseId || null,
   };
   const current = aircraft as unknown as Record<string, unknown>;
   return Object.fromEntries(
@@ -257,19 +261,15 @@ function DetailsForm({
             {...register("cruiseSpeedKmh")}
           />
         </div>
-        <p className="text-body-sm text-muted">
-          Home base: {aircraft.homeBase ? aircraft.homeBase.name : "not set"}.
-          Search below only to change it.
-        </p>
         <Controller
           control={control}
           name="homeBaseId"
           render={({ field }) => (
             <LocationField
-              label="New home base"
-              searchLabel="Find a new home base"
-              value={field.value === aircraft.homeBaseId ? "" : field.value}
-              onChange={(id) => field.onChange(id || aircraft.homeBaseId || "")}
+              label="Home base"
+              searchLabel="Find a different home base"
+              value={field.value}
+              onChange={field.onChange}
               error={errors.homeBaseId?.message}
             />
           )}

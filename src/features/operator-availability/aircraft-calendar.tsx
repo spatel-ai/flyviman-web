@@ -58,7 +58,11 @@ export function AircraftCalendar({ id }: { id: string }) {
 function CalendarFor({ aircraft }: { aircraft: Aircraft }) {
   const zone = aircraft.homeBase?.timeZone ?? FLEET_ZONE;
   const range = useCalendarRange(zone, { grid: true });
-  const approved = useOperatorApproved() === true;
+  const approvedState = useOperatorApproved();
+  const approved = approvedState === true;
+  const zoneNote = aircraft.homeBase
+    ? "the aircraft's home base time"
+    : "because no home base is set";
   const router = useRouter();
   const pathname = usePathname();
   const calendar = useQuery({
@@ -119,9 +123,14 @@ function CalendarFor({ aircraft }: { aircraft: Aircraft }) {
       </div>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <RangeControls range={range} />
-        <Button onClick={() => setAddingOn(range.anchor)}>Add entry</Button>
+        <Button
+          onClick={() => setAddingOn(range.anchor)}
+          disabled={approvedState === undefined}
+        >
+          Add entry
+        </Button>
       </div>
-      {calendar.isPending ? (
+      {calendar.isPending || approvedState === undefined ? (
         <Skeleton className="h-96" />
       ) : calendar.isError ? (
         <LoadError
@@ -160,6 +169,7 @@ function CalendarFor({ aircraft }: { aircraft: Aircraft }) {
           aircraftId={aircraft.id}
           registration={aircraft.registration}
           zone={zone}
+          zoneNote={zoneNote}
           approved={approved}
           day={addingOn}
         />
@@ -171,6 +181,7 @@ function CalendarFor({ aircraft }: { aircraft: Aircraft }) {
           aircraftId={aircraft.id}
           registration={aircraft.registration}
           zone={zone}
+          zoneNote={zoneNote}
           approved={approved}
           slot={editing}
         />
@@ -239,7 +250,7 @@ function MonthGrid({
 }) {
   return (
     <div className="overflow-x-auto rounded-lg border border-border bg-surface-raised">
-      <div role="grid" aria-label="Month" className="min-w-2xl">
+      <div role="table" aria-label="Month" className="min-w-2xl">
         <div role="row" className="grid grid-cols-7 border-b border-border">
           {WEEKDAYS.map((weekday) => (
             <div
@@ -263,7 +274,7 @@ function MonthGrid({
               return (
                 <div
                   key={day}
-                  role="gridcell"
+                  role="cell"
                   className={cn(
                     "flex min-h-28 flex-col gap-1 border-l border-border p-1.5 first:border-l-0",
                     outside ? "bg-surface" : undefined,

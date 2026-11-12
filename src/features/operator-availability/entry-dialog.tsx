@@ -20,10 +20,11 @@ import { apiFetch } from "@/lib/api/client";
 import { ApiError } from "@/lib/api/errors";
 import { messageFor } from "@/lib/api/messages";
 import { queryKeys } from "@/lib/api/query-keys";
-import { addDays, utcToLocal, zoneName } from "@/lib/format/zoned";
+import { utcToLocal, zoneName } from "@/lib/format/zoned";
 import type { Entry } from "./entries";
 import { addableTypes, ENTRY_LABELS } from "./labels";
 import {
+  defaultExpiry,
   entrySchema,
   MAX_SOFT_HOLD_DAYS,
   toRequest,
@@ -45,6 +46,8 @@ export interface EntryDialogProps {
   aircraftId: string;
   registration: string;
   zone: string;
+  /** Whose time the fields are in, for example "the aircraft's home base time". */
+  zoneNote: string;
   /** Approved operators may offer time; others may only ground (D-058). */
   approved: boolean;
   /** The day to start on when adding. */
@@ -57,6 +60,7 @@ function defaults(
   day: string | undefined,
   slot: Entry | undefined,
   zone: string,
+  firstType: EntryValues["type"],
 ) {
   if (slot) {
     const start = utcToLocal(slot.startsAt, zone);
@@ -74,15 +78,19 @@ function defaults(
     };
   }
   const date = day ?? "";
-  return {
-    type: "OPEN" as const,
+  const times = {
     startDate: date,
     startTime: "09:00",
     endDate: date,
     endTime: "17:00",
+  };
+  const expiry = defaultExpiry(times, zone);
+  return {
+    type: firstType,
+    ...times,
     originId: "",
-    expiresDate: date ? addDays(date, -1) : "",
-    expiresTime: "18:00",
+    expiresDate: expiry.date,
+    expiresTime: expiry.time,
     note: "",
   };
 }
@@ -101,6 +109,7 @@ function EntryForm({
   aircraftId,
   registration,
   zone,
+  zoneNote,
   approved,
   day,
   slot,
@@ -108,20 +117,22 @@ function EntryForm({
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const [formError, setFormError] = useState<string | null>(null);
+  const types = (
+    slot ? ["OPEN", "DEPARTURE_SLOT"] : addableTypes(approved)
+  ) as EntryValues["type"][];
   const {
     control,
     register,
     handleSubmit,
     setError,
-    formState: { errors, isSubmitting },
+    getValues,
+    setValue,
+    formState: { errors, isSubmitting, dirtyFields },
   } = useForm<EntryValues>({
     resolver: zodResolver(entrySchema(zone)),
-    defaultValues: defaults(day, slot, zone),
+    defaultValues: defaults(day, slot, zone, types[0]),
   });
   const type = useWatch({ control, name: "type" });
-  const types = slot
-    ? (["OPEN", "DEPARTURE_SLOT"] as const)
-    : addableTypes(approved);
   const zoneLabel = zoneName(zone);
 
   async function onSubmit(values: EntryValues) {
@@ -167,7 +178,7 @@ function EntryForm({
   return (
     <DialogContent
       title={slot ? `Change slot · ${registration}` : `Add to ${registration}`}
-      description={`Times are in ${zoneLabel}, the aircraft's home base time.`}
+      description={`Times are in ${zoneLabel}, ${zoneNote}.`}
     >
       <form
         noValidate
@@ -187,7 +198,19 @@ function EntryForm({
               }))}
               name={field.name}
               value={field.value}
-              onValueChange={field.onChange}
+              onValueChange={(value) => {
+                field.onChange(value);
+                // A new soft hold lapses before it starts, unless already set.
+                if (
+                  value === "SOFT_HOLD" &&
+                  !dirtyFields.expiresDate &&
+                  !dirtyFields.expiresTime
+                ) {
+                  const expiry = defaultExpiry(getValues(), zone);
+                  setValue("expiresDate", expiry.date);
+                  setValue("expiresTime", expiry.time);
+                }
+              }}
               hint={
                 approved
                   ? undefined
