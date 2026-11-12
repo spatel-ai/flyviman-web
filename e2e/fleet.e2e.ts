@@ -77,6 +77,20 @@ test("an operator lists an aircraft and operations reject, then approve it", asy
   );
   await addAircraftDocument(page, "Insurance", "insurance.pdf");
   await expect(page.getByText("Still needed before submit")).toHaveCount(0);
+
+  // A draft's document can be removed, and is needed again.
+  await page
+    .getByRole("button", { name: "Remove Insurance (insurance.pdf)" })
+    .click();
+  await page
+    .getByRole("dialog", { name: "Remove this document?" })
+    .getByRole("button", { name: "Remove" })
+    .click();
+  await expect(
+    page.getByText("Insurance (current, not expired)", { exact: true }),
+  ).toBeVisible();
+  await addAircraftDocument(page, "Insurance", "insurance.pdf");
+  await expect(page.getByText("Still needed before submit")).toHaveCount(0);
   await expectNoSidewaysScroll(page);
   await page.getByRole("button", { name: "Submit for review" }).click();
   await expect(listingStatus(page)).toHaveAttribute(

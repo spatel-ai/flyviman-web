@@ -143,3 +143,107 @@ test("the calendar does not let an operator create a booking", async ({
   await expect(page.getByRole("option", { name: "Open" })).toBeVisible();
   await expect(page.getByRole("option", { name: "Booking" })).toHaveCount(0);
 });
+
+/** Minimal JPEG bytes: the storage mock checks the signature only. */
+const JPEG = Buffer.from([0xff, 0xd8, 0xff, 0xd9]);
+
+test("an operator adds and removes a photo and grounds an aircraft", async ({
+  page,
+  browser,
+}) => {
+  test.slow();
+  const { id, registration } = await approvedAircraft(page, browser);
+  await page.goto(`/operator/aircraft/${id}`);
+  await expect(
+    page.getByRole("heading", { level: 1, name: registration }),
+  ).toBeVisible();
+
+  // A photo is shown, then removed; the aircraft stays approved.
+  await page.getByLabel("Image").setInputFiles({
+    name: "cabin.jpg",
+    mimeType: "image/jpeg",
+    buffer: JPEG,
+  });
+  await page.getByRole("button", { name: "Add image" }).click();
+  await expect(
+    page.getByRole("img", { name: "Photo: cabin.jpg" }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Remove cabin.jpg" }).click();
+  await page
+    .getByRole("dialog", { name: "Remove this image?" })
+    .getByRole("button", { name: "Remove" })
+    .click();
+  await expect(page.getByRole("img", { name: "Photo: cabin.jpg" })).toHaveCount(
+    0,
+  );
+  await expect(page.locator("h1 + [data-status]")).toHaveAttribute(
+    "data-status",
+    "APPROVED",
+  );
+
+  // Grounded for maintenance, and the fleet shows it.
+  await page.getByRole("combobox", { name: "Availability" }).click();
+  await page.getByRole("option", { name: "Maintenance", exact: true }).click();
+  await page
+    .getByRole("dialog", { name: "Mark as maintenance?" })
+    .getByRole("button", { name: "Change" })
+    .click();
+  await expect(
+    page.locator('[data-status="MAINTENANCE"]').first(),
+  ).toBeVisible();
+  await page.goto("/operator/aircraft");
+  await expect(
+    page
+      .getByRole("listitem")
+      .filter({ hasText: registration })
+      .locator('[data-status="MAINTENANCE"]'),
+  ).toBeVisible();
+
+  // A verified document on a live listing is replaced, not removed.
+  await page.goto(`/operator/aircraft/${id}`);
+  await expect(
+    page.getByRole("heading", { level: 1, name: registration }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: /^Remove Insurance/ }),
+  ).toHaveCount(0);
+  await expectNoSidewaysScroll(page);
+});
+
+test("editing an approved aircraft's details warns, then sends it back to review", async ({
+  page,
+  browser,
+}) => {
+  test.slow();
+  const { id, registration } = await approvedAircraft(page, browser);
+  await page.goto(`/operator/aircraft/${id}`);
+  await page.getByRole("button", { name: "Edit details" }).click();
+  const dialog = page.getByRole("dialog", { name: `Edit ${registration}` });
+  await expect(
+    dialog.getByText(/sends the aircraft back to review/),
+  ).toBeVisible();
+
+  // An unchanged save just closes.
+  await dialog.getByRole("button", { name: "Save changes" }).click();
+  await expect(dialog).toHaveCount(0);
+  await expect(page.locator("h1 + [data-status]")).toHaveAttribute(
+    "data-status",
+    "APPROVED",
+  );
+
+  await page.getByRole("button", { name: "Edit details" }).click();
+  await dialog.getByLabel("Passenger capacity").fill("6");
+  await dialog.getByRole("button", { name: "Save changes" }).click();
+  await page
+    .getByRole("dialog", { name: "Send the aircraft back to review?" })
+    .getByRole("button", { name: "Save and send for review" })
+    .click();
+  await expect(page.locator("h1 + [data-status]")).toHaveAttribute(
+    "data-status",
+    "PENDING_REVIEW",
+  );
+  await expect(page.getByText(/6 passengers/)).toBeVisible();
+  await expect(page.getByRole("button", { name: "Edit details" })).toHaveCount(
+    0,
+  );
+});

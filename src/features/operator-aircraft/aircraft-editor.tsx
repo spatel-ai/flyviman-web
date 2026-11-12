@@ -4,13 +4,13 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { useState, type FormEvent } from "react";
 import { StatusBadge } from "@/components/shared/status-badge";
-import { Button } from "@/components/ui/button";
+import { Button, buttonClasses } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { ConfirmDialog } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { apiFetch } from "@/lib/api/client";
-import { ApiError } from "@/lib/api/errors";
 import { messageFor } from "@/lib/api/messages";
 import { queryKeys } from "@/lib/api/query-keys";
 import type { Schemas } from "@/lib/api/types";
@@ -21,40 +21,16 @@ import {
   missingLabel,
 } from "@/lib/format/aircraft";
 import { useOperatorApproved } from "@/lib/operator";
+import { AircraftDetailsDialog } from "./aircraft-details-dialog";
+import { AircraftPhotos } from "./aircraft-photos";
+import { AvailabilityStatusControl } from "./availability-status-control";
+import { upload } from "./upload";
 
 type Aircraft = Schemas["AircraftResponseDto"];
 
 const DOCUMENT_TYPES = Object.entries(AIRCRAFT_DOCUMENT_LABELS).map(
   ([value, label]) => ({ value, label }),
 );
-
-async function upload(
-  file: File,
-  purpose: "AIRCRAFT_DOCUMENT" | "AIRCRAFT_PHOTO",
-) {
-  const { data } = await apiFetch<Schemas["PresignUploadResponseDto"]>(
-    "uploads/presign",
-    {
-      method: "POST",
-      body: {
-        purpose,
-        fileName: file.name,
-        contentType: file.type,
-        sizeBytes: file.size,
-      },
-    },
-  );
-  const response = await fetch(data.upload.url, {
-    method: data.upload.method,
-    headers: data.upload.headers as Record<string, string>,
-    body: file,
-    credentials: "omit",
-  });
-  if (!response.ok) {
-    throw new ApiError(response.status, "UPLOAD_FAILED", "The upload failed.");
-  }
-  return data.fileId;
-}
 
 export function AircraftEditor({ id }: { id: string }) {
   const approved = useOperatorApproved();
@@ -67,6 +43,10 @@ export function AircraftEditor({ id }: { id: string }) {
   });
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [removingDocument, setRemovingDocument] = useState<
+    Aircraft["documents"][number] | null
+  >(null);
 
   async function refresh() {
     await queryClient.invalidateQueries({
@@ -75,6 +55,7 @@ export function AircraftEditor({ id }: { id: string }) {
     await queryClient.invalidateQueries({
       queryKey: queryKeys.operatorAircraft,
     });
+    await queryClient.invalidateQueries({ queryKey: queryKeys.availability });
   }
 
   if (aircraft.isPending) return <Skeleton className="mt-6 h-64" />;
@@ -87,12 +68,41 @@ export function AircraftEditor({ id }: { id: string }) {
   }
 
   const item = aircraft.data.data;
-  // Under review or suspended, or the operator itself is not approved: the
-  // API refuses changes, so none are offered.
-  const locked =
+  // Under review or suspended, the listing is frozen. Adding to it also needs
+  // an approved operator; removing and grounding do not (D-058), so a
+  // suspended operator can still take things away or ground the aircraft.
+  const frozen =
     item.listingStatus === "PENDING_REVIEW" ||
-    item.listingStatus === "SUSPENDED" ||
-    approved !== true;
+    item.listingStatus === "SUSPENDED";
+  const canAdd = !frozen && approved === true;
+  const canRemove = !frozen;
+  const locked = !canAdd;
+  // A verified document stays until the listing is a draft or rejected
+  // again; on a live listing it is replaced by uploading a new copy.
+  const mayRemoveDocument = (document: Aircraft["documents"][number]) =>
+    canRemove &&
+    (document.verificationStatus !== "VERIFIED" ||
+      item.listingStatus === "DRAFT" ||
+      item.listingStatus === "REJECTED");
+
+  async function removeDocument() {
+    if (!removingDocument) return;
+    setPending(true);
+    setError(null);
+    try {
+      await apiFetch(
+        `${base}/documents/${encodeURIComponent(removingDocument.id)}`,
+        { method: "DELETE" },
+      );
+      setRemovingDocument(null);
+      await refresh();
+    } catch (failure) {
+      setRemovingDocument(null);
+      setError(messageFor(failure));
+    } finally {
+      setPending(false);
+    }
+  }
 
   async function submit() {
     setPending(true);
@@ -147,12 +157,36 @@ export function AircraftEditor({ id }: { id: string }) {
         <div className="mt-2 flex flex-wrap items-center gap-3">
           <h1 className="text-h2">{item.registration}</h1>
           <StatusBadge kind="aircraft" status={item.listingStatus} />
+          <StatusBadge kind="availability" status={item.availabilityStatus} />
         </div>
         <p className="mt-2 text-muted">
           {item.manufacturer} {item.model} · {item.passengerCapacity} passengers
           · {item.rangeKm ?? "Range not set"} km
+          {item.homeBase ? ` · based at ${item.homeBase.name}` : ""}
         </p>
+        <div className="mt-4 flex flex-wrap gap-3">
+          <Link
+            href={`/operator/availability/${item.id}`}
+            className={buttonClasses({ variant: "secondary", size: "sm" })}
+          >
+            Calendar
+          </Link>
+          {canAdd ? (
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => setEditing(true)}
+            >
+              Edit details
+            </Button>
+          ) : null}
+        </div>
       </div>
+      <AvailabilityStatusControl
+        base={base}
+        status={item.availabilityStatus}
+        onChanged={refresh}
+      />
       {error ? (
         <p role="alert" className="text-danger">
           {error}
@@ -191,6 +225,17 @@ export function AircraftEditor({ id }: { id: string }) {
                 kind="document"
                 status={document.verificationStatus}
               />
+              {mayRemoveDocument(document) ? (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 px-2"
+                  onClick={() => setRemovingDocument(document)}
+                  aria-label={`Remove ${aircraftDocumentLabel(document.type)} (${document.fileName})`}
+                >
+                  Remove
+                </Button>
+              ) : null}
             </li>
           ))}
         </ul>
@@ -214,11 +259,39 @@ export function AircraftEditor({ id }: { id: string }) {
           </form>
         )}
       </section>
+      <AircraftPhotos
+        base={base}
+        media={item.media}
+        canAdd={canAdd}
+        canRemove={canRemove}
+        onChanged={refresh}
+      />
       {locked || item.listingStatus === "APPROVED" ? null : (
         <Button loading={pending} onClick={() => void submit()}>
           Submit for review
         </Button>
       )}
+      <AircraftDetailsDialog
+        aircraft={item}
+        base={base}
+        open={editing}
+        onOpenChange={setEditing}
+        onSaved={refresh}
+      />
+      <ConfirmDialog
+        open={removingDocument !== null}
+        onOpenChange={(open) => !open && setRemovingDocument(null)}
+        title="Remove this document?"
+        description={
+          item.listingStatus === "APPROVED"
+            ? "Removing a document sends the aircraft back to review. It is not offered to customers until operations approve it again."
+            : "It is deleted. Add a new copy if the aircraft still needs one."
+        }
+        confirmLabel="Remove"
+        destructive
+        loading={pending}
+        onConfirm={() => void removeDocument()}
+      />
     </div>
   );
 }
