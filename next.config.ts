@@ -27,6 +27,15 @@ const SECURITY_HEADERS = [
     : []),
 ];
 
+/**
+ * Where the API really lives, when the browser should reach it through this
+ * site (D-065). With the web app and the API on unrelated domains (for
+ * example vercel.app and onrender.com) the browser would not send the API's
+ * session cookies back. Proxying `/api/v1` keeps everything on one origin.
+ * Unset, nothing is proxied and the browser calls NEXT_PUBLIC_API_URL itself.
+ */
+const API_PROXY_TARGET = process.env.API_PROXY_TARGET?.replace(/\/+$/, "");
+
 /** Pages whose address carries a single-use token or attempt ID. */
 const NO_REFERRER = [{ key: "Referrer-Policy", value: "no-referrer" }];
 
@@ -35,6 +44,16 @@ const nextConfig: NextConfig = {
   partialPrefetching: true,
   reactCompiler: true,
   poweredByHeader: false,
+  async rewrites() {
+    return API_PROXY_TARGET
+      ? [
+          {
+            source: "/api/v1/:path*",
+            destination: `${API_PROXY_TARGET}/api/v1/:path*`,
+          },
+        ]
+      : [];
+  },
   async headers() {
     return [
       { source: "/:path*", headers: SECURITY_HEADERS },

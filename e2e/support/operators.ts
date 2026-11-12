@@ -180,7 +180,7 @@ export async function approvedAircraft(page: Page, browser: Browser) {
     params: { q: "BOM", pageSize: 1 },
   });
   const homeBaseId = (await locations.json()).data[0].id as string;
-  const registration = `VT-${randomUUID().slice(0, 5).toUpperCase()}`;
+  const registration = `VT-${randomUUID().slice(0, 13).toUpperCase()}`;
   const created = await page.request.post(`${API_URL}operator/aircraft`, {
     headers,
     data: {

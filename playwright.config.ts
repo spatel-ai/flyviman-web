@@ -53,7 +53,14 @@ export default defineConfig({
       url: ORIGIN,
       reuseExistingServer: !process.env.CI,
       timeout: 180_000,
-      env: { NEXT_PUBLIC_API_URL: `${API_ORIGIN}/api/v1` },
+      // API_PROXY=1 runs the journeys as a hosted proof of concept does:
+      // the browser reaches the API through this site's /api/v1 (D-065).
+      env: process.env.API_PROXY
+        ? {
+            NEXT_PUBLIC_API_URL: `${ORIGIN}/api/v1`,
+            API_PROXY_TARGET: API_ORIGIN,
+          }
+        : { NEXT_PUBLIC_API_URL: `${API_ORIGIN}/api/v1` },
     },
   ],
 });

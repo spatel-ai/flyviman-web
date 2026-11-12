@@ -38,7 +38,7 @@ test("an operator lists an aircraft and operations reject, then approve it", asy
   ).toBeVisible();
   await page.getByRole("link", { name: "Add an aircraft" }).click();
 
-  const registration = `VT-${randomUUID().slice(0, 5).toUpperCase()}`;
+  const registration = `VT-${randomUUID().slice(0, 13).toUpperCase()}`;
   await page.getByRole("textbox", { name: "Registration" }).fill(registration);
   await page.getByRole("textbox", { name: "Manufacturer" }).fill("Cessna");
   await page.getByRole("textbox", { name: "Model" }).fill("Citation CJ3+");
@@ -178,7 +178,7 @@ test("operations release a registration claimed by a draft aircraft", async ({
   test.slow();
   await approvedOperator(page, browser);
   await page.goto("/operator/aircraft/new");
-  const registration = `VT-${randomUUID().slice(0, 5).toUpperCase()}`;
+  const registration = `VT-${randomUUID().slice(0, 13).toUpperCase()}`;
   await page.getByRole("textbox", { name: "Registration" }).fill(registration);
   await page.getByRole("textbox", { name: "Manufacturer" }).fill("Airbus");
   await page.getByRole("textbox", { name: "Model" }).fill("H125");

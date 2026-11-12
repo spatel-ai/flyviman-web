@@ -15,3 +15,14 @@ const schema = z.object({
 export const env = schema.parse({
   NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
 });
+
+/**
+ * The API base URL for calls made by this server (route protection, server
+ * reads). When the browser reaches the API through this site's `/api/v1`
+ * proxy (API_PROXY_TARGET, D-065), the server calls the API directly rather
+ * than looping through its own public address. Not a secret, but server
+ * only: in the browser bundle it is always NEXT_PUBLIC_API_URL.
+ */
+export const serverApiUrl = process.env.API_PROXY_TARGET
+  ? `${process.env.API_PROXY_TARGET.replace(/\/+$/, "")}/api/v1`
+  : env.NEXT_PUBLIC_API_URL;

@@ -1,4 +1,4 @@
-import { env } from "@/lib/env";
+import { serverApiUrl } from "@/lib/env";
 import { ApiError, type ApiErrorDetail } from "./errors";
 
 export interface ApiMeta {
@@ -35,7 +35,9 @@ export const CSRF_HEADER = "X-CSRF-Token";
 const SAFE_METHODS = new Set(["GET", "HEAD", "OPTIONS"]);
 
 export function apiUrl(path: string, query?: ApiRequestInit["query"]): string {
-  const url = `${env.NEXT_PUBLIC_API_URL}/${path.replace(/^\/+/, "")}`;
+  // In the browser this is NEXT_PUBLIC_API_URL; on the server it may be the
+  // API's own address (see serverApiUrl).
+  const url = `${serverApiUrl}/${path.replace(/^\/+/, "")}`;
   const params = new URLSearchParams();
   for (const [key, value] of Object.entries(query ?? {})) {
     if (value !== undefined && value !== "") params.set(key, String(value));

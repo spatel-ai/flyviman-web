@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { env } from "@/lib/env";
+import { serverApiUrl } from "@/lib/env";
 
 const ACCESS = "access_token";
 const REFRESH = "refresh_token";
@@ -75,7 +75,7 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
 
   let rotated: Response;
   try {
-    rotated = await fetch(`${env.NEXT_PUBLIC_API_URL}/auth/refresh`, {
+    rotated = await fetch(`${serverApiUrl}/auth/refresh`, {
       method: "POST",
       headers: {
         Cookie: request.cookies.toString(),
