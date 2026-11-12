@@ -52,8 +52,10 @@ src/
     (customer)/            customer site: home, account/ (profile, passengers, notifications), legal/[slug],
                            legal/image-credits
     (auth)/                login, register, verify, forgot-password, reset-password, operator/register
-    (operator)/operator/   operator portal: dashboard, onboarding
-    (admin)/admin/         admin portal: dashboard, operators, operators/[id], users
+    (operator)/operator/   operator portal: dashboard, onboarding, aircraft (list, new, [id]),
+                           availability (fleet timeline, [aircraftId] calendar)
+    (admin)/admin/         admin portal: dashboard, operators, operators/[id], users, aircraft,
+                           aircraft/[id], locations
     layout.tsx             root: font, theme script, providers
     globals.css            design tokens
   components/
@@ -67,12 +69,14 @@ src/
     theme/                 ThemeScript, ThemeSwitch
   content/                 site photographs (images/) and image-credits.ts
   features/<feature>/      feature UI, hooks, schemas (auth, account, home, legal,
-                           operator-onboarding, admin-operators, admin-users)
+                           operator-onboarding, operator-aircraft, operator-availability,
+                           admin-operators, admin-users, admin-aircraft, admin-locations)
   lib/
     api/                   apiFetch, ApiError, messages by error code, query keys, generated types
     auth/                  session and server-side API reads (server only), roles
-    format/                money and date formatting
-    env.ts                 validated public environment
+    format/                money, date and time-zone formatting (zoned.ts)
+    env.ts                 validated public environment; serverApiUrl (direct API address for
+                           server-side calls when API_PROXY_TARGET is set)
     utils.ts               cn()
   providers/               QueryProvider
   proxy.ts                 first-line route protection and session rotation
@@ -94,7 +98,7 @@ Full structure and the page map: `../docs/frontend/frontend-design.md`.
 - **Prices render only through `PriceLabel`,** which requires a `priceType`. Booking status and payment status are always two separate badges.
 - **Never cache** prices, availability or statuses beyond the validity the API returns.
 - **Portal navigation:** add an item to a portal's `NAV` in the same change as its page, never before.
-- **Environment:** only `NEXT_PUBLIC_` values, declared in `src/lib/env.ts` and `.env.example`. Secrets live in the API.
+- **Environment:** `NEXT_PUBLIC_` values plus the server-only `API_PROXY_TARGET` (hosting, D-065), declared in `src/lib/env.ts` and `.env.example`. No secrets: they live in the API.
 - **Motion** follows the five-level scale in `../docs/frontend/motion-design.md`. Wrap each new customer page's content in `PageTransition`; use `Reveal` only for content that starts below the first screen; never animate safety notices, prices, forms or status badges. The home page has the site's one story section (level 5, scroll-driven CSS, wide and tall screens only); do not add another to the same page. Pinned content sits below `--header-height`.
 - **Redirecting into a page with a form** from a page that streams: use `ClientRedirect`, not `redirect()` (which also reloads the destination a moment later).
 - **Photographs** come only from `src/content/image-credits.ts`, where each has alt text, photographer, source and licence. Rules for choosing one: `../docs/frontend/motion-design.md`.

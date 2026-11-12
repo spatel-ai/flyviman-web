@@ -4,7 +4,7 @@ Frontend for the Flyviman aviation booking platform (Next.js): the customer site
 
 ## Requirements
 
-- Node.js 22 or later
+- Node.js 22, 22.12 or later (`engines` pins `22.x` so Vercel builds on 22)
 - `flyviman-api` running on http://localhost:4000 for anything that loads data
 
 ## Getting started
@@ -27,6 +27,10 @@ npx playwright install chromium   # once
 npm run test:e2e                  # browser tests (Playwright)
 npm run build
 ```
+
+## Deployment
+
+Hosted on Vercel, with `API_PROXY_TARGET` pointing at the API on Render so the browser sees one origin. Steps and variables: `../docs/deployment.md`.
 
 ## Documentation
 

@@ -977,6 +977,88 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/locations": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Search airports and heliports
+     * @description Active locations only. Without `q`, lists them by name, airports first.
+     */
+    get: operations["LocationsController_search"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/locations/{id}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** One location */
+    get: operations["LocationsController_detail"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/admin/locations": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * List locations
+     * @description Active and inactive, with charges, by name.
+     */
+    get: operations["AdminLocationsController_list"];
+    put?: never;
+    /**
+     * Add a location
+     * @description Audited. IATA and ICAO codes are stored in capitals and must be unique (409 `LOCATION_CODE_IN_USE`).
+     */
+    post: operations["AdminLocationsController_create"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/admin/locations/{id}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** One location, with charges */
+    get: operations["AdminLocationsController_detail"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    /**
+     * Change a location, its capabilities or charges
+     * @description Send only the fields to change. Audited with the values before and after. `isActive: false` hides the location from search and from new trips.
+     */
+    patch: operations["AdminLocationsController_update"];
+    trace?: never;
+  };
   "/api/v1/operator/availability/conflicts": {
     parameters: {
       query?: never;
@@ -1098,88 +1180,6 @@ export interface paths {
     options?: never;
     head?: never;
     patch?: never;
-    trace?: never;
-  };
-  "/api/v1/locations": {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    /**
-     * Search airports and heliports
-     * @description Active locations only. Without `q`, lists them by name, airports first.
-     */
-    get: operations["LocationsController_search"];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  "/api/v1/locations/{id}": {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    /** One location */
-    get: operations["LocationsController_detail"];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  "/api/v1/admin/locations": {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    /**
-     * List locations
-     * @description Active and inactive, with charges, by name.
-     */
-    get: operations["AdminLocationsController_list"];
-    put?: never;
-    /**
-     * Add a location
-     * @description Audited. IATA and ICAO codes are stored in capitals and must be unique (409 `LOCATION_CODE_IN_USE`).
-     */
-    post: operations["AdminLocationsController_create"];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  "/api/v1/admin/locations/{id}": {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    /** One location, with charges */
-    get: operations["AdminLocationsController_detail"];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    /**
-     * Change a location, its capabilities or charges
-     * @description Send only the fields to change. Audited with the values before and after. `isActive: false` hides the location from search and from new trips.
-     */
-    patch: operations["AdminLocationsController_update"];
     trace?: never;
   };
   "/api/v1/admin/audit-logs": {
@@ -1887,83 +1887,6 @@ export interface components {
       reason?: string;
     };
     /** @enum {string} */
-    AvailabilityBlockReason:
-      "MAINTENANCE" | "BLACKOUT" | "SOFT_HOLD" | "BOOKING" | "OTHER";
-    BlockResponseDto: {
-      /** Format: uuid */
-      id: string;
-      /** Format: uuid */
-      aircraftId: string;
-      startsAt: string;
-      endsAt: string;
-      reason: components["schemas"]["AvailabilityBlockReason"];
-      /** Format: uuid */
-      bookingId?: string | null;
-      expiresAt?: string | null;
-      note?: string | null;
-    };
-    SoftHoldConflictDto: {
-      /** Format: uuid */
-      aircraftId: string;
-      hold: components["schemas"]["BlockResponseDto"];
-      overlaps: components["schemas"]["BlockResponseDto"];
-    };
-    FleetAircraftDto: {
-      /** Format: uuid */
-      id: string;
-      registration: string;
-      listingStatus: components["schemas"]["AircraftListingStatus"];
-      availabilityStatus: components["schemas"]["AircraftAvailabilityStatus"];
-      homeBase: components["schemas"]["HomeBaseSummaryDto"] | null;
-    };
-    /** @enum {string} */
-    AvailabilitySlotKind: "OPEN" | "DEPARTURE_SLOT";
-    SlotResponseDto: {
-      /** Format: uuid */
-      id: string;
-      /** Format: uuid */
-      aircraftId: string;
-      startsAt: string;
-      endsAt: string;
-      kind: components["schemas"]["AvailabilitySlotKind"];
-      /** Format: uuid */
-      originId?: string | null;
-    };
-    FleetCalendarResponseDto: {
-      aircraft: components["schemas"]["FleetAircraftDto"][];
-      slots: components["schemas"]["SlotResponseDto"][];
-      blocks: components["schemas"]["BlockResponseDto"][];
-      /** @description True when the range held more than 2000 slots or blocks and the list was cut short */
-      truncated: boolean;
-    };
-    CalendarResponseDto: {
-      slots: components["schemas"]["SlotResponseDto"][];
-      blocks: components["schemas"]["BlockResponseDto"][];
-    };
-    CreateSlotDto: {
-      startsAt: string;
-      endsAt: string;
-      kind: components["schemas"]["AvailabilitySlotKind"];
-      /** Format: uuid */
-      originId?: string | null;
-    };
-    UpdateSlotDto: {
-      startsAt?: string;
-      endsAt?: string;
-      kind?: components["schemas"]["AvailabilitySlotKind"];
-      /** Format: uuid */
-      originId?: string | null;
-    };
-    CreateBlockDto: {
-      startsAt: string;
-      endsAt: string;
-      /** @enum {string} */
-      reason: "MAINTENANCE" | "BLACKOUT" | "SOFT_HOLD" | "OTHER";
-      /** @description Required for a soft hold. When the hold lapses. */
-      expiresAt?: string;
-      note?: string;
-    };
-    /** @enum {string} */
     LocationType: "AIRPORT" | "HELIPORT" | "CITY" | "LANDING_SITE";
     LocationCapabilitiesDto: {
       /** @description Longest usable runway in metres; null for heliports and where unknown. */
@@ -2104,6 +2027,83 @@ export interface components {
       capabilities?: components["schemas"]["LocationCapabilitiesInputDto"];
       charges?: components["schemas"]["LocationChargesDto"] | null;
       isActive?: boolean;
+    };
+    /** @enum {string} */
+    AvailabilityBlockReason:
+      "MAINTENANCE" | "BLACKOUT" | "SOFT_HOLD" | "BOOKING" | "OTHER";
+    BlockResponseDto: {
+      /** Format: uuid */
+      id: string;
+      /** Format: uuid */
+      aircraftId: string;
+      startsAt: string;
+      endsAt: string;
+      reason: components["schemas"]["AvailabilityBlockReason"];
+      /** Format: uuid */
+      bookingId?: string | null;
+      expiresAt?: string | null;
+      note?: string | null;
+    };
+    SoftHoldConflictDto: {
+      /** Format: uuid */
+      aircraftId: string;
+      hold: components["schemas"]["BlockResponseDto"];
+      overlaps: components["schemas"]["BlockResponseDto"];
+    };
+    FleetAircraftDto: {
+      /** Format: uuid */
+      id: string;
+      registration: string;
+      listingStatus: components["schemas"]["AircraftListingStatus"];
+      availabilityStatus: components["schemas"]["AircraftAvailabilityStatus"];
+      homeBase: components["schemas"]["HomeBaseSummaryDto"] | null;
+    };
+    /** @enum {string} */
+    AvailabilitySlotKind: "OPEN" | "DEPARTURE_SLOT";
+    SlotResponseDto: {
+      /** Format: uuid */
+      id: string;
+      /** Format: uuid */
+      aircraftId: string;
+      startsAt: string;
+      endsAt: string;
+      kind: components["schemas"]["AvailabilitySlotKind"];
+      /** Format: uuid */
+      originId?: string | null;
+    };
+    FleetCalendarResponseDto: {
+      aircraft: components["schemas"]["FleetAircraftDto"][];
+      slots: components["schemas"]["SlotResponseDto"][];
+      blocks: components["schemas"]["BlockResponseDto"][];
+      /** @description True when the range held more than 2000 slots or blocks and the list was cut short */
+      truncated: boolean;
+    };
+    CalendarResponseDto: {
+      slots: components["schemas"]["SlotResponseDto"][];
+      blocks: components["schemas"]["BlockResponseDto"][];
+    };
+    CreateSlotDto: {
+      startsAt: string;
+      endsAt: string;
+      kind: components["schemas"]["AvailabilitySlotKind"];
+      /** Format: uuid */
+      originId?: string | null;
+    };
+    UpdateSlotDto: {
+      startsAt?: string;
+      endsAt?: string;
+      kind?: components["schemas"]["AvailabilitySlotKind"];
+      /** Format: uuid */
+      originId?: string | null;
+    };
+    CreateBlockDto: {
+      startsAt: string;
+      endsAt: string;
+      /** @enum {string} */
+      reason: "MAINTENANCE" | "BLACKOUT" | "SOFT_HOLD" | "OTHER";
+      /** @description Required for a soft hold. When the hold lapses. */
+      expiresAt?: string;
+      note?: string;
     };
     AuditLogResponseDto: {
       /** Format: uuid */
@@ -3418,6 +3418,147 @@ export interface operations {
       };
     };
   };
+  LocationsController_search: {
+    parameters: {
+      query?: {
+        page?: number;
+        pageSize?: number;
+        /** @description Part of a name or city, or an IATA or ICAO code. Exact codes rank first. */
+        q?: string;
+        type?: components["schemas"]["LocationType"];
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["LocationResponseDto"][];
+        };
+      };
+    };
+  };
+  LocationsController_detail: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["LocationResponseDto"];
+        };
+      };
+    };
+  };
+  AdminLocationsController_list: {
+    parameters: {
+      query?: {
+        page?: number;
+        pageSize?: number;
+        /** @description Part of a name or city, or a code. */
+        q?: string;
+        type?: components["schemas"]["LocationType"];
+        isActive?: boolean;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["AdminLocationResponseDto"][];
+        };
+      };
+    };
+  };
+  AdminLocationsController_create: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["CreateLocationDto"];
+      };
+    };
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["AdminLocationResponseDto"];
+        };
+      };
+    };
+  };
+  AdminLocationsController_detail: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["AdminLocationResponseDto"];
+        };
+      };
+    };
+  };
+  AdminLocationsController_update: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["UpdateLocationDto"];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["AdminLocationResponseDto"];
+        };
+      };
+    };
+  };
   AvailabilityController_conflicts: {
     parameters: {
       query?: never;
@@ -3596,147 +3737,6 @@ export interface operations {
           [name: string]: unknown;
         };
         content?: never;
-      };
-    };
-  };
-  LocationsController_search: {
-    parameters: {
-      query?: {
-        page?: number;
-        pageSize?: number;
-        /** @description Part of a name or city, or an IATA or ICAO code. Exact codes rank first. */
-        q?: string;
-        type?: components["schemas"]["LocationType"];
-      };
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["LocationResponseDto"][];
-        };
-      };
-    };
-  };
-  LocationsController_detail: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        id: string;
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["LocationResponseDto"];
-        };
-      };
-    };
-  };
-  AdminLocationsController_list: {
-    parameters: {
-      query?: {
-        page?: number;
-        pageSize?: number;
-        /** @description Part of a name or city, or a code. */
-        q?: string;
-        type?: components["schemas"]["LocationType"];
-        isActive?: boolean;
-      };
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["AdminLocationResponseDto"][];
-        };
-      };
-    };
-  };
-  AdminLocationsController_create: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        "application/json": components["schemas"]["CreateLocationDto"];
-      };
-    };
-    responses: {
-      201: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["AdminLocationResponseDto"];
-        };
-      };
-    };
-  };
-  AdminLocationsController_detail: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        id: string;
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["AdminLocationResponseDto"];
-        };
-      };
-    };
-  };
-  AdminLocationsController_update: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        id: string;
-      };
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        "application/json": components["schemas"]["UpdateLocationDto"];
-      };
-    };
-    responses: {
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["AdminLocationResponseDto"];
-        };
       };
     };
   };
