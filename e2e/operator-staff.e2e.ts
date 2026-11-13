@@ -61,6 +61,7 @@ async function inviteFromTeamPage(
 test("an operator invites a staff member, who manages only the aircraft assigned to them", async ({
   page,
   browser,
+  isMobile,
 }) => {
   test.slow();
   const assigned = await approvedAircraft(page, browser);
@@ -70,8 +71,12 @@ test("an operator invites a staff member, who manages only the aircraft assigned
   await expectNoSidewaysScroll(page);
 
   const { context, staff } = await acceptInvitation(browser, email);
-  // Staff see only what their permissions cover.
-  const nav = staff.getByRole("navigation").first();
+  // Staff see only what their permissions cover. On phones the navigation
+  // lives in a drawer.
+  if (isMobile) {
+    await staff.getByRole("button", { name: "Open navigation" }).click();
+  }
+  const nav = staff.getByRole("navigation", { name: "Operator navigation" });
   await expect(nav.getByRole("link", { name: "Fleet" })).toBeVisible();
   await expect(nav.getByRole("link", { name: "Availability" })).toBeVisible();
   await expect(nav.getByRole("link", { name: "Team" })).toHaveCount(0);

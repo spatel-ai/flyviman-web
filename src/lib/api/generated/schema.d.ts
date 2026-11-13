@@ -1655,6 +1655,11 @@ export interface components {
     };
     /** @enum {string} */
     StaffStatus: "INVITED" | "ACTIVE" | "SUSPENDED";
+    /**
+     * @description Who suspended the account, while suspended. Only the operator can lift its own; PLATFORM (Flyviman) cannot be lifted here.
+     * @enum {string}
+     */
+    SuspensionSource: "PLATFORM" | "OPERATOR";
     StaffMemberDto: {
       /**
        * Format: uuid
@@ -1663,6 +1668,8 @@ export interface components {
       id: string;
       email: string | null;
       status: components["schemas"]["StaffStatus"];
+      /** @description Who suspended the account, while suspended. Only the operator can lift its own; PLATFORM (Flyviman) cannot be lifted here. */
+      suspendedBy: components["schemas"]["SuspensionSource"] | null;
       capabilities: components["schemas"]["StaffCapability"][];
       allAircraft: boolean;
       aircraftIds: string[];

@@ -1,7 +1,7 @@
 import type { Schemas } from "@/lib/api/types";
 
 /**
- * What the signed-in operator user may do, as `GET /operator/profile`
+ * What the signed-in operator user may do, as `GET /operator/me`
  * returns it (D-049, D-068). The API decides every request; this only keeps
  * the portal from offering what it would refuse.
  */

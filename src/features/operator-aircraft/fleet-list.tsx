@@ -40,7 +40,8 @@ export function FleetList() {
   const aircraft = fleet.data.data;
   return (
     <div className="mt-6 flex flex-col gap-4">
-      {access && !admin ? null : approved === false ? (
+      {/* Administrator notices only once the role is known (no flash for staff). */}
+      {!access || !admin ? null : approved === false ? (
         <p className="text-body-sm text-muted">
           Your organisation is not approved at the moment, so you cannot add
           aircraft. You can still take an aircraft out of service.
@@ -53,7 +54,7 @@ export function FleetList() {
         </div>
       ) : null}
       {aircraft.length === 0 ? (
-        access && !admin ? (
+        !access ? null : !admin ? (
           <EmptyState
             title="No aircraft assigned to you yet"
             description="Your administrator chooses which aircraft you manage."

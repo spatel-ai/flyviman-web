@@ -53,7 +53,7 @@ src/
                            legal/image-credits
     (auth)/                login, register, verify, forgot-password, reset-password, operator/register
     (operator)/operator/   operator portal: dashboard, onboarding, aircraft (list, new, [id]),
-                           availability (fleet timeline, [aircraftId] calendar)
+                           availability (fleet timeline, [aircraftId] calendar), team
     (admin)/admin/         admin portal: dashboard, operators, operators/[id], users, aircraft,
                            aircraft/[id], locations
     layout.tsx             root: font, theme script, providers
@@ -69,7 +69,7 @@ src/
     theme/                 ThemeScript, ThemeSwitch
   content/                 site photographs (images/) and image-credits.ts
   features/<feature>/      feature UI, hooks, schemas (auth, account, home, legal,
-                           operator-onboarding, operator-aircraft, operator-availability,
+                           operator-onboarding, operator-aircraft, operator-availability, operator-staff,
                            admin-operators, admin-users, admin-aircraft, admin-locations)
   lib/
     api/                   apiFetch, ApiError, messages by error code, query keys, generated types

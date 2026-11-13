@@ -88,15 +88,24 @@ const ACTIONS: Record<
   },
 };
 
-/** What can be done to a row, in the order the buttons appear. */
-export function rowActions(member: StaffMember): RowAction[] {
+/**
+ * What can be done to a row, in the order the buttons appear. A suspension
+ * by Flyviman cannot be lifted by the operator (D-070), and invitations can
+ * be sent only while the organisation is approved.
+ */
+export function rowActions(
+  member: Pick<StaffMember, "status" | "suspendedBy">,
+  approved: boolean,
+): RowAction[] {
   switch (member.status) {
     case "INVITED":
-      return ["resend", "remove"];
+      return approved ? ["resend", "remove"] : ["remove"];
     case "ACTIVE":
       return ["suspend", "remove"];
     case "SUSPENDED":
-      return ["reinstate", "remove"];
+      return member.suspendedBy === "PLATFORM"
+        ? ["remove"]
+        : ["reinstate", "remove"];
   }
 }
 
@@ -269,6 +278,12 @@ export function TeamList({ approved }: { approved: boolean }) {
                         </TableCell>
                         <TableCell className="whitespace-nowrap">
                           <StatusBadge kind="staff" status={member.status} />
+                          {member.status === "SUSPENDED" &&
+                          member.suspendedBy === "PLATFORM" ? (
+                            <p className="mt-1 text-caption text-muted">
+                              By Flyviman
+                            </p>
+                          ) : null}
                         </TableCell>
                         <TableCell className="whitespace-nowrap">
                           {member.lastLoginAt ? (
@@ -290,7 +305,7 @@ export function TeamList({ approved }: { approved: boolean }) {
                             >
                               Edit access
                             </Button>
-                            {rowActions(member).map((action) => (
+                            {rowActions(member, approved).map((action) => (
                               <Button
                                 key={action}
                                 variant="secondary"
