@@ -109,13 +109,15 @@ test.describe("customer home, photography and footer", () => {
   }) => {
     await page.goto("/");
 
-    const hero = page.getByRole("img", {
-      name: "An aircraft wing above sunlit clouds",
-    });
-    await expect(hero).toBeVisible();
+    // The hero's own pictures are scenery, described once in words.
+    const poster = page.locator(".hero-poster--first");
+    await expect(poster).toHaveAttribute("alt", "");
     await expect
-      .poll(() => hero.evaluate((img: HTMLImageElement) => img.naturalWidth))
+      .poll(() => poster.evaluate((img: HTMLImageElement) => img.naturalWidth))
       .toBeGreaterThan(0);
+    await expect(
+      page.getByText(/A view through a private jet window/),
+    ).toBeAttached();
     await expect(page.locator("main img:not([alt])")).toHaveCount(0);
   });
 

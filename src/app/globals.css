@@ -84,12 +84,20 @@
   /* Theme-independent: a dimming layer, and text set on a photograph. */
   --color-scrim: rgb(0 0 0 / 0.4);
   --color-on-photo: #ffffff;
+  /* The home page hero, dark in both themes: its ground and its text. */
+  --color-hero-ground: #000000;
+  --color-on-hero: #f5f5f7;
 
   /* San Francisco on Apple devices, Inter elsewhere. */
   --font-sans:
     -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display",
     var(--font-inter), "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 
+  /* The home page hero's headline, on wide screens only. */
+  --text-hero: 4rem;
+  --text-hero--line-height: 4.25rem;
+  --text-hero--letter-spacing: -0.025em;
+  --text-hero--font-weight: 600;
   --text-display: 3.5rem;
   --text-display--line-height: 3.75rem;
   --text-display--letter-spacing: -0.022em;
@@ -195,13 +203,12 @@ body {
   --duration-reveal: 700ms;
   --distance-reveal: 24px;
   --stagger-reveal: 80ms;
-  /* Slit reveal and intro (customer marketing pages). */
+  /* Slit reveal (customer marketing pages). */
   --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
   --duration-slit: 900ms;
   --distance-slit: 14px;
   /* Whole pixels, so no seam can show between slits. */
   --slit-width: 14px;
-  --duration-intro: 650ms;
 }
 
 /* Set by <Reveal>. Content is never hidden without JavaScript, under reduced
@@ -275,149 +282,240 @@ body {
 }
 
 /*
- * Intro (components/motion/intro.tsx): on the first view of the home page
- * in a browser session a hairline is drawn across the screen, the page
- * opens from it, and the headline's words rise into place. CSS only, so it
- * never waits on JavaScript; about 1.5 s in all, the page covered for
- * under a second of it. Not under reduced motion,
- * not in print, and not once `data-intro-seen` is set.
+ * Home page hero (features/home/hero.tsx, level 5, D-088): a film played
+ * by the scroll. By default it is a still, one screen tall: the cabin with
+ * the headline and action in place. With `data-hero-film` on the root
+ * element (set before paint, only with JavaScript, motion allowed and no
+ * data saver) the track grows tall, its stage is held at the top of the
+ * screen and the script plays the frames and brings the text in. Always
+ * dark, in both themes. Only opacity and transforms change.
  */
-.intro-curtain {
+.hero-track {
+  position: relative;
+  /* It starts at the very top of the page, behind the header (whose
+     hairline adds a pixel to its height). */
+  margin-top: calc(-1 * var(--header-height) - 1px);
+  height: 100svh;
+  background: var(--color-hero-ground);
+  color: var(--color-on-hero);
+}
+
+.hero-stage {
+  position: relative;
+  height: 100svh;
+  overflow: hidden;
+  background: var(--color-hero-ground);
+}
+
+.hero-media,
+.hero-canvas,
+.hero-shade,
+.hero-scrim {
+  position: absolute;
+  inset: 0;
+}
+
+.hero-canvas {
+  display: none;
+  width: 100%;
+  height: 100%;
+}
+
+.hero-poster {
+  object-fit: cover;
+  object-position: var(--hero-focal-mobile) 50%;
+}
+
+.hero-poster--first,
+.hero-opening {
   display: none;
 }
 
-.intro-word {
-  display: inline-block;
+/* Keeps the header's links legible over a bright ceiling or sky. */
+.hero-shade {
+  bottom: auto;
+  height: 10rem;
+  background: linear-gradient(
+    to bottom,
+    color-mix(in srgb, var(--color-hero-ground) 60%, transparent),
+    transparent
+  );
+  pointer-events: none;
 }
 
-.intro-word > span {
-  display: inline-block;
+/* Under the text: from the bottom on a phone, from the left on a desk. */
+.hero-scrim {
+  background: linear-gradient(
+    to top,
+    color-mix(in srgb, var(--color-hero-ground) 86%, transparent),
+    color-mix(in srgb, var(--color-hero-ground) 72%, transparent) 45%,
+    transparent 85%
+  );
+  pointer-events: none;
 }
 
-@media screen and (prefers-reduced-motion: no-preference) {
-  :root:not([data-intro-seen]) .intro-curtain {
-    position: fixed;
-    inset: 0;
-    z-index: 50;
-    display: block;
-    background: var(--background);
-    pointer-events: none;
-    animation: intro-open var(--duration-intro) var(--ease-in-out) 300ms both;
-  }
-
-  :root:not([data-intro-seen]) .intro-curtain__line {
-    position: absolute;
-    inset-inline: 0;
-    top: 50%;
-    height: 1px;
-    background: var(--accent);
-    animation:
-      intro-line 350ms var(--ease-emphasis) both,
-      intro-line-out 250ms linear 700ms forwards;
-  }
-
-  /* The clipped box each word rises into, with room for descenders. */
-  :root:not([data-intro-seen]) .intro-word {
-    margin-bottom: -0.14em;
-    padding-bottom: 0.14em;
-    overflow: clip;
-    vertical-align: bottom;
-  }
-
-  :root:not([data-intro-seen]) .intro-word > span {
-    animation: intro-rise var(--duration-reveal) var(--ease-emphasis) both;
-    animation-delay: calc(550ms + var(--word-index, 0) * 50ms);
-  }
-
-  :root:not([data-intro-seen]) .intro-after {
-    animation: intro-fade 450ms var(--ease-standard) 1000ms both;
-  }
+.hero-closing {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: flex-end;
+  padding-bottom: 4rem;
+  text-align: center;
 }
 
-@keyframes intro-line {
-  from {
-    transform: scaleX(0);
-  }
+.hero-eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
 }
 
-@keyframes intro-line-out {
-  to {
-    opacity: 0;
-  }
+.hero-opening {
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 6rem 1rem 2.5rem;
+  background: linear-gradient(
+    to top,
+    color-mix(in srgb, var(--color-hero-ground) 55%, transparent),
+    transparent
+  );
+  pointer-events: none;
 }
 
-@keyframes intro-open {
-  from {
-    clip-path: inset(0);
-  }
-  to {
-    clip-path: inset(50% 0 50% 0);
-  }
+.hero-opening__line {
+  /* The trailing space of the last letter would push it off centre. */
+  margin-right: -0.32em;
+  text-transform: uppercase;
+  letter-spacing: 0.32em;
 }
 
-@keyframes intro-rise {
-  from {
-    transform: translateY(110%);
-  }
+.hero-cue {
+  width: 1px;
+  height: 2.5rem;
+  background: var(--color-on-hero);
+  transform-origin: top;
 }
 
-@keyframes intro-fade {
-  from {
-    opacity: 0;
-  }
-}
-
-/*
- * Hero photograph (features/home/hero.tsx): a slow drift, and a band of
- * light that crosses now and then. Transform only.
- */
-.hero-glint {
-  display: none;
-}
-
-@media screen and (prefers-reduced-motion: no-preference) {
-  .hero-drift {
-    animation: hero-drift 28s var(--ease-in-out) infinite alternate;
+@media (min-width: 64rem) {
+  .hero-poster {
+    object-position: var(--hero-focal) 50%;
   }
 
-  .hero-glint {
-    position: absolute;
-    inset: 0;
-    display: block;
-    overflow: hidden;
-    pointer-events: none;
-  }
-
-  .hero-glint::before {
-    position: absolute;
-    inset-block: -20%;
-    left: 0;
-    width: 30%;
-    /* The on-photo white, faint, fading to nothing at both edges. */
+  .hero-scrim {
     background: linear-gradient(
-      90deg,
-      rgb(255 255 255 / 0),
-      rgb(255 255 255 / 0.2),
-      rgb(255 255 255 / 0)
+      to right,
+      color-mix(in srgb, var(--color-hero-ground) 78%, transparent),
+      color-mix(in srgb, var(--color-hero-ground) 74%, transparent) 45%,
+      color-mix(in srgb, var(--color-hero-ground) 55%, transparent) 70%,
+      transparent 95%
     );
-    content: "";
-    animation: hero-glint 19s linear 2s infinite both;
+  }
+
+  .hero-closing {
+    align-items: center;
+    padding-bottom: 0;
+    text-align: left;
+  }
+}
+
+@media screen {
+  :root[data-hero-film] .hero-track {
+    height: var(--hero-track-mobile);
+  }
+
+  :root[data-hero-film] .hero-stage {
+    position: sticky;
+    top: 0;
+  }
+
+  :root[data-hero-film] .hero-canvas,
+  :root[data-hero-film] .hero-poster--first {
+    display: block;
+  }
+
+  :root[data-hero-film] .hero-poster--last {
+    display: none;
+  }
+
+  :root[data-hero-film] .hero-opening {
+    display: flex;
+  }
+
+  /* Until the scroll brings them in. The script takes over from here. */
+  :root[data-hero-film] .hero-scrim,
+  :root[data-hero-film] .hero-part {
+    opacity: 0;
+  }
+
+  :root[data-hero-film] .hero-part {
+    will-change: opacity, transform;
+  }
+
+  @media (min-width: 48rem) {
+    :root[data-hero-film] .hero-track {
+      height: var(--hero-track);
+    }
+  }
+}
+
+@media screen and (prefers-reduced-motion: no-preference) {
+  /* At rest at the top of the page the sky drifts, very slowly. */
+  :root[data-hero-film]:not([data-hero-scrolled]) .hero-media {
+    animation: hero-drift var(--hero-drift-seconds) var(--ease-in-out) infinite
+      alternate;
+  }
+
+  :root[data-hero-film] .hero-cue {
+    animation: hero-cue 2.4s var(--ease-in-out) infinite;
+  }
+}
+
+/* Paper gets the still, whatever the script last set. */
+@media print {
+  .hero-scrim,
+  .hero-part,
+  .hero-media {
+    opacity: 1 !important;
+    transform: none !important;
   }
 }
 
 @keyframes hero-drift {
   to {
+    transform: scale(var(--hero-drift-scale));
+  }
+}
+
+/*
+ * Marketing page hero photograph (components/marketing/page-hero.tsx): a
+ * slow drift, 6% of scale over 28 s and back. Transform only.
+ */
+@media screen and (prefers-reduced-motion: no-preference) {
+  .page-hero-drift {
+    animation: page-hero-drift 28s var(--ease-in-out) infinite alternate;
+  }
+}
+
+@keyframes page-hero-drift {
+  to {
     transform: scale(1.06) translate(-1.2%, -0.6%);
   }
 }
 
-@keyframes hero-glint {
+@keyframes hero-cue {
   from {
-    transform: translateX(-130%) skewX(-12deg);
+    opacity: 0;
+    transform: scaleY(0);
   }
-  45%,
+  40% {
+    opacity: 1;
+    transform: scaleY(1);
+  }
   to {
-    transform: translateX(470%) skewX(-12deg);
+    opacity: 0;
+    transform: scaleY(1);
   }
 }
 
@@ -657,6 +755,29 @@ body {
 
 :root[data-scrolled] .site-header {
   border-color: color-mix(in srgb, var(--border) 60%, transparent);
+}
+
+/*
+ * Over the home page hero (data-over-hero, set by features/home/hero.tsx)
+ * the bar is clear and its text light in both themes, since the hero is
+ * always dark. Below the hero it is the usual bar again.
+ */
+.site-header {
+  transition:
+    border-color 150ms var(--ease-standard),
+    background-color 250ms var(--ease-standard),
+    color 250ms var(--ease-standard);
+}
+
+:root[data-over-hero] .site-header {
+  --foreground: var(--color-on-hero);
+  --muted: color-mix(in srgb, var(--color-on-hero) 82%, transparent);
+  --border: color-mix(in srgb, var(--color-on-hero) 35%, transparent);
+  border-color: transparent;
+  background: transparent;
+  color: var(--color-on-hero);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
 }
 
 /*

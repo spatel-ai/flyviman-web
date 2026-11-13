@@ -42,6 +42,7 @@ Run from this directory.
 | Browser tests | `npm run test:e2e` (starts the API and the app itself; needs `npm run db:up` in `flyviman-api`; first run needs `npx playwright install chromium`) |
 | Regenerate API types | `npm run api:types` (after `npm run openapi:export` in `flyviman-api`) |
 | Build | `npm run build` |
+| Hero film frames | `node scripts/extract-hero-frames.mjs` (after replacing `media-src/hero/hero-desktop.mp4`; needs ffmpeg, ffprobe and cwebp) |
 | Format | `npm run format` |
 
 ## Layout
@@ -64,7 +65,7 @@ src/
     shared/                cross-feature pieces (PriceLabel, StatusBadge, EmptyState, FormAlert, LoadError,
                            ClientRedirect)
     layout/                SiteHeader (with SiteNavLinks and SITE_NAV), SiteFooter, AppShell, NavLinks, MobileNav, UserMenu
-    motion/                Reveal (level 4, with the slit variant), Intro and IntroSeen (home page intro),
+    motion/                Reveal (level 4, with the slit variant),
                            ScrollScrub and ScrollFilm (level 5; gsap is imported only in load-gsap.ts), TiltCard and Magnetic
                            (pointer feedback, on spring.ts), PageTransition (level 3)
     marketing/             SectionHeading, PageHero, EnquiryLink (customer marketing pages)
@@ -84,6 +85,8 @@ src/
   providers/               QueryProvider
   proxy.ts                 first-line route protection and session rotation
 e2e/                       Playwright browser journeys; helpers in e2e/support
+public/hero/               hero film frames and posters (made by scripts/extract-hero-frames.mjs, committed)
+scripts/                   extract-hero-frames.mjs: clip in media-src/ (git-ignored) to WebP frames
 ```
 
 Full structure and the page map: `../docs/frontend/frontend-design.md`.
@@ -102,7 +105,7 @@ Full structure and the page map: `../docs/frontend/frontend-design.md`.
 - **Never cache** prices, availability or statuses beyond the validity the API returns.
 - **Portal navigation:** add an item to a portal's `NAV` in the same change as its page, never before.
 - **Environment:** `NEXT_PUBLIC_` values plus the server-only `API_PROXY_TARGET` (hosting, D-065), declared in `src/lib/env.ts` and `.env.example`. No secrets: they live in the API.
-- **Motion** follows the five-level scale in `../docs/frontend/motion-design.md`; use the `motion-effect` skill to add or change one. Wrap each new customer page's content in `PageTransition`; use `Reveal` only for content that starts below the first screen (`variant="slit"` for a section heading); never animate safety notices, prices, forms or status badges. Anything that plays on load is CSS. `gsap` is imported only inside `components/motion/load-gsap.ts`, dynamically; scrolling stays native, and only the home page showpiece (`ScrollFilm`) is pinned, with CSS `position: sticky`. `TiltCard` and `Magnetic` are for customer marketing sections only.
+- **Motion** follows the five-level scale in `../docs/frontend/motion-design.md`; use the `motion-effect` skill to add or change one. Wrap each new customer page's content in `PageTransition`; use `Reveal` only for content that starts below the first screen (`variant="slit"` for a section heading); never animate safety notices, prices, forms or status badges. Anything that plays on load is CSS. `gsap` is imported only inside `components/motion/load-gsap.ts`, dynamically; scrolling stays native, and only the home page's hero film (`features/home/hero.tsx`, values in `hero-config.ts`, frames made by `scripts/extract-hero-frames.mjs` from `media-src/`, which is not committed) and its showpiece (`ScrollFilm`) are pinned, with CSS `position: sticky`. `TiltCard` and `Magnetic` are for customer marketing sections only.
 - **Marketing copy** lives in typed modules in `src/content/` (`home.ts`, `about.ts`, `services.ts`, `charter.ts`, `contact.ts`), imported from flyviman.com with the `site-content-import` skill. Components do not hold copy inline. Claims the business has not confirmed stay out (`../docs/open-decisions.md`).
 - **Redirecting into a page with a form** from a page that streams: use `ClientRedirect`, not `redirect()` (which also reloads the destination a moment later).
 - **Photographs** come only from `src/content/image-credits.ts`, where each has alt text, photographer, source and licence. Rules for choosing one: `../docs/frontend/motion-design.md`. They apply to Flyviman's own pictures too.

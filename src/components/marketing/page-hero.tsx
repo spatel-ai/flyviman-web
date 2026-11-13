@@ -41,7 +41,7 @@ export function PageHero({
           preload
           placeholder="blur"
           sizes="(min-width: 1200px) 1136px, 100vw"
-          className="hero-drift object-cover"
+          className="page-hero-drift object-cover"
         />
       </div>
     </section>

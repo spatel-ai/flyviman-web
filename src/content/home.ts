@@ -20,6 +20,13 @@ export const HOME = {
     /** One entry per line of the headline. */
     headline: ["Your trusted partner", "for every aviation decision"],
     action: { label: "Explore ways to fly", href: "#ways-to-fly" },
+    // Our own words for the scroll film (features/home/hero.tsx); not from
+    // the live site. Placeholders until the business supplies its own.
+    opening: "Above it all",
+    eyebrow: "Flyviman Aviation",
+    /** Read out once in place of the film. */
+    scene:
+      "A view through a private jet window of clouds at sunset, drawing back into a cabin with cream leather seats.",
   },
   about: {
     overline: "About Flyviman",

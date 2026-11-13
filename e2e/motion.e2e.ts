@@ -3,7 +3,7 @@ import { expect, test, type Page } from "@playwright/test";
 /**
  * Motion on the customer site (docs/frontend/motion-design.md): the header
  * hairline and pointer feedback (level 1), page cross-fades (level 3),
- * section reveals and the home page intro (level 4), scroll-linked motion
+ * section reveals (level 4), scroll-linked motion and the home page hero
  * (level 5), and that reduced motion and layout stability are respected.
  */
 
@@ -88,7 +88,7 @@ test.describe("section reveals", () => {
     });
     await page.goto("/");
     for (const y of [
-      600, 1200, 1800, 2400, 3200, 4000, 4800, 6000, 7200, 8400,
+      600, 1200, 1800, 2400, 3200, 4000, 4800, 6000, 7200, 8400, 9600, 10800,
     ]) {
       await scrollTo(page, y);
       await page.waitForTimeout(150);
@@ -152,79 +152,206 @@ test.describe("page cross-fade", () => {
   });
 });
 
-test.describe("home page intro", () => {
-  const curtain = (page: Page) => page.locator(".intro-curtain");
+test.describe("home page hero", () => {
+  const root = (page: Page) => page.locator("html");
+  const track = (page: Page) => page.locator(".hero-track");
+  const canvas = (page: Page) => page.locator(".hero-canvas");
+  const heading = (page: Page) => page.getByRole("heading", { level: 1 });
+  const action = (page: Page) =>
+    track(page).getByRole("link", { name: "Explore ways to fly" });
+  const headerGlass = (page: Page) =>
+    page
+      .locator(".site-header")
+      .evaluate((el) => getComputedStyle(el).backgroundColor);
+  /** Scrolls to a fraction of the hero's scroll distance. */
+  const scrollHero = (page: Page, fraction: number) =>
+    page.evaluate((f) => {
+      const el = document.querySelector<HTMLElement>(".hero-track")!;
+      window.scrollTo({ top: (el.offsetHeight - window.innerHeight) * f });
+    }, fraction);
+  const lastFrame = (page: Page) =>
+    (page.viewportSize()?.width ?? 0) < 768 ? "79" : "119";
+  const screens = (page: Page) =>
+    track(page).evaluate((el) =>
+      Math.round((el as HTMLElement).offsetHeight / window.innerHeight),
+    );
 
-  test("opens the page on a first visit, then leaves it clear", async ({
+  test("opens on the sky, behind a clear header, with the headline waiting", async ({
     page,
   }) => {
     await page.goto("/");
 
-    // CSS only: it is there from the first paint and never takes a click.
-    await expect(curtain(page)).toHaveCSS("position", "fixed");
-    await expect(curtain(page)).toHaveCSS("pointer-events", "none");
-    await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+    await expect(root(page)).toHaveAttribute("data-hero-film", "");
+    expect(await screens(page)).toBe(lastFrame(page) === "79" ? 3 : 4);
+    // It starts at the very top of the page, under the header.
+    expect(
+      await track(page).evaluate((el) => el.getBoundingClientRect().top),
+    ).toBe(0);
+    expect(await headerGlass(page)).toBe("rgba(0, 0, 0, 0)");
+    await expect(canvas(page)).toHaveAttribute("data-frame", "0");
+    await expect(page.getByText("Above it all")).toBeVisible();
 
-    await expect(page.locator("html")).toHaveAttribute("data-intro-seen", "");
-    await expect(curtain(page)).toBeHidden();
-    // Every word of the headline has come to rest.
-    const transforms = await page
-      .locator(".intro-word > span")
-      .evaluateAll((words) =>
-        words.map((el) => getComputedStyle(el).transform),
-      );
-    expect(transforms).toHaveLength(7);
-    expect(new Set(transforms)).toEqual(new Set(["none"]));
+    // Unseen until the film ends, but always there to read.
+    await expect(heading(page)).toHaveCSS("opacity", "0");
+    await expect(heading(page)).toHaveAccessibleName(
+      "Your trusted partner for every aviation decision",
+    );
+    await expect(action(page)).toHaveAttribute("href", "#ways-to-fly");
   });
 
-  test("does not play again on a reload in the same visit", async ({
+  test("the scroll plays the film to the cabin and back", async ({ page }) => {
+    await page.goto("/");
+    await expect(canvas(page)).toHaveAttribute("data-frame", "0");
+    const opening = page.locator(".hero-opening");
+
+    await scrollHero(page, 0.5);
+    await expect
+      .poll(async () => Number(await canvas(page).getAttribute("data-frame")))
+      .toBeGreaterThan(20);
+    await expect(opening).toHaveCSS("opacity", "0");
+    await expect(heading(page)).toHaveCSS("opacity", "0");
+    // The stage is held: the track has moved, the canvas has not.
+    expect(
+      await canvas(page).evaluate((el) => el.getBoundingClientRect().top),
+    ).toBe(0);
+
+    await scrollHero(page, 1);
+    await expect(canvas(page)).toHaveAttribute("data-frame", lastFrame(page));
+    await expect(heading(page)).toHaveCSS("opacity", "1");
+    await expect(page.locator(".hero-scrim")).toHaveCSS("opacity", "1");
+    await expect(action(page)).toBeVisible();
+    await expect(root(page)).toHaveAttribute("data-over-hero", "");
+
+    await scrollHero(page, 0);
+    await expect(canvas(page)).toHaveAttribute("data-frame", "0");
+    await expect(heading(page)).toHaveCSS("opacity", "0");
+    await expect(opening).toHaveCSS("opacity", "1");
+  });
+
+  test("the header is its usual bar again below the hero", async ({ page }) => {
+    await page.goto("/");
+    await expect(root(page)).toHaveAttribute("data-over-hero", "");
+
+    await page.locator("#ways-to-fly").scrollIntoViewIfNeeded();
+    await expect(root(page)).not.toHaveAttribute("data-over-hero");
+    expect(await headerGlass(page)).not.toBe("rgba(0, 0, 0, 0)");
+
+    await scrollTo(page, 0);
+    await expect(root(page)).toHaveAttribute("data-over-hero", "");
+  });
+
+  test("the sky drifts only while the page rests at the top", async ({
     page,
   }) => {
     await page.goto("/");
-    await expect(page.locator("html")).toHaveAttribute("data-intro-seen", "");
+    const media = page.locator(".hero-media");
+    await expect(media).toHaveCSS("animation-name", "hero-drift");
 
-    await page.reload();
-    await expect(curtain(page)).toBeHidden();
-    await expect(page.locator("html")).toHaveAttribute("data-intro-seen", "");
+    await scrollHero(page, 0.2);
+    await expect(media).toHaveCSS("animation-name", "none");
+    await expect(media).toHaveCSS("transform", "none");
+
+    await scrollHero(page, 0);
+    await expect(media).toHaveCSS("animation-name", "hero-drift");
   });
 
-  test("arriving from another page plays it once, and a reload does not repeat it", async ({
+  test("a keyboard that reaches the button early is taken to it", async ({
+    page,
+  }) => {
+    await page.goto("/");
+    await expect(canvas(page)).toHaveAttribute("data-frame", "0");
+
+    await action(page).focus();
+    await expect(action(page).locator("xpath=ancestor::div[1]")).toHaveCSS(
+      "opacity",
+      "1",
+    );
+    await expect(action(page)).toBeFocused();
+    const gap = await track(page).evaluate(
+      (el) => el.getBoundingClientRect().bottom - window.innerHeight,
+    );
+    expect(Math.abs(gap)).toBeLessThanOrEqual(1);
+  });
+
+  test("arriving by a link from another page starts the film too", async ({
     page,
   }) => {
     await page.goto("/legal/image-credits");
     await page.getByRole("link", { name: "Flyviman home" }).click();
-    await expect(page.getByRole("heading", { level: 1 })).toHaveText(
-      /Your trusted partner/,
-    );
-    await expect(page.locator("html")).toHaveAttribute("data-intro-seen", "");
 
-    await page.reload();
-    // Set by the inline script before the first paint, from session storage.
-    expect(
-      await page.evaluate(() => sessionStorage.getItem("flyviman-intro")),
-    ).toBe("1");
-    await expect(curtain(page)).toBeHidden();
+    await expect(root(page)).toHaveAttribute("data-hero-film", "");
+    await expect(canvas(page)).toHaveAttribute("data-frame", "0");
+
+    // And leaving the home page gives the header back.
+    await page.goBack();
+    await expect(
+      page.getByRole("heading", { level: 1, name: "Image credits" }),
+    ).toBeVisible();
+    await expect(root(page)).not.toHaveAttribute("data-over-hero");
+    await expect(root(page)).not.toHaveAttribute("data-hero-film");
   });
 
-  test("the headline is one sentence to a screen reader", async ({ page }) => {
-    await page.goto("/");
-    const heading = page.getByRole("heading", { level: 1 });
+  async function expectStill(page: Page) {
+    await expect(root(page)).not.toHaveAttribute("data-hero-film");
+    expect(await screens(page)).toBe(1);
+    await expect(heading(page)).toBeVisible();
+    await expect(heading(page)).toHaveCSS("opacity", "1");
+    await expect(heading(page)).not.toHaveAttribute("style", /.+/);
+    await expect(action(page)).toBeVisible();
+    await expect(canvas(page)).toBeHidden();
+    await expect(page.getByText("Above it all")).toBeHidden();
+    // The cabin, not the sky.
+    await expect(page.locator(".hero-poster--last")).toBeVisible();
+    await expect(page.locator(".hero-poster--first")).toBeHidden();
+    await expect(page.locator(".hero-scrim")).toHaveCSS("opacity", "1");
+  }
 
-    await expect(heading).toHaveAccessibleName(
-      "Your trusted partner for every aviation decision",
-    );
-    await expect(heading.locator("[aria-hidden] .intro-word")).toHaveCount(7);
-  });
-
-  test("is absent under reduced motion, and the hero stays still", async ({
+  test("under reduced motion it is a still, one screen tall", async ({
     page,
   }) => {
     await page.emulateMedia({ reducedMotion: "reduce" });
     await page.goto("/");
+    await page.waitForLoadState("networkidle");
 
-    await expect(curtain(page)).toBeHidden();
-    await expect(page.locator(".hero-glint")).toBeHidden();
-    await expect(page.locator(".hero-drift")).toHaveCSS(
+    await expectStill(page);
+    await expect(page.locator(".hero-media")).toHaveCSS(
+      "animation-name",
+      "none",
+    );
+  });
+
+  test("on a data-saver connection it is a still, and no frame is fetched", async ({
+    page,
+  }) => {
+    const frames: string[] = [];
+    page.on("request", (request) => {
+      if (/\/hero\/.*\/frame-/.test(request.url())) frames.push(request.url());
+    });
+    await page.addInitScript(() => {
+      Object.defineProperty(navigator, "connection", {
+        value: { saveData: true },
+        configurable: true,
+      });
+    });
+    await page.goto("/");
+    await page.waitForLoadState("networkidle");
+
+    await expectStill(page);
+    expect(frames).toHaveLength(0);
+  });
+
+  test("the other marketing pages keep their photograph's slow drift", async ({
+    page,
+  }) => {
+    await page.goto("/about");
+    await expect(page.locator(".page-hero-drift")).toHaveCSS(
+      "animation-name",
+      "page-hero-drift",
+    );
+    await expect(root(page)).not.toHaveAttribute("data-over-hero");
+
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await expect(page.locator(".page-hero-drift")).toHaveCSS(
       "animation-name",
       "none",
     );
@@ -235,12 +362,8 @@ test.describe("home page intro", () => {
     const page = await context.newPage();
     await page.goto("/");
 
-    await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+    await expectStill(page);
     await expect(page.locator('[data-reveal="waiting"]')).toHaveCount(0);
-    // The curtain's animation ends by itself, clipped away to nothing.
-    await expect
-      .poll(() => curtain(page).evaluate((el) => getComputedStyle(el).clipPath))
-      .toBe("inset(50% 0px)");
     await page
       .getByRole("heading", {
         level: 3,
@@ -311,22 +434,6 @@ test.describe("scroll-linked motion", () => {
 
     await scrollTo(page, 0);
     await expect(wordmark(page)).toHaveCSS("opacity", "0.2");
-  });
-
-  test("the hero's headline lifts as it scrolls away, and its action stays legible", async ({
-    page,
-  }) => {
-    await page.goto("/");
-    const block = page
-      .getByRole("heading", { level: 1 })
-      .locator("xpath=ancestor::div[1]");
-    await expect(wordmark(page)).toHaveCSS("opacity", "0.2");
-    await expect(block).toHaveCSS("opacity", "1");
-
-    await scrollTo(page, 5000);
-    await expect(block).toHaveCSS("opacity", "0.6");
-    await scrollTo(page, 0);
-    await expect(block).toHaveCSS("opacity", "1");
   });
 
   test("with reduced motion nothing follows the scroll", async ({ page }) => {

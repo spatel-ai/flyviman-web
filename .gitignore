@@ -42,3 +42,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# raw media; the site ships the frames extracted from it (scripts/extract-hero-frames.mjs)
+/media-src/
