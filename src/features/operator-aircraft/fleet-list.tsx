@@ -11,12 +11,16 @@ import { apiFetch } from "@/lib/api/client";
 import { messageFor } from "@/lib/api/messages";
 import { queryKeys } from "@/lib/api/query-keys";
 import type { Schemas } from "@/lib/api/types";
-import { useOperatorApproved } from "@/lib/operator";
+import { useOperatorAccess, useOperatorApproved } from "@/lib/operator";
+import { isOperatorAdmin } from "@/lib/operator-access";
 
 type Summary = Schemas["AircraftSummaryResponseDto"];
 
 export function FleetList() {
   const approved = useOperatorApproved();
+  // Only administrators add aircraft; staff see those assigned to them.
+  const access = useOperatorAccess();
+  const admin = isOperatorAdmin(access);
   const fleet = useQuery({
     queryKey: queryKeys.operatorAircraft,
     queryFn: () => apiFetch<Summary[]>("operator/aircraft"),
@@ -36,7 +40,7 @@ export function FleetList() {
   const aircraft = fleet.data.data;
   return (
     <div className="mt-6 flex flex-col gap-4">
-      {approved === false ? (
+      {access && !admin ? null : approved === false ? (
         <p className="text-body-sm text-muted">
           Your organisation is not approved at the moment, so you cannot add
           aircraft. You can still take an aircraft out of service.
@@ -49,10 +53,17 @@ export function FleetList() {
         </div>
       ) : null}
       {aircraft.length === 0 ? (
-        <EmptyState
-          title="No aircraft yet"
-          description="Add your first aircraft, then submit it for review."
-        />
+        access && !admin ? (
+          <EmptyState
+            title="No aircraft assigned to you yet"
+            description="Your administrator chooses which aircraft you manage."
+          />
+        ) : (
+          <EmptyState
+            title="No aircraft yet"
+            description="Add your first aircraft, then submit it for review."
+          />
+        )
       ) : (
         <ul className="flex flex-col gap-3">
           {aircraft.map((item) => (

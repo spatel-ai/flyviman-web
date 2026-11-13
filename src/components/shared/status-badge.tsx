@@ -7,7 +7,8 @@ export type StatusKind =
   | "document"
   | "user"
   | "aircraft"
-  | "availability";
+  | "availability"
+  | "staff";
 
 export type BookingStatus =
   | "REQUESTED"
@@ -52,6 +53,9 @@ export type AircraftAvailabilityStatus =
   "AVAILABLE" | "UNAVAILABLE" | "MAINTENANCE";
 
 export type UserStatus = "PENDING_VERIFICATION" | "ACTIVE" | "SUSPENDED";
+
+/** An operator's staff member, as the team page shows them. */
+export type StaffStatus = "INVITED" | "ACTIVE" | "SUSPENDED";
 
 interface Presentation {
   label: string;
@@ -115,6 +119,12 @@ const USER: Record<UserStatus, Presentation> = {
   SUSPENDED: { label: "Suspended", tone: "danger" },
 };
 
+const STAFF: Record<StaffStatus, Presentation> = {
+  INVITED: { label: "Invited", tone: "warning" },
+  ACTIVE: { label: "Active", tone: "success" },
+  SUSPENDED: { label: "Suspended", tone: "danger" },
+};
+
 const PRESENTATION: Record<StatusKind, Record<string, Presentation>> = {
   booking: BOOKING,
   payment: PAYMENT,
@@ -123,6 +133,7 @@ const PRESENTATION: Record<StatusKind, Record<string, Presentation>> = {
   user: USER,
   aircraft: AIRCRAFT,
   availability: AVAILABILITY,
+  staff: STAFF,
 };
 
 export interface StatusBadgeProps {

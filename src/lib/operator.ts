@@ -4,6 +4,16 @@ import { useQuery } from "@tanstack/react-query";
 import { apiFetch } from "@/lib/api/client";
 import { queryKeys } from "@/lib/api/query-keys";
 import type { Schemas } from "@/lib/api/types";
+import type { OperatorAccess } from "@/lib/operator-access";
+
+type Profile = Schemas["OperatorProfileWithAccessDto"];
+
+function useOperatorProfile() {
+  return useQuery({
+    queryKey: queryKeys.operatorProfile,
+    queryFn: () => apiFetch<Profile>("operator/profile"),
+  });
+}
 
 /**
  * Whether the operator may add to its fleet. A suspended operator still sees
@@ -11,10 +21,15 @@ import type { Schemas } from "@/lib/api/types";
  * (D-058), so the pages do not offer them. Undefined while loading.
  */
 export function useOperatorApproved(): boolean | undefined {
-  const profile = useQuery({
-    queryKey: queryKeys.operatorProfile,
-    queryFn: () =>
-      apiFetch<Schemas["OperatorProfileResponseDto"]>("operator/profile"),
-  });
+  const profile = useOperatorProfile();
   return profile.data ? profile.data.data.status === "APPROVED" : undefined;
+}
+
+/**
+ * What the signed-in user may do in the organisation (D-049, D-068).
+ * Undefined while loading; the helpers in lib/operator-access treat that as
+ * "nothing", so actions appear only once permissions are known.
+ */
+export function useOperatorAccess(): OperatorAccess | undefined {
+  return useOperatorProfile().data?.data.access;
 }

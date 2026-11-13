@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { proxyTarget } from "./proxy-target";
 
 const schema = z.object({
   /** Base URL of flyviman-api including the version prefix, no trailing slash. */
@@ -23,6 +24,13 @@ export const env = schema.parse({
  * than looping through its own public address. Not a secret, but server
  * only: in the browser bundle it is always NEXT_PUBLIC_API_URL.
  */
-export const serverApiUrl = process.env.API_PROXY_TARGET
-  ? `${process.env.API_PROXY_TARGET.replace(/\/+$/, "")}/api/v1`
+const target =
+  typeof window === "undefined"
+    ? proxyTarget(
+        process.env.API_PROXY_TARGET,
+        process.env.NODE_ENV === "production",
+      )
+    : undefined;
+export const serverApiUrl = target
+  ? `${target}/api/v1`
   : env.NEXT_PUBLIC_API_URL;

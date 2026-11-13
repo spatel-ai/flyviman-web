@@ -20,7 +20,8 @@ import {
   formatDay,
   missingLabel,
 } from "@/lib/format/aircraft";
-import { useOperatorApproved } from "@/lib/operator";
+import { useOperatorAccess, useOperatorApproved } from "@/lib/operator";
+import { can } from "@/lib/operator-access";
 import { AircraftDetailsDialog } from "./aircraft-details-dialog";
 import { AircraftPhotos } from "./aircraft-photos";
 import { AvailabilityStatusControl } from "./availability-status-control";
@@ -34,6 +35,11 @@ const DOCUMENT_TYPES = Object.entries(AIRCRAFT_DOCUMENT_LABELS).map(
 
 export function AircraftEditor({ id }: { id: string }) {
   const approved = useOperatorApproved();
+  // Staff edit only with "manage aircraft" and see the calendar only with
+  // "manage availability"; grounding needs either (D-068).
+  const access = useOperatorAccess();
+  const managesAircraft = can(access, "MANAGE_AIRCRAFT", id);
+  const managesTime = can(access, "MANAGE_AVAILABILITY", id);
   const queryClient = useQueryClient();
   // The id comes from the URL; encode it so it can only name one aircraft.
   const base = `operator/aircraft/${encodeURIComponent(id)}`;
@@ -74,8 +80,8 @@ export function AircraftEditor({ id }: { id: string }) {
   const frozen =
     item.listingStatus === "PENDING_REVIEW" ||
     item.listingStatus === "SUSPENDED";
-  const canAdd = !frozen && approved === true;
-  const canRemove = !frozen;
+  const canAdd = !frozen && approved === true && managesAircraft;
+  const canRemove = !frozen && managesAircraft;
   const locked = !canAdd;
   // A verified document stays until the listing is a draft or rejected
   // again; on a live listing it is replaced by uploading a new copy.
@@ -165,12 +171,14 @@ export function AircraftEditor({ id }: { id: string }) {
           {item.homeBase ? ` · based at ${item.homeBase.name}` : ""}
         </p>
         <div className="mt-4 flex flex-wrap gap-3">
-          <Link
-            href={`/operator/availability/${item.id}`}
-            className={buttonClasses({ variant: "secondary", size: "sm" })}
-          >
-            Calendar
-          </Link>
+          {managesTime ? (
+            <Link
+              href={`/operator/availability/${item.id}`}
+              className={buttonClasses({ variant: "secondary", size: "sm" })}
+            >
+              Calendar
+            </Link>
+          ) : null}
           {canAdd ? (
             <Button
               variant="secondary"

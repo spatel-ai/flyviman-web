@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { proxyTarget } from "./src/lib/proxy-target";
 
 /**
  * Sent with every response. The pages hold account and compliance data, so
@@ -34,7 +35,10 @@ const SECURITY_HEADERS = [
  * session cookies back. Proxying `/api/v1` keeps everything on one origin.
  * Unset, nothing is proxied and the browser calls NEXT_PUBLIC_API_URL itself.
  */
-const API_PROXY_TARGET = process.env.API_PROXY_TARGET?.replace(/\/+$/, "");
+const API_PROXY_TARGET = proxyTarget(
+  process.env.API_PROXY_TARGET,
+  process.env.NODE_ENV === "production",
+);
 
 /** Pages whose address carries a single-use token or attempt ID. */
 const NO_REFERRER = [{ key: "Referrer-Policy", value: "no-referrer" }];

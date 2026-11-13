@@ -230,3 +230,29 @@ export async function approvedAircraft(page: Page, browser: Browser) {
   await staff.context.close();
   return { id, registration };
 }
+
+/** A draft aircraft for the operator signed in on `page`. */
+export async function addDraftAircraft(
+  page: Page,
+): Promise<{ id: string; registration: string }> {
+  const locations = await page.request.get(`${API_URL}locations`, {
+    params: { q: "GOI", pageSize: 1 },
+  });
+  const homeBaseId = (await locations.json()).data[0].id as string;
+  const registration = `VT-${randomUUID().slice(0, 13).toUpperCase()}`;
+  const created = await page.request.post(`${API_URL}operator/aircraft`, {
+    headers: await csrf(page),
+    data: {
+      registration,
+      manufacturer: "Bell",
+      model: "407",
+      category: "HELICOPTER",
+      wingType: "HELICOPTER",
+      passengerCapacity: 6,
+      rangeKm: 600,
+      homeBaseId,
+    },
+  });
+  expect(created.status()).toBe(201);
+  return { id: (await created.json()).data.id as string, registration };
+}

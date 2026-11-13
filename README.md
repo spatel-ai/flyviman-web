@@ -28,6 +28,15 @@ npm run test:e2e                  # browser tests (Playwright)
 npm run build
 ```
 
+## What is built
+
+- **Customer site:** home page with the route story, registration and sign-in (email or mobile code), account, saved passengers, notifications, policies.
+- **Operator portal (`/operator`):** onboarding and documents, fleet (add, edit, photos, documents, submit for review), availability (fleet timeline and aircraft calendar), and the team page to invite and manage staff. Staff see only the aircraft and actions their permissions allow.
+- **Admin portal (`/admin`):** operator review, aircraft review, locations, users and staff accounts.
+- **Not yet:** search and booking, payments, empty legs, air ambulance.
+
+Page map and design rules: `../docs/frontend/frontend-design.md` and `../docs/frontend/design-system.md`. Progress: `../docs/progress.md`.
+
 ## Deployment
 
 Hosted on Vercel, with `API_PROXY_TARGET` pointing at the API on Render so the browser sees one origin. Steps and variables: `../docs/deployment.md`.

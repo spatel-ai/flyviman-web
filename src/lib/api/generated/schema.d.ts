@@ -439,7 +439,10 @@ export interface paths {
       path?: never;
       cookie?: never;
     };
-    /** The operator organisation and its review status */
+    /**
+     * The operator organisation and its review status
+     * @description Also says what the caller may do in it (`access`), so the portal shows staff only what they can use.
+     */
     get: operations["OperatorController_profile"];
     put?: never;
     post?: never;
@@ -509,6 +512,51 @@ export interface paths {
     options?: never;
     head?: never;
     patch?: never;
+    trace?: never;
+  };
+  "/api/v1/operator/staff": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** List the operator's staff */
+    get: operations["OperatorStaffController_list"];
+    put?: never;
+    /**
+     * Invite a staff member
+     * @description Emails a single-use link (72 hours) to choose a password. Posting again for an invitation not yet accepted re-sends it and applies the permissions given. Needs an approved operator; at most 20 invitations an hour.
+     */
+    post: operations["OperatorStaffController_invite"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/operator/staff/{id}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    /**
+     * Remove a staff member
+     * @description Ends their membership, suspends the account and signs them out. Inviting the address again brings it back.
+     */
+    delete: operations["OperatorStaffController_remove"];
+    options?: never;
+    head?: never;
+    /**
+     * Change a staff member's permissions, or suspend or reinstate them
+     * @description Permission changes apply on their next request. Suspending needs a reason and signs them out everywhere.
+     */
+    patch: operations["OperatorStaffController_update"];
     trace?: never;
   };
   "/api/v1/admin/operators": {
@@ -1486,6 +1534,63 @@ export interface components {
       | "HELICOPTER"
       | "EMPTY_LEG"
       | "AIR_AMBULANCE";
+    /** @enum {string} */
+    StaffCapability: "MANAGE_AIRCRAFT" | "MANAGE_AVAILABILITY";
+    OperatorAccessDto: {
+      /** @enum {string} */
+      role: "OPERATOR_ADMIN" | "OPERATOR_STAFF";
+      capabilities: components["schemas"]["StaffCapability"][];
+      allAircraft: boolean;
+      /** @description Assigned aircraft; empty when allAircraft is true. */
+      aircraftIds: string[];
+    };
+    OperatorProfileWithAccessDto: {
+      /** Format: uuid */
+      id: string;
+      status: components["schemas"]["OperatorStatus"];
+      legalName: string;
+      tradingName: string | null;
+      registrationNumber: string | null;
+      taxNumber: string | null;
+      businessAddress: components["schemas"]["AddressDto"] | null;
+      billingAddress: components["schemas"]["AddressDto"] | null;
+      contactName: string;
+      contactEmail: string;
+      contactPhone: string | null;
+      serviceCategories: components["schemas"]["ServiceCategory"][];
+      operatingRegions: string[];
+      /** Format: date-time */
+      submittedAt: string | null;
+      /** Format: date-time */
+      reviewedAt: string | null;
+      /** @description The reason given when the application was rejected or suspended. */
+      reviewNote: string | null;
+      /** @description What is still needed before the application can be submitted. Empty when it is complete. */
+      missing: string[];
+      access: components["schemas"]["OperatorAccessDto"];
+    };
+    UpdateOperatorProfileDto: {
+      legalName?: string;
+      tradingName?: string | null;
+      registrationNumber?: string | null;
+      /** @description GSTIN. */
+      taxNumber?: string | null;
+      businessAddress?: components["schemas"]["AddressDto"] | null;
+      billingAddress?: components["schemas"]["AddressDto"] | null;
+      contactName?: string;
+      contactEmail?: string;
+      contactPhone?: string | null;
+      serviceCategories?: (
+        "PRIVATE_CHARTER" | "HELICOPTER" | "EMPTY_LEG" | "AIR_AMBULANCE"
+      )[];
+      /**
+       * @example [
+       *       "Maharashtra",
+       *       "Goa"
+       *     ]
+       */
+      operatingRegions?: string[];
+    };
     OperatorProfileResponseDto: {
       /** Format: uuid */
       id: string;
@@ -1509,28 +1614,6 @@ export interface components {
       reviewNote: string | null;
       /** @description What is still needed before the application can be submitted. Empty when it is complete. */
       missing: string[];
-    };
-    UpdateOperatorProfileDto: {
-      legalName?: string;
-      tradingName?: string | null;
-      registrationNumber?: string | null;
-      /** @description GSTIN. */
-      taxNumber?: string | null;
-      businessAddress?: components["schemas"]["AddressDto"] | null;
-      billingAddress?: components["schemas"]["AddressDto"] | null;
-      contactName?: string;
-      contactEmail?: string;
-      contactPhone?: string | null;
-      serviceCategories?: (
-        "PRIVATE_CHARTER" | "HELICOPTER" | "EMPTY_LEG" | "AIR_AMBULANCE"
-      )[];
-      /**
-       * @example [
-       *       "Maharashtra",
-       *       "Goa"
-       *     ]
-       */
-      operatingRegions?: string[];
     };
     /** @enum {string} */
     OperatorDocumentType: "AOC" | "INSURANCE" | "REGISTRATION" | "OTHER";
@@ -1566,6 +1649,49 @@ export interface components {
       issuedAt?: string | null;
       /** Format: date */
       expiresAt?: string | null;
+    };
+    /** @enum {string} */
+    StaffStatus: "INVITED" | "ACTIVE" | "SUSPENDED";
+    StaffMemberDto: {
+      /**
+       * Format: uuid
+       * @description The membership id.
+       */
+      id: string;
+      email: string | null;
+      status: components["schemas"]["StaffStatus"];
+      capabilities: components["schemas"]["StaffCapability"][];
+      allAircraft: boolean;
+      aircraftIds: string[];
+      /** Format: date-time */
+      invitedAt: string;
+      /** Format: date-time */
+      lastLoginAt: string | null;
+    };
+    InviteStaffDto: {
+      capabilities: components["schemas"]["StaffCapability"][];
+      /** @description Every aircraft of the operator, including ones added later. When true, aircraftIds is ignored. */
+      allAircraft: boolean;
+      /** @description Assigned aircraft, each one of this operator's. At least one unless allAircraft is true. */
+      aircraftIds: string[];
+      /** @example dispatch@example.com */
+      email: string;
+    };
+    UpdateStaffDto: {
+      capabilities?: components["schemas"]["StaffCapability"][];
+      allAircraft?: boolean;
+      aircraftIds?: string[];
+      /**
+       * @description SUSPENDED signs the person out at once; ACTIVE reinstates.
+       * @enum {string}
+       */
+      status?: "ACTIVE" | "SUSPENDED";
+      /** @description Required when suspending. Audited. */
+      reason?: string;
+    };
+    RemoveStaffDto: {
+      /** @description Audited. */
+      reason: string;
     };
     AdminOperatorSummaryDto: {
       /** Format: uuid */
@@ -2690,7 +2816,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/json": components["schemas"]["OperatorProfileResponseDto"];
+          "application/json": components["schemas"]["OperatorProfileWithAccessDto"];
         };
       };
     };
@@ -2795,6 +2921,96 @@ export interface operations {
           [name: string]: unknown;
         };
         content?: never;
+      };
+    };
+  };
+  OperatorStaffController_list: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["StaffMemberDto"][];
+        };
+      };
+    };
+  };
+  OperatorStaffController_invite: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["InviteStaffDto"];
+      };
+    };
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["StaffMemberDto"];
+        };
+      };
+    };
+  };
+  OperatorStaffController_remove: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["RemoveStaffDto"];
+      };
+    };
+    responses: {
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  OperatorStaffController_update: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["UpdateStaffDto"];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["StaffMemberDto"];
+        };
       };
     };
   };
