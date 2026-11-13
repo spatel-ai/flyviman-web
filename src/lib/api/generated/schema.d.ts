@@ -1250,6 +1250,26 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/admin/documents/expiring": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Certificates and insurance nearing expiry, or expired
+     * @description The current copy of each operator and aircraft document (a renewal replaces the copy it renews), for live operators and listings, soonest first.
+     */
+    get: operations["AdminComplianceController_expiring"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/v1/admin/audit-logs": {
     parameters: {
       query?: never;
@@ -1917,6 +1937,8 @@ export interface components {
       reviewNote?: string | null;
       /** @description Missing fields for submit. */
       missing: string[];
+      /** @description Why search (M4) would not offer this aircraft; empty when it would. `listingNotApproved`, `operatorNotApproved`, `notAvailable`, then the `missing` codes, including `document:<TYPE>` for a required document that is absent or expired. */
+      searchBlockers: string[];
       media: components["schemas"]["AircraftMediaResponseDto"][];
       documents: components["schemas"]["AircraftDocumentResponseDto"][];
       createdAt: string;
@@ -2008,6 +2030,8 @@ export interface components {
       reviewNote?: string | null;
       /** @description Missing fields for submit. */
       missing: string[];
+      /** @description Why search (M4) would not offer this aircraft; empty when it would. `listingNotApproved`, `operatorNotApproved`, `notAvailable`, then the `missing` codes, including `document:<TYPE>` for a required document that is absent or expired. */
+      searchBlockers: string[];
       media: components["schemas"]["AircraftMediaResponseDto"][];
       documents: components["schemas"]["AircraftDocumentResponseDto"][];
       createdAt: string;
@@ -2240,6 +2264,29 @@ export interface components {
       /** @description Required for a soft hold. When the hold lapses. */
       expiresAt?: string;
       note?: string;
+    };
+    /** @enum {string} */
+    ExpiryDocumentKind: "OPERATOR" | "AIRCRAFT";
+    ExpiringDocumentDto: {
+      kind: components["schemas"]["ExpiryDocumentKind"];
+      /** Format: uuid */
+      documentId: string;
+      /** @description OperatorDocumentType for an operator document, AircraftDocumentType for an aircraft one. */
+      type: string;
+      /**
+       * Format: date
+       * @example 2026-12-01
+       */
+      expiresAt: string;
+      /** @description Days from today (India); negative once expired. */
+      daysLeft: number;
+      verificationStatus: string;
+      /** Format: uuid */
+      operatorId: string;
+      operatorName: string;
+      /** Format: uuid */
+      aircraftId: string | null;
+      registration: string | null;
     };
     AuditLogResponseDto: {
       /** Format: uuid */
@@ -3982,6 +4029,31 @@ export interface operations {
           [name: string]: unknown;
         };
         content?: never;
+      };
+    };
+  };
+  AdminComplianceController_expiring: {
+    parameters: {
+      query?: {
+        page?: number;
+        pageSize?: number;
+        /** @description Documents expiring within this many days; expired ones are always included. */
+        withinDays?: number;
+        kind?: "OPERATOR" | "AIRCRAFT";
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ExpiringDocumentDto"][];
+        };
       };
     };
   };

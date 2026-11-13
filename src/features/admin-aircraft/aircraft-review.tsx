@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { ExpiryBadge } from "@/components/shared/expiry-badge";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -122,6 +123,7 @@ export function AircraftReview({ id }: { id: string }) {
                 kind="document"
                 status={document.verificationStatus}
               />
+              <ExpiryBadge expiresAt={document.expiresAt} />
               {document.verificationStatus === "VERIFIED" ? null : (
                 <Button
                   variant="secondary"

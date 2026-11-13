@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { useToast } from "@/components/ui/toast";
 import { apiFetch } from "@/lib/api/client";
+import { indiaToday } from "@/lib/format/expiry";
 import { queryKeys } from "@/lib/api/query-keys";
 import type { Schemas } from "@/lib/api/types";
 import { FormAlert } from "@/components/shared/form-alert";
@@ -76,6 +77,7 @@ export function AddDocumentForm() {
   const [expiresAt, setExpiresAt] = useState("");
   const [typeError, setTypeError] = useState<string | null>(null);
   const [fileError, setFileError] = useState<string | null>(null);
+  const [expiryError, setExpiryError] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
   const [step, setStep] = useState<Step>("idle");
   // Remounts the file input, the only way to clear a chosen file.
@@ -88,9 +90,14 @@ export function AddDocumentForm() {
 
     const missingType = type === "";
     const problem = file ? fileProblem(file) : "Choose a file to upload.";
+    // The API refuses an expiry in the past; say so before uploading.
+    const pastExpiry = expiresAt !== "" && expiresAt < indiaToday();
     setTypeError(missingType ? "Choose the type of document." : null);
     setFileError(problem);
-    if (missingType || !file || problem) return;
+    setExpiryError(
+      pastExpiry ? "This date has passed. Upload the current copy." : null,
+    );
+    if (missingType || !file || problem || pastExpiry) return;
 
     try {
       setStep("preparing");
@@ -173,9 +180,15 @@ export function AddDocumentForm() {
         <Input
           label="Expiry date (optional)"
           type="date"
+          min={indiaToday()}
           value={expiresAt}
-          onChange={(event) => setExpiresAt(event.target.value)}
+          onChange={(event) => {
+            setExpiresAt(event.target.value);
+            setExpiryError(null);
+          }}
           disabled={busy}
+          error={expiryError ?? undefined}
+          hint="We remind you 30 days, 7 days and on the day before it lapses."
         />
       </div>
       <Input

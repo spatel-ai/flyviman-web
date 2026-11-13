@@ -3,6 +3,7 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { useState, type FormEvent } from "react";
+import { ExpiryBadge } from "@/components/shared/expiry-badge";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { Button, buttonClasses } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -19,7 +20,9 @@ import {
   aircraftDocumentLabel,
   formatDay,
   missingLabel,
+  searchBlockerLabel,
 } from "@/lib/format/aircraft";
+import { indiaToday } from "@/lib/format/expiry";
 import { useOperatorAccess, useOperatorApproved } from "@/lib/operator";
 import { can } from "@/lib/operator-access";
 import { AircraftDetailsDialog } from "./aircraft-details-dialog";
@@ -165,6 +168,23 @@ export function AircraftEditor({ id }: { id: string }) {
           <StatusBadge kind="aircraft" status={item.listingStatus} />
           <StatusBadge kind="availability" status={item.availabilityStatus} />
         </div>
+        {item.listingStatus === "APPROVED" && item.searchBlockers.length > 0 ? (
+          <Card
+            variant="flat"
+            role="status"
+            className="mt-4 border border-warning/40"
+          >
+            <h2 className="text-title">Not offered to customers</h2>
+            <p className="mt-1 text-body-sm text-muted">
+              Customers will not see this aircraft until this is fixed:
+            </p>
+            <ul className="mt-2 list-disc pl-5 text-body-sm">
+              {item.searchBlockers.map((code) => (
+                <li key={code}>{searchBlockerLabel(code)}</li>
+              ))}
+            </ul>
+          </Card>
+        ) : null}
         <p className="mt-2 text-muted">
           {item.manufacturer} {item.model} · {item.passengerCapacity} passengers
           · {item.rangeKm ?? "Range not set"} km
@@ -233,6 +253,7 @@ export function AircraftEditor({ id }: { id: string }) {
                 kind="document"
                 status={document.verificationStatus}
               />
+              <ExpiryBadge expiresAt={document.expiresAt} />
               {mayRemoveDocument(document) ? (
                 <Button
                   variant="ghost"
@@ -253,7 +274,14 @@ export function AircraftEditor({ id }: { id: string }) {
             className="mt-4 flex max-w-lg flex-col gap-4"
           >
             <DocumentTypeField />
-            <Input label="Expiry date" name="expiresAt" type="date" required />
+            <Input
+              label="Expiry date"
+              name="expiresAt"
+              type="date"
+              min={indiaToday()}
+              hint="Today or later. We remind you 30 days, 7 days and on the day before it lapses."
+              required
+            />
             <Input
               label="File"
               name="file"

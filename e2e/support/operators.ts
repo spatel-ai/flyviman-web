@@ -81,7 +81,7 @@ export async function completeApplication(page: Page) {
 
 export async function asStaff(
   browser: Browser,
-  account: "ops" | "superAdmin" = "ops",
+  account: "ops" | "superAdmin" | "finance" = "ops",
 ) {
   const context = await browser.newContext();
   const page = await context.newPage();
@@ -132,17 +132,18 @@ export async function approvedOperator(page: Page, browser: Browser) {
 }
 
 /** The CSRF header for API calls made with a page's own session. */
-async function csrf(page: Page): Promise<Record<string, string>> {
+export async function csrf(page: Page): Promise<Record<string, string>> {
   const cookies = await page.context().cookies();
   const token = cookies.find((cookie) => cookie.name === "csrf_token")?.value;
   return { "X-CSRF-Token": token ?? "" };
 }
 
-async function uploadAircraftDocument(
+export async function uploadAircraftDocument(
   page: Page,
   headers: Record<string, string>,
   aircraftId: string,
   type: string,
+  expiresAt = "2030-12-31",
 ) {
   const presign = await page.request.post(`${API_URL}uploads/presign`, {
     headers,
@@ -163,7 +164,7 @@ async function uploadAircraftDocument(
   expect(put.status()).toBe(200);
   const attach = await page.request.post(
     `${API_URL}operator/aircraft/${aircraftId}/documents`,
-    { headers, data: { type, fileId, expiresAt: "2030-12-31" } },
+    { headers, data: { type, fileId, expiresAt } },
   );
   expect(attach.status()).toBe(201);
 }

@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { useState } from "react";
 import { EmptyState } from "@/components/shared/empty-state";
+import { ExpiryBadge } from "@/components/shared/expiry-badge";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -415,6 +416,7 @@ function Documents({
                     kind="document"
                     status={document.verificationStatus}
                   />
+                  <ExpiryBadge expiresAt={document.expiresAt} />
                 </div>
                 <p className="wrap-break-word text-muted">
                   {document.fileName}

@@ -12,6 +12,8 @@ export const queryKeys = {
   adminOperator: (id: string) => ["admin", "operators", id] as const,
   adminUsers: (filter: object) => ["admin", "users", filter] as const,
   adminLocations: (filter: object) => ["admin", "locations", filter] as const,
+  adminExpiringDocuments: (filter: object) =>
+    ["admin", "documents", "expiring", filter] as const,
   operatorAircraft: ["operator", "aircraft"] as const,
   operatorAircraftDetail: (id: string) => ["operator", "aircraft", id] as const,
   /** Every aircraft in reach, for pickers (under the operatorAircraft prefix). */

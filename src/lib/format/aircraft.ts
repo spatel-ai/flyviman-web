@@ -25,6 +25,30 @@ export function missingLabel(code: string): string {
   return FIELD_LABELS[code] ?? code;
 }
 
+/**
+ * Why search would not offer an aircraft, in words (the API's
+ * `searchBlockers`, M3 step 8).
+ */
+export function searchBlockerLabel(code: string): string {
+  if (code.startsWith("document:")) {
+    return `${aircraftDocumentLabel(code.slice("document:".length))} is missing, not accepted or has expired`;
+  }
+  switch (code) {
+    case "listingNotApproved":
+      return "The listing is not approved";
+    case "operatorNotApproved":
+      return "Your organisation is not approved at the moment";
+    case "notAvailable":
+      return "The aircraft is marked unavailable or in maintenance";
+    case "homeBaseId":
+      return "No home base is set";
+    case "rangeKm":
+      return "No range is set";
+    default:
+      return code;
+  }
+}
+
 /** A date-only value ("2030-12-31") as "31 Dec 2030", without shifting the day. */
 export function formatDay(day: string): string {
   const date = new Date(`${day.slice(0, 10)}T00:00:00Z`);

@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { EmptyState } from "@/components/shared/empty-state";
+import { ExpiryBadge } from "@/components/shared/expiry-badge";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/dialog";
@@ -133,6 +134,7 @@ export function DocumentsSection({ editable }: { editable: boolean }) {
                       kind="document"
                       status={document.verificationStatus}
                     />
+                    <ExpiryBadge expiresAt={document.expiresAt} />
                   </div>
                   <p className="text-body-sm break-all text-muted">
                     {document.fileName}
