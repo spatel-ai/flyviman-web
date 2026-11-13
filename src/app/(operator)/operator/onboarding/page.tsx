@@ -8,9 +8,7 @@ export const metadata: Metadata = { title: "Company and documents" };
 
 export default async function OperatorOnboardingPage() {
   const { data: operator } =
-    await serverGet<Schemas["OperatorProfileWithAccessDto"]>(
-      "operator/profile",
-    );
+    await serverGet<Schemas["OperatorMeResponseDto"]>("operator/me");
   // Staff never edit the company or its documents (D-068); the API refuses.
   if (operator.access.role !== "OPERATOR_ADMIN") {
     return <AdministratorOnly title="Company and documents" />;

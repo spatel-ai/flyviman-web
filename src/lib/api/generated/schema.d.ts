@@ -432,6 +432,26 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/operator/me": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * The caller's organisation in brief, and what they may do in it
+     * @description For the portal: status, a display name and `access`. Staff use this; the full profile is for administrators (D-070).
+     */
+    get: operations["OperatorController_me"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/v1/operator/profile": {
     parameters: {
       query?: never;
@@ -441,7 +461,7 @@ export interface paths {
     };
     /**
      * The operator organisation and its review status
-     * @description Also says what the caller may do in it (`access`), so the portal shows staff only what they can use.
+     * @description Administrators only: it holds tax and registration numbers and the review note. Staff read `GET /operator/me` (D-070).
      */
     get: operations["OperatorController_profile"];
     put?: never;
@@ -1514,6 +1534,24 @@ export interface components {
     /** @enum {string} */
     OperatorStatus:
       "DRAFT" | "PENDING_REVIEW" | "APPROVED" | "REJECTED" | "SUSPENDED";
+    /** @enum {string} */
+    StaffCapability: "MANAGE_AIRCRAFT" | "MANAGE_AVAILABILITY";
+    OperatorAccessDto: {
+      /** @enum {string} */
+      role: "OPERATOR_ADMIN" | "OPERATOR_STAFF";
+      capabilities: components["schemas"]["StaffCapability"][];
+      allAircraft: boolean;
+      /** @description Assigned aircraft; empty when allAircraft is true. */
+      aircraftIds: string[];
+    };
+    OperatorMeResponseDto: {
+      /** Format: uuid */
+      operatorId: string;
+      status: components["schemas"]["OperatorStatus"];
+      /** @description Trading name, or the legal name if none. */
+      displayName: string;
+      access: components["schemas"]["OperatorAccessDto"];
+    };
     AddressDto: {
       line1: string;
       line2?: string | null;
@@ -1534,63 +1572,6 @@ export interface components {
       | "HELICOPTER"
       | "EMPTY_LEG"
       | "AIR_AMBULANCE";
-    /** @enum {string} */
-    StaffCapability: "MANAGE_AIRCRAFT" | "MANAGE_AVAILABILITY";
-    OperatorAccessDto: {
-      /** @enum {string} */
-      role: "OPERATOR_ADMIN" | "OPERATOR_STAFF";
-      capabilities: components["schemas"]["StaffCapability"][];
-      allAircraft: boolean;
-      /** @description Assigned aircraft; empty when allAircraft is true. */
-      aircraftIds: string[];
-    };
-    OperatorProfileWithAccessDto: {
-      /** Format: uuid */
-      id: string;
-      status: components["schemas"]["OperatorStatus"];
-      legalName: string;
-      tradingName: string | null;
-      registrationNumber: string | null;
-      taxNumber: string | null;
-      businessAddress: components["schemas"]["AddressDto"] | null;
-      billingAddress: components["schemas"]["AddressDto"] | null;
-      contactName: string;
-      contactEmail: string;
-      contactPhone: string | null;
-      serviceCategories: components["schemas"]["ServiceCategory"][];
-      operatingRegions: string[];
-      /** Format: date-time */
-      submittedAt: string | null;
-      /** Format: date-time */
-      reviewedAt: string | null;
-      /** @description The reason given when the application was rejected or suspended. */
-      reviewNote: string | null;
-      /** @description What is still needed before the application can be submitted. Empty when it is complete. */
-      missing: string[];
-      access: components["schemas"]["OperatorAccessDto"];
-    };
-    UpdateOperatorProfileDto: {
-      legalName?: string;
-      tradingName?: string | null;
-      registrationNumber?: string | null;
-      /** @description GSTIN. */
-      taxNumber?: string | null;
-      businessAddress?: components["schemas"]["AddressDto"] | null;
-      billingAddress?: components["schemas"]["AddressDto"] | null;
-      contactName?: string;
-      contactEmail?: string;
-      contactPhone?: string | null;
-      serviceCategories?: (
-        "PRIVATE_CHARTER" | "HELICOPTER" | "EMPTY_LEG" | "AIR_AMBULANCE"
-      )[];
-      /**
-       * @example [
-       *       "Maharashtra",
-       *       "Goa"
-       *     ]
-       */
-      operatingRegions?: string[];
-    };
     OperatorProfileResponseDto: {
       /** Format: uuid */
       id: string;
@@ -1614,6 +1595,28 @@ export interface components {
       reviewNote: string | null;
       /** @description What is still needed before the application can be submitted. Empty when it is complete. */
       missing: string[];
+    };
+    UpdateOperatorProfileDto: {
+      legalName?: string;
+      tradingName?: string | null;
+      registrationNumber?: string | null;
+      /** @description GSTIN. */
+      taxNumber?: string | null;
+      businessAddress?: components["schemas"]["AddressDto"] | null;
+      billingAddress?: components["schemas"]["AddressDto"] | null;
+      contactName?: string;
+      contactEmail?: string;
+      contactPhone?: string | null;
+      serviceCategories?: (
+        "PRIVATE_CHARTER" | "HELICOPTER" | "EMPTY_LEG" | "AIR_AMBULANCE"
+      )[];
+      /**
+       * @example [
+       *       "Maharashtra",
+       *       "Goa"
+       *     ]
+       */
+      operatingRegions?: string[];
     };
     /** @enum {string} */
     OperatorDocumentType: "AOC" | "INSURANCE" | "REGISTRATION" | "OTHER";
@@ -1686,7 +1689,7 @@ export interface components {
        * @enum {string}
        */
       status?: "ACTIVE" | "SUSPENDED";
-      /** @description Required when suspending. Audited. */
+      /** @description Required when suspending (at least 3 characters). Audited. */
       reason?: string;
     };
     RemoveStaffDto: {
@@ -2802,6 +2805,25 @@ export interface operations {
       };
     };
   };
+  OperatorController_me: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["OperatorMeResponseDto"];
+        };
+      };
+    };
+  };
   OperatorController_profile: {
     parameters: {
       query?: never;
@@ -2816,7 +2838,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/json": components["schemas"]["OperatorProfileWithAccessDto"];
+          "application/json": components["schemas"]["OperatorProfileResponseDto"];
         };
       };
     };

@@ -8,9 +8,7 @@ export const metadata: Metadata = { title: "Team" };
 
 export default async function OperatorTeamPage() {
   const { data: operator } =
-    await serverGet<Schemas["OperatorProfileWithAccessDto"]>(
-      "operator/profile",
-    );
+    await serverGet<Schemas["OperatorMeResponseDto"]>("operator/me");
   if (operator.access.role !== "OPERATOR_ADMIN") {
     return <AdministratorOnly title="Team" />;
   }

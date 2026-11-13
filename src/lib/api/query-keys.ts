@@ -5,6 +5,8 @@ export const queryKeys = {
   notifications: (page: number) => ["me", "notifications", page] as const,
   policy: (slug: string) => ["policy", slug] as const,
   operatorProfile: ["operator", "profile"] as const,
+  /** Under operatorProfile, so refreshing the profile refreshes this too. */
+  operatorMe: ["operator", "profile", "me"] as const,
   operatorDocuments: ["operator", "documents"] as const,
   adminOperators: (filter: object) => ["admin", "operators", filter] as const,
   adminOperator: (id: string) => ["admin", "operators", id] as const,

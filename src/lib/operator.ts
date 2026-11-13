@@ -6,12 +6,13 @@ import { queryKeys } from "@/lib/api/query-keys";
 import type { Schemas } from "@/lib/api/types";
 import type { OperatorAccess } from "@/lib/operator-access";
 
-type Profile = Schemas["OperatorProfileWithAccessDto"];
+/** The organisation in brief and the caller's access (D-070). */
+type Me = Schemas["OperatorMeResponseDto"];
 
 function useOperatorProfile() {
   return useQuery({
-    queryKey: queryKeys.operatorProfile,
-    queryFn: () => apiFetch<Profile>("operator/profile"),
+    queryKey: queryKeys.operatorMe,
+    queryFn: () => apiFetch<Me>("operator/me"),
   });
 }
 

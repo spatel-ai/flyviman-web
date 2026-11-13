@@ -5,7 +5,7 @@ import { serverGet } from "@/lib/auth/server-api";
 
 export default async function OperatorDashboardPage() {
   const { data: operator } =
-    await serverGet<Schemas["OperatorProfileResponseDto"]>("operator/profile");
+    await serverGet<Schemas["OperatorMeResponseDto"]>("operator/me");
   // The dashboard opens once the organisation is approved. Not redirect():
   // this page streams, and a streamed redirect reloads the destination a
   // moment later, wiping what the operator has started typing there.

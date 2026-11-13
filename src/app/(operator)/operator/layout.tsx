@@ -17,9 +17,7 @@ const OPERATOR: Role[] = ["OPERATOR_ADMIN", "OPERATOR_STAFF"];
 async function OperatorShell({ children }: { children: React.ReactNode }) {
   const session = await requireRole(OPERATOR, "/operator");
   const { data: operator } =
-    await serverGet<Schemas["OperatorProfileWithAccessDto"]>(
-      "operator/profile",
-    );
+    await serverGet<Schemas["OperatorMeResponseDto"]>("operator/me");
   // Add an item when its page ships (docs/frontend/frontend-design.md). Who
   // sees what: lib/operator-access.ts (D-058, D-068).
   const nav: NavItem[] = operatorNav(operator.status, operator.access);
@@ -28,7 +26,7 @@ async function OperatorShell({ children }: { children: React.ReactNode }) {
       surface="Operator"
       nav={nav}
       user={{
-        name: session.email ?? operator.contactName,
+        name: session.email ?? operator.displayName,
         role: session.role,
       }}
     >
