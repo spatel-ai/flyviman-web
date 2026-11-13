@@ -1270,6 +1270,26 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/enquiries": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Send a sales enquiry from the contact page
+     * @description Charter, aircraft sales or consultancy. Needs an email address or a phone number, or both. Operations are emailed; the answer is a reference and never repeats what was sent. Limited per caller (5 per 10 minutes by default; 429 `RATE_LIMITED`). A repeat with the same `Idempotency-Key` and body returns the first answer; with a different body, 409 `IDEMPOTENCY_CONFLICT`.
+     */
+    post: operations["EnquiriesController_create"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/v1/admin/audit-logs": {
     parameters: {
       query?: never;
@@ -2287,6 +2307,47 @@ export interface components {
       /** Format: uuid */
       aircraftId: string | null;
       registration: string | null;
+    };
+    /** @enum {string} */
+    EnquiryTopic:
+      | "GENERAL"
+      | "PRIVATE_CHARTER"
+      | "CELEBRITY_CHARTER"
+      | "ELECTION_CHARTER"
+      | "MARRIAGE_CHARTER"
+      | "PILGRIMAGE_CHARTER"
+      | "MEDICAL_CHARTER"
+      | "GROUP_CHARTER"
+      | "FLOWER_DROP_CHARTER"
+      | "AIRCRAFT_SALES"
+      | "CONSULTANCY";
+    CreateEnquiryDto: {
+      /** @example Asha Rao */
+      name: string;
+      /**
+       * @description Send this, `phone`, or both.
+       * @example asha@example.com
+       */
+      email?: string;
+      /**
+       * @description E.164. Send this, `email`, or both.
+       * @example +919876543210
+       */
+      phone?: string;
+      topic: components["schemas"]["EnquiryTopic"];
+      message: string;
+    };
+    EnquiryResponseDto: {
+      /**
+       * @description Quote it when following up.
+       * @example FLY-ENQ-7K2M9Q
+       */
+      reference: string;
+      /**
+       * Format: date-time
+       * @example 2026-11-13T09:30:00.000Z
+       */
+      receivedAt: string;
     };
     AuditLogResponseDto: {
       /** Format: uuid */
@@ -4053,6 +4114,32 @@ export interface operations {
         };
         content: {
           "application/json": components["schemas"]["ExpiringDocumentDto"][];
+        };
+      };
+    };
+  };
+  EnquiriesController_create: {
+    parameters: {
+      query?: never;
+      header: {
+        /** @description A UUID, new for each enquiry and reused on retry. */
+        "Idempotency-Key": string;
+      };
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["CreateEnquiryDto"];
+      };
+    };
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["EnquiryResponseDto"];
         };
       };
     };

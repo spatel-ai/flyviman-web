@@ -422,6 +422,193 @@ body {
 }
 
 /*
+ * Showpiece (level 5, components/motion/scroll-film.tsx, D-081). By default
+ * a plain section: the scenes are photographed cards in a row. With
+ * `data-film="on"` (set only on wide, tall screens with motion allowed,
+ * once GSAP has loaded) the section grows tall and its stage is held below
+ * the header while the scenes play one after another; vertical blinds in
+ * the page's colour close and reopen between them. Only transforms and the
+ * slit mask change. Never in print.
+ */
+:root {
+  /* Scroll length of one scene. (The number of blind strips is
+     FILM_BLINDS in scroll-film.tsx.) */
+  --film-scene: 90svh;
+}
+
+/* Printed as the plain section, whatever the film last wrote inline. */
+@media print {
+  .scroll-film__media,
+  .scroll-film__title,
+  .scroll-film__text {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
+
+.scroll-film__scenes {
+  display: grid;
+  gap: 1rem;
+  max-width: var(--container-wide);
+  margin-inline: auto;
+  padding-inline: 1rem;
+}
+
+@media (min-width: 48rem) {
+  .scroll-film__scenes {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    padding-inline: 1.5rem;
+  }
+}
+
+@media (min-width: 64rem) {
+  .scroll-film__scenes {
+    padding-inline: 2rem;
+  }
+}
+
+.scroll-film__frame {
+  position: relative;
+  aspect-ratio: 4 / 5;
+  overflow: hidden;
+  border-radius: var(--radius-xl);
+  background: var(--surface);
+}
+
+.scroll-film__media {
+  position: absolute;
+  inset: 0;
+}
+
+.scroll-film__copy {
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  padding: 4rem 1.5rem 1.5rem;
+  color: var(--color-on-photo);
+  /* Two layers of the scrim, so white titles stay legible on a light
+     photograph (a cream cabin). */
+  background:
+    linear-gradient(to top, var(--color-scrim) 40%, transparent),
+    linear-gradient(to top, var(--color-scrim), transparent);
+}
+
+.scroll-film__text {
+  margin-top: 0.5rem;
+}
+
+.scroll-film__link {
+  display: inline-flex;
+  min-height: 2.75rem;
+  align-items: center;
+  font-weight: 500;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.scroll-film__blinds,
+.scroll-film__markers {
+  display: none;
+}
+
+@media screen {
+  .scroll-film[data-film="on"] {
+    height: calc(var(--film-count) * var(--film-scene) + 100svh);
+  }
+
+  [data-film="on"] .scroll-film__stage {
+    position: sticky;
+    top: var(--header-height);
+    height: calc(100svh - var(--header-height));
+    overflow: hidden;
+  }
+
+  [data-film="on"] .scroll-film__scenes {
+    position: relative;
+    display: block;
+    height: 100%;
+    max-width: none;
+    padding: 0;
+  }
+
+  /* Scenes not on show are transparent and take no clicks, but stay in
+     the page for keyboards and screen readers (focus scrolls to them). */
+  [data-film="on"] .scroll-film__scene {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  [data-film="on"] .scroll-film__scene[data-film-active="true"] {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  [data-film="on"] .scroll-film__frame {
+    height: 100%;
+    aspect-ratio: auto;
+    border-radius: 0;
+  }
+
+  [data-film="on"] .scroll-film__copy {
+    padding: 8rem max(2rem, calc((100vw - var(--container-wide)) / 2 + 2rem))
+      5rem;
+  }
+
+  /* The title resolves through slits as --slit goes from 0% to 100%. */
+  [data-film="on"] .scroll-film__title {
+    margin-bottom: -0.16em;
+    padding-bottom: 0.16em;
+    mask-image: linear-gradient(
+      90deg,
+      #000 var(--slit),
+      transparent var(--slit)
+    );
+    mask-size: var(--slit-width) 100%;
+    mask-repeat: repeat;
+  }
+
+  [data-film="on"] .scroll-film__blinds {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    display: flex;
+    pointer-events: none;
+  }
+
+  .scroll-film__blind {
+    flex: 1;
+    border-inline: 1px solid color-mix(in srgb, var(--border) 60%, transparent);
+    background: var(--background);
+    transform: scaleX(0);
+  }
+
+  [data-film="on"] .scroll-film__markers {
+    position: absolute;
+    right: max(2rem, calc((100vw - var(--container-wide)) / 2 + 2rem));
+    bottom: 5.5rem;
+    /* Under the blinds, so they close over it with the scene. */
+    z-index: 0;
+    display: flex;
+    gap: 0.5rem;
+  }
+
+  .scroll-film__marker {
+    width: 2rem;
+    height: 2px;
+    border-radius: 999px;
+    /* The on-photo white, at 40%. */
+    background: rgb(255 255 255 / 0.4);
+    transition: background-color 250ms var(--ease-standard);
+  }
+
+  .scroll-film__marker[aria-current="step"] {
+    background: var(--color-on-photo);
+  }
+}
+
+/*
  * Questions and answers (features/home/faq.tsx), level 2: the answer fades
  * and rises 8 px as it opens; the mark turns from a plus into a minus.
  */

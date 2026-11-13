@@ -1,5 +1,12 @@
 import type { StaticImageData } from "next/image";
 import airAmbulance from "./images/air-ambulance-calm-sky.jpg";
+import cabinCream from "./images/cabin-cream-seats.jpg";
+import cabinTan from "./images/cabin-tan-seats.jpg";
+import charterJetDusk from "./images/charter-jet-at-dusk.jpg";
+import cockpitNight from "./images/cockpit-at-night.jpg";
+import heliport from "./images/helicopter-city-heliport.jpg";
+import jetNose from "./images/jet-nose-in-sun.jpg";
+import runwayCockpit from "./images/runway-from-cockpit.jpg";
 import charter from "./images/charter-jets-on-apron.jpg";
 import emptyLeg from "./images/empty-leg-wing-at-dusk.jpg";
 import helicopter from "./images/helicopter-over-hills.jpg";
@@ -79,6 +86,64 @@ export const IMAGES = {
     photographer: "Samuel Arkwright",
     sourceUrl: "https://unsplash.com/photos/FxObxrP06aI",
     added: "2026-11-11",
+    ...UNSPLASH,
+  },
+  // Added 2026-11-13 for CR-1 round 2, chosen by the product owner.
+  charterJetDusk: {
+    src: charterJetDusk,
+    alt: "A white long-range business jet parked on an apron under a dusk sky",
+    photographer: "Niklas Jonasson",
+    sourceUrl: "https://unsplash.com/photos/vr7QkWk6bzM",
+    added: "2026-11-13",
+    // The registration on the tail fin was painted out (D-082).
+    ...UNSPLASH,
+  },
+  cabinCream: {
+    src: cabinCream,
+    alt: "Empty cream leather seats in a private jet cabin, facing a walnut bar",
+    photographer: "Andy Wang",
+    sourceUrl: "https://unsplash.com/photos/ogUyaf8JWA4",
+    added: "2026-11-13",
+    ...UNSPLASH,
+  },
+  heliport: {
+    src: heliport,
+    alt: "A helicopter lifting off a waterside heliport between tall buildings",
+    photographer: "Jon Flobrant",
+    sourceUrl: "https://unsplash.com/photos/-USxtr0RpUA",
+    added: "2026-11-13",
+    ...UNSPLASH,
+  },
+  cockpitNight: {
+    src: cockpitNight,
+    alt: "A cockpit's glowing instruments at night, an orange horizon beyond the windscreen",
+    photographer: "Andrés Dallimonti",
+    sourceUrl: "https://unsplash.com/photos/kjqTlMHLci4",
+    added: "2026-11-13",
+    ...UNSPLASH,
+  },
+  jetNose: {
+    src: jetNose,
+    alt: "The nose of a white business jet on the apron in bright sunshine",
+    photographer: "Niklas Jonasson",
+    sourceUrl: "https://unsplash.com/photos/A8O5zhN5hF4",
+    added: "2026-11-13",
+    ...UNSPLASH,
+  },
+  cabinTan: {
+    src: cabinTan,
+    alt: "Tan quilted leather seats beside round windows in a small jet cabin",
+    photographer: "Yaroslav Muzychenko",
+    sourceUrl: "https://unsplash.com/photos/xG-pV6Eu-bE",
+    added: "2026-11-13",
+    ...UNSPLASH,
+  },
+  runwayCockpit: {
+    src: runwayCockpit,
+    alt: "A runway between hills, seen through a cockpit window on approach",
+    photographer: "Benjamin Chambon",
+    sourceUrl: "https://unsplash.com/photos/AzMSyv2ikwI",
+    added: "2026-11-13",
     ...UNSPLASH,
   },
 } as const satisfies Record<string, SiteImage>;

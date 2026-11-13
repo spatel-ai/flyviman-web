@@ -3,6 +3,9 @@ import { Suspense } from "react";
 import { getSession } from "@/lib/auth/session";
 import { homeFor, surfaceFor } from "@/lib/auth/roles";
 import { HeaderScrollState } from "./header-scroll-state";
+import { MobileNav } from "./mobile-nav";
+import { SITE_NAV } from "./site-nav";
+import { SiteNavLinks, SiteNavList } from "./site-nav-links";
 import { UserMenu } from "./user-menu";
 
 const LINK =
@@ -53,13 +56,25 @@ export function SiteHeader() {
     <header className="site-header material-bar sticky top-0 z-40 border-b">
       <HeaderScrollState />
       <div className="mx-auto flex h-(--header-height) max-w-wide items-center justify-between px-4 md:px-6 lg:px-8">
-        <Link
-          href="/"
-          className="text-title tracking-tight"
-          aria-label="Flyviman home"
-        >
-          Flyviman
-        </Link>
+        <div className="flex items-center gap-1 md:gap-6">
+          <div className="-ml-2 md:hidden">
+            <MobileNav
+              surface="Site"
+              items={[{ href: "/", label: "Home" }, ...SITE_NAV]}
+            />
+          </div>
+          <Link
+            href="/"
+            className="text-title tracking-tight"
+            aria-label="Flyviman home"
+          >
+            Flyviman
+          </Link>
+          {/* The current page is marked once the address is known. */}
+          <Suspense fallback={<SiteNavList active={null} />}>
+            <SiteNavLinks />
+          </Suspense>
+        </div>
         {/* The page shell is static; the account area streams in. */}
         <Suspense fallback={<div className="h-9 w-24" aria-hidden="true" />}>
           <Account />

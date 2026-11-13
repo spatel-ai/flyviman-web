@@ -24,6 +24,8 @@ export const HOME = {
   about: {
     overline: "About Flyviman",
     heading: "Your strategic partner in the sky and on the ground.",
+    image: "cabinTan",
+    action: { label: "View about", href: "/about" },
     paragraphs: [
       "FlyViman Aviation is a premium aviation solutions company built on clarity, trust, and operational discipline. We support businesses, operators, and private clients with structured aircraft services including sales, leasing, charters, and aviation advisory.",
       "Driven by a commitment to professionalism and safety, we approach every project with strategic insight and a deep understanding of aviation standards. Our goal is simple: deliver solutions that give our clients confidence in every decision they make.",
@@ -33,6 +35,8 @@ export const HOME = {
     overline: "Our services",
     heading: "Fly without limits – where possibilities take flight",
     lead: "Experience aviation services designed to exceed your ambitions — and redefine what’s possible.",
+    image: "jetNose",
+    action: { label: "View more", href: "/services" },
     points: [
       {
         title: "One-stop aviation hub",
@@ -60,7 +64,24 @@ export const HOME = {
     overline: "Our luxury charter",
     heading: "Your gateway to effortless luxury travel",
     lead: "Discover personalized charter booking services crafted to meet your exact preferences, ensuring every journey is smooth, stylish, and stress-free.",
-    cards: ["Private charter", "Celebrity charter", "Election charter"],
+    scenes: [
+      {
+        name: "Private charter",
+        image: "charterJetDusk",
+        topic: "PRIVATE_CHARTER",
+      },
+      {
+        name: "Celebrity charter",
+        image: "cabinCream",
+        topic: "CELEBRITY_CHARTER",
+      },
+      {
+        name: "Election charter",
+        image: "heliport",
+        topic: "ELECTION_CHARTER",
+      },
+    ],
+    action: "View more",
   },
   faq: {
     overline: "FAQs",

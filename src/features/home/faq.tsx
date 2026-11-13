@@ -1,6 +1,6 @@
 import { Reveal } from "@/components/motion/reveal";
 import { HOME, type FaqItem } from "@/content/home";
-import { SectionHeading } from "./section-heading";
+import { SectionHeading } from "@/components/marketing/section-heading";
 
 /**
  * Questions and answers. Native disclosure elements, so the answers are in

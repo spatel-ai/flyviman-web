@@ -8,7 +8,9 @@ import { ApiError } from "./errors";
 const MESSAGES: Record<string, string> = {
   NETWORK_ERROR:
     "We could not reach the server. Check your connection and try again.",
-  RATE_LIMITED: "Too many attempts. Wait a minute and try again.",
+  RATE_LIMITED: "Too many attempts. Wait a few minutes and try again.",
+  IDEMPOTENCY_CONFLICT:
+    "We may already have this request. Wait a moment, then reload the page before sending it again.",
   AUTH_INVALID_CREDENTIALS: "The email or password is not correct.",
   AUTH_ACCOUNT_SUSPENDED: "This account is suspended. Contact support.",
   AUTH_OTP_INVALID: "That code is not correct. Check it and try again.",

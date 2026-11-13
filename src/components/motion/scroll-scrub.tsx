@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, type HTMLAttributes } from "react";
+import { whenGsapReady } from "./load-gsap";
 
 /** Only opacity and transforms follow the scroll (motion-design.md). */
 export interface ScrubValues {
@@ -50,16 +51,7 @@ export function ScrollScrub({
       return;
     }
 
-    let cancelled = false;
-    let revert: (() => void) | undefined;
-
-    const load = async () => {
-      const [{ gsap }, { ScrollTrigger }] = await Promise.all([
-        import("gsap"),
-        import("gsap/ScrollTrigger"),
-      ]);
-      if (cancelled) return;
-      gsap.registerPlugin(ScrollTrigger);
+    return whenGsapReady(({ gsap }) => {
       const { from, to, trigger, start, end } = config.current;
       const context = gsap.context(() => {
         gsap.fromTo(element, from, {
@@ -76,32 +68,8 @@ export function ScrollScrub({
           },
         });
       });
-      // Measure again when the page's height changes.
-      let timer = 0;
-      const observer = new ResizeObserver(() => {
-        window.clearTimeout(timer);
-        timer = window.setTimeout(() => ScrollTrigger.refresh(), 150);
-      });
-      observer.observe(document.body);
-      revert = () => {
-        window.clearTimeout(timer);
-        observer.disconnect();
-        context.revert();
-      };
-    };
-    // If the script cannot be fetched the content stays at rest.
-    const start = () => void load().catch(() => undefined);
-
-    const idle = window.requestIdleCallback
-      ? window.requestIdleCallback(start)
-      : window.setTimeout(start, 200);
-
-    return () => {
-      cancelled = true;
-      if (window.cancelIdleCallback) window.cancelIdleCallback(idle);
-      else window.clearTimeout(idle);
-      revert?.();
-    };
+      return () => context.revert();
+    });
   }, []);
 
   return <div ref={ref} {...props} />;

@@ -87,7 +87,9 @@ test.describe("section reveals", () => {
       }).observe({ type: "layout-shift", buffered: true });
     });
     await page.goto("/");
-    for (const y of [600, 1200, 1800, 2400, 3200, 4000, 4800]) {
+    for (const y of [
+      600, 1200, 1800, 2400, 3200, 4000, 4800, 6000, 7200, 8400,
+    ]) {
       await scrollTo(page, y);
       await page.waitForTimeout(150);
     }
@@ -388,5 +390,140 @@ test.describe("pointer feedback", () => {
 
     await expect(tile).toHaveCSS("transform", "none");
     await expect(tile).not.toHaveAttribute("style", /transform/);
+  });
+});
+
+test.describe("charter scenes showpiece", () => {
+  const film = (page: Page) => page.locator(".scroll-film");
+  const active = (page: Page) =>
+    page.locator('.scroll-film__scene[data-film-active="true"] h3');
+
+  /** Scrolls to a fraction (0 to 1) of the film's pinned range. */
+  async function scrollFilm(page: Page, fraction: number) {
+    await page.evaluate((f) => {
+      const el = document.querySelector(".scroll-film") as HTMLElement;
+      const top = el.getBoundingClientRect().top + window.scrollY;
+      const header = 48;
+      const start = top - header;
+      const end = top + el.offsetHeight - window.innerHeight;
+      window.scrollTo({ top: start + (end - start) * f });
+    }, fraction);
+  }
+
+  test("on a wide screen it pins and plays the scenes in turn, and reverses", async ({
+    page,
+  }, info) => {
+    test.skip(
+      info.project.name !== "desktop",
+      "The film plays on wide screens.",
+    );
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.goto("/");
+    await expect(film(page)).toHaveAttribute("data-film", "on");
+
+    await scrollFilm(page, 0.05);
+    await expect(active(page)).toHaveText("Private charter");
+    // Held below the header while it plays.
+    const stageTop = () =>
+      page
+        .locator(".scroll-film__stage")
+        .evaluate((el) => Math.round(el.getBoundingClientRect().top));
+    await expect.poll(stageTop).toBe(48);
+
+    await scrollFilm(page, 0.5);
+    await expect(active(page)).toHaveText("Celebrity charter");
+    await expect.poll(stageTop).toBe(48);
+
+    // At a scene change the blinds are closed.
+    await scrollFilm(page, 1 / 3);
+    await expect
+      .poll(() =>
+        page
+          .locator(".scroll-film__blind")
+          .nth(7)
+          .evaluate((el) => (el as HTMLElement).style.transform),
+      )
+      .toBe("scaleX(1)");
+
+    await scrollFilm(page, 0.95);
+    await expect(active(page)).toHaveText("Election charter");
+    await expect(
+      page.locator('.scroll-film__marker[aria-current="step"]'),
+    ).toHaveCount(1);
+
+    await scrollFilm(page, 0.05);
+    await expect(active(page)).toHaveText("Private charter");
+  });
+
+  test("every scene stays reachable by keyboard and screen reader while it plays", async ({
+    page,
+  }, info) => {
+    test.skip(
+      info.project.name !== "desktop",
+      "The film plays on wide screens.",
+    );
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.goto("/");
+    await expect(film(page)).toHaveAttribute("data-film", "on");
+
+    // All three scenes are in the accessibility tree, not just the one on show.
+    for (const name of [
+      "Private charter",
+      "Celebrity charter",
+      "Election charter",
+    ]) {
+      await expect(
+        film(page).getByRole("heading", { level: 3, name }),
+      ).toBeAttached();
+    }
+    // Focusing a scene that is not on show brings it on show.
+    await film(page)
+      .getByRole("link", { name: "Send an enquiry about election charter" })
+      .focus();
+    await expect(active(page)).toHaveText("Election charter");
+  });
+
+  test("it turns on only while it is below the screen", async ({
+    page,
+  }, info) => {
+    test.skip(
+      info.project.name !== "desktop",
+      "The film plays on wide screens.",
+    );
+    await page.setViewportSize({ width: 1280, height: 800 });
+    // Arrive with the section already on screen: it stays a plain section,
+    // so the page does not grow under the visitor.
+    await page.goto("/#charter-heading");
+    await page.waitForLoadState("networkidle");
+    await page.waitForTimeout(500);
+    await expect(film(page)).not.toHaveAttribute("data-film", "on");
+  });
+
+  test("on phones, under reduced motion and without JavaScript it is a plain section", async ({
+    page,
+    browser,
+  }) => {
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await page.goto("/");
+    await page.waitForLoadState("networkidle");
+    await expect(film(page)).not.toHaveAttribute("data-film", "on");
+    for (const name of [
+      "Private charter",
+      "Celebrity charter",
+      "Election charter",
+    ]) {
+      await expect(
+        film(page).getByRole("heading", { level: 3, name }),
+      ).toBeVisible();
+    }
+
+    const context = await browser.newContext({ javaScriptEnabled: false });
+    const plain = await context.newPage();
+    await plain.goto("/");
+    await expect(film(plain)).not.toHaveAttribute("data-film", "on");
+    await expect(
+      film(plain).getByRole("heading", { level: 3, name: "Election charter" }),
+    ).toBeVisible();
+    await context.close();
   });
 });

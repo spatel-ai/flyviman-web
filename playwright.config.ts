@@ -44,6 +44,7 @@ export default defineConfig({
         // Tests sign in and request codes far more often than a person does.
         RATE_LIMIT_AUTH_PER_MINUTE: "100000",
         RATE_LIMIT_DEFAULT_PER_MINUTE: "100000",
+        RATE_LIMIT_ENQUIRY_PER_WINDOW: "100000",
         OTP_RESEND_COOLDOWN_SECONDS: "0",
         OTP_MAX_PER_HOUR: "100000",
       },

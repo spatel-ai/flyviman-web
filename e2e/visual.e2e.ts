@@ -28,6 +28,26 @@ const SHOTS: Shot[] = [
     ready: (page) => page.getByRole("heading", { level: 1 }),
   },
   {
+    name: "about",
+    path: "/about",
+    ready: (page) => page.getByRole("heading", { level: 1 }),
+  },
+  {
+    name: "services",
+    path: "/services",
+    ready: (page) => page.getByRole("heading", { level: 1 }),
+  },
+  {
+    name: "charter",
+    path: "/charter",
+    ready: (page) => page.getByRole("heading", { level: 1 }),
+  },
+  {
+    name: "contact",
+    path: "/contact",
+    ready: (page) => page.getByRole("button", { name: "Send enquiry" }),
+  },
+  {
     name: "login",
     path: "/login",
     ready: (page) => page.getByRole("button", { name: "Sign in" }),
@@ -106,5 +126,54 @@ for (const scheme of ["light", "dark"] as const) {
         });
       });
     }
+  });
+}
+
+/**
+ * The full-page shots above use reduced motion, so the showpiece appears as
+ * a plain section. This one captures the film part way through a scene
+ * change (blinds half closed) on a wide screen.
+ */
+for (const scheme of ["light", "dark"] as const) {
+  test(`home showpiece, mid change, ${scheme}, matches`, async ({
+    page,
+  }, info) => {
+    test.skip(
+      info.project.name !== "desktop",
+      "The film plays on wide screens.",
+    );
+    await page.emulateMedia({ colorScheme: scheme });
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.goto("/");
+    await expect(page.locator(".scroll-film")).toHaveAttribute(
+      "data-film",
+      "on",
+    );
+    await page.evaluate(() => document.fonts.ready);
+    await page.evaluate(() => {
+      const el = document.querySelector(".scroll-film") as HTMLElement;
+      const top = el.getBoundingClientRect().top + window.scrollY;
+      const start = top - 48;
+      const end = top + el.offsetHeight - window.innerHeight;
+      // Just before the first change: the private charter scene, blinds
+      // about half closed.
+      window.scrollTo({ top: start + (end - start) * (1 / 3 - 0.05) });
+    });
+    await expect(
+      page.locator('.scroll-film__scene[data-film-active="true"] h3'),
+    ).toHaveText("Private charter");
+    await expect
+      .poll(() =>
+        page
+          .locator('.scroll-film__scene[data-film-active="true"] img')
+          .evaluate(
+            (img: HTMLImageElement) => img.complete && img.naturalWidth > 0,
+          ),
+      )
+      .toBe(true);
+    await expect(page).toHaveScreenshot(`home-showpiece-${scheme}.png`, {
+      animations: "allow",
+      maxDiffPixelRatio: 0.01,
+    });
   });
 }
