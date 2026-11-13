@@ -1,9 +1,11 @@
+import Link from "next/link";
 import { EnquiryLink } from "@/components/marketing/enquiry-link";
 import { PageHero } from "@/components/marketing/page-hero";
 import { SectionHeading } from "@/components/marketing/section-heading";
 import { Reveal } from "@/components/motion/reveal";
 import { TiltCard } from "@/components/motion/tilt-card";
 import { SERVICES_PAGE, type Service } from "@/content/services";
+import { buttonClasses } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 /** In-page index, so a visitor can jump to one service. */
@@ -94,6 +96,22 @@ function ServiceSection({
                 {paragraph}
               </p>
             ))}
+            <aside
+              aria-label={service.insights.title}
+              className={cn(
+                "max-w-reading rounded-xl p-6",
+                band ? "bg-surface-raised" : "bg-surface",
+              )}
+            >
+              <p className="text-overline text-muted">Insights</p>
+              <h4 className="mt-3 text-title">{service.insights.title}</h4>
+              <p className="mt-2 text-body-sm text-muted">
+                {service.insights.lead}
+              </p>
+              <p className="mt-2 text-body-sm text-muted">
+                {service.insights.text}
+              </p>
+            </aside>
             {service.notice ? (
               <p className="max-w-reading text-body-sm font-medium text-foreground">
                 {service.notice}
@@ -128,6 +146,27 @@ export function ServicesPage() {
           band={index % 2 === 0}
         />
       ))}
+      <section
+        aria-labelledby="more-solutions"
+        className="mx-auto max-w-wide px-4 py-16 md:px-6 md:py-24 lg:px-8"
+      >
+        <h2 id="more-solutions" className="text-h2">
+          Permits, setup, pilots and more
+        </h2>
+        <p className="mt-4 max-w-reading text-body-lg text-muted">
+          Charter permits, FTO and MRO setup, pilot jobs and training, spares,
+          business plans and meet and greet.
+        </p>
+        <Link
+          href="/aviation-solutions"
+          className={buttonClasses({
+            variant: "ghost",
+            className: "mt-6 -ml-5",
+          })}
+        >
+          See all aviation solutions
+        </Link>
+      </section>
     </>
   );
 }

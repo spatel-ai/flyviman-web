@@ -77,13 +77,13 @@ test.describe("customer home", () => {
     await expect(first).toBeHidden();
   });
 
-  test("claims the business has not confirmed are not shown", async ({
+  test("the claims approved in the full migration are shown", async ({
     page,
   }) => {
     await page.goto("/");
 
-    await expect(page.getByText(/24\/7/)).toHaveCount(0);
-    await expect(page.getByText(/transparent pricing/i)).toHaveCount(0);
+    await expect(page.getByText("24/7 operations support")).toBeAttached();
+    await expect(page.getByText("Transparent pricing")).toBeAttached();
   });
 
   test("does not scroll sideways", async ({ page }) => {

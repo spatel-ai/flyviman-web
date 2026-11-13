@@ -5,10 +5,10 @@ import type { EnquiryTopic } from "./contact";
  * (WordPress page 9178, modified 2026-02-09) on 2026-11-13. Wording as on
  * the live site, with sentence case and small fixes only.
  *
- * Held back until the business confirms them (docs/open-decisions.md):
- * "Transparent pricing & clear communication", the medical and air
- * ambulance wording in Charter services, "Investor-exclusive access to
- * aircraft availability", and every "Insights" teaser (no articles exist).
+ * Everything on the live page is here: the business approved the full
+ * migration (D-092). The medical wording keeps the emergency-services
+ * notice beside it (rule 7). The "Insights" notes have no articles to link
+ * to yet, so they are shown as text.
  */
 export interface Service {
   /** Anchor on the page, and the enquiry topic it leads to. */
@@ -22,6 +22,8 @@ export interface Service {
   points: readonly string[];
   detailTitle: string;
   detail: readonly string[];
+  /** The "Insights" note at the end of the section. */
+  insights: { title: string; lead: string; text: string };
   /** Shown under the section, never animated. */
   notice?: string;
 }
@@ -60,6 +62,11 @@ export const SERVICES_PAGE = {
         "We assist in comparing aircraft options based on mission needs, operational cost, and long-term suitability. Every assessment is objective and tailored to your goals, ensuring that you invest in the platform that genuinely fits your requirements.",
         "Whether it’s a jet, turboprop, helicopter, or special-mission aircraft, we guide you with a clear, confident approach backed by industry understanding.",
       ],
+      insights: {
+        title: "Industry insight, articles & expertise",
+        lead: "Stay informed with updates, insights, and guidance from aviation professionals.",
+        text: "From operational considerations to international transaction trends, FlyViman provides knowledge that helps buyers and sellers move with confidence in a complex market.",
+      },
     },
     {
       id: "leasing",
@@ -87,6 +94,11 @@ export const SERVICES_PAGE = {
         "From there, we evaluate available aircraft, negotiate clear terms, coordinate inspection requirements, and ensure all regulatory processes are handled correctly. Whether you’re inducting your first aircraft or expanding an existing fleet, our team ensures you receive solutions that are both practical and sustainable.",
         "With a focus on clarity and operational readiness, FlyViman helps you make leasing decisions that strengthen your capabilities today and support your growth tomorrow.",
       ],
+      insights: {
+        title: "Aviation leasing insights & information",
+        lead: "Stay informed with updates on leasing trends, best practices, regulatory developments, and market opportunities.",
+        text: "FlyViman shares industry knowledge that helps operators and investors navigate aircraft leasing with better understanding and stronger decision-making.",
+      },
     },
     {
       id: "charter",
@@ -95,28 +107,30 @@ export const SERVICES_PAGE = {
       tagline: "A tailored private travel experience",
       paragraphs: [
         "Private aviation is about more than reaching a destination — it is about control, comfort, and the freedom to move on your schedule. FlyViman coordinates premium charter solutions through certified operators, giving you access to a diverse fleet of jets, turboprops, and helicopters suited for every mission.",
-        // Held back: "Whether traveling for business, leisure, medical needs,
-        // or urgent mobility, ..." (medical wording, rule 7).
-        "Every flight is handled with discretion, precision, and a commitment to delivering a refined travel experience.",
+        "Whether traveling for business, leisure, medical needs, or urgent mobility, our team ensures your journey is seamless from planning to touchdown. Every flight is handled with discretion, precision, and a commitment to delivering a refined travel experience.",
         "With FlyViman, private flying becomes effortless, reliable, and shaped entirely around you.",
       ],
       quote:
         "Those who fly privately don’t just save time — they reclaim it, and shape every journey on their own terms.",
       listTitle: "What you can expect from our charter service",
-      // Held back: "Transparent pricing & clear communication" and
-      // "Options for business, leisure, medical & special missions".
       points: [
         "Custom itineraries designed around your schedule",
         "Access to jets, turboprops & helicopters via certified operators",
         "Enhanced privacy, comfort, and on-ground assistance",
+        "Transparent pricing & clear communication",
+        "Options for business, leisure, medical & special missions",
       ],
       detailTitle: "Charters built for business and personal travel",
       detail: [
-        // Held back: the sentence naming "air ambulance requirements".
-        "Every traveler has unique needs and private flying should reflect that.",
+        "Every traveler has unique needs and private flying should reflect that. From urgent corporate trips to family getaways, air ambulance requirements, or remote-area access, FlyViman offers tailored solutions supported by a trusted operator network.",
         "Our team evaluates aircraft suitability, availability, weather considerations, and airport access to ensure your mission runs smoothly and efficiently. We handle coordination, logistics, and communication so you can focus solely on your journey.",
         "With FlyViman, you receive more than a flight — you receive a carefully managed aviation experience that puts reliability and comfort first.",
       ],
+      insights: {
+        title: "Insights, destinations & aviation updates",
+        lead: "Explore curated travel insights, operational guidance, and updates from the world of private aviation.",
+        text: "From destination highlights to charter best practices, FlyViman shares knowledge that enhances your flying experience.",
+      },
       notice:
         "For a medical transfer, choose air ambulance on our home page. In an emergency, call 112 or your local emergency services first.",
     },
@@ -146,6 +160,11 @@ export const SERVICES_PAGE = {
         "We work closely with clients to assess needs, identify gaps, and design strategies that align with industry standards and regulatory expectations. Our guidance is not theoretical — it is shaped by experience across real-world aviation operations, transactions, and compliance environments.",
         "With FlyViman, you gain a consultancy partner who understands the industry, respects its risks, and helps you build with confidence.",
       ],
+      insights: {
+        title: "Aviation insights & strategic knowledge",
+        lead: "Stay informed with expert-driven content on industry developments, regulatory updates, operational practices, and strategic aviation planning.",
+        text: "FlyViman shares knowledge that strengthens decision-making and empowers growth.",
+      },
     },
     {
       id: "investment",
@@ -160,12 +179,12 @@ export const SERVICES_PAGE = {
       quote:
         "Aviation isn’t just an investment — it’s an experience shaped by insight, responsibility, and the freedom to fly on your own terms.",
       listTitle: "Our aviation investment support includes",
-      // Held back: "Investor-exclusive access to aircraft availability".
       points: [
         "Fractional ownership programs",
         "Shared aircraft investment models",
         "Advisory on selecting the right aviation asset",
         "Usage planning & cost-distribution insights",
+        "Investor-exclusive access to aircraft availability",
       ],
       detailTitle: "Invest with confidence, supported by real aviation insight",
       detail: [
@@ -173,6 +192,11 @@ export const SERVICES_PAGE = {
         "We help you assess aircraft types, mission suitability, operational requirements, and long-term cost expectations. Our advisory services ensure that your entry into aviation is strategic, safe, and aligned with your objectives.",
         "Whether you aim to reduce charter costs, gain flexible mobility, or explore aviation as an investment asset, FlyViman offers a transparent, structured path forward.",
       ],
+      insights: {
+        title: "Aviation market insights & investment updates",
+        lead: "Understand trends, opportunities, and strategic developments in the aviation investment space.",
+        text: "FlyViman provides reliable, experience-backed knowledge that helps investors make informed, future-ready decisions.",
+      },
     },
   ] satisfies readonly Service[],
 } as const;

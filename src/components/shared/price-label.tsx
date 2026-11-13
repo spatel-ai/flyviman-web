@@ -36,6 +36,9 @@ export interface PriceLabelProps {
   validUntil?: string;
   /** Set by the caller once `validUntil` has passed. */
   expired?: boolean;
+  /** Replaces the price type's standard note, for a price that is not a
+   *  flight (a course fee). The type's badge always stays. */
+  note?: string;
   className?: string;
 }
 
@@ -49,9 +52,12 @@ export function PriceLabel({
   priceType,
   validUntil,
   expired = false,
+  note: noteOverride,
   className,
 }: PriceLabelProps) {
-  const { label, tone, note } = PRESENTATION[priceType];
+  const presentation = PRESENTATION[priceType];
+  const { label, tone } = presentation;
+  const note = noteOverride ?? presentation.note;
 
   return (
     <div className={cn("flex flex-col items-start gap-1", className)}>

@@ -1,8 +1,8 @@
 /**
  * Home page copy, imported from https://flyviman.com/ (WordPress page 8573)
  * on 2026-11-13. The wording is the live site's, with sentence case and
- * small typo fixes only. Items held back until the business confirms them
- * are listed in docs/open-decisions.md; do not add them here before then.
+ * small typo fixes only. The business approved the full migration (D-092);
+ * the few items still not shown, and why, are in docs/open-decisions.md.
  * How to import another page: the `site-content-import` skill.
  */
 
@@ -124,12 +124,13 @@ export const HOME = {
         question:
           "What makes FlyViman different from other aviation service providers?",
         answer: "FlyViman stands out through:",
-        // Held back: "Transparent pricing" and "24/7 operations support".
         points: [
+          "Transparent pricing",
           "Fast processing of permissions",
           "Highly trained aviation professionals",
           "Pan-India network across airports & helipads",
           "Advanced aviation technology & tracking",
+          "24/7 operations support",
         ],
       },
       {

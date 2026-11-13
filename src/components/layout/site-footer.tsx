@@ -2,10 +2,11 @@ import Link from "next/link";
 import { ScrollScrub } from "@/components/motion/scroll-scrub";
 import { ThemeSwitch } from "@/components/theme/theme-switch";
 import { CONTACT } from "@/content/contact";
-import { SITE_NAV } from "./site-nav";
+import { MORE_NAV, SITE_NAV } from "./site-nav";
 
 const LINKS = [
   ...SITE_NAV,
+  ...MORE_NAV,
   { href: "/legal/terms", label: "Terms" },
   { href: "/legal/privacy", label: "Privacy" },
   { href: "/legal/image-credits", label: "Image credits" },

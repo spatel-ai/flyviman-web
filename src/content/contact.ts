@@ -57,4 +57,6 @@ export const ENQUIRY_TOPICS = [
   { value: "FLOWER_DROP_CHARTER", label: "Flower drop charter" },
   { value: "AIRCRAFT_SALES", label: "Aircraft sale, purchase or leasing" },
   { value: "CONSULTANCY", label: "Consultancy or investment" },
+  { value: "PILOT_JOBS", label: "Pilot job assistance" },
+  { value: "PILOT_TRAINING", label: "Pilot course or training" },
 ] as const satisfies readonly { value: EnquiryTopic; label: string }[];

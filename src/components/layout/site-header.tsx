@@ -4,7 +4,7 @@ import { getSession } from "@/lib/auth/session";
 import { homeFor, surfaceFor } from "@/lib/auth/roles";
 import { HeaderScrollState } from "./header-scroll-state";
 import { MobileNav } from "./mobile-nav";
-import { SITE_NAV } from "./site-nav";
+import { MORE_NAV, SITE_NAV } from "./site-nav";
 import { SiteNavLinks, SiteNavList } from "./site-nav-links";
 import { UserMenu } from "./user-menu";
 
@@ -60,7 +60,7 @@ export function SiteHeader() {
           <div className="-ml-2 md:hidden">
             <MobileNav
               surface="Site"
-              items={[{ href: "/", label: "Home" }, ...SITE_NAV]}
+              items={[{ href: "/", label: "Home" }, ...SITE_NAV, ...MORE_NAV]}
             />
           </div>
           <Link

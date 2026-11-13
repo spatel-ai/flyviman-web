@@ -2,8 +2,8 @@ import { expect, test } from "@playwright/test";
 
 /**
  * The customer site's marketing pages, imported from flyviman.com (M4,
- * D-075, D-084): their headings, the navigation between them, and that
- * claims the business has not confirmed stay out.
+ * D-075, D-084, D-092): their headings, the navigation between them, and
+ * that the rules still shape what the migration shows.
  */
 
 const PAGES = [
@@ -18,10 +18,26 @@ const PAGES = [
     nav: "Charter",
     heading: "Comprehensive charter solutions for unforgettable journeys",
   },
+  {
+    path: "/aircraft-sales",
+    nav: "Aircraft sales",
+    heading: "Aircraft and helicopters for sale",
+  },
+  { path: "/pilots", nav: "Pilots", heading: "For pilots" },
   { path: "/contact", nav: "Contact", heading: "Get in touch" },
 ] as const;
 
-for (const { path, heading } of PAGES) {
+/** Linked from their parent pages and the footer, not the header. */
+const MORE_PAGES = [
+  { path: "/aviation-solutions", heading: "Powering the future of flight" },
+  {
+    path: "/charter/fleet",
+    heading: "Exquisite fleet for unmatched charter experiences",
+  },
+  { path: "/aircraft-sales/gulfstream-g550", heading: "Gulfstream G550" },
+] as const;
+
+for (const { path, heading } of [...PAGES, ...MORE_PAGES]) {
   test(`${path} shows its heading and does not scroll sideways`, async ({
     page,
   }) => {
@@ -41,8 +57,8 @@ for (const { path, heading } of PAGES) {
         document.documentElement.clientWidth,
     );
     expect(overflow).toBeLessThanOrEqual(0);
-    await expect(page.getByText(/24\/7/)).toHaveCount(0);
-    await expect(page.getByText(/transparent pricing/i)).toHaveCount(0);
+    // Nothing migrated is bookable (rule 4).
+    await expect(page.getByText(/^book now$/i)).toHaveCount(0);
   });
 }
 
@@ -149,15 +165,50 @@ test.describe("services", () => {
     await expect(page).toHaveURL(/#investment$/);
   });
 
-  test("leaves out medical claims and points to emergency services", async ({
+  test("medical wording comes with the emergency-services notice", async ({
     page,
   }) => {
     await page.goto("/services");
 
-    await expect(page.getByText(/medical needs/i)).toHaveCount(0);
-    await expect(page.getByText(/air ambulance requirements/i)).toHaveCount(0);
-    await expect(page.getByText(/Investor-exclusive access/i)).toHaveCount(0);
+    await expect(page.getByText(/medical needs/i)).toBeVisible();
     await expect(page.getByText(/In an emergency, call 112/)).toBeVisible();
+    await expect(page.getByText(/Investor-exclusive access/i)).toBeVisible();
+    await expect(
+      page.getByRole("complementary", { name: /insights/i }),
+    ).toHaveCount(5);
+  });
+});
+
+test.describe("full migration (D-092)", () => {
+  test("course fees are labelled estimates and lead to a pilot enquiry", async ({
+    page,
+  }) => {
+    await page.goto("/pilots");
+    const course = page
+      .getByRole("listitem")
+      .filter({
+        has: page.getByRole("heading", { name: "Private pilot course" }),
+      });
+    await expect(course.getByText("Estimate", { exact: true })).toBeVisible();
+    await expect(course.getByText("₹21,00,000")).toBeVisible();
+    await course.getByRole("link", { name: /apply now/i }).click();
+    await expect(page).toHaveURL(/topic=PILOT_TRAINING/);
+  });
+
+  test("a sale listing has its details, no broker, and an enquiry", async ({
+    page,
+  }) => {
+    await page.goto("/aircraft-sales/2023-airbus-h130");
+    await expect(page.getByText("On request")).toBeVisible();
+    await expect(page.getByText(/Proudly presented by/i)).toHaveCount(0);
+    await expect(page.getByText(/Martin Weening/)).toHaveCount(0);
+    await page.getByRole("link", { name: "Enquire now" }).click();
+    await expect(page).toHaveURL(/topic=AIRCRAFT_SALES/);
+  });
+
+  test("an unknown listing is not found", async ({ page }) => {
+    const response = await page.goto("/aircraft-sales/not-a-listing");
+    expect(response?.status()).toBe(404);
   });
 });
 

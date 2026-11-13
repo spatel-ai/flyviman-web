@@ -2320,7 +2320,9 @@ export interface components {
       | "GROUP_CHARTER"
       | "FLOWER_DROP_CHARTER"
       | "AIRCRAFT_SALES"
-      | "CONSULTANCY";
+      | "CONSULTANCY"
+      | "PILOT_JOBS"
+      | "PILOT_TRAINING";
     CreateEnquiryDto: {
       /** @example Asha Rao */
       name: string;

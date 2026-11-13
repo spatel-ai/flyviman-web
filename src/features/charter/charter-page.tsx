@@ -1,4 +1,6 @@
+import Link from "next/link";
 import { EnquiryLink } from "@/components/marketing/enquiry-link";
+import { buttonClasses } from "@/components/ui/button";
 import { PageHero } from "@/components/marketing/page-hero";
 import { SectionHeading } from "@/components/marketing/section-heading";
 import { Reveal } from "@/components/motion/reveal";
@@ -75,6 +77,14 @@ export function CharterPage() {
             );
           })}
         </ul>
+        <div className="mt-10">
+          <Link
+            href="/charter/fleet"
+            className={buttonClasses({ variant: "ghost", className: "-ml-5" })}
+          >
+            See the charter fleet
+          </Link>
+        </div>
       </section>
     </>
   );
