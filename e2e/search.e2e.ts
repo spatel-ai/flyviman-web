@@ -154,7 +154,10 @@ test("air ambulance is a request, never a search, with the emergency notice", as
   page,
 }) => {
   await page.goto("/search?service=air-ambulance");
-  await expect(page.getByText(/In an emergency, call 112/)).toBeVisible();
+  // A streamed page can briefly hold a hidden copy: count visible text only.
+  await expect(
+    page.getByText(/In an emergency, call 112/).filter({ visible: true }),
+  ).toBeVisible();
   await expect(
     page.getByRole("button", { name: "Search", exact: true }),
   ).toHaveCount(0);

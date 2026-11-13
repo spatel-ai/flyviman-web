@@ -186,6 +186,11 @@ test.describe("an idle session", () => {
   test.beforeEach(async ({ page, context }) => {
     await signIn(page, "superAdmin");
     await expect(page).toHaveURL("/admin");
+    // The sign-in page's redirect must have finished, or it can land after
+    // the test's own navigation and send the browser back to /admin.
+    await expect(
+      page.getByRole("heading", { level: 1, name: "Dashboard" }),
+    ).toBeVisible();
     // What the browser holds after 15 idle minutes: the access cookie has
     // expired, the refresh cookie has not.
     const cookies = await context.cookies();
