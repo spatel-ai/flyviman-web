@@ -16,6 +16,11 @@ type State = "visible" | "waiting" | "shown";
 export interface RevealProps extends HTMLAttributes<HTMLDivElement> {
   /** Position in a group revealed together: 0 to 3, 80 ms apart. */
   index?: number;
+  /**
+   * "rise" (default) fades and rises. "slit" resolves the content through
+   * thin vertical slits, for section headings (globals.css).
+   */
+  variant?: "rise" | "slit";
 }
 
 /**
@@ -28,7 +33,13 @@ export interface RevealProps extends HTMLAttributes<HTMLDivElement> {
  * flashes. Without JavaScript,
  * without IntersectionObserver, or with reduced motion, nothing is hidden.
  */
-export function Reveal({ index = 0, style, children, ...props }: RevealProps) {
+export function Reveal({
+  index = 0,
+  variant = "rise",
+  style,
+  children,
+  ...props
+}: RevealProps) {
   const ref = useRef<HTMLDivElement>(null);
   const [state, setState] = useState<State>("visible");
 
@@ -40,7 +51,12 @@ export function Reveal({ index = 0, style, children, ...props }: RevealProps) {
     }
     // Any part already on screen (or above it) at load: leave it as
     // rendered. Only content wholly below the screen waits to be revealed.
-    if (element.getBoundingClientRect().top < window.innerHeight) return;
+    // (If it was left waiting while the page was kept in the background
+    // and is on screen now, show it.)
+    if (element.getBoundingClientRect().top < window.innerHeight) {
+      setState((current) => (current === "waiting" ? "shown" : current));
+      return;
+    }
 
     setState("waiting");
     // Revealed as soon as any part enters the screen, so content can never
@@ -60,6 +76,7 @@ export function Reveal({ index = 0, style, children, ...props }: RevealProps) {
     <div
       ref={ref}
       data-reveal={state}
+      data-reveal-variant={variant === "slit" ? "slit" : undefined}
       style={{ ...style, "--reveal-index": stagger } as CSSProperties}
       {...props}
     >

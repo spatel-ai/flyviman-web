@@ -25,7 +25,7 @@ test.describe("route protection", () => {
       page.getByRole("navigation", { name: "Admin navigation" }),
     ).toHaveCount(0);
     await expect(
-      page.getByRole("heading", { level: 1, name: /every way to fly/i }),
+      page.getByRole("heading", { level: 1, name: /your trusted partner/i }),
     ).toBeVisible();
   });
 

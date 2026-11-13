@@ -64,10 +64,11 @@ src/
     shared/                cross-feature pieces (PriceLabel, StatusBadge, EmptyState, FormAlert, LoadError,
                            ClientRedirect)
     layout/                SiteHeader, SiteFooter, AppShell, NavLinks, MobileNav, UserMenu
-    motion/                Reveal (level 4), PageTransition (level 3); the level-5 route story is CSS only
-                           (.route-story in globals.css, used by features/home/how-it-works.tsx)
+    motion/                Reveal (level 4, with the slit variant), Intro and IntroSeen (home page intro),
+                           ScrollScrub (level 5, the only place gsap is imported), TiltCard and Magnetic
+                           (pointer feedback, on spring.ts), PageTransition (level 3)
     theme/                 ThemeScript, ThemeSwitch
-  content/                 site photographs (images/) and image-credits.ts
+  content/                 marketing copy (home.ts, contact.ts), site photographs (images/) and image-credits.ts
   features/<feature>/      feature UI, hooks, schemas (auth, account, home, legal,
                            operator-onboarding, operator-aircraft, operator-availability, operator-staff,
                            admin-operators, admin-users, admin-aircraft, admin-locations)
@@ -99,9 +100,11 @@ Full structure and the page map: `../docs/frontend/frontend-design.md`.
 - **Never cache** prices, availability or statuses beyond the validity the API returns.
 - **Portal navigation:** add an item to a portal's `NAV` in the same change as its page, never before.
 - **Environment:** `NEXT_PUBLIC_` values plus the server-only `API_PROXY_TARGET` (hosting, D-065), declared in `src/lib/env.ts` and `.env.example`. No secrets: they live in the API.
-- **Motion** follows the five-level scale in `../docs/frontend/motion-design.md`. Wrap each new customer page's content in `PageTransition`; use `Reveal` only for content that starts below the first screen; never animate safety notices, prices, forms or status badges. The home page has the site's one story section (level 5, scroll-driven CSS, wide and tall screens only); do not add another to the same page. Pinned content sits below `--header-height`.
+- **Motion** follows the five-level scale in `../docs/frontend/motion-design.md`; use the `motion-effect` skill to add or change one. Wrap each new customer page's content in `PageTransition`; use `Reveal` only for content that starts below the first screen (`variant="slit"` for a section heading); never animate safety notices, prices, forms or status badges. Anything that plays on load is CSS. `gsap` is imported only inside `components/motion/scroll-scrub.tsx`, dynamically; scrolling stays native and nothing is pinned. `TiltCard` and `Magnetic` are for customer marketing sections only.
+- **Marketing copy** lives in typed modules in `src/content/` (`home.ts`, `contact.ts`), imported from flyviman.com with the `site-content-import` skill. Components do not hold copy inline. Claims the business has not confirmed stay out (`../docs/open-decisions.md`).
 - **Redirecting into a page with a form** from a page that streams: use `ClientRedirect`, not `redirect()` (which also reloads the destination a moment later).
-- **Photographs** come only from `src/content/image-credits.ts`, where each has alt text, photographer, source and licence. Rules for choosing one: `../docs/frontend/motion-design.md`.
+- **Photographs** come only from `src/content/image-credits.ts`, where each has alt text, photographer, source and licence. Rules for choosing one: `../docs/frontend/motion-design.md`. They apply to Flyviman's own pictures too.
+- **Class names** are merged with `cn` (`lib/utils.ts`), which knows our type-scale names. A new `--text-*` token must be added to its list, or a text colour beside it is silently dropped (D-078).
 - **Visual baseline:** `e2e/visual.e2e.ts` compares screenshots of the main pages. After an intended visual change run `npm run test:e2e -- visual --update-snapshots` and commit the new images.
 - **No tokens in `localStorage` or `sessionStorage`.** The session is the API's `HttpOnly` cookies. (The theme preference is stored there; it is not a credential.)
 

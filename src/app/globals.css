@@ -184,16 +184,24 @@ body {
 /*
  * Motion scale, level 4 (Reveal): a section rises into view once.
  * Levels 1 to 3 use Tailwind's duration-150/250/450 with ease-standard and
- * ease-emphasis. Level 5 (Story) follows the scroll position, so it has no
- * duration. Scale and rules: docs/frontend/motion-design.md.
+ * ease-emphasis. Level 5 (scroll-linked, <ScrollScrub>) follows the scroll
+ * position, so it has no duration. Scale and rules:
+ * docs/frontend/motion-design.md.
  */
 :root {
-  /* Height of the customer site header; pinned content sits below it. (The
-     portal and sign-in headers are h-14 and have no pinned content.) */
+  /* Height of the customer site header. (The portal and sign-in headers
+     are h-14.) */
   --header-height: 3rem;
   --duration-reveal: 700ms;
   --distance-reveal: 24px;
   --stagger-reveal: 80ms;
+  /* Slit reveal and intro (customer marketing pages). */
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --duration-slit: 900ms;
+  --distance-slit: 14px;
+  /* Whole pixels, so no seam can show between slits. */
+  --slit-width: 14px;
+  --duration-intro: 650ms;
 }
 
 /* Set by <Reveal>. Content is never hidden without JavaScript, under reduced
@@ -222,83 +230,230 @@ body {
 }
 
 /*
- * Motion level 5 (Story): the home page's "From search to sky" section
- * (features/home/how-it-works.tsx). The section is pinned while the visitor
- * scrolls through it: the route arc draws from origin to destination and each
- * step's marker fills in turn, then stays filled. The words never dim. It
- * follows the scroll, so scrolling back undoes it. Only on screens (not in
- * print) at least 1024 px wide and 720 px tall, where the pinned stage fits;
- * only where scroll-driven animations exist; never under reduced motion.
- * Everywhere else the section shows its final state. Only transform animates.
+ * Slit reveal (level 4, <Reveal variant="slit">): a section heading resolves
+ * through thin vertical slits, all filling from left to right together.
+ * --slit is the filled share of each slit; registered so it can transition.
+ * Where @property or masks are missing the heading is simply shown.
  */
-.route-story__wipe {
+@property --slit {
+  syntax: "<percentage>";
+  inherits: false;
+  initial-value: 100%;
+}
+
+@layer components {
+  @supports (mask-image: linear-gradient(#000, #000)) {
+    [data-reveal-variant="slit"] {
+      /* Room for descenders inside the mask. */
+      margin-bottom: -0.16em;
+      padding-bottom: 0.16em;
+      mask-image: linear-gradient(
+        90deg,
+        #000 var(--slit),
+        transparent var(--slit)
+      );
+      mask-size: var(--slit-width) 100%;
+      mask-repeat: repeat;
+      transition:
+        --slit var(--duration-slit) var(--ease-in-out),
+        transform var(--duration-slit) var(--ease-emphasis);
+    }
+
+    [data-reveal-variant="slit"][data-reveal="waiting"] {
+      --slit: 0%;
+      opacity: 1;
+      transform: translateY(var(--distance-slit));
+      transition: none;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce), print {
+    [data-reveal-variant="slit"] {
+      mask-image: none !important;
+    }
+  }
+}
+
+/*
+ * Intro (components/motion/intro.tsx): on the first view of the home page
+ * in a browser session a hairline is drawn across the screen, the page
+ * opens from it, and the headline's words rise into place. CSS only, so it
+ * never waits on JavaScript; about 1.5 s in all, the page covered for
+ * under a second of it. Not under reduced motion,
+ * not in print, and not once `data-intro-seen` is set.
+ */
+.intro-curtain {
   display: none;
 }
 
-@media screen and (min-width: 64rem) and (min-height: 45rem) and (prefers-reduced-motion: no-preference) {
-  @supports (animation-timeline: view()) {
-    .route-story {
-      height: 220svh;
-      view-timeline-name: --route-story;
-    }
+.intro-word {
+  display: inline-block;
+}
 
-    .route-story__stage {
-      position: sticky;
-      top: var(--header-height);
-      display: flex;
-      min-height: calc(100svh - var(--header-height));
-      flex-direction: column;
-      justify-content: center;
-      padding-block: 2rem;
-    }
+.intro-word > span {
+  display: inline-block;
+}
 
-    /* A cover in the section's colour that shrinks towards the destination,
-       uncovering the arc. It exists only here, where the timeline drives it. */
-    .route-story__wipe {
-      display: block;
-      transform-box: fill-box;
-      transform-origin: right;
-      animation: route-wipe linear both;
-      animation-timeline: --route-story;
-      animation-range: contain 0% contain 90%;
-    }
+@media screen and (prefers-reduced-motion: no-preference) {
+  :root:not([data-intro-seen]) .intro-curtain {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    display: block;
+    background: var(--background);
+    pointer-events: none;
+    animation: intro-open var(--duration-intro) var(--ease-in-out) 300ms both;
+  }
 
-    .route-story__mark {
-      transform-origin: left;
-      animation: route-mark linear both;
-      animation-timeline: --route-story;
-    }
+  :root:not([data-intro-seen]) .intro-curtain__line {
+    position: absolute;
+    inset-inline: 0;
+    top: 50%;
+    height: 1px;
+    background: var(--accent);
+    animation:
+      intro-line 350ms var(--ease-emphasis) both,
+      intro-line-out 250ms linear 700ms forwards;
+  }
 
-    .route-story__step:nth-child(1) .route-story__mark {
-      animation-range: contain 0% contain 15%;
-    }
-    .route-story__step:nth-child(2) .route-story__mark {
-      animation-range: contain 25% contain 40%;
-    }
-    .route-story__step:nth-child(3) .route-story__mark {
-      animation-range: contain 50% contain 65%;
-    }
-    .route-story__step:nth-child(4) .route-story__mark {
-      animation-range: contain 75% contain 90%;
-    }
+  /* The clipped box each word rises into, with room for descenders. */
+  :root:not([data-intro-seen]) .intro-word {
+    margin-bottom: -0.14em;
+    padding-bottom: 0.14em;
+    overflow: clip;
+    vertical-align: bottom;
+  }
+
+  :root:not([data-intro-seen]) .intro-word > span {
+    animation: intro-rise var(--duration-reveal) var(--ease-emphasis) both;
+    animation-delay: calc(550ms + var(--word-index, 0) * 50ms);
+  }
+
+  :root:not([data-intro-seen]) .intro-after {
+    animation: intro-fade 450ms var(--ease-standard) 1000ms both;
   }
 }
 
-@keyframes route-wipe {
+@keyframes intro-line {
   from {
-    transform: scaleX(1);
-  }
-  to {
     transform: scaleX(0);
   }
 }
 
-@keyframes route-mark {
+@keyframes intro-line-out {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes intro-open {
   from {
-    transform: scaleX(0);
+    clip-path: inset(0);
   }
   to {
-    transform: scaleX(1);
+    clip-path: inset(50% 0 50% 0);
+  }
+}
+
+@keyframes intro-rise {
+  from {
+    transform: translateY(110%);
+  }
+}
+
+@keyframes intro-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+/*
+ * Hero photograph (features/home/hero.tsx): a slow drift, and a band of
+ * light that crosses now and then. Transform only.
+ */
+.hero-glint {
+  display: none;
+}
+
+@media screen and (prefers-reduced-motion: no-preference) {
+  .hero-drift {
+    animation: hero-drift 28s var(--ease-in-out) infinite alternate;
+  }
+
+  .hero-glint {
+    position: absolute;
+    inset: 0;
+    display: block;
+    overflow: hidden;
+    pointer-events: none;
+  }
+
+  .hero-glint::before {
+    position: absolute;
+    inset-block: -20%;
+    left: 0;
+    width: 30%;
+    /* The on-photo white, faint, fading to nothing at both edges. */
+    background: linear-gradient(
+      90deg,
+      rgb(255 255 255 / 0),
+      rgb(255 255 255 / 0.2),
+      rgb(255 255 255 / 0)
+    );
+    content: "";
+    animation: hero-glint 19s linear 2s infinite both;
+  }
+}
+
+@keyframes hero-drift {
+  to {
+    transform: scale(1.06) translate(-1.2%, -0.6%);
+  }
+}
+
+@keyframes hero-glint {
+  from {
+    transform: translateX(-130%) skewX(-12deg);
+  }
+  45%,
+  to {
+    transform: translateX(470%) skewX(-12deg);
+  }
+}
+
+/*
+ * Questions and answers (features/home/faq.tsx), level 2: the answer fades
+ * and rises 8 px as it opens; the mark turns from a plus into a minus.
+ */
+.faq__mark::before,
+.faq__mark::after {
+  position: absolute;
+  inset-inline: 0;
+  top: 50%;
+  height: 1.5px;
+  margin-top: -0.75px;
+  border-radius: 999px;
+  background: currentColor;
+  content: "";
+  transition: transform 250ms var(--ease-standard);
+}
+
+.faq__mark::after {
+  transform: rotate(90deg);
+}
+
+.faq[open] .faq__mark::after {
+  transform: rotate(0deg);
+}
+
+.faq[open] > .faq__answer {
+  animation: faq-open 250ms var(--ease-standard) both;
+}
+
+@keyframes faq-open {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
   }
 }
 

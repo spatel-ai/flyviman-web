@@ -1,4 +1,5 @@
 import { act, render, screen } from "@testing-library/react";
+import { Activity } from "react";
 import { renderToString } from "react-dom/server";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { Reveal } from "./reveal";
@@ -98,6 +99,23 @@ describe("Reveal", () => {
     expect(disconnects).toBeGreaterThan(0);
   });
 
+  it("shows content that was left waiting and is on screen when the page returns", () => {
+    // A kept page: its state survives while it is hidden, its effects run
+    // again when it is shown.
+    const page = (mode: "visible" | "hidden") => (
+      <Activity mode={mode}>
+        <Reveal>Section</Reveal>
+      </Activity>
+    );
+    const { rerender } = render(page("visible"));
+    expect(section()).toHaveAttribute("data-reveal", "waiting");
+
+    rerender(page("hidden"));
+    placeAt(100);
+    rerender(page("visible"));
+    expect(section()).toHaveAttribute("data-reveal", "shown");
+  });
+
   it("never hides anything under reduced motion", () => {
     stubReducedMotion(true);
     render(<Reveal>Section</Reveal>);
@@ -126,6 +144,20 @@ describe("Reveal", () => {
     expect(index("Second")).toBe("2");
     expect(index("Too far")).toBe("3");
     expect(index("Negative")).toBe("0");
+  });
+
+  it("marks a slit reveal, and leaves an ordinary one unmarked", () => {
+    render(
+      <>
+        <Reveal variant="slit">Section</Reveal>
+        <Reveal>Plain</Reveal>
+      </>,
+    );
+    expect(section()).toHaveAttribute("data-reveal-variant", "slit");
+    expect(section()).toHaveAttribute("data-reveal", "waiting");
+    expect(
+      screen.getByText("Plain").closest("[data-reveal]"),
+    ).not.toHaveAttribute("data-reveal-variant");
   });
 
   it("keeps the caller's attributes and styles", () => {

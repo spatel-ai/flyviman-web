@@ -1,9 +1,10 @@
 import { expect, test, type Page } from "@playwright/test";
 
 /**
- * Motion on the customer site (M2, docs/frontend/motion-design.md): the
- * header hairline (level 1), page cross-fades (level 3) and section reveals
- * (level 4), and that reduced motion and layout stability are respected.
+ * Motion on the customer site (docs/frontend/motion-design.md): the header
+ * hairline and pointer feedback (level 1), page cross-fades (level 3),
+ * section reveals and the home page intro (level 4), scroll-linked motion
+ * (level 5), and that reduced motion and layout stability are respected.
  */
 
 async function scrollTo(page: Page, y: number) {
@@ -32,7 +33,7 @@ test.describe("section reveals", () => {
   }) => {
     await page.goto("/");
     const step = page
-      .getByRole("heading", { level: 3, name: "Fly", exact: true })
+      .getByRole("heading", { level: 3, name: "Strong global network" })
       .locator("xpath=ancestor::*[@data-reveal][1]");
 
     await expect(step).toHaveAttribute("data-reveal", "waiting");
@@ -86,7 +87,7 @@ test.describe("section reveals", () => {
       }).observe({ type: "layout-shift", buffered: true });
     });
     await page.goto("/");
-    for (const y of [600, 1200, 1800, 2400, 3200]) {
+    for (const y of [600, 1200, 1800, 2400, 3200, 4000, 4800]) {
       await scrollTo(page, y);
       await page.waitForTimeout(150);
     }
@@ -134,133 +135,258 @@ test.describe("page cross-fade", () => {
         (window as unknown as { __transitions: number[] }).__transitions.length,
     );
     expect(transitions).toBeGreaterThan(0);
+    // The footer is shared by both pages: its scroll-linked wordmark is
+    // measured again for the new, shorter page and still settles.
+    await page.evaluate(() =>
+      window.scrollTo({ top: document.documentElement.scrollHeight }),
+    );
+    await expect(page.locator(".site-footer__wordmark")).toHaveCSS(
+      "opacity",
+      "1",
+    );
     await expect(
       page.getByRole("link", { name: "Flyviman home" }),
     ).toBeVisible();
   });
 });
 
-test.describe("story section (From search to sky)", () => {
-  const section = (page: Page) =>
-    page.locator("section", {
-      has: page.getByRole("heading", { level: 2, name: "From search to sky" }),
-    });
-  /** How far each step's marker has filled, 0 to 1, to one decimal. */
-  const marks = (page: Page) =>
-    section(page)
-      .locator(".route-story__mark")
-      .evaluateAll((elements) =>
-        elements.map(
-          (el) =>
-            Math.round(new DOMMatrix(getComputedStyle(el).transform).a * 10) /
-            10,
-        ),
-      );
-  /** The steps' words are never dimmed. */
-  const stepOpacities = (page: Page) =>
-    section(page)
-      .locator(".route-story__step")
-      .evaluateAll((elements) =>
-        elements.map((el) => getComputedStyle(el).opacity),
-      );
-  const wipeScale = (page: Page) =>
-    section(page)
-      .locator(".route-story__wipe")
-      .evaluate((el) => new DOMMatrix(getComputedStyle(el).transform).a);
-  const isPinned = (page: Page) =>
-    section(page)
-      .locator(".route-story__stage")
-      .evaluate((el) => getComputedStyle(el).position === "sticky");
+test.describe("home page intro", () => {
+  const curtain = (page: Page) => page.locator(".intro-curtain");
 
-  /** Scrolls so that `progress` (0 to 1) of the pinned range has passed. */
-  async function scrollThrough(page: Page, progress: number) {
-    await page.evaluate((p) => {
-      const el = document.querySelector(".route-story") as HTMLElement;
-      const top = el.getBoundingClientRect().top + window.scrollY;
-      const range = el.offsetHeight - window.innerHeight;
-      window.scrollTo({ top: top + range * p });
-    }, progress);
-  }
-
-  test("on a wide screen it is pinned while the arc draws and the step markers fill in turn", async ({
+  test("opens the page on a first visit, then leaves it clear", async ({
     page,
   }) => {
-    await page.setViewportSize({ width: 1280, height: 800 });
     await page.goto("/");
 
-    await scrollThrough(page, 0);
-    await expect.poll(() => wipeScale(page)).toBeGreaterThan(0.9);
-    await expect.poll(() => marks(page)).toEqual([0, 0, 0, 0]);
+    // CSS only: it is there from the first paint and never takes a click.
+    await expect(curtain(page)).toHaveCSS("position", "fixed");
+    await expect(curtain(page)).toHaveCSS("pointer-events", "none");
+    await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
 
-    await scrollThrough(page, 0.45);
-    await expect.poll(() => marks(page)).toEqual([1, 1, 0, 0]);
-    await expect(
-      section(page).getByRole("heading", { level: 2 }),
-    ).toBeInViewport();
-    expect(new Set(await stepOpacities(page))).toEqual(new Set(["1"]));
-
-    await scrollThrough(page, 1);
-    await expect.poll(() => wipeScale(page)).toBeLessThan(0.05);
-    await expect.poll(() => marks(page)).toEqual([1, 1, 1, 1]);
-
-    // Scrolling back undoes it.
-    await scrollThrough(page, 0);
-    await expect.poll(() => marks(page)).toEqual([0, 0, 0, 0]);
-  });
-
-  test("at the smallest size that pins it, the whole stage fits below the header", async ({
-    page,
-  }) => {
-    await page.setViewportSize({ width: 1024, height: 720 });
-    await page.goto("/");
-    expect(await isPinned(page)).toBe(true);
-    const fits = await section(page)
-      .locator(".route-story__stage")
-      .evaluate((el) => {
-        const header =
-          parseFloat(
-            getComputedStyle(document.documentElement).getPropertyValue(
-              "--header-height",
-            ),
-          ) * parseFloat(getComputedStyle(document.documentElement).fontSize);
-        return el.scrollHeight <= window.innerHeight - header;
-      });
-    expect(fits).toBe(true);
-  });
-
-  for (const [label, size] of [
-    ["on a phone", { width: 390, height: 844 }],
-    ["on a wide but short window", { width: 1280, height: 650 }],
-  ] as const) {
-    test(`${label} it is a plain section with everything shown`, async ({
-      page,
-    }) => {
-      await page.setViewportSize(size);
-      await page.goto("/");
-      expect(await isPinned(page)).toBe(false);
-      await expect(section(page).locator(".route-story__wipe")).toBeHidden();
-      await section(page).scrollIntoViewIfNeeded();
-      await expect.poll(() => marks(page)).toEqual([1, 1, 1, 1]);
-    });
-  }
-
-  test("with reduced motion, and in print, it shows its final state and is not pinned", async ({
-    page,
-  }) => {
-    await page.setViewportSize({ width: 1280, height: 800 });
-    for (const media of [
-      { reducedMotion: "reduce" },
-      { reducedMotion: "no-preference", media: "print" },
-    ] as const) {
-      await page.emulateMedia(media);
-      await page.goto("/");
-      expect(await isPinned(page)).toBe(false);
-      await expect(section(page).locator(".route-story__wipe")).toBeHidden();
-      const height = await section(page).evaluate(
-        (el) => (el as HTMLElement).offsetHeight,
+    await expect(page.locator("html")).toHaveAttribute("data-intro-seen", "");
+    await expect(curtain(page)).toBeHidden();
+    // Every word of the headline has come to rest.
+    const transforms = await page
+      .locator(".intro-word > span")
+      .evaluateAll((words) =>
+        words.map((el) => getComputedStyle(el).transform),
       );
-      expect(height).toBeLessThan(800 * 1.5);
-      await expect.poll(() => marks(page)).toEqual([1, 1, 1, 1]);
-    }
+    expect(transforms).toHaveLength(7);
+    expect(new Set(transforms)).toEqual(new Set(["none"]));
+  });
+
+  test("does not play again on a reload in the same visit", async ({
+    page,
+  }) => {
+    await page.goto("/");
+    await expect(page.locator("html")).toHaveAttribute("data-intro-seen", "");
+
+    await page.reload();
+    await expect(curtain(page)).toBeHidden();
+    await expect(page.locator("html")).toHaveAttribute("data-intro-seen", "");
+  });
+
+  test("arriving from another page plays it once, and a reload does not repeat it", async ({
+    page,
+  }) => {
+    await page.goto("/legal/image-credits");
+    await page.getByRole("link", { name: "Flyviman home" }).click();
+    await expect(page.getByRole("heading", { level: 1 })).toHaveText(
+      /Your trusted partner/,
+    );
+    await expect(page.locator("html")).toHaveAttribute("data-intro-seen", "");
+
+    await page.reload();
+    // Set by the inline script before the first paint, from session storage.
+    expect(
+      await page.evaluate(() => sessionStorage.getItem("flyviman-intro")),
+    ).toBe("1");
+    await expect(curtain(page)).toBeHidden();
+  });
+
+  test("the headline is one sentence to a screen reader", async ({ page }) => {
+    await page.goto("/");
+    const heading = page.getByRole("heading", { level: 1 });
+
+    await expect(heading).toHaveAccessibleName(
+      "Your trusted partner for every aviation decision",
+    );
+    await expect(heading.locator("[aria-hidden] .intro-word")).toHaveCount(7);
+  });
+
+  test("is absent under reduced motion, and the hero stays still", async ({
+    page,
+  }) => {
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await page.goto("/");
+
+    await expect(curtain(page)).toBeHidden();
+    await expect(page.locator(".hero-glint")).toBeHidden();
+    await expect(page.locator(".hero-drift")).toHaveCSS(
+      "animation-name",
+      "none",
+    );
+  });
+
+  test("the page is whole without JavaScript", async ({ browser }) => {
+    const context = await browser.newContext({ javaScriptEnabled: false });
+    const page = await context.newPage();
+    await page.goto("/");
+
+    await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+    await expect(page.locator('[data-reveal="waiting"]')).toHaveCount(0);
+    // The curtain's animation ends by itself, clipped away to nothing.
+    await expect
+      .poll(() => curtain(page).evaluate((el) => getComputedStyle(el).clipPath))
+      .toBe("inset(50% 0px)");
+    await page
+      .getByRole("heading", {
+        level: 3,
+        name: "How can I request a quote or make a booking?",
+      })
+      .click();
+    await expect(page.getByText("You can request a quote by:")).toBeVisible();
+    await context.close();
+  });
+});
+
+test.describe("slit reveal", () => {
+  test("a section heading waits masked, then resolves fully", async ({
+    page,
+  }) => {
+    await page.goto("/");
+    const heading = page
+      .getByRole("heading", {
+        level: 2,
+        name: "Your gateway to effortless luxury travel",
+      })
+      .locator("xpath=ancestor::*[@data-reveal-variant='slit'][1]");
+
+    await expect(heading).toHaveAttribute("data-reveal", "waiting");
+    await expect(heading).toHaveCSS("--slit", "0%");
+    await heading.scrollIntoViewIfNeeded();
+    await expect(heading).toHaveAttribute("data-reveal", "shown");
+    await expect(heading).toHaveCSS("--slit", "100%");
+    await expect(heading).toHaveCSS("transform", "none");
+  });
+
+  test("with reduced motion a heading carries no mask", async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await page.goto("/");
+
+    const masks = await page
+      .locator('[data-reveal-variant="slit"]')
+      .evaluateAll((elements) =>
+        elements.map((el) => getComputedStyle(el).maskImage),
+      );
+    expect(masks.length).toBeGreaterThan(0);
+    expect(new Set(masks)).toEqual(new Set(["none"]));
+  });
+});
+
+test.describe("scroll-linked motion", () => {
+  const wordmark = (page: Page) => page.locator(".site-footer__wordmark");
+
+  test("the footer wordmark settles as it scrolls in, and scrolling stays native", async ({
+    page,
+  }) => {
+    await page.goto("/");
+    // GSAP loads once the page is idle and sets the starting state.
+    await expect(wordmark(page)).toHaveCSS("opacity", "0.2");
+
+    await page.evaluate(() =>
+      window.scrollTo({ top: document.documentElement.scrollHeight }),
+    );
+    await expect(wordmark(page)).toHaveCSS("opacity", "1");
+    // The page really is at the bottom: nothing smoothed or held the scroll.
+    const gap = await page.evaluate(
+      () =>
+        document.documentElement.scrollHeight -
+        document.documentElement.clientHeight -
+        window.scrollY,
+    );
+    expect(Math.abs(gap)).toBeLessThanOrEqual(1);
+
+    await scrollTo(page, 0);
+    await expect(wordmark(page)).toHaveCSS("opacity", "0.2");
+  });
+
+  test("the hero's headline lifts as it scrolls away, and its action stays legible", async ({
+    page,
+  }) => {
+    await page.goto("/");
+    const block = page
+      .getByRole("heading", { level: 1 })
+      .locator("xpath=ancestor::div[1]");
+    await expect(wordmark(page)).toHaveCSS("opacity", "0.2");
+    await expect(block).toHaveCSS("opacity", "1");
+
+    await scrollTo(page, 5000);
+    await expect(block).toHaveCSS("opacity", "0.6");
+    await scrollTo(page, 0);
+    await expect(block).toHaveCSS("opacity", "1");
+  });
+
+  test("with reduced motion nothing follows the scroll", async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await page.goto("/");
+    await page.waitForLoadState("networkidle");
+
+    await expect(wordmark(page)).toHaveCSS("opacity", "1");
+    await expect(wordmark(page)).not.toHaveAttribute("style", /.+/);
+  });
+});
+
+test.describe("pointer feedback", () => {
+  test("a service card leans to the pointer and settles back", async ({
+    page,
+  }, info) => {
+    test.skip(
+      info.project.name !== "desktop",
+      "Tilt needs a mouse or trackpad.",
+    );
+    await page.goto("/");
+    const card = page
+      .getByRole("heading", { level: 3, name: "Strong global network" })
+      .locator("xpath=..");
+    await card.scrollIntoViewIfNeeded();
+    await expect(card).toHaveCSS("transform", "none");
+
+    // Once the card has risen into place and the page has hydrated, the
+    // pointer near its top-right corner tilts it. Retried, because either
+    // can still be under way when the pointer first moves.
+    await expect(async () => {
+      const box = (await card.boundingBox())!;
+      await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+      await page.mouse.move(box.x + box.width - 8, box.y + 8);
+      await expect
+        .poll(
+          () => card.evaluate((el) => (el as HTMLElement).style.transform),
+          { timeout: 1000 },
+        )
+        .toMatch(/rotateX\(3\.\d+deg\) rotateY\(3\.\d+deg\)/);
+    }).toPass({ timeout: 10_000 });
+
+    await page.mouse.move(0, 0);
+    await expect
+      .poll(() => card.evaluate((el) => (el as HTMLElement).style.transform))
+      .toBe("");
+  });
+
+  test("the air ambulance tile never leans", async ({ page }, info) => {
+    test.skip(
+      info.project.name !== "desktop",
+      "Tilt needs a mouse or trackpad.",
+    );
+    await page.goto("/");
+    const tile = page
+      .getByText(/In an emergency, call 112/)
+      .locator("xpath=ancestor::li[1]/div");
+    await tile.scrollIntoViewIfNeeded();
+    await tile.hover();
+    await page.waitForTimeout(300);
+
+    await expect(tile).toHaveCSS("transform", "none");
+    await expect(tile).not.toHaveAttribute("style", /transform/);
   });
 });
