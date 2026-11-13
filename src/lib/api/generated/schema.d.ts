@@ -2460,6 +2460,8 @@ export interface components {
       /** Format: uuid */
       searchId: string;
       category: components["schemas"]["ServiceCategory"];
+      /** @description The fixed-wing class asked for; null for any. */
+      aircraftCategory: components["schemas"]["CharterCategory"] | null;
       legs: components["schemas"]["SearchLegDto"][];
       passengerCount: number;
       /** Format: date-time */

@@ -17,6 +17,9 @@
   --border: #d2d2d7;
   --accent: #0b6bcb;
   --accent-hover: #0a5fb4;
+  /* Blue backgrounds (primary buttons, selected states) with white text. */
+  --accent-fill: #0b6bcb;
+  --accent-fill-hover: #0a5fb4;
   --accent-foreground: #ffffff;
   --success: #1a7f45;
   --warning: #9a5b00;
@@ -37,7 +40,9 @@
     --border: #38383a;
     --accent: #3b9bff;
     --accent-hover: #62b0ff;
-    --accent-foreground: #00172e;
+    --accent-fill: #0a6fdc;
+    --accent-fill-hover: #1a7ee8;
+    --accent-foreground: #ffffff;
     --success: #34c26b;
     --warning: #f0a93b;
     --danger: #ff6961;
@@ -57,7 +62,9 @@
   --border: #38383a;
   --accent: #3b9bff;
   --accent-hover: #62b0ff;
-  --accent-foreground: #00172e;
+  --accent-fill: #0a6fdc;
+  --accent-fill-hover: #1a7ee8;
+  --accent-foreground: #ffffff;
   --success: #34c26b;
   --warning: #f0a93b;
   --danger: #ff6961;
@@ -75,6 +82,8 @@
   --color-border: var(--border);
   --color-accent: var(--accent);
   --color-accent-hover: var(--accent-hover);
+  --color-accent-fill: var(--accent-fill);
+  --color-accent-fill-hover: var(--accent-fill-hover);
   --color-accent-foreground: var(--accent-foreground);
   --color-success: var(--success);
   --color-warning: var(--warning);

@@ -15,7 +15,9 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { shortRupees } from "@/components/booking/format";
 import { SearchWidget } from "@/components/booking/search-widget";
+import { useNow } from "@/components/booking/use-now";
 import { useToday } from "@/components/booking/use-today";
+import { FormAlert } from "@/components/shared/form-alert";
 import { EmptyState } from "@/components/shared/empty-state";
 import { LoadError } from "@/components/shared/load-error";
 import { PriceLabel } from "@/components/shared/price-label";
@@ -24,6 +26,7 @@ import { Button } from "@/components/ui/button";
 import { buttonClasses } from "@/components/ui/button-classes";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Reveal } from "@/components/motion/reveal";
 import { Skeleton } from "@/components/ui/skeleton";
 import { IMAGES } from "@/content/image-credits";
 import { apiFetch } from "@/lib/api/client";
@@ -67,6 +70,8 @@ export function SearchResults({ searchId }: { searchId: string }) {
   const params = useSearchParams();
   const queryClient = useQueryClient();
   const today = useToday();
+  const now = useNow();
+  const [rerunError, setRerunError] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
   const [rerunning, setRerunning] = useState(false);
   const search = useQuery({
@@ -99,8 +104,6 @@ export function SearchResults({ searchId }: { searchId: string }) {
   const kind = data.category === "HELICOPTER" ? "helicopter" : "charter";
   const { filters, sort } = readFilters(new URLSearchParams(params.toString()));
   const shown = applyFilters(data.results, filters, sort);
-  // Expiry is judged at the time the results were fetched.
-  const fetchedAt = search.dataUpdatedAt;
 
   function update(next: Filters, nextSort: Sort = sort) {
     router.replace(`${pathname}${writeFilters(next, nextSort)}`, {
@@ -110,6 +113,7 @@ export function SearchResults({ searchId }: { searchId: string }) {
 
   async function rerun(date: string) {
     setRerunning(true);
+    setRerunError(null);
     try {
       const { data: next } = await apiFetch<SearchResponse>(`search/${kind}`, {
         method: "POST",
@@ -118,10 +122,15 @@ export function SearchResults({ searchId }: { searchId: string }) {
           destinationId: leg.destinationId,
           departureAt: localToUtc(date, local.time, ZONE),
           passengerCount: data.passengerCount,
+          ...(data.aircraftCategory ? { category: data.aircraftCategory } : {}),
         },
       });
       queryClient.setQueryData(queryKeys.search(next.searchId), { data: next });
       router.push(`/search/${next.searchId}`);
+    } catch {
+      setRerunError(
+        "That day could not be searched. It may be too soon to depart; try another day.",
+      );
     } finally {
       setRerunning(false);
     }
@@ -171,6 +180,7 @@ export function SearchResults({ searchId }: { searchId: string }) {
             date: local.date,
             time: local.time,
             passengerCount: data.passengerCount,
+            category: data.aircraftCategory ?? "ANY",
           }}
         />
       ) : null}
@@ -185,9 +195,13 @@ export function SearchResults({ searchId }: { searchId: string }) {
           originId: leg.originId,
           destinationId: leg.destinationId,
           passengerCount: data.passengerCount,
+          ...(data.aircraftCategory
+            ? { aircraftCategory: data.aircraftCategory }
+            : {}),
         }}
         onChoose={(date) => void rerun(date)}
       />
+      <FormAlert message={rerunError} />
 
       <div className="grid gap-6 md:grid-cols-[16rem_1fr]">
         <aside aria-label="Filters" className="hidden md:block">
@@ -259,13 +273,17 @@ export function SearchResults({ searchId }: { searchId: string }) {
             />
           ) : (
             <ul className="flex flex-col gap-4" aria-label="Aircraft found">
-              {shown.map((result) => (
+              {shown.map((result, index) => (
                 <li key={result.resultId}>
-                  <ResultCard
-                    result={result}
-                    searchId={searchId}
-                    expired={new Date(result.validUntil).getTime() < fetchedAt}
-                  />
+                  <Reveal index={Math.min(index, 4)}>
+                    <ResultCard
+                      result={result}
+                      searchId={searchId}
+                      expired={
+                        now > 0 && new Date(result.validUntil).getTime() < now
+                      }
+                    />
+                  </Reveal>
                 </li>
               ))}
             </ul>
@@ -288,7 +306,13 @@ function ResultCard({
   const image = IMAGES[categoryImage(result.aircraft.category)];
   const name = `${result.aircraft.manufacturer} ${result.aircraft.model}`;
   return (
-    <article className="flex flex-col overflow-hidden rounded-xl bg-surface md:flex-row">
+    <article
+      className={cn(
+        "group flex flex-col overflow-hidden rounded-xl bg-surface md:flex-row",
+        // A gentle lift on hover (motion level 1); still under reduced motion.
+        "transition duration-250 ease-emphasis hover:-translate-y-0.5 hover:shadow-md motion-reduce:hover:translate-y-0",
+      )}
+    >
       <div className="relative aspect-video w-full md:aspect-auto md:w-60 md:shrink-0">
         <Image
           src={image.src}
@@ -296,7 +320,7 @@ function ResultCard({
           fill
           placeholder="blur"
           sizes="(min-width: 768px) 15rem, 100vw"
-          className="object-cover"
+          className="object-cover transition-transform duration-450 ease-emphasis group-hover:scale-105 motion-reduce:group-hover:scale-100"
         />
       </div>
       <div className="flex flex-1 flex-col gap-4 p-5 md:flex-row md:items-center md:justify-between">

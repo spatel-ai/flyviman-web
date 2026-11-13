@@ -9,7 +9,7 @@ import { SITE_NAV } from "./site-nav";
 /** The site's pages across the header, from the md breakpoint up. */
 export function SiteNavList({ active }: { active: string | null }) {
   return (
-    <nav aria-label="Site" className="hidden md:block">
+    <nav aria-label="Site" className="hidden lg:block">
       <ul className="flex items-center gap-1">
         {SITE_NAV.map((item) => (
           <li key={item.href}>

@@ -69,10 +69,13 @@ src/
                            ScrollScrub and ScrollFilm (level 5; gsap is imported only in load-gsap.ts), TiltCard and Magnetic
                            (pointer feedback, on spring.ts), PageTransition (level 3)
     marketing/             SectionHeading, PageHero, EnquiryLink (customer marketing pages)
+    booking/               the customer search card and its pickers (SearchWidget, AirportPicker, FareCalendar,
+                           TravellerPicker, FieldTile, ResponsivePicker: popover on desktop, sheet on phones; useToday)
     theme/                 ThemeScript, ThemeSwitch
-  content/                 marketing copy (home, about, services, charter, contact), site photographs
+  content/                 marketing copy (home, about, services, charter, contact, search), site photographs
                            (images/) and image-credits.ts
   features/<feature>/      feature UI, hooks, schemas (auth, account, home, about, services, charter, contact, legal,
+                           search (results, filters, detail), search-landing,
                            operator-onboarding, operator-aircraft, operator-availability, operator-staff,
                            admin-operators, admin-users, admin-aircraft, admin-locations)
   lib/

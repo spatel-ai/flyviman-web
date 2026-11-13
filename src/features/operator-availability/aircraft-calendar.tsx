@@ -297,7 +297,7 @@ function MonthGrid({
                       className={cn(
                         "text-caption",
                         day === props.today
-                          ? "rounded-pill bg-accent px-1.5 font-semibold text-accent-foreground"
+                          ? "rounded-pill bg-accent-fill px-1.5 font-semibold text-accent-foreground"
                           : outside
                             ? "text-muted"
                             : "text-foreground",

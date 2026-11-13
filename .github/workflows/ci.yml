@@ -60,6 +60,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           path: flyviman-web
+          persist-credentials: false
 
       - name: Choose the API branch
         id: api
@@ -76,6 +77,7 @@ jobs:
           repository: ${{ env.API_REPOSITORY }}
           ref: ${{ steps.api.outputs.ref }}
           path: flyviman-api
+          persist-credentials: false
 
       - uses: actions/setup-node@v4
         with:
@@ -129,10 +131,13 @@ jobs:
 
       - name: API types match the API
         working-directory: flyviman-web
+        # Through the environment, never interpolated into the script.
+        env:
+          API_REF: ${{ steps.api.outputs.ref }}
         run: |
           npm run api:types
           git diff --exit-code -- src/lib/api/generated || {
-            echo "::error::src/lib/api/generated is out of date with flyviman-api@${{ steps.api.outputs.ref }}. Run 'npm run api:types' and commit it."
+            echo "::error::src/lib/api/generated is out of date with flyviman-api@$API_REF. Run 'npm run api:types' and commit it."
             exit 1
           }
 

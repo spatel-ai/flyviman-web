@@ -154,7 +154,7 @@ export function SearchWidget({
               "flex shrink-0 items-center gap-2 rounded-pill px-4 py-2 text-body-sm font-medium",
               "transition-colors duration-150 ease-standard outline-none focus-visible:ring-2 focus-visible:ring-accent",
               service === id
-                ? "bg-accent text-accent-foreground"
+                ? "bg-accent-fill text-accent-foreground"
                 : "text-muted hover:bg-surface hover:text-foreground",
             )}
           >

@@ -7,7 +7,7 @@ export type Variant = "primary" | "secondary" | "ghost" | "destructive";
 export type Size = "sm" | "md" | "lg";
 
 const VARIANTS: Record<Variant, string> = {
-  primary: "bg-accent text-accent-foreground hover:bg-accent-hover",
+  primary: "bg-accent-fill text-accent-foreground hover:bg-accent-fill-hover",
   secondary: "bg-surface text-foreground hover:bg-border/60",
   ghost: "text-accent hover:bg-accent/10",
   destructive: "bg-danger text-danger-foreground hover:bg-danger/90",
@@ -30,8 +30,9 @@ export function buttonClasses({
 }: { variant?: Variant; size?: Size; className?: string } = {}): string {
   return cn(
     "inline-flex items-center justify-center gap-2 rounded-pill font-medium whitespace-nowrap",
-    "transition-colors duration-150 ease-standard",
-    "disabled:cursor-not-allowed disabled:opacity-50",
+    // A press sinks the button slightly (motion level 1); not under reduced motion.
+    "transition duration-150 ease-standard active:scale-97 motion-reduce:active:scale-100",
+    "disabled:cursor-not-allowed disabled:opacity-50 disabled:active:scale-100",
     VARIANTS[variant],
     SIZES[size],
     className,

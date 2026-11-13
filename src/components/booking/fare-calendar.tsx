@@ -72,11 +72,16 @@ export function FareCalendar({
   const [open, setOpen] = useState(false);
   const desktop = useIsDesktop();
   const today = useToday();
-  // The month shown first: the chosen date's, else today's once known.
-  const [shown, setShown] = useState<string | null>(null);
-  const first = shown ?? monthStart(date || today || "2026-01-01");
-  const setFirst = setShown;
-  const months = desktop ? [first, addMonths(first, 1)] : [first];
+  // The month the visitor moved to; reset on close, so the picker opens on
+  // the chosen date's month (or today's) every time.
+  const [moved, setMoved] = useState<string | null>(null);
+  const start = date || today;
+  const first = moved ?? (start ? monthStart(start) : null);
+  const months = first
+    ? desktop
+      ? [first, addMonths(first, 1)]
+      : [first]
+    : [];
   const ready = readyRoute(route);
 
   const calendars = useQueries({
@@ -104,9 +109,14 @@ export function FareCalendar({
   return (
     <ResponsivePicker
       open={open}
-      onOpenChange={setOpen}
+      onOpenChange={(next) => {
+        setOpen(next);
+        if (!next) setMoved(null);
+      }}
       title="Departure date and time"
       width="lg"
+      room={500}
+      align="center"
       trigger={
         <FieldTile
           label="Departure"
@@ -124,8 +134,8 @@ export function FareCalendar({
             variant="ghost"
             size="sm"
             aria-label="Previous month"
-            disabled={!today || first <= monthStart(today)}
-            onClick={() => setFirst(addMonths(first, -1))}
+            disabled={!today || !first || first <= monthStart(today)}
+            onClick={() => first && setMoved(addMonths(first, -1))}
           >
             <ChevronLeft aria-hidden="true" className="size-4" />
           </Button>
@@ -138,13 +148,13 @@ export function FareCalendar({
             variant="ghost"
             size="sm"
             aria-label="Next month"
-            onClick={() => setFirst(addMonths(first, 1))}
+            onClick={() => first && setMoved(addMonths(first, 1))}
           >
             <ChevronRight aria-hidden="true" className="size-4" />
           </Button>
         </div>
 
-        <div className="flex flex-col gap-6 md:flex-row">
+        <div className="grid gap-6 md:grid-cols-2">
           {months.map((month, monthIndex) => {
             const answer = calendars[monthIndex]?.data?.data;
             const fares = new Map(
@@ -155,12 +165,12 @@ export function FareCalendar({
             );
             const cheapest = prices.length > 0 ? Math.min(...prices) : null;
             return (
-              <div key={month} className="flex flex-col gap-2">
+              <div key={month} className="flex min-w-0 flex-col gap-2">
                 <p className="text-title">{formatMonth(month)}</p>
                 <div
                   role="grid"
                   aria-label={formatMonth(month)}
-                  className="grid grid-cols-7 gap-1"
+                  className="grid grid-cols-7 gap-0.5"
                 >
                   {WEEKDAYS.map((weekday) => (
                     <span
@@ -209,7 +219,7 @@ export function FareCalendar({
                           .join(", ")}
                         onClick={() => onDateChange(day)}
                         className={cn(
-                          "flex h-14 w-11 flex-col items-center justify-center rounded-sm text-body-sm tabular-nums md:w-12",
+                          "flex h-11 w-full flex-col items-center justify-center rounded-sm text-body-sm tabular-nums",
                           "transition-colors duration-150 ease-standard outline-none focus-visible:ring-2 focus-visible:ring-accent",
                           state === "past" && "cursor-not-allowed text-subtle",
                           state === "none" && "text-subtle hover:bg-surface",
@@ -218,7 +228,7 @@ export function FareCalendar({
                           state === "cheapest" &&
                             "bg-success/10 hover:bg-success/20",
                           selected &&
-                            "bg-accent text-accent-foreground hover:bg-accent",
+                            "bg-accent-fill text-accent-foreground hover:bg-accent-fill",
                         )}
                       >
                         <span className="font-medium">
@@ -248,10 +258,15 @@ export function FareCalendar({
         </div>
 
         <fieldset className="flex flex-col gap-2">
-          <legend className="text-caption font-medium tracking-wide text-muted uppercase">
-            Departure time (India)
-          </legend>
-          <div className="flex flex-wrap gap-1.5">
+          <div className="flex items-center justify-between gap-4">
+            <legend className="text-caption font-medium tracking-wide text-muted uppercase">
+              Departure time (India)
+            </legend>
+            <Button size="sm" disabled={!date} onClick={() => setOpen(false)}>
+              Done
+            </Button>
+          </div>
+          <div className="grid grid-cols-4 gap-1.5 sm:grid-cols-8">
             {DEPARTURE_TIMES.map((slot) => (
               <button
                 key={slot}
@@ -259,9 +274,9 @@ export function FareCalendar({
                 aria-pressed={slot === time}
                 onClick={() => onTimeChange(slot)}
                 className={cn(
-                  "h-9 rounded-pill px-3 text-body-sm tabular-nums transition-colors duration-150 ease-standard",
+                  "h-9 rounded-pill text-body-sm tabular-nums transition-colors duration-150 ease-standard",
                   slot === time
-                    ? "bg-accent text-accent-foreground"
+                    ? "bg-accent-fill text-accent-foreground"
                     : "bg-surface hover:bg-border/60",
                 )}
               >
@@ -270,12 +285,6 @@ export function FareCalendar({
             ))}
           </div>
         </fieldset>
-
-        <div className="flex justify-end">
-          <Button disabled={!date} onClick={() => setOpen(false)}>
-            Done
-          </Button>
-        </div>
       </div>
     </ResponsivePicker>
   );

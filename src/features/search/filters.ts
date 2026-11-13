@@ -72,9 +72,10 @@ export function applyFilters(
       (filters.maxPriceMinor == null ||
         result.price == null ||
         result.price.amountMinor <= filters.maxPriceMinor) &&
+      // Like a price on request, an unknown flight time is not hidden.
       (filters.maxMinutes == null ||
-        (result.flightMinutes != null &&
-          result.flightMinutes <= filters.maxMinutes)) &&
+        result.flightMinutes == null ||
+        result.flightMinutes <= filters.maxMinutes) &&
       (filters.minSeats == null ||
         result.aircraft.passengerCapacity >= filters.minSeats),
   );

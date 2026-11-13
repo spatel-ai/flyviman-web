@@ -89,6 +89,7 @@ export function AirportPicker({
         if (!next) setTerm("");
       }}
       title={`${label}: choose an airport or heliport`}
+      room={440}
       trigger={
         <FieldTile
           label={label}
@@ -143,7 +144,7 @@ export function AirportPicker({
           id={listId}
           role="listbox"
           aria-label={searching ? "Results" : "Popular airports"}
-          className="flex max-h-80 flex-col overflow-y-auto"
+          className="flex max-h-72 flex-col overflow-y-auto"
         >
           {options.map((location, index) => {
             const Icon = location.type === "HELIPORT" ? Building2 : Plane;

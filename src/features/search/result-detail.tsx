@@ -2,6 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import Image from "next/image";
+import { useNow } from "@/components/booking/use-now";
 import Link from "next/link";
 import { LoadError } from "@/components/shared/load-error";
 import { PriceLabel } from "@/components/shared/price-label";
@@ -37,6 +38,7 @@ export function ResultDetail({
   searchId: string;
   resultId: string;
 }) {
+  const now = useNow();
   const result = useQuery({
     queryKey: queryKeys.searchResult(searchId, resultId),
     queryFn: () =>
@@ -65,7 +67,7 @@ export function ResultDetail({
 
   const detail = result.data.data;
   const leg = detail.legs[0];
-  const expired = new Date(detail.validUntil).getTime() < result.dataUpdatedAt;
+  const expired = now > 0 && new Date(detail.validUntil).getTime() < now;
 
   return (
     <div className="flex flex-col gap-8">

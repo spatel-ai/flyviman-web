@@ -31,7 +31,7 @@ export const FieldTile = forwardRef<HTMLButtonElement, FieldTileProps>(
           aria-label={`${label}: ${value ?? placeholder}`}
           className={cn(
             "flex h-full min-h-24 w-full min-w-0 flex-col items-start gap-1 rounded-md bg-surface px-4 py-3 text-left",
-            "transition-colors duration-150 ease-standard hover:bg-border/40",
+            "transition duration-150 ease-standard hover:bg-border/40 active:scale-99 motion-reduce:active:scale-100",
             "outline-none focus-visible:ring-2 focus-visible:ring-accent",
             error && "ring-1 ring-danger",
             className,

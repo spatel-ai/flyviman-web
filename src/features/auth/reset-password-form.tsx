@@ -2,6 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
+import { buttonClasses } from "@/components/ui/button-classes";
 import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -49,10 +50,7 @@ export function ResetPasswordForm() {
         <p className="text-muted">
           Your password has been set. You have been signed out everywhere else.
         </p>
-        <Link
-          href="/login"
-          className="inline-flex h-13 items-center justify-center rounded-pill bg-accent px-7 text-body-lg font-medium text-accent-foreground transition-colors duration-150 ease-standard hover:bg-accent-hover"
-        >
+        <Link href="/login" className={buttonClasses({ size: "lg" })}>
           Sign in
         </Link>
       </div>

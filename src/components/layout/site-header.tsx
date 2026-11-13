@@ -28,7 +28,7 @@ function SignedOut() {
       </Link>
       <Link
         href="/register"
-        className={`${LINK} bg-accent text-accent-foreground hover:bg-accent-hover`}
+        className={`${LINK} bg-accent-fill text-accent-foreground hover:bg-accent-fill-hover`}
       >
         Create account
       </Link>
@@ -57,7 +57,7 @@ export function SiteHeader() {
       <HeaderScrollState />
       <div className="mx-auto flex h-(--header-height) max-w-wide items-center justify-between px-4 md:px-6 lg:px-8">
         <div className="flex items-center gap-1 md:gap-6">
-          <div className="-ml-2 md:hidden">
+          <div className="-ml-2 lg:hidden">
             <MobileNav
               surface="Site"
               items={[{ href: "/", label: "Home" }, ...SITE_NAV, ...MORE_NAV]}

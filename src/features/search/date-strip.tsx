@@ -28,6 +28,7 @@ export function DateStrip({
     originId: string;
     destinationId: string;
     passengerCount: number;
+    aircraftCategory?: string;
   };
   busy: boolean;
   onChoose: (date: string) => void;
@@ -54,48 +55,53 @@ export function DateStrip({
   );
 
   return (
-    <div
-      role="group"
-      aria-label="Nearby dates"
-      className="-mx-4 flex gap-1 overflow-x-auto px-4 md:mx-0 md:px-0"
-    >
-      {days.map((day) => {
-        const fare = fares.get(day);
-        const past = Boolean(today) && day < today;
-        const selected = day === date;
-        return (
-          <button
-            key={day}
-            type="button"
-            disabled={past || busy}
-            aria-pressed={selected}
-            onClick={() => onChoose(day)}
-            className={cn(
-              "flex min-w-24 flex-1 flex-col items-center gap-0.5 rounded-md px-3 py-2 text-center",
-              "transition-colors duration-150 ease-standard outline-none focus-visible:ring-2 focus-visible:ring-accent",
-              selected
-                ? "bg-accent text-accent-foreground"
-                : "bg-surface hover:bg-border/60 disabled:cursor-not-allowed disabled:opacity-50",
-            )}
-          >
-            <span className="text-body-sm font-medium">
-              {formatCalendarDay(day)}
-            </span>
-            <span
+    <div className="flex flex-col gap-1.5">
+      <p className="text-caption text-muted">
+        Lowest estimates for a 10:00 departure. The operator confirms the price.
+      </p>
+      <div
+        role="group"
+        aria-label="Nearby dates, lowest estimates"
+        className="-mx-4 flex gap-1 overflow-x-auto px-4 md:mx-0 md:px-0"
+      >
+        {days.map((day) => {
+          const fare = fares.get(day);
+          const past = Boolean(today) && day < today;
+          const selected = day === date;
+          return (
+            <button
+              key={day}
+              type="button"
+              disabled={past || busy}
+              aria-pressed={selected}
+              onClick={() => onChoose(day)}
               className={cn(
-                "text-caption tabular-nums",
-                selected ? "text-accent-foreground" : "text-muted",
+                "flex min-w-24 flex-1 flex-col items-center gap-0.5 rounded-md px-3 py-2 text-center",
+                "transition-colors duration-150 ease-standard outline-none focus-visible:ring-2 focus-visible:ring-accent",
+                selected
+                  ? "bg-accent-fill text-accent-foreground"
+                  : "bg-surface hover:bg-border/60 disabled:cursor-not-allowed disabled:opacity-50",
               )}
             >
-              {fare?.lowest
-                ? `from ${shortRupees(fare.lowest.amountMinor)}`
-                : fare
-                  ? "No aircraft"
-                  : "—"}
-            </span>
-          </button>
-        );
-      })}
+              <span className="text-body-sm font-medium">
+                {formatCalendarDay(day)}
+              </span>
+              <span
+                className={cn(
+                  "text-caption tabular-nums",
+                  selected ? "text-accent-foreground" : "text-muted",
+                )}
+              >
+                {fare?.lowest
+                  ? `from ${shortRupees(fare.lowest.amountMinor)}`
+                  : fare
+                    ? "No aircraft"
+                    : "—"}
+              </span>
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 }

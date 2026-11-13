@@ -71,6 +71,15 @@ describe("applyFilters", () => {
     expect(only({ operators: ["Aero"] })).toEqual(["b", "c"]);
     expect(only({ minSeats: 8 })).toEqual(["b", "c"]);
     expect(only({ maxMinutes: 75 })).toEqual(["a", "b"]);
+    expect(
+      ids(
+        applyFilters(
+          [result("d", "LIGHT_JET", 6, null, 300)],
+          { ...NO_FILTERS, maxMinutes: 60 },
+          "price",
+        ),
+      ),
+    ).toEqual(["d"]);
     // A price on request is not hidden by a price limit.
     expect(only({ maxPriceMinor: 600 })).toEqual(["a", "c"]);
   });
