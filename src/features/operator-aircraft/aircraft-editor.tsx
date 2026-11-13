@@ -51,6 +51,7 @@ export function AircraftEditor({ id }: { id: string }) {
     queryFn: () => apiFetch<Aircraft>(base),
   });
   const [error, setError] = useState<string | null>(null);
+  const [expiryError, setExpiryError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
   const [editing, setEditing] = useState(false);
   const [removingDocument, setRemovingDocument] = useState<
@@ -133,6 +134,13 @@ export function AircraftEditor({ id }: { id: string }) {
     const form = new FormData(formElement);
     const file = form.get("file");
     if (!(file instanceof File) || file.size === 0) return;
+    // The API refuses an expiry in the past; say so before uploading.
+    const expiresAt = String(form.get("expiresAt"));
+    if (expiresAt < indiaToday()) {
+      setExpiryError("This date has passed. Upload the current copy.");
+      return;
+    }
+    setExpiryError(null);
     setPending(true);
     setError(null);
     try {
@@ -142,7 +150,7 @@ export function AircraftEditor({ id }: { id: string }) {
         body: {
           type: String(form.get("type")),
           fileId,
-          expiresAt: String(form.get("expiresAt")),
+          expiresAt,
         },
       });
       formElement.reset();
@@ -171,10 +179,13 @@ export function AircraftEditor({ id }: { id: string }) {
         {item.listingStatus === "APPROVED" && item.searchBlockers.length > 0 ? (
           <Card
             variant="flat"
-            role="status"
+            role="region"
+            aria-labelledby="not-offered"
             className="mt-4 border border-warning/40"
           >
-            <h2 className="text-title">Not offered to customers</h2>
+            <h2 id="not-offered" className="text-title">
+              Not offered to customers
+            </h2>
             <p className="mt-1 text-body-sm text-muted">
               Customers will not see this aircraft until this is fixed:
             </p>
@@ -280,6 +291,8 @@ export function AircraftEditor({ id }: { id: string }) {
               type="date"
               min={indiaToday()}
               hint="Today or later. We remind you 30 days, 7 days and on the day before it lapses."
+              error={expiryError ?? undefined}
+              onChange={() => setExpiryError(null)}
               required
             />
             <Input

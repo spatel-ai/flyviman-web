@@ -1,13 +1,7 @@
+import { operatorDocumentLabel } from "@/lib/format/documents";
 import type { Schemas } from "@/lib/api/types";
 
 type Address = Schemas["AddressDto"];
-
-const DOCUMENT_TYPES: Record<Schemas["OperatorDocumentType"], string> = {
-  AOC: "Air operator certificate",
-  INSURANCE: "Insurance certificate",
-  REGISTRATION: "Company registration",
-  OTHER: "Other",
-};
 
 const SERVICES: Record<Schemas["ServiceCategory"], string> = {
   SCHEDULED_AIRLINE: "Scheduled airline",
@@ -27,9 +21,7 @@ function known(map: Record<string, string>, key: string): string | undefined {
   return Object.hasOwn(map, key) ? map[key] : undefined;
 }
 
-export function documentTypeLabel(type: string): string {
-  return known(DOCUMENT_TYPES, type) ?? type;
-}
+export const documentTypeLabel = operatorDocumentLabel;
 
 export function serviceLabel(category: string): string {
   return known(SERVICES, category) ?? category;

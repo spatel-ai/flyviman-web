@@ -1,9 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  operatorDocumentLabel,
-  parseExpiringFilter,
-  serialiseExpiringFilter,
-} from "./filters";
+import { parseExpiringFilter, serialiseExpiringFilter } from "./filters";
 
 describe("expiring documents filter", () => {
   it("defaults to everything in the next 30 days", () => {
@@ -28,9 +24,5 @@ describe("expiring documents filter", () => {
     expect(
       serialiseExpiringFilter({ kind: "ALL", withinDays: 30, page: 1 }),
     ).toBe("");
-  });
-
-  it("names operator documents", () => {
-    expect(operatorDocumentLabel("AOC")).toBe("Air operator certificate");
   });
 });

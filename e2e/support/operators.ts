@@ -174,7 +174,12 @@ export async function uploadAircraftDocument(
  * at Mumbai. The aircraft is set up through the API, which the fleet journey
  * already covers in the browser.
  */
-export async function approvedAircraft(page: Page, browser: Browser) {
+export async function approvedAircraft(
+  page: Page,
+  browser: Browser,
+  /** A further document, attached before review (an approved listing returns to review when one is added). */
+  extra?: { type: string; expiresAt: string },
+) {
   await approvedOperator(page, browser);
   const headers = await csrf(page);
   const locations = await page.request.get(`${API_URL}locations`, {
@@ -199,6 +204,15 @@ export async function approvedAircraft(page: Page, browser: Browser) {
   const id = (await created.json()).data.id as string;
   for (const type of ["REGISTRATION", "AIRWORTHINESS", "INSURANCE"]) {
     await uploadAircraftDocument(page, headers, id, type);
+  }
+  if (extra) {
+    await uploadAircraftDocument(
+      page,
+      headers,
+      id,
+      extra.type,
+      extra.expiresAt,
+    );
   }
   expect(
     (

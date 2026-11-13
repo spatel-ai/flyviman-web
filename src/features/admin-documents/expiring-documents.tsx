@@ -23,11 +23,11 @@ import { apiFetch } from "@/lib/api/client";
 import { queryKeys } from "@/lib/api/query-keys";
 import type { Schemas } from "@/lib/api/types";
 import { aircraftDocumentLabel, formatDay } from "@/lib/format/aircraft";
+import { operatorDocumentLabel } from "@/lib/format/documents";
 import {
   type ExpiringFilter,
   KINDS,
   type KindFilter,
-  operatorDocumentLabel,
   parseExpiringFilter,
   serialiseExpiringFilter,
   WINDOWS,
@@ -68,7 +68,6 @@ export function ExpiringDocuments() {
   }
 
   const rows = data?.data ?? [];
-  const expired = rows.filter((row) => row.daysLeft < 0).length;
 
   return (
     <div className="mt-6 flex flex-col gap-6">
@@ -118,9 +117,8 @@ export function ExpiringDocuments() {
           {isPending ? null : (
             <p className="text-body-sm text-muted" role="status">
               {data.meta.total ?? rows.length} document
-              {(data.meta.total ?? rows.length) === 1 ? "" : "s"}
-              {expired > 0 ? `, ${expired} already expired on this page` : ""}.
-              Operators are reminded 30 days, 7 days and on the day.
+              {(data.meta.total ?? rows.length) === 1 ? "" : "s"}. Operators are
+              reminded 30 days, 7 days and on the day.
             </p>
           )}
           <div aria-busy={isPending || undefined}>

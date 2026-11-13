@@ -1,3 +1,7 @@
+import {
+  OPERATOR_DOCUMENT_TYPES,
+  operatorDocumentLabel,
+} from "@/lib/format/documents";
 import { z } from "zod";
 import type { Schemas } from "@/lib/api/types";
 
@@ -18,19 +22,12 @@ export type OperatorCategory = (typeof SERVICE_CATEGORIES)[number]["value"];
 
 const CATEGORY_VALUES = SERVICE_CATEGORIES.map((category) => category.value);
 
-export const DOCUMENT_TYPES = [
-  { value: "AOC", label: "Air operator certificate" },
-  { value: "INSURANCE", label: "Insurance certificate" },
-  { value: "REGISTRATION", label: "Company registration" },
-  { value: "OTHER", label: "Other" },
-] as const;
+export const DOCUMENT_TYPES = OPERATOR_DOCUMENT_TYPES;
 
 export type DocumentType = (typeof DOCUMENT_TYPES)[number]["value"];
 
 /** The wording for a document type; an unknown type is shown as it is. */
-export function documentTypeLabel(type: string): string {
-  return DOCUMENT_TYPES.find((option) => option.value === type)?.label ?? type;
-}
+export const documentTypeLabel = operatorDocumentLabel;
 
 // --- Company details -------------------------------------------------------
 

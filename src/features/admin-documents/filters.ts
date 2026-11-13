@@ -35,14 +35,3 @@ export function serialiseExpiringFilter(filter: ExpiringFilter): string {
   if (filter.page > 1) params.set("page", String(filter.page));
   return params.toString();
 }
-
-const OPERATOR_LABELS: Record<string, string> = {
-  AOC: "Air operator certificate",
-  INSURANCE: "Insurance",
-  REGISTRATION: "Company registration",
-  OTHER: "Other document",
-};
-
-export function operatorDocumentLabel(type: string): string {
-  return OPERATOR_LABELS[type] ?? type;
-}

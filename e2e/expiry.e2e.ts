@@ -1,11 +1,6 @@
 import { expect, test } from "@playwright/test";
 import { API_URL, expectNoSidewaysScroll } from "./support/api";
-import {
-  approvedAircraft,
-  asStaff,
-  csrf,
-  uploadAircraftDocument,
-} from "./support/operators";
+import { approvedAircraft, asStaff, csrf } from "./support/operators";
 
 /** A calendar date in India, `days` from today. */
 function indiaDate(days: number): string {
@@ -22,9 +17,13 @@ test("an expiring document is flagged to the operator and listed for operations"
   browser,
 }) => {
   test.slow();
-  const { id, registration } = await approvedAircraft(page, browser);
+  // The expiring document is attached before review: adding one to an
+  // approved listing sends it back to review.
+  const { id, registration } = await approvedAircraft(page, browser, {
+    type: "OTHER",
+    expiresAt: indiaDate(3),
+  });
   const headers = await csrf(page);
-  await uploadAircraftDocument(page, headers, id, "OTHER", indiaDate(3));
 
   // The operator sees the expiry on the aircraft, in words.
   await page.goto(`/operator/aircraft/${id}`);
@@ -44,8 +43,8 @@ test("an expiring document is flagged to the operator and listed for operations"
     ).status(),
   ).toBe(200);
   await page.reload();
-  const notice = page.getByRole("status").filter({
-    hasText: "Not offered to customers",
+  const notice = page.getByRole("region", {
+    name: "Not offered to customers",
   });
   await expect(notice).toBeVisible();
   await expect(
