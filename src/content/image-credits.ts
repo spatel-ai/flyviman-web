@@ -88,7 +88,7 @@ export const IMAGES = {
     added: "2026-11-11",
     ...UNSPLASH,
   },
-  // Added 2026-11-13 for CR-1 round 2, chosen by the product owner.
+  // Added 2026-11-13 for M4 round 2, chosen by the product owner.
   charterJetDusk: {
     src: charterJetDusk,
     alt: "A white long-range business jet parked on an apron under a dusk sky",

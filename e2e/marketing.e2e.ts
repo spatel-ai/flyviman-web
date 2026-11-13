@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 
 /**
- * The customer site's marketing pages, imported from flyviman.com (CR-1,
+ * The customer site's marketing pages, imported from flyviman.com (M4,
  * D-075, D-084): their headings, the navigation between them, and that
  * claims the business has not confirmed stay out.
  */

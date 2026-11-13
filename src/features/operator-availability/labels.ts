@@ -58,7 +58,7 @@ export const ENTRY_ORDER: EntryType[] = [
 /** Entries that offer time to customers, which need an approved operator. */
 export const OFFERS_TIME: EntryType[] = ["OPEN", "DEPARTURE_SLOT", "SOFT_HOLD"];
 
-/** Types an operator can add (bookings come only from bookings, M7). */
+/** Types an operator can add (bookings come only from bookings, M8). */
 export function addableTypes(approved: boolean): EntryType[] {
   return ENTRY_ORDER.filter(
     (type) => type !== "BOOKING" && (approved || !OFFERS_TIME.includes(type)),

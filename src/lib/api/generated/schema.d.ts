@@ -1957,7 +1957,7 @@ export interface components {
       reviewNote?: string | null;
       /** @description Missing fields for submit. */
       missing: string[];
-      /** @description Why search (M4) would not offer this aircraft; empty when it would. `listingNotApproved`, `operatorNotApproved`, `notAvailable`, then the `missing` codes, including `document:<TYPE>` for a required document that is absent or expired. */
+      /** @description Why search (M5) would not offer this aircraft; empty when it would. `listingNotApproved`, `operatorNotApproved`, `notAvailable`, then the `missing` codes, including `document:<TYPE>` for a required document that is absent or expired. */
       searchBlockers: string[];
       media: components["schemas"]["AircraftMediaResponseDto"][];
       documents: components["schemas"]["AircraftDocumentResponseDto"][];
@@ -2050,7 +2050,7 @@ export interface components {
       reviewNote?: string | null;
       /** @description Missing fields for submit. */
       missing: string[];
-      /** @description Why search (M4) would not offer this aircraft; empty when it would. `listingNotApproved`, `operatorNotApproved`, `notAvailable`, then the `missing` codes, including `document:<TYPE>` for a required document that is absent or expired. */
+      /** @description Why search (M5) would not offer this aircraft; empty when it would. `listingNotApproved`, `operatorNotApproved`, `notAvailable`, then the `missing` codes, including `document:<TYPE>` for a required document that is absent or expired. */
       searchBlockers: string[];
       media: components["schemas"]["AircraftMediaResponseDto"][];
       documents: components["schemas"]["AircraftDocumentResponseDto"][];

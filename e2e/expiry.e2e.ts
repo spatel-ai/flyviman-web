@@ -54,7 +54,25 @@ test("an expiring document is flagged to the operator and listed for operations"
 
   // Operations find it on the expiring documents page.
   const ops = await asStaff(browser, "ops");
-  await ops.page.goto("/admin/documents?kind=AIRCRAFT&within=7");
+  // Documents left by earlier runs sort ahead of this one once their dates
+  // draw nearer, so find the page this document is on (20 to a page, as
+  // the admin page shows them) rather than assume the first.
+  const listed = await ops.page.request.get(
+    `${API_URL}admin/documents/expiring`,
+    { params: { kind: "AIRCRAFT", withinDays: 7, page: 1, pageSize: 100 } },
+  );
+  expect(listed.status()).toBe(200);
+  const position = (
+    (await listed.json()).data as { aircraftId: string | null }[]
+  ).findIndex((row) => row.aircraftId === id);
+  expect(
+    position,
+    "the document is among the first 100",
+  ).toBeGreaterThanOrEqual(0);
+  const onPage = Math.floor(position / 20) + 1;
+  await ops.page.goto(
+    `/admin/documents?kind=AIRCRAFT&within=7${onPage > 1 ? `&page=${onPage}` : ""}`,
+  );
   await expect(
     ops.page.getByRole("heading", { level: 1, name: "Expiring documents" }),
   ).toBeVisible();
