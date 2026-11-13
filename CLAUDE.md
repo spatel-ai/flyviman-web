@@ -60,10 +60,10 @@ src/
     layout.tsx             root: font, theme script, providers
     globals.css            design tokens
   components/
-    ui/                    design-system primitives (Button and buttonClasses, Input, Select, Checkbox, Card, Badge,
+    ui/                    design-system primitives (Button; buttonClasses in button-classes.ts, Input, Select, Checkbox, Card, Badge,
                            Dialog and ConfirmDialog, Sheet, Tabs, Toast, Skeleton, Table and Pagination, Textarea)
     shared/                cross-feature pieces (PriceLabel, StatusBadge, EmptyState, FormAlert, LoadError,
-                           ClientRedirect)
+                           ClientRedirect, RecordNotFound)
     layout/                SiteHeader (with SiteNavLinks and SITE_NAV), SiteFooter, AppShell, NavLinks, MobileNav, UserMenu
     motion/                Reveal (level 4, with the slit variant),
                            ScrollScrub and ScrollFilm (level 5; gsap is imported only in load-gsap.ts), TiltCard and Magnetic
@@ -83,7 +83,7 @@ src/
                            server-side calls when API_PROXY_TARGET is set)
     utils.ts               cn()
   providers/               QueryProvider
-  proxy.ts                 first-line route protection and session rotation
+  proxy.ts                 first-line route protection, session rotation, 404s for unknown slugs
 e2e/                       Playwright browser journeys; helpers in e2e/support
 public/hero/               hero film frames and posters (made by scripts/extract-hero-frames.mjs, committed)
 scripts/                   extract-hero-frames.mjs: clip in media-src/ (git-ignored) to WebP frames
@@ -100,6 +100,7 @@ Full structure and the page map: `../docs/frontend/frontend-design.md`.
 - **All API access goes through `apiFetch`.** Client-side data uses TanStack Query with keys from `lib/api/query-keys.ts`. Switch on `ApiError.code`, never on the message; wording lives in `lib/api/messages.ts`. On the server use `serverGet` from `lib/auth/server-api.ts`. The one exception is sending a file to a signed upload URL, which is a plain `fetch` without credentials.
 - **Protected surfaces** are gated twice: `proxy.ts` turns away visitors with no session, and each protected layout calls `requireRole()` inside `<Suspense>` before rendering anything. Hiding a button by role is a convenience; the API decides.
 - **Types come from the API.** Use `Schemas["…"]` from `lib/api/types.ts`; do not hand-write request or response shapes.
+- **Forms** submit only through `<Button type="submit">`, which is disabled until the page is interactive (D-095); never a raw `<button type="submit">`.
 - **Forms:** React Hook Form with a Zod schema in the feature's `schema.ts`; `applyApiError` puts the API's field errors under the fields; `FormAlert` shows the form-level message.
 - **Prices render only through `PriceLabel`,** which requires a `priceType`. Booking status and payment status are always two separate badges.
 - **Never cache** prices, availability or statuses beyond the validity the API returns.
@@ -107,6 +108,7 @@ Full structure and the page map: `../docs/frontend/frontend-design.md`.
 - **Environment:** `NEXT_PUBLIC_` values plus the server-only `API_PROXY_TARGET` (hosting, D-065), declared in `src/lib/env.ts` and `.env.example`. No secrets: they live in the API.
 - **Motion** follows the five-level scale in `../docs/frontend/motion-design.md`; use the `motion-effect` skill to add or change one. Wrap each new customer page's content in `PageTransition`; use `Reveal` only for content that starts below the first screen (`variant="slit"` for a section heading); never animate safety notices, prices, forms or status badges. Anything that plays on load is CSS. `gsap` is imported only inside `components/motion/load-gsap.ts`, dynamically; scrolling stays native, and only the home page's hero film (`features/home/hero.tsx`, values in `hero-config.ts`, frames made by `scripts/extract-hero-frames.mjs` from `media-src/`, which is not committed) and its showpiece (`ScrollFilm`) are pinned, with CSS `position: sticky`. `TiltCard` and `Magnetic` are for customer marketing sections only.
 - **Marketing copy** lives in typed modules in `src/content/` (`home.ts`, `about.ts`, `services.ts`, `charter.ts`, `contact.ts`), imported from flyviman.com with the `site-content-import` skill. Components do not hold copy inline. Claims the business has not confirmed stay out (`../docs/open-decisions.md`).
+- **Pages with a dynamic segment** (`[slug]`, `[id]`): a public one gets its slugs added to `KNOWN_SLUGS` in `proxy.ts` so an unknown address answers 404; a signed-in detail page shows `RecordNotFound` when `isNotFoundError(error)`. The not-found guard (`src/proxy.spec.ts`, `e2e/not-found.e2e.ts`) finds new pages by itself and fails until they are handled (D-094).
 - **Redirecting into a page with a form** from a page that streams: use `ClientRedirect`, not `redirect()` (which also reloads the destination a moment later).
 - **Photographs** come only from `src/content/image-credits.ts`, where each has alt text, photographer, source and licence. Rules for choosing one: `../docs/frontend/motion-design.md`. They apply to Flyviman's own pictures too.
 - **Class names** are merged with `cn` (`lib/utils.ts`), which knows our type-scale names. A new `--text-*` token must be added to its list, or a text colour beside it is silently dropped (D-078).
@@ -119,7 +121,7 @@ Strategy and conventions: `../docs/testing-strategy.md`.
 
 - Formatting, schemas and logic-bearing components: Vitest.
 - Pages and journeys: Playwright, written with the `/playwright-test` skill, on both the desktop and mobile projects.
-- A change is not done until `npm run lint`, `npm run typecheck`, `npm test`, `npm run build` and `npm run test:e2e` pass.
+- A change is not done until `npm run lint`, `npm run typecheck`, `npm test`, `npm run build` and `npm run test:e2e` pass. CI (`.github/workflows/ci.yml`) runs all of them on every pull request and push to `main`; after an intended visual change, also run it by hand with "update visual baselines" (`../docs/testing-strategy.md`).
 
 ## Skills and agents
 

@@ -10,7 +10,7 @@ import {
   type CSSProperties,
 } from "react";
 import { Magnetic } from "@/components/motion/magnetic";
-import { buttonClasses } from "@/components/ui/button";
+import { buttonClasses } from "@/components/ui/button-classes";
 import { IMAGES } from "@/content/image-credits";
 import { HERO, type HeroRange } from "./hero-config";
 import {

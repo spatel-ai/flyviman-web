@@ -63,7 +63,11 @@ test("an operator offers time, holds it twice, resolves the overlap and opens th
   await expect(
     page.getByRole("heading", { level: 1, name: "Availability" }),
   ).toBeVisible();
-  await expect(page.getByText("Times in IST (Asia/Kolkata)")).toBeVisible();
+  // A streamed page can briefly hold a hidden copy of its content, which
+  // text lookups also match; only the visible one counts.
+  await expect(
+    page.getByText("Times in IST (Asia/Kolkata)").filter({ visible: true }),
+  ).toBeVisible();
   await expect(
     page
       .getByRole("group", { name: registration })
@@ -239,7 +243,9 @@ test("editing an approved aircraft's details warns, then sends it back to review
   );
 
   await page.getByRole("button", { name: "Edit details" }).click();
-  await dialog.getByLabel("Passenger capacity").fill("6");
+  await dialog
+    .getByRole("spinbutton", { name: "Passenger capacity" })
+    .fill("6");
   await dialog.getByRole("button", { name: "Save changes" }).click();
   await page
     .getByRole("dialog", { name: "Send the aircraft back to review?" })

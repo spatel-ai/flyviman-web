@@ -5,12 +5,14 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { ExpiryBadge } from "@/components/shared/expiry-badge";
+import { RecordNotFound } from "@/components/shared/record-not-found";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ConfirmDialog } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { apiFetch } from "@/lib/api/client";
+import { isNotFoundError } from "@/lib/api/errors";
 import { messageFor } from "@/lib/api/messages";
 import { queryKeys } from "@/lib/api/query-keys";
 import type { Schemas } from "@/lib/api/types";
@@ -71,6 +73,16 @@ export function AircraftReview({ id }: { id: string }) {
     `admin/aircraft/documents/${encodeURIComponent(documentId)}/verify`;
 
   if (aircraft.isPending) return <Skeleton className="h-64" />;
+  if (aircraft.isError && isNotFoundError(aircraft.error)) {
+    return (
+      <RecordNotFound
+        title="Aircraft not found"
+        description="This aircraft does not exist, or the link is not correct."
+        backHref="/admin/aircraft"
+        backLabel="Back to aircraft"
+      />
+    );
+  }
   if (aircraft.isError) {
     return (
       <p role="alert" className="text-danger">

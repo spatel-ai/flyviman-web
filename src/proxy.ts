@@ -1,4 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { AIRCRAFT_SALES } from "@/content/aircraft-sales";
+import { POLICY_SLUGS } from "@/features/legal/policies";
 import { serverApiUrl } from "@/lib/env";
 
 const ACCESS = "access_token";
@@ -10,6 +12,29 @@ const EXPIRY_MARGIN_SECONDS = 30;
 
 /** Public pages that live under a protected prefix. */
 const PUBLIC_PATHS = new Set(["/operator/register"]);
+
+/**
+ * Public pages addressed by a slug, with the slugs that exist. Any other
+ * `/<section>/<slug>` must answer 404 on its first visit. The pages call
+ * `notFound()` themselves, but they stream, so without this an unknown
+ * address is first sent with status 200 (D-093).
+ */
+const KNOWN_SLUGS: Record<string, ReadonlySet<string>> = {
+  "aircraft-sales": new Set(
+    AIRCRAFT_SALES.listings.flatMap((listing) =>
+      listing.slug ? [listing.slug] : [],
+    ),
+  ),
+  // `image-credits` is a page of its own beside the policies.
+  legal: new Set([...POLICY_SLUGS, "image-credits"]),
+};
+const SLUG_PAGE = /^\/(aircraft-sales|legal)\/([^/]+)\/?$/;
+
+/** Renders the site's not-found page with status 404 by rewriting to an
+ *  address no route matches. */
+function notFound(request: NextRequest): NextResponse {
+  return NextResponse.rewrite(new URL("/_no-such-page", request.url));
+}
 
 /**
  * True when the cookie holds a token that is still valid for a while. This
@@ -65,6 +90,14 @@ function parseCookieHeader(header: string | null): Map<string, string> {
  * components cannot set cookies.
  */
 export async function proxy(request: NextRequest): Promise<NextResponse> {
+  const slugPage = SLUG_PAGE.exec(request.nextUrl.pathname);
+  if (slugPage) {
+    // Slugs are plain ASCII, so the raw path segment is compared as it is.
+    const [, section, slug] = slugPage;
+    return KNOWN_SLUGS[section].has(slug)
+      ? NextResponse.next()
+      : notFound(request);
+  }
   if (PUBLIC_PATHS.has(request.nextUrl.pathname)) return NextResponse.next();
 
   const access = request.cookies.get(ACCESS)?.value;
@@ -126,5 +159,7 @@ export const config = {
     "/account/:path*",
     "/trips/:path*",
     "/book/:path*",
+    "/aircraft-sales/:slug",
+    "/legal/:slug",
   ],
 };

@@ -4,14 +4,17 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { useState, type FormEvent } from "react";
 import { ExpiryBadge } from "@/components/shared/expiry-badge";
+import { RecordNotFound } from "@/components/shared/record-not-found";
 import { StatusBadge } from "@/components/shared/status-badge";
-import { Button, buttonClasses } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
+import { buttonClasses } from "@/components/ui/button-classes";
 import { Card } from "@/components/ui/card";
 import { ConfirmDialog } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { apiFetch } from "@/lib/api/client";
+import { isNotFoundError } from "@/lib/api/errors";
 import { messageFor } from "@/lib/api/messages";
 import { queryKeys } from "@/lib/api/query-keys";
 import type { Schemas } from "@/lib/api/types";
@@ -69,6 +72,16 @@ export function AircraftEditor({ id }: { id: string }) {
   }
 
   if (aircraft.isPending) return <Skeleton className="mt-6 h-64" />;
+  if (aircraft.isError && isNotFoundError(aircraft.error)) {
+    return (
+      <RecordNotFound
+        title="Aircraft not found"
+        description="This aircraft is not in your fleet, or the link is not correct."
+        backHref="/operator/aircraft"
+        backLabel="Back to your fleet"
+      />
+    );
+  }
   if (aircraft.isError) {
     return (
       <p role="alert" className="text-danger">

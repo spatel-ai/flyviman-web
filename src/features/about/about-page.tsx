@@ -3,7 +3,7 @@ import { PageHero } from "@/components/marketing/page-hero";
 import { Magnetic } from "@/components/motion/magnetic";
 import { Reveal } from "@/components/motion/reveal";
 import { TiltCard } from "@/components/motion/tilt-card";
-import { buttonClasses } from "@/components/ui/button";
+import { buttonClasses } from "@/components/ui/button-classes";
 import { ABOUT } from "@/content/about";
 import Link from "next/link";
 

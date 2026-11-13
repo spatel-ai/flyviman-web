@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { EnquiryLink } from "@/components/marketing/enquiry-link";
-import { buttonClasses } from "@/components/ui/button";
+import { buttonClasses } from "@/components/ui/button-classes";
 import { PageHero } from "@/components/marketing/page-hero";
 import { SectionHeading } from "@/components/marketing/section-heading";
 import { Reveal } from "@/components/motion/reveal";

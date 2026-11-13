@@ -3,7 +3,7 @@ import Link from "next/link";
 import { SectionHeading } from "@/components/marketing/section-heading";
 import { Reveal } from "@/components/motion/reveal";
 import { ScrollScrub } from "@/components/motion/scroll-scrub";
-import { buttonClasses } from "@/components/ui/button";
+import { buttonClasses } from "@/components/ui/button-classes";
 import { HOME } from "@/content/home";
 import { IMAGES } from "@/content/image-credits";
 
