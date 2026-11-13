@@ -7,10 +7,9 @@ import { apiFetch } from "@/lib/api/client";
 import { ApiError } from "@/lib/api/errors";
 import type { Schemas } from "@/lib/api/types";
 import { PageTransition } from "@/components/motion/page-transition";
+import { POLICY_SLUGS } from "@/features/legal/policies";
 
 type Policy = Schemas["PolicyResponseDto"];
-
-const POLICIES = ["terms", "privacy"];
 
 export const metadata: Metadata = { title: "Policy" };
 
@@ -32,7 +31,7 @@ async function getPolicy(slug: string): Promise<Policy | null> {
 async function PolicyText({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   // Only real policies are looked up, so made-up slugs cannot fill the cache.
-  if (!POLICIES.includes(slug)) notFound();
+  if (!POLICY_SLUGS.includes(slug)) notFound();
   const policy = await getPolicy(slug);
   if (!policy) notFound();
 

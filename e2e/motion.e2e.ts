@@ -210,10 +210,16 @@ test.describe("home page hero", () => {
       .toBeGreaterThan(20);
     await expect(opening).toHaveCSS("opacity", "0");
     await expect(heading(page)).toHaveCSS("opacity", "0");
-    // The stage is held: the track has moved, the canvas has not.
-    expect(
-      await canvas(page).evaluate((el) => el.getBoundingClientRect().top),
-    ).toBe(0);
+    // The stage is held: the track has moved, the canvas has not. Sticky
+    // positioning can leave a sub-pixel offset (-0.0046 seen), so "held"
+    // means within a pixel of the top.
+    await expect
+      .poll(async () =>
+        Math.abs(
+          await canvas(page).evaluate((el) => el.getBoundingClientRect().top),
+        ),
+      )
+      .toBeLessThan(1);
 
     await scrollHero(page, 1);
     await expect(canvas(page)).toHaveAttribute("data-frame", lastFrame(page));

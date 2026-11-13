@@ -19,3 +19,18 @@ export class ApiError extends Error {
     this.name = "ApiError";
   }
 }
+
+/**
+ * The record a page asked for does not exist: unknown (404) or the address
+ * holds something that is not an id at all (400). A detail page shows
+ * `RecordNotFound` for it, never a "could not load" message with a retry,
+ * because retrying cannot help.
+ */
+export function isNotFoundError(error: unknown): boolean {
+  return (
+    error instanceof ApiError &&
+    (error.status === 404 ||
+      error.code === "NOT_FOUND" ||
+      error.code === "VALIDATION_ERROR")
+  );
+}

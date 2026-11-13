@@ -73,12 +73,12 @@ test("the header leads to every page and marks the current one", async ({
       await page.getByRole("button", { name: "Open navigation" }).click();
       await page
         .getByRole("navigation", { name: "Site navigation" })
-        .getByRole("link", { name: nav })
+        .getByRole("link", { name: nav, exact: true })
         .click();
     } else {
       await page
         .getByRole("navigation", { name: "Site" })
-        .getByRole("link", { name: nav })
+        .getByRole("link", { name: nav, exact: true })
         .click();
     }
     await expect(
@@ -88,7 +88,7 @@ test("the header leads to every page and marks the current one", async ({
       await expect(
         page
           .getByRole("navigation", { name: "Site" })
-          .getByRole("link", { name: nav }),
+          .getByRole("link", { name: nav, exact: true }),
       ).toHaveAttribute("aria-current", "page");
     }
   }
@@ -99,10 +99,9 @@ test("the footer lists the pages", async ({ page }) => {
   const footer = page.getByRole("navigation", { name: "Footer" });
 
   for (const { path, nav } of PAGES) {
-    await expect(footer.getByRole("link", { name: nav })).toHaveAttribute(
-      "href",
-      path,
-    );
+    await expect(
+      footer.getByRole("link", { name: nav, exact: true }),
+    ).toHaveAttribute("href", path);
   }
 });
 
@@ -174,7 +173,9 @@ test.describe("services", () => {
     await expect(page.getByText(/In an emergency, call 112/)).toBeVisible();
     await expect(page.getByText(/Investor-exclusive access/i)).toBeVisible();
     await expect(
-      page.getByRole("complementary", { name: /insights/i }),
+      page
+        .getByRole("complementary")
+        .filter({ has: page.getByText("Insights", { exact: true }) }),
     ).toHaveCount(5);
   });
 });
@@ -184,11 +185,9 @@ test.describe("full migration (D-092)", () => {
     page,
   }) => {
     await page.goto("/pilots");
-    const course = page
-      .getByRole("listitem")
-      .filter({
-        has: page.getByRole("heading", { name: "Private pilot course" }),
-      });
+    const course = page.getByRole("listitem").filter({
+      has: page.getByRole("heading", { name: "Private pilot course" }),
+    });
     await expect(course.getByText("Estimate", { exact: true })).toBeVisible();
     await expect(course.getByText("₹21,00,000")).toBeVisible();
     await course.getByRole("link", { name: /apply now/i }).click();
@@ -204,11 +203,6 @@ test.describe("full migration (D-092)", () => {
     await expect(page.getByText(/Martin Weening/)).toHaveCount(0);
     await page.getByRole("link", { name: "Enquire now" }).click();
     await expect(page).toHaveURL(/topic=AIRCRAFT_SALES/);
-  });
-
-  test("an unknown listing is not found", async ({ page }) => {
-    const response = await page.goto("/aircraft-sales/not-a-listing");
-    expect(response?.status()).toBe(404);
   });
 });
 

@@ -1,0 +1,193 @@
+# Every push and pull request runs the full check (docs/testing-strategy.md,
+# "A change is done when ..."). A red run means the change is not done.
+#
+# The browser journeys run against the real API, so the job checks out
+# flyviman-api beside this repository, as on a developer's machine: the
+# branch of the same name when there is one, otherwise main.
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      update_visual_baselines:
+        description: "Make the Linux visual baselines and commit them to this branch"
+        type: boolean
+        default: false
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  API_REPOSITORY: spatel-ai/flyviman-api
+
+jobs:
+  check:
+    name: Lint, types, unit, build, Playwright
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    # Write access is used only by the manual baseline update, which commits.
+    permissions:
+      contents: write
+
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: flyviman
+          POSTGRES_PASSWORD: flyviman
+          POSTGRES_DB: flyviman
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U flyviman -d flyviman"
+          --health-interval 5s --health-timeout 3s --health-retries 10
+      redis:
+        image: redis:7
+        ports: ["6379:6379"]
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s --health-timeout 3s --health-retries 10
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: flyviman-web
+
+      - name: Choose the API branch
+        id: api
+        run: |
+          branch="${GITHUB_HEAD_REF:-$GITHUB_REF_NAME}"
+          if git ls-remote --exit-code --heads "https://github.com/$API_REPOSITORY.git" "$branch" >/dev/null; then
+            echo "ref=$branch" >> "$GITHUB_OUTPUT"
+          else
+            echo "ref=main" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/checkout@v4
+        with:
+          repository: ${{ env.API_REPOSITORY }}
+          ref: ${{ steps.api.outputs.ref }}
+          path: flyviman-api
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            flyviman-web/package-lock.json
+            flyviman-api/package-lock.json
+
+      # Test-only values, made fresh on every run. The browser journeys read
+      # the seeded passwords from this file, as they do locally.
+      - name: Write the API's test environment
+        working-directory: flyviman-api
+        run: |
+          cat > .env <<EOF
+          NODE_ENV=development
+          PORT=4000
+          DATABASE_URL=postgresql://flyviman:flyviman@localhost:5432/flyviman?schema=public
+          WEB_ORIGIN=http://localhost:3000
+          REDIS_URL=redis://localhost:6379
+          JWT_ACCESS_SECRET=$(openssl rand -base64 48 | tr -d '\n')
+          DATA_ENCRYPTION_KEY=$(openssl rand -base64 32 | tr -d '\n')
+          ENABLE_DEV_TOOLS=true
+          SEED_ADMIN_EMAIL=admin@flyviman.test
+          SEED_ADMIN_PASSWORD=Ci-$(openssl rand -hex 16)-Aa1!
+          SEED_LOCAL_PASSWORD=Ci-$(openssl rand -hex 16)-Aa1!
+          EOF
+
+      - name: Install the API
+        working-directory: flyviman-api
+        run: npm ci
+      - name: Install the web app
+        working-directory: flyviman-web
+        run: npm ci
+
+      - name: Lint
+        working-directory: flyviman-web
+        run: npm run lint
+      - name: Type check
+        working-directory: flyviman-web
+        run: npm run typecheck
+      - name: Format
+        working-directory: flyviman-web
+        run: npm run format:check
+
+      # The not-found guard (src/proxy.spec.ts, D-093) runs here with the
+      # other unit tests.
+      - name: Unit tests
+        working-directory: flyviman-web
+        run: npm test
+
+      - name: API types match the API
+        working-directory: flyviman-web
+        run: |
+          npm run api:types
+          git diff --exit-code -- src/lib/api/generated || {
+            echo "::error::src/lib/api/generated is out of date with flyviman-api@${{ steps.api.outputs.ref }}. Run 'npm run api:types' and commit it."
+            exit 1
+          }
+
+      - name: Build
+        working-directory: flyviman-web
+        run: npm run build
+
+      - name: Install Chromium
+        working-directory: flyviman-web
+        run: npx playwright install --with-deps chromium
+
+      # Screenshots differ between operating systems: CI compares its own
+      # Linux images. Run this workflow by hand with "update visual
+      # baselines" after an intended visual change (and after the macOS
+      # update, `npm run test:e2e -- visual --update-snapshots`).
+      - name: Update the Linux visual baselines
+        if: inputs.update_visual_baselines
+        working-directory: flyviman-web
+        env:
+          CI: "true"
+        run: |
+          npx playwright test visual --update-snapshots
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add e2e/visual.e2e.ts-snapshots/*-linux.png
+          git diff --cached --quiet || {
+            git commit -m "Visual baselines for Linux (CI)"
+            git push
+          }
+
+      # The visual baseline is compared only once Linux images exist. Every
+      # other journey always runs.
+      - name: Playwright (browser journeys)
+        working-directory: flyviman-web
+        env:
+          CI: "true"
+        run: |
+          if ls e2e/visual.e2e.ts-snapshots/*-linux.png >/dev/null 2>&1; then
+            npx playwright test
+          else
+            echo "::warning::No Linux visual baselines yet: run the 'Visual baselines' workflow. Skipping the visual comparison."
+            npx playwright test --grep-invert "visual baseline"
+          fi
+
+      # The hosted proof of concept reaches the API through this site's
+      # /api/v1 (D-065); the journeys must pass that way too.
+      - name: Playwright through the web proxy
+        working-directory: flyviman-web
+        env:
+          CI: "true"
+          API_PROXY: "1"
+        run: npx playwright test --grep-invert "visual baseline"
+
+      - name: Keep the Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: flyviman-web/playwright-report
+          retention-days: 14

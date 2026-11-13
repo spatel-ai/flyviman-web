@@ -5,10 +5,12 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import { LoadError } from "@/components/shared/load-error";
+import { RecordNotFound } from "@/components/shared/record-not-found";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { apiFetch } from "@/lib/api/client";
+import { isNotFoundError } from "@/lib/api/errors";
 import { queryKeys } from "@/lib/api/query-keys";
 import type { Schemas } from "@/lib/api/types";
 import {
@@ -43,6 +45,16 @@ export function AircraftCalendar({ id }: { id: string }) {
     queryFn: () => apiFetch<Aircraft>(base),
   });
   if (aircraft.isPending) return <Skeleton className="mt-6 h-96" />;
+  if (aircraft.isError && isNotFoundError(aircraft.error)) {
+    return (
+      <RecordNotFound
+        title="Aircraft not found"
+        description="This aircraft is not in your fleet, or the link is not correct."
+        backHref="/operator/availability"
+        backLabel="Back to availability"
+      />
+    );
+  }
   if (aircraft.isError) {
     return (
       <LoadError

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { EmptyState } from "@/components/shared/empty-state";
 import { ExpiryBadge } from "@/components/shared/expiry-badge";
+import { RecordNotFound } from "@/components/shared/record-not-found";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -12,7 +13,7 @@ import { ConfirmDialog } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/components/ui/toast";
 import { apiFetch } from "@/lib/api/client";
-import { ApiError } from "@/lib/api/errors";
+import { ApiError, isNotFoundError } from "@/lib/api/errors";
 import { messageFor } from "@/lib/api/messages";
 import { queryKeys } from "@/lib/api/query-keys";
 import type { Schemas } from "@/lib/api/types";
@@ -40,16 +41,6 @@ type OperatorDocument = Schemas["OperatorDocumentResponseDto"];
 
 // Every operator list and detail query sits under this prefix.
 const OPERATOR_QUERIES = queryKeys.adminOperators({}).slice(0, 2);
-
-/** The id in the URL matches nothing: unknown (404) or not an id at all (400). */
-function isNotFound(error: unknown): boolean {
-  return (
-    error instanceof ApiError &&
-    (error.status === 404 ||
-      error.code === "NOT_FOUND" ||
-      error.code === "VALIDATION_ERROR")
-  );
-}
 
 function BackLink() {
   return (
@@ -95,12 +86,13 @@ export function OperatorDetail({ id }: { id: string }) {
         </>
       );
     }
-    if (isNotFound(error)) {
+    if (isNotFoundError(error)) {
       return (
-        <EmptyState
+        <RecordNotFound
           title="Operator not found"
           description="This operator does not exist, or the link is not correct."
-          action={<BackLink />}
+          backHref="/admin/operators"
+          backLabel="Back to operators"
         />
       );
     }
