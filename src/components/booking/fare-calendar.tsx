@@ -101,6 +101,8 @@ export function FareCalendar({
         queryKey: queryKeys.fareCalendar(params),
         queryFn: () => apiFetch<Calendar>("search/calendar", { query: params }),
         enabled: open && ready && Boolean(today),
+        // A refused month is not retried: it would only spend the rate limit.
+        retry: false,
         staleTime: 5 * 60_000,
       };
     }),
@@ -148,6 +150,13 @@ export function FareCalendar({
             variant="ghost"
             size="sm"
             aria-label="Next month"
+            // The calendar answers this month and the next twelve.
+            disabled={
+              !today ||
+              !first ||
+              addMonths(first, desktop ? 1 : 0) >=
+                addMonths(monthStart(today), 12)
+            }
             onClick={() => first && setMoved(addMonths(first, 1))}
           >
             <ChevronRight aria-hidden="true" className="size-4" />

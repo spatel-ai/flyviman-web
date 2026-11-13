@@ -74,7 +74,9 @@ export function ResponsivePicker({
         asChild
         // Like a travel site: when the field sits too low for the picker,
         // the page scrolls first so the picker opens below it, in full.
-        onClick={(event) => makeRoom(event.currentTarget, room)}
+        onClick={(event) => {
+          if (!open) makeRoom(event.currentTarget, room);
+        }}
       >
         {trigger}
       </Popover.Trigger>

@@ -275,7 +275,7 @@ export function SearchResults({ searchId }: { searchId: string }) {
             <ul className="flex flex-col gap-4" aria-label="Aircraft found">
               {shown.map((result, index) => (
                 <li key={result.resultId}>
-                  <Reveal index={Math.min(index, 4)}>
+                  <Reveal index={index}>
                     <ResultCard
                       result={result}
                       searchId={searchId}
@@ -309,7 +309,7 @@ function ResultCard({
     <article
       className={cn(
         "group flex flex-col overflow-hidden rounded-xl bg-surface md:flex-row",
-        // A gentle lift on hover (motion level 1); still under reduced motion.
+        // A gentle lift on hover (motion level 1); none under reduced motion.
         "transition duration-250 ease-emphasis hover:-translate-y-0.5 hover:shadow-md motion-reduce:hover:translate-y-0",
       )}
     >
