@@ -44,8 +44,8 @@ test("an operator lists an aircraft and operations reject, then approve it", asy
   await page.getByRole("textbox", { name: "Model" }).fill("Citation CJ3+");
   await page.getByRole("combobox", { name: "Category" }).click();
   await page.getByRole("option", { name: "Light jet", exact: true }).click();
-  await page.getByLabel("Passenger capacity").fill("8");
-  await page.getByLabel("Range (km)").fill("3200");
+  await page.getByRole("spinbutton", { name: "Passenger capacity" }).fill("8");
+  await page.getByRole("spinbutton", { name: "Range (km)" }).fill("3200");
   // Saving without a home base is explained before anything is sent.
   await page.getByRole("button", { name: "Save and continue" }).click();
   await expect(
@@ -184,8 +184,8 @@ test("operations release a registration claimed by a draft aircraft", async ({
   await page.getByRole("textbox", { name: "Model" }).fill("H125");
   await page.getByRole("combobox", { name: "Category" }).click();
   await page.getByRole("option", { name: "Helicopter", exact: true }).click();
-  await page.getByLabel("Passenger capacity").fill("5");
-  await page.getByLabel("Range (km)").fill("600");
+  await page.getByRole("spinbutton", { name: "Passenger capacity" }).fill("5");
+  await page.getByRole("spinbutton", { name: "Range (km)" }).fill("600");
   await page.getByRole("textbox", { name: "Find the home base" }).fill("Juhu");
   await page.getByRole("combobox", { name: "Home base" }).click();
   await page.getByRole("option").first().click();

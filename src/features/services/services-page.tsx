@@ -5,7 +5,7 @@ import { SectionHeading } from "@/components/marketing/section-heading";
 import { Reveal } from "@/components/motion/reveal";
 import { TiltCard } from "@/components/motion/tilt-card";
 import { SERVICES_PAGE, type Service } from "@/content/services";
-import { buttonClasses } from "@/components/ui/button";
+import { buttonClasses } from "@/components/ui/button-classes";
 import { cn } from "@/lib/utils";
 
 /** In-page index, so a visitor can jump to one service. */

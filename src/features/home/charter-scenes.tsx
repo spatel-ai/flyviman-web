@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { SectionHeading } from "@/components/marketing/section-heading";
 import { ScrollFilm } from "@/components/motion/scroll-film";
-import { buttonClasses } from "@/components/ui/button";
+import { buttonClasses } from "@/components/ui/button-classes";
 import { HOME } from "@/content/home";
 import { IMAGES } from "@/content/image-credits";
 

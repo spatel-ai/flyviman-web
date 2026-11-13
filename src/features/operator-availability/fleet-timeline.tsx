@@ -6,7 +6,7 @@ import { useState } from "react";
 import { EmptyState } from "@/components/shared/empty-state";
 import { LoadError } from "@/components/shared/load-error";
 import { StatusBadge } from "@/components/shared/status-badge";
-import { buttonClasses } from "@/components/ui/button";
+import { buttonClasses } from "@/components/ui/button-classes";
 import { Skeleton } from "@/components/ui/skeleton";
 import { apiFetch } from "@/lib/api/client";
 import { queryKeys } from "@/lib/api/query-keys";

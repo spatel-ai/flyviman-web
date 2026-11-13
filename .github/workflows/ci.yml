@@ -1,4 +1,4 @@
-# Every push and pull request runs the full check (docs/testing-strategy.md,
+# Every pull request and every push to main runs the full check (docs/testing-strategy.md,
 # "A change is done when ..."). A red run means the change is not done.
 #
 # The browser journeys run against the real API, so the job checks out
@@ -7,8 +7,10 @@
 name: CI
 
 on:
+  # Every pull request, and main itself after a merge. A branch is checked
+  # once its pull request is open (or by running the workflow by hand).
   push:
-    branches: ["**"]
+    branches: [main]
   pull_request:
   workflow_dispatch:
     inputs:
@@ -171,8 +173,8 @@ jobs:
           if ls e2e/visual.e2e.ts-snapshots/*-linux.png >/dev/null 2>&1; then
             npx playwright test
           else
-            echo "::warning::No Linux visual baselines yet: run the 'Visual baselines' workflow. Skipping the visual comparison."
-            npx playwright test --grep-invert "visual baseline"
+            echo "::warning::No Linux visual baselines yet: run this workflow by hand with 'update visual baselines'. Skipping the visual comparison."
+            SKIP_VISUAL=1 npx playwright test
           fi
 
       # The hosted proof of concept reaches the API through this site's
@@ -182,7 +184,8 @@ jobs:
         env:
           CI: "true"
           API_PROXY: "1"
-        run: npx playwright test --grep-invert "visual baseline"
+          SKIP_VISUAL: "1"
+        run: npx playwright test
 
       - name: Keep the Playwright report
         if: failure()

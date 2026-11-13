@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { buttonClasses } from "@/components/ui/button";
+import { buttonClasses } from "@/components/ui/button-classes";
 import type { EnquiryTopic } from "@/content/contact";
 
 /** A link to the contact page with the enquiry topic chosen. */

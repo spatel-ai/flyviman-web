@@ -1,38 +1,23 @@
-import type { ButtonHTMLAttributes } from "react";
-import { cn } from "@/lib/utils";
+"use client";
 
-type Variant = "primary" | "secondary" | "ghost" | "destructive";
-type Size = "sm" | "md" | "lg";
+import { useSyncExternalStore, type ButtonHTMLAttributes } from "react";
+import { buttonClasses, type Size, type Variant } from "./button-classes";
 
-const VARIANTS: Record<Variant, string> = {
-  primary: "bg-accent text-accent-foreground hover:bg-accent-hover",
-  secondary: "bg-surface text-foreground hover:bg-border/60",
-  ghost: "text-accent hover:bg-accent/10",
-  destructive: "bg-danger text-danger-foreground hover:bg-danger/90",
-};
-
-const SIZES: Record<Size, string> = {
-  sm: "h-9 px-4 text-body-sm",
-  md: "h-11 px-5 text-body",
-  lg: "h-13 px-7 text-body-lg",
-};
+const subscribe = () => () => {};
 
 /**
- * The button look, for a link that must be styled as a button (for example a
- * page's primary action that navigates rather than submits).
+ * False in the server-rendered HTML and until React has taken over the
+ * page; true after. A submit button stays disabled until then (D-095):
+ * clicked earlier, the browser would send the form itself, as a GET to the
+ * same address, putting every field (passwords, passenger details) into
+ * the URL, where history and server logs keep it. While the default button
+ * is disabled, pressing Enter in a field does not submit either.
  */
-export function buttonClasses({
-  variant = "primary",
-  size = "md",
-  className,
-}: { variant?: Variant; size?: Size; className?: string } = {}): string {
-  return cn(
-    "inline-flex items-center justify-center gap-2 rounded-pill font-medium whitespace-nowrap",
-    "transition-colors duration-150 ease-standard",
-    "disabled:cursor-not-allowed disabled:opacity-50",
-    VARIANTS[variant],
-    SIZES[size],
-    className,
+function useHydrated(): boolean {
+  return useSyncExternalStore(
+    subscribe,
+    () => true,
+    () => false,
   );
 }
 
@@ -53,10 +38,11 @@ export function Button({
   type = "button",
   ...props
 }: ButtonProps) {
+  const hydrated = useHydrated();
   return (
     <button
       type={type}
-      disabled={disabled || loading}
+      disabled={disabled || loading || (type === "submit" && !hydrated)}
       aria-busy={loading || undefined}
       className={buttonClasses({ variant, size, className })}
       {...props}

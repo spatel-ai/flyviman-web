@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Reveal } from "@/components/motion/reveal";
 import { ScrollScrub } from "@/components/motion/scroll-scrub";
-import { buttonClasses } from "@/components/ui/button";
+import { buttonClasses } from "@/components/ui/button-classes";
 import { IMAGES } from "@/content/image-credits";
 import { TiltCard } from "@/components/motion/tilt-card";
 import { HOME } from "@/content/home";
