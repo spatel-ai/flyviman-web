@@ -1270,6 +1270,74 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/search/charter": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Search eligible charter aircraft with estimates */
+    post: operations["SearchController_charter"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/search/helicopter": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Search helicopter options with estimates */
+    post: operations["SearchController_helicopter"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/search/{searchId}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** A stored search and its results */
+    get: operations["SearchController_get"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/search/{searchId}/results/{resultId}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** One result with its breakdown and conditions */
+    get: operations["SearchController_result"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/v1/enquiries": {
     parameters: {
       query?: never;
@@ -2307,6 +2375,133 @@ export interface components {
       /** Format: uuid */
       aircraftId: string | null;
       registration: string | null;
+    };
+    /**
+     * @description Limit to one fixed-wing category. All of them when left out.
+     * @enum {string}
+     */
+    CharterCategory: "TURBOPROP" | "LIGHT_JET" | "MIDSIZE_JET" | "HEAVY_JET";
+    CharterSearchDto: {
+      /**
+       * Format: uuid
+       * @description An active location (`GET /locations`).
+       */
+      originId: string;
+      /** Format: uuid */
+      destinationId: string;
+      /**
+       * @description ISO 8601 with offset, at least an hour ahead.
+       * @example 2026-12-05T10:00:00+05:30
+       */
+      departureAt: string;
+      /** @example 4 */
+      passengerCount: number;
+      /** @description Limit to one fixed-wing category. All of them when left out. */
+      category?: components["schemas"]["CharterCategory"];
+    };
+    SearchLegDto: {
+      /** Format: uuid */
+      originId: string;
+      originName: string;
+      /** Format: uuid */
+      destinationId: string;
+      destinationName: string;
+      /** Format: date-time */
+      departureAt: string;
+    };
+    SearchAircraftDto: {
+      /** Format: uuid */
+      id: string;
+      manufacturer: string;
+      model: string;
+      category: components["schemas"]["AircraftCategory"];
+      passengerCapacity: number;
+    };
+    /** @enum {string} */
+    PriceType: "ESTIMATE" | "LIVE_FARE" | "QUOTE" | "CONFIRMED";
+    SearchPriceDto: {
+      priceType: components["schemas"]["PriceType"];
+      /** @description Paise. */
+      amountMinor: number;
+      /** @example INR */
+      currency: string;
+    };
+    SearchResultDto: {
+      /** Format: uuid */
+      resultId: string;
+      aircraft: components["schemas"]["SearchAircraftDto"];
+      operatorName: string;
+      distanceKm: number;
+      flightMinutes: number | null;
+      /** @description Always an `ESTIMATE`. Null when the price is on request. */
+      price: components["schemas"]["SearchPriceDto"] | null;
+      /** Format: date-time */
+      validUntil: string;
+      warnings: string[];
+    };
+    SearchResponseDto: {
+      /** Format: uuid */
+      searchId: string;
+      category: components["schemas"]["ServiceCategory"];
+      legs: components["schemas"]["SearchLegDto"][];
+      passengerCount: number;
+      /** Format: date-time */
+      createdAt: string;
+      /** @description Priced first, cheapest first. */
+      results: components["schemas"]["SearchResultDto"][];
+    };
+    HelicopterSearchDto: {
+      /**
+       * Format: uuid
+       * @description An active location (`GET /locations`).
+       */
+      originId: string;
+      /** Format: uuid */
+      destinationId: string;
+      /**
+       * @description ISO 8601 with offset, at least an hour ahead.
+       * @example 2026-12-05T10:00:00+05:30
+       */
+      departureAt: string;
+      /** @example 4 */
+      passengerCount: number;
+    };
+    BreakdownLineDto: {
+      /** @example OPERATING */
+      code: string;
+      label: string;
+      /** @description Paise. */
+      amountMinor: number;
+      basis?: string;
+    };
+    SearchResultDetailDto: {
+      /** Format: uuid */
+      resultId: string;
+      aircraft: components["schemas"]["SearchAircraftDto"];
+      operatorName: string;
+      distanceKm: number;
+      flightMinutes: number | null;
+      /** @description Always an `ESTIMATE`. Null when the price is on request. */
+      price: components["schemas"]["SearchPriceDto"] | null;
+      /** Format: date-time */
+      validUntil: string;
+      warnings: string[];
+      /** Format: uuid */
+      searchId: string;
+      legs: components["schemas"]["SearchLegDto"][];
+      passengerCount: number;
+      breakdown: components["schemas"]["BreakdownLineDto"][];
+      assumptions: string[];
+      /** @description What the estimate leaves out. */
+      exclusions: string[];
+      /**
+       * @description Charter is confirmed only after the operator accepts.
+       * @enum {string}
+       */
+      bookingMode: "REQUEST";
+      confirmationRequirements: string[];
+      /** @description Shown before the customer commits (business rule 9). */
+      cancellationNote: string;
     };
     /** @enum {string} */
     EnquiryTopic:
@@ -4116,6 +4311,95 @@ export interface operations {
         };
         content: {
           "application/json": components["schemas"]["ExpiringDocumentDto"][];
+        };
+      };
+    };
+  };
+  SearchController_charter: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["CharterSearchDto"];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["SearchResponseDto"];
+        };
+      };
+    };
+  };
+  SearchController_helicopter: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["HelicopterSearchDto"];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["SearchResponseDto"];
+        };
+      };
+    };
+  };
+  SearchController_get: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        searchId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["SearchResponseDto"];
+        };
+      };
+    };
+  };
+  SearchController_result: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        searchId: string;
+        resultId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["SearchResultDetailDto"];
         };
       };
     };

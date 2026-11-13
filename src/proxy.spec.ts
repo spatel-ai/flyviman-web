@@ -44,7 +44,8 @@ describe("not-found guard for dynamic pages", () => {
     );
   });
 
-  for (const { pattern, signedIn } of routes) {
+  for (const { pattern, signedIn, loadsRecord } of routes) {
+    if (loadsRecord && !signedIn) continue; // e2e/not-found.e2e.ts covers it
     if (signedIn) {
       it(`${pattern} sits behind sign-in`, () => {
         expect(

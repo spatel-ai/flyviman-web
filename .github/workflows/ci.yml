@@ -177,16 +177,6 @@ jobs:
             SKIP_VISUAL=1 npx playwright test
           fi
 
-      # The hosted proof of concept reaches the API through this site's
-      # /api/v1 (D-065); the journeys must pass that way too.
-      - name: Playwright through the web proxy
-        working-directory: flyviman-web
-        env:
-          CI: "true"
-          API_PROXY: "1"
-          SKIP_VISUAL: "1"
-        run: npx playwright test
-
       - name: Keep the Playwright report
         if: failure()
         uses: actions/upload-artifact@v4

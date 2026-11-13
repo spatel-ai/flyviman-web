@@ -22,6 +22,9 @@ export const queryKeys = {
   adminAircraft: (status: string) => ["admin", "aircraft", status] as const,
   adminAircraftDetail: (id: string) => ["admin", "aircraft", id] as const,
   locationSearch: (q: string) => ["locations", "search", q] as const,
+  search: (id: string) => ["search", id] as const,
+  searchResult: (searchId: string, resultId: string) =>
+    ["search", searchId, "results", resultId] as const,
   location: (id: string) => ["locations", "one", id] as const,
   fileDownload: (fileId: string) => ["files", fileId, "download"] as const,
   /** Every availability key starts with this, so one invalidation covers all. */

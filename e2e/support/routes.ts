@@ -12,7 +12,22 @@ export type DynamicRoute = {
   pattern: string;
   /** Signed-in surfaces: the portals and the customer's account pages. */
   signedIn: boolean;
+  /**
+   * Loads its record in the browser and shows `RecordNotFound` when it does
+   * not exist (status 200). True for every signed-in page and for the
+   * public pages in `RECORD_PAGES`; the other public pages must answer 404.
+   */
+  loadsRecord: boolean;
 };
+
+/**
+ * Public pages whose record is created at run time (a search), so the proxy
+ * cannot know which addresses exist. They are `noindex`.
+ */
+export const RECORD_PAGES = [
+  "/search/[searchId]",
+  "/search/[searchId]/[resultId]",
+];
 
 /** Address prefixes that need a session (the `matcher` in `src/proxy.ts`). */
 export const SIGNED_IN_PREFIXES = [
@@ -49,12 +64,16 @@ export function allRoutes(): string[] {
 export function dynamicRoutes(): DynamicRoute[] {
   return allRoutes()
     .filter((pattern) => /\[[^\]]+\]/.test(pattern))
-    .map((pattern) => ({
-      pattern,
-      signedIn: SIGNED_IN_PREFIXES.some(
+    .map((pattern) => {
+      const signedIn = SIGNED_IN_PREFIXES.some(
         (prefix) => pattern === prefix || pattern.startsWith(`${prefix}/`),
-      ),
-    }));
+      );
+      return {
+        pattern,
+        signedIn,
+        loadsRecord: signedIn || RECORD_PAGES.includes(pattern),
+      };
+    });
 }
 
 /** The pattern with every dynamic segment replaced by `value`. */

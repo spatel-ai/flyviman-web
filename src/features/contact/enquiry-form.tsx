@@ -72,7 +72,8 @@ export function EnquiryForm() {
       email: "",
       phone: "",
       topic: topicFrom(searchParams.get("topic")),
-      message: "",
+      // Prefilled by "Request this aircraft" on a search result.
+      message: (searchParams.get("message") ?? "").slice(0, 2000),
     },
   });
 

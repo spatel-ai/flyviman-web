@@ -31,8 +31,8 @@ test("an unknown address answers 404", async ({ page }) => {
   expect(response?.status()).toBe(404);
 });
 
-for (const { pattern, signedIn } of dynamicRoutes()) {
-  if (!signedIn) {
+for (const { pattern, signedIn, loadsRecord } of dynamicRoutes()) {
+  if (!loadsRecord) {
     test(`${pattern}: an unknown address answers 404 on the first visit`, async ({
       page,
     }) => {
@@ -42,6 +42,18 @@ for (const { pattern, signedIn } of dynamicRoutes()) {
       await expect(
         page.getByRole("heading", { level: 1, name: "Page not found" }),
       ).toBeVisible();
+    });
+    continue;
+  }
+
+  if (!signedIn) {
+    test(`${pattern}: an address that matches no record says so`, async ({
+      page,
+    }) => {
+      await page.goto(fill(pattern, randomUUID()));
+      await expect(page.getByRole("heading", { level: 1 })).toHaveText(
+        NOT_FOUND,
+      );
     });
     continue;
   }

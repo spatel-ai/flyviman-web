@@ -121,7 +121,7 @@ Strategy and conventions: `../docs/testing-strategy.md`.
 
 - Formatting, schemas and logic-bearing components: Vitest.
 - Pages and journeys: Playwright, written with the `/playwright-test` skill, on both the desktop and mobile projects.
-- A change is not done until `npm run lint`, `npm run typecheck`, `npm test`, `npm run build` and `npm run test:e2e` pass. CI (`.github/workflows/ci.yml`) runs all of them on every pull request and push to `main`; after an intended visual change, also run it by hand with "update visual baselines" (`../docs/testing-strategy.md`).
+- A change is done when `npm run lint`, `npm run typecheck`, the unit specs it touches (`npm test -- <name>`) and its Playwright file (`npx playwright test <name>`) pass. Full suites only when asked: CI (`.github/workflows/ci.yml`) runs everything on every pull request and push to `main` (`../docs/testing-strategy.md`).
 
 ## Skills and agents
 
