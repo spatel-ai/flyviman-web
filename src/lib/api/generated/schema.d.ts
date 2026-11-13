@@ -1304,6 +1304,23 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/search/calendar": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Lowest estimate and aircraft count for each day of a month */
+    get: operations["SearchController_calendar"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/v1/search/{searchId}": {
     parameters: {
       query?: never;
@@ -2465,6 +2482,20 @@ export interface components {
       departureAt: string;
       /** @example 4 */
       passengerCount: number;
+    };
+    FareCalendarDayDto: {
+      /** @example 2026-12-05 */
+      date: string;
+      /** @description Aircraft that can fly the route at 10:00 India time. */
+      availableCount: number;
+      /** @description The lowest estimate that day. Null when none is priced. */
+      lowest: components["schemas"]["SearchPriceDto"] | null;
+    };
+    FareCalendarResponseDto: {
+      /** @example 2026-12 */
+      month: string;
+      /** @description Days inside the minimum notice are left out. */
+      days: components["schemas"]["FareCalendarDayDto"][];
     };
     BreakdownLineDto: {
       /** @example OPERATING */
@@ -4357,6 +4388,33 @@ export interface operations {
         };
         content: {
           "application/json": components["schemas"]["SearchResponseDto"];
+        };
+      };
+    };
+  };
+  SearchController_calendar: {
+    parameters: {
+      query: {
+        category: "PRIVATE_CHARTER" | "HELICOPTER";
+        originId: string;
+        destinationId: string;
+        /** @description YYYY-MM. */
+        month: string;
+        passengerCount: number;
+        aircraftCategory?: components["schemas"]["CharterCategory"];
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["FareCalendarResponseDto"];
         };
       };
     };

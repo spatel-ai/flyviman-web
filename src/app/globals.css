@@ -127,6 +127,9 @@
   --text-body-sm--line-height: 1.375rem;
   --text-caption: 0.8125rem;
   --text-caption--line-height: 1.125rem;
+  /* Fare calendar prices under the day number only (D-098). */
+  --text-micro: 0.625rem;
+  --text-micro--line-height: 0.75rem;
   --text-overline: 0.75rem;
   --text-overline--line-height: 1rem;
   --text-overline--letter-spacing: 0.06em;

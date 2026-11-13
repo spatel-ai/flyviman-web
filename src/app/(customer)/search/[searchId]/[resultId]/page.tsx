@@ -21,7 +21,7 @@ export default function Page({
 }: PageProps<"/search/[searchId]/[resultId]">) {
   return (
     <PageTransition>
-      <div className="mx-auto w-full max-w-reading px-4 py-12 md:px-6 md:py-16">
+      <div className="mx-auto w-full max-w-wide px-4 py-12 md:px-6 md:py-16">
         <Suspense fallback={<Skeleton className="h-96" />}>
           <Detail params={params} />
         </Suspense>

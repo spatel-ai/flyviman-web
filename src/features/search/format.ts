@@ -43,3 +43,16 @@ export function requestHref(detail: Detail): string {
   const params = new URLSearchParams({ topic: "PRIVATE_CHARTER", message });
   return `/contact?${params.toString()}#enquiry`;
 }
+
+/** Our licensed photograph for each aircraft class (aircraft photos are private). */
+export const CATEGORY_IMAGES = {
+  TURBOPROP: "charter",
+  LIGHT_JET: "jetNose",
+  MIDSIZE_JET: "cabinTan",
+  HEAVY_JET: "charterJetDusk",
+  HELICOPTER: "helicopter",
+} as const;
+
+export function categoryImage(category: string) {
+  return CATEGORY_IMAGES[category as keyof typeof CATEGORY_IMAGES] ?? "charter";
+}

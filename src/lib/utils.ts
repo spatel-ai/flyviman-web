@@ -18,6 +18,7 @@ const twMerge = extendTailwindMerge({
         "body",
         "body-sm",
         "caption",
+        "micro",
         "overline",
       ],
     },

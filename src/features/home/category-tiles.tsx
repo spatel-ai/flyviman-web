@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 import { IMAGES, type SiteImageName } from "@/content/image-credits";
 import { Reveal } from "@/components/motion/reveal";
 import { cn } from "@/lib/utils";
@@ -11,6 +12,9 @@ interface Category {
   notice?: string;
   /** The first two tiles are wide; the rest sit three to a row. */
   wide?: boolean;
+  /** Opens the search with this service chosen. */
+  href: string;
+  linkLabel: string;
 }
 
 const CATEGORIES: Category[] = [
@@ -19,28 +23,38 @@ const CATEGORIES: Category[] = [
     description: "Compare live fares across airlines.",
     image: "scheduled",
     wide: true,
+    href: "/search?service=flights",
+    linkLabel: "Search flights",
   },
   {
     name: "Private charter",
     description: "Aircraft matched to your route, with a clear estimate.",
     image: "charter",
     wide: true,
+    href: "/search?service=charter",
+    linkLabel: "Search private jets",
   },
   {
     name: "Helicopter",
     description: "Point-to-point travel between heliports and airports.",
     image: "helicopter",
+    href: "/search?service=helicopter",
+    linkLabel: "Search helicopters",
   },
   {
     name: "Empty-leg deals",
     description: "Repositioning flights offered at reduced prices.",
     image: "emptyLeg",
+    href: "/search?service=empty-legs",
+    linkLabel: "See empty legs",
   },
   {
     name: "Air ambulance",
     description: "Medical transfers coordinated by our operations team.",
     image: "airAmbulance",
     notice: "In an emergency, call 112 or your local emergency services first.",
+    href: "/search?service=air-ambulance",
+    linkLabel: "Request an air ambulance",
   },
 ];
 
@@ -101,6 +115,12 @@ export function CategoryTiles() {
                       {category.notice}
                     </p>
                   ) : null}
+                  <Link
+                    href={category.href}
+                    className="mt-4 text-body-sm font-medium text-accent hover:underline"
+                  >
+                    {category.linkLabel}
+                  </Link>
                 </div>
               </Tile>
             </li>
