@@ -53,7 +53,7 @@ export const HERO = {
     last: "/hero/desktop/poster-last.webp",
   },
   sequences: {
-    desktop: sequence("desktop", 120, 1280, 720, 0.5),
+    desktop: sequence("desktop", 118, 1280, 720, 0.5),
     // On a phone only a tall slice of the frame fits: keep the window in it.
     mobile: sequence("mobile", 80, 1080, 608, 0.6),
   },

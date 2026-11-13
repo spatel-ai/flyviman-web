@@ -170,7 +170,7 @@ test.describe("home page hero", () => {
       window.scrollTo({ top: (el.offsetHeight - window.innerHeight) * f });
     }, fraction);
   const lastFrame = (page: Page) =>
-    (page.viewportSize()?.width ?? 0) < 768 ? "79" : "119";
+    (page.viewportSize()?.width ?? 0) < 768 ? "79" : "117";
   const screens = (page: Page) =>
     track(page).evaluate((el) =>
       Math.round((el as HTMLElement).offsetHeight / window.innerHeight),

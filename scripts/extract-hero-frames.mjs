@@ -23,7 +23,7 @@ const CONFIG = {
   allowUpscale: false,
   posterQuality: 88,
   sets: [
-    { name: "desktop", frames: 120, width: 1920, quality: 80, posters: true },
+    { name: "desktop", frames: 118, width: 1920, quality: 80, posters: true },
     { name: "mobile", frames: 80, width: 1080, quality: 76, posters: false },
   ],
 };
