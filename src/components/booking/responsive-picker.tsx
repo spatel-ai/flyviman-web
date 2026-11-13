@@ -49,9 +49,7 @@ export function ResponsivePicker({
     return (
       <Sheet open={open} onOpenChange={onOpenChange}>
         <SheetTrigger asChild>{trigger}</SheetTrigger>
-        <SheetContent title={title}>
-          {children}
-        </SheetContent>
+        <SheetContent title={title}>{children}</SheetContent>
       </Sheet>
     );
   }
