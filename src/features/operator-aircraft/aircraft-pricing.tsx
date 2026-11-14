@@ -30,12 +30,9 @@ const parses = (value: string) => {
 };
 
 const schema = z.object({
-  hourlyRate: z
-    .string()
-    .trim()
-    .refine(parses, {
-      message: "Enter the rate in rupees, for example 180000.",
-    }),
+  hourlyRate: z.string().trim().refine(parses, {
+    message: "Enter the rate in rupees, for example 180000.",
+  }),
   taxInclusive: z.boolean(),
   commissionInclusive: z.boolean(),
   minBillableHours: z
