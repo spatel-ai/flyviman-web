@@ -18,7 +18,11 @@ export function SiteNavList({ active }: { active: string | null }) {
               aria-current={item.href === active ? "page" : undefined}
               className={cn(
                 "flex h-9 items-center rounded-pill px-3 text-body-sm transition-colors duration-150 ease-standard hover:text-foreground",
-                item.href === active ? "text-foreground" : "text-muted",
+                // Weight and an underline as well as colour, so the current
+                // page is not shown by colour alone (accessibility rules).
+                item.href === active
+                  ? "font-medium text-foreground underline decoration-current/40 decoration-2 underline-offset-8"
+                  : "text-muted",
               )}
             >
               {item.label}

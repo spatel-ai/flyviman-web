@@ -125,7 +125,8 @@ export function FareCalendar({
           icon={CalendarDays}
           value={date ? formatCalendarDay(date) : undefined}
           placeholder="Choose date"
-          hint={`${time} · India time`}
+          // Before a date is chosen, a time here read as already decided.
+          hint={date ? `${time} · India time` : "Pick a date, then a time"}
           error={error}
         />
       }

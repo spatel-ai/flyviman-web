@@ -3,17 +3,75 @@
  * from the fare calendar and are always estimates (business rule 1).
  */
 
-/** Shown in the airport picker before anything is typed (IATA or ICAO). */
-export const POPULAR_LOCATIONS = [
-  "BOM",
-  "DEL",
-  "BLR",
-  "GOI",
-  "HYD",
-  "MAA",
-  "CCU",
-  "JAI",
-] as const;
+export interface PopularLocation {
+  /** IATA code; the location is looked up by it, ids differ per database. */
+  code: string;
+  /** City and name exactly as the API holds them (prisma/data/locations-in.json). */
+  city: string;
+  name: string;
+  /** What people call the place, for headings ("Goa", not "Vasco da Gama"). */
+  area: string;
+}
+
+/**
+ * Shown in the airport picker before anything is typed. Held here, not
+ * fetched, so the list appears at once even when the API is slow or down.
+ */
+export const POPULAR_LOCATIONS: readonly PopularLocation[] = [
+  {
+    code: "BOM",
+    city: "Mumbai",
+    name: "Chhatrapati Shivaji Maharaj International Airport",
+    area: "Mumbai",
+  },
+  {
+    code: "DEL",
+    city: "New Delhi",
+    name: "Indira Gandhi International Airport",
+    area: "Delhi",
+  },
+  {
+    code: "BLR",
+    city: "Bengaluru",
+    name: "Kempegowda International Airport Bengaluru",
+    area: "Bengaluru",
+  },
+  {
+    code: "GOI",
+    city: "Vasco da Gama",
+    name: "Goa Dabolim International Airport",
+    area: "Goa",
+  },
+  {
+    code: "HYD",
+    city: "Hyderabad",
+    name: "Rajiv Gandhi International Airport",
+    area: "Hyderabad",
+  },
+  {
+    code: "MAA",
+    city: "Chennai",
+    name: "Chennai International Airport",
+    area: "Chennai",
+  },
+  {
+    code: "CCU",
+    city: "Kolkata",
+    name: "Netaji Subhash Chandra Bose International Airport",
+    area: "Kolkata",
+  },
+  {
+    code: "JAI",
+    city: "Jaipur",
+    name: "Jaipur International Airport",
+    area: "Jaipur",
+  },
+];
+
+/** The everyday name of a popular airport's place, or the code itself. */
+export function areaOf(code: string): string {
+  return POPULAR_LOCATIONS.find((entry) => entry.code === code)?.area ?? code;
+}
 
 export const SEARCH_LANDING = {
   hero: {

@@ -172,10 +172,14 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* One visible focus treatment everywhere. */
-:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
+/* One visible focus treatment everywhere. In the base layer, so a component
+   that draws its own focus (a ring on a wrapper, a highlighted menu row) can
+   turn it off with `outline-none`; unlayered, it beat every utility. */
+@layer base {
+  :focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
 }
 
 /* Translucent bars: blur where supported, solid where transparency is reduced. */

@@ -155,14 +155,26 @@ export function SearchWidget({
               "transition-colors duration-150 ease-standard outline-none focus-visible:ring-2 focus-visible:ring-accent",
               service === id
                 ? "bg-accent-fill text-accent-foreground"
-                : "text-muted hover:bg-surface hover:text-foreground",
+                : soon
+                  ? // Not offered yet: dimmed and outlined, so it does not
+                    // read as a live service. It still opens the enquiry panel.
+                    // (text stays at muted contrast: the tab still works).
+                    "border border-dashed border-border text-muted hover:text-foreground"
+                  : "text-muted hover:bg-surface hover:text-foreground",
             )}
           >
             <Icon aria-hidden="true" className="size-4" />
             {label}
             {soon ? (
-              <span className="rounded-pill bg-surface px-2 text-micro text-muted">
-                Soon
+              <span
+                className={cn(
+                  "rounded-pill px-2 text-micro",
+                  service === id
+                    ? "bg-accent-foreground/20 text-accent-foreground"
+                    : "bg-surface text-muted",
+                )}
+              >
+                Coming soon
               </span>
             ) : null}
           </button>
@@ -231,13 +243,15 @@ export function SearchWidget({
               <div className="flex items-center justify-center">
                 <button
                   type="button"
-                  aria-label="Swap From and To"
+                  aria-label="Swap from and to"
                   onClick={() => {
                     const { originId: from, destinationId: to } = getValues();
                     setValue("originId", to);
                     setValue("destinationId", from);
                   }}
-                  className="flex size-10 items-center justify-center rounded-pill bg-surface text-accent shadow-sm transition-colors duration-150 ease-standard hover:bg-border/60 md:-mx-4 md:size-9 md:bg-surface-raised"
+                  // 44 px everywhere (touch target); the hairline keeps it
+                  // visible on the card, which shares its surface on desktop.
+                  className="relative z-10 flex size-11 items-center justify-center rounded-pill border border-foreground/12 bg-surface text-accent shadow-sm transition-colors duration-150 ease-standard hover:bg-border/60 md:-mx-5 md:bg-surface-raised"
                 >
                   <ArrowLeftRight
                     aria-hidden="true"

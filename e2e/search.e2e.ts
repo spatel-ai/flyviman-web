@@ -145,9 +145,87 @@ test("a visitor searches, opens a result and requests the aircraft as an enquiry
 
 test("the search form explains what is missing", async ({ page }) => {
   await page.goto("/search");
+  // No time is suggested before a date is chosen.
+  await expect(page.getByRole("button", { name: /^Departure:/ })).toContainText(
+    "Pick a date, then a time",
+  );
   await page.getByRole("button", { name: "Search", exact: true }).click();
   await expect(page.getByText("Choose where you fly from.")).toBeVisible();
   await expect(page.getByText("Choose where you fly to.")).toBeVisible();
+});
+
+test("the open travellers picker leaves the Search button usable", async ({
+  page,
+}) => {
+  test.skip(
+    test.info().project.name !== "desktop",
+    "Phones use a bottom sheet, which is meant to cover the page",
+  );
+  // A wide laptop, where the panel used to open over the button.
+  await page.setViewportSize({ width: 1710, height: 1100 });
+  await page.goto("/search");
+  await page.getByRole("button", { name: /^Travellers:/ }).click();
+  const panel = page.getByRole("dialog", { name: "Travellers" });
+  await expect(panel).toBeVisible();
+  const search = page.getByRole("button", { name: "Search", exact: true });
+  const a = await panel.boundingBox();
+  const b = await search.boundingBox();
+  if (!a || !b) throw new Error("panel or Search button not laid out");
+  const overlaps =
+    a.x < b.x + b.width &&
+    b.x < a.x + a.width &&
+    a.y < b.y + b.height &&
+    b.y < a.y + a.height;
+  expect(overlaps, "the travellers panel covers the Search button").toBe(false);
+});
+
+test("the airport picker works from the keyboard", async ({ page }) => {
+  test.skip(
+    test.info().project.name !== "desktop",
+    "Keyboard use is checked on desktop",
+  );
+  await page.goto("/search");
+  const from = page.getByRole("button", { name: /^From:/ });
+  await from.focus();
+  await page.keyboard.press("Enter");
+  const box = page.getByRole("combobox", { name: "Search from airports" });
+  await expect(box).toBeFocused();
+  // Popular airports are listed before anything is typed (F1).
+  await expect(
+    page.getByRole("listbox", { name: "Popular airports" }),
+  ).toContainText("Mumbai");
+  await box.fill("GOI");
+  await expect(page.getByRole("option", { name: /GOI/ })).toBeVisible();
+  await page.keyboard.press("Enter");
+  await expect(page.getByRole("button", { name: /^From:/ })).toContainText(
+    "GOI",
+  );
+  // Escape closes without choosing.
+  await page.getByRole("button", { name: /^To:/ }).focus();
+  await page.keyboard.press("Enter");
+  await expect(
+    page.getByRole("combobox", { name: "Search to airports" }),
+  ).toBeFocused();
+  await page.keyboard.press("Escape");
+  await expect(
+    page.getByRole("combobox", { name: "Search to airports" }),
+  ).toBeHidden();
+  await expect(page.getByRole("button", { name: /^To:/ })).toContainText(
+    "Choose airport",
+  );
+});
+
+test("services not offered yet say so and lead to an enquiry", async ({
+  page,
+}) => {
+  await page.goto("/search");
+  const emptyLegs = page.getByRole("tab", { name: /Empty legs\s*Coming soon/ });
+  await expect(emptyLegs).toBeVisible();
+  await emptyLegs.click();
+  await expect(page.getByText("Empty legs are coming soon")).toBeVisible();
+  await expect(
+    page.getByRole("link", { name: "Send an enquiry" }),
+  ).toHaveAttribute("href", /\/contact\?topic=PRIVATE_CHARTER/);
 });
 
 test("air ambulance is a request, never a search, with the emergency notice", async ({

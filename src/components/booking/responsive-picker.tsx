@@ -1,7 +1,7 @@
 "use client";
 
 import { Popover } from "radix-ui";
-import { useSyncExternalStore, type ReactNode } from "react";
+import { useSyncExternalStore, type ReactNode, type RefObject } from "react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 
@@ -46,6 +46,8 @@ export function ResponsivePicker({
   width = "md",
   room = 360,
   align = "start",
+  side = "bottom",
+  initialFocus,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -58,13 +60,31 @@ export function ResponsivePicker({
   /** Pixels the picker needs below its field (desktop). */
   room?: number;
   align?: "start" | "center";
+  /**
+   * Where the popover opens on desktop. `left` keeps a field's popover off
+   * whatever sits below it (the travellers picker would cover Search).
+   */
+  side?: "bottom" | "left";
+  /**
+   * Where focus lands on opening, instead of the first control (a stepper's
+   * minus button looked pressed). Give the element `tabIndex={-1}`.
+   */
+  initialFocus?: RefObject<HTMLElement | null>;
 }) {
   const desktop = useIsDesktop();
+  const onOpenAutoFocus = initialFocus
+    ? (event: Event) => {
+        event.preventDefault();
+        initialFocus.current?.focus();
+      }
+    : undefined;
   if (!desktop) {
     return (
       <Sheet open={open} onOpenChange={onOpenChange}>
         <SheetTrigger asChild>{trigger}</SheetTrigger>
-        <SheetContent title={title}>{children}</SheetContent>
+        <SheetContent title={title} onOpenAutoFocus={onOpenAutoFocus}>
+          {children}
+        </SheetContent>
       </Sheet>
     );
   }
@@ -83,7 +103,8 @@ export function ResponsivePicker({
       <Popover.Portal>
         <Popover.Content
           aria-label={title}
-          side="bottom"
+          onOpenAutoFocus={onOpenAutoFocus}
+          side={side}
           align={align}
           sideOffset={8}
           collisionPadding={16}
@@ -91,7 +112,9 @@ export function ResponsivePicker({
           // and if space is still short the picker scrolls inside.
           avoidCollisions={false}
           className={cn(
-            "z-50 overflow-y-auto rounded-lg bg-surface-raised p-4 text-foreground shadow-lg outline-none",
+            // The hairline separates the popover from the card it opens over,
+            // which has the same surface; in dark mode the shadow cannot.
+            "z-50 overflow-y-auto rounded-lg border border-foreground/12 bg-surface-raised p-4 text-foreground shadow-lg outline-none",
             "max-h-(--radix-popover-content-available-height) max-w-(--radix-popover-content-available-width)",
             "transition duration-150 ease-standard starting:translate-y-1 starting:opacity-0",
             width === "sm" && "w-72",

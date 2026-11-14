@@ -12,7 +12,7 @@ import {
 } from "@/components/booking/search-widget";
 import { Reveal } from "@/components/motion/reveal";
 import { IMAGES } from "@/content/image-credits";
-import { SEARCH_LANDING } from "@/content/search";
+import { areaOf, SEARCH_LANDING } from "@/content/search";
 import { useLocationByCode, useRouteFare } from "./use-route-fare";
 
 const SERVICES: Service[] = [
@@ -65,6 +65,13 @@ export function SearchLanding() {
             className="object-cover"
           />
           <div className="absolute inset-0 bg-linear-to-b from-scrim/40 via-scrim/20 to-scrim" />
+          {/* The photo fades into the page behind the card's top (the card
+              overlaps by -mt-28), instead of ending in a hard line. Kept
+              below the hero text, which stays on the darkened photo. */}
+          <div
+            aria-hidden="true"
+            className="absolute inset-x-0 bottom-0 h-28 bg-linear-to-b from-transparent to-background"
+          />
           <div className="relative mx-auto flex h-full w-full max-w-wide flex-col justify-center px-4 pb-24 md:px-6">
             <p className="text-overline text-on-photo/80 uppercase">
               {hero.overline}
@@ -186,7 +193,6 @@ function RouteCard({
   const fare = useRouteFare(origin?.id, destination?.id).data;
   const photo = IMAGES[image];
   const ready = Boolean(origin && destination);
-  const name = (code: string, city?: string | null) => city ?? code;
 
   return (
     <button
@@ -205,13 +211,19 @@ function RouteCard({
         sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
         className="object-cover transition-transform duration-450 ease-emphasis group-hover:scale-105"
       />
+      {/* Two scrims, as on the hero (globals.css): solid under the text, so
+          white text stays at least 4.5:1 even over a white fuselage (one
+          40% scrim gave about 2.8:1); the top of the photo stays clear. */}
+      <span className="absolute inset-0 bg-linear-to-t from-scrim from-40% to-transparent" />
       <span className="absolute inset-0 bg-linear-to-t from-scrim via-scrim/20 to-transparent" />
       <span className="relative mt-auto flex w-full items-end justify-between gap-3 p-5 text-on-photo">
         <span className="flex flex-col">
+          {/* Place names from content, so the title reads "Mumbai → Goa"
+              even before (or without) the API answering; codes below. */}
           <span className="text-title">
-            {name(from, origin?.city)}{" "}
+            {areaOf(from)}{" "}
             <ArrowRight aria-hidden="true" className="inline size-4" />{" "}
-            {name(to, destination?.city)}
+            {areaOf(to)}
           </span>
           <span className="text-body-sm text-on-photo/80">
             {from} to {to}

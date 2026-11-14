@@ -94,6 +94,19 @@ test("the header leads to every page and marks the current one", async ({
   }
 });
 
+test("the header marks Search as the current page on /search", async ({
+  page,
+}, info) => {
+  test.skip(info.project.name === "mobile", "Phones show the menu button");
+  await page.goto("/search");
+  const link = page
+    .getByRole("navigation", { name: "Site" })
+    .getByRole("link", { name: "Search", exact: true });
+  await expect(link).toHaveAttribute("aria-current", "page");
+  // Marked by weight too, not by colour alone.
+  await expect(link).toHaveCSS("font-weight", "500");
+});
+
 test("the footer lists the pages", async ({ page }) => {
   await page.goto("/");
   const footer = page.getByRole("navigation", { name: "Footer" });
