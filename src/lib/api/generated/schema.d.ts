@@ -1355,20 +1355,36 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  "/api/v1/enquiries": {
+  "/api/v1/operator/pricing": {
     parameters: {
       query?: never;
       header?: never;
       path?: never;
       cookie?: never;
     };
-    get?: never;
-    put?: never;
-    /**
-     * Send a sales enquiry from the contact page
-     * @description Charter, aircraft sales or consultancy. Needs an email address or a phone number, or both. Operations are emailed; the answer is a reference and never repeats what was sent. Limited per caller (5 per 10 minutes by default; 429 `RATE_LIMITED`). A repeat with the same `Idempotency-Key` and body returns the first answer; with a different body, 409 `IDEMPOTENCY_CONFLICT`.
-     */
-    post: operations["EnquiriesController_create"];
+    /** Operator-wide pricing defaults */
+    get: operations["OperatorPricingController_getOperator"];
+    /** Set operator-wide pricing defaults (new rule versions, audited) */
+    put: operations["OperatorPricingController_setOperator"];
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/operator/aircraft/{id}/pricing": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** One aircraft's rate */
+    get: operations["OperatorPricingController_getAircraft"];
+    /** Set one aircraft's rate (new rule versions, audited) */
+    put: operations["OperatorPricingController_setAircraft"];
+    post?: never;
     delete?: never;
     options?: never;
     head?: never;
@@ -1389,6 +1405,26 @@ export interface paths {
     get: operations["AdminAuditController_list"];
     put?: never;
     post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/enquiries": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Send a sales enquiry from the contact page
+     * @description Charter, aircraft sales or consultancy. Needs an email address or a phone number, or both. Operations are emailed; the answer is a reference and never repeats what was sent. Limited per caller (5 per 10 minutes by default; 429 `RATE_LIMITED`). A repeat with the same `Idempotency-Key` and body returns the first answer; with a different body, 409 `IDEMPOTENCY_CONFLICT`.
+     */
+    post: operations["EnquiriesController_create"];
     delete?: never;
     options?: never;
     head?: never;
@@ -2536,6 +2572,111 @@ export interface components {
       /** @description Shown before the customer commits (business rule 9). */
       cancellationNote: string;
     };
+    OperatorPricingResponseDto: {
+      /**
+       * @description Minimum billable hours per flight.
+       * @example 1.5
+       */
+      minBillableHours: number | null;
+      /**
+       * @description Positioning and return flying, charged as this share of the hourly rate.
+       * @example 0.8
+       */
+      positioningRateFactor: number | null;
+      /**
+       * @description Positioning within this distance is not charged.
+       * @example 50
+       */
+      freeWithinKm: number | null;
+      /**
+       * @description Landing charge in paise, used where the airport has none on record.
+       * @example 1500000
+       */
+      landingFallbackMinor: number | null;
+      /**
+       * @description Handling charge per stop in paise, used where the airport has none on record.
+       * @example 500000
+       */
+      handlingFallbackMinor: number | null;
+      /** @example INR */
+      currency: string;
+    };
+    OperatorPricingDto: {
+      /**
+       * @description Minimum billable hours per flight.
+       * @example 1.5
+       */
+      minBillableHours: number | null;
+      /**
+       * @description Positioning and return flying, charged as this share of the hourly rate.
+       * @example 0.8
+       */
+      positioningRateFactor: number | null;
+      /**
+       * @description Positioning within this distance is not charged.
+       * @example 50
+       */
+      freeWithinKm: number | null;
+      /**
+       * @description Landing charge in paise, used where the airport has none on record.
+       * @example 1500000
+       */
+      landingFallbackMinor: number | null;
+      /**
+       * @description Handling charge per stop in paise, used where the airport has none on record.
+       * @example 500000
+       */
+      handlingFallbackMinor: number | null;
+    };
+    AircraftPricingResponseDto: {
+      /**
+       * @description Hourly rate in paise (₹1,80,000 is 18000000).
+       * @example 18000000
+       */
+      hourlyRateMinor: number | null;
+      /** @description The rate already includes GST. It is reduced before tax is added. */
+      taxInclusive: boolean;
+      /** @description The rate already includes Flyviman's commission. It is reduced before commission is added. */
+      commissionInclusive: boolean;
+      /** @description Overrides the operator's minimum billable hours for this aircraft. */
+      minBillableHours: number | null;
+      /** Format: uuid */
+      aircraftId: string;
+      /** @example INR */
+      currency: string;
+    };
+    AircraftPricingDto: {
+      /**
+       * @description Hourly rate in paise (₹1,80,000 is 18000000).
+       * @example 18000000
+       */
+      hourlyRateMinor: number | null;
+      /** @description The rate already includes GST. It is reduced before tax is added. */
+      taxInclusive: boolean;
+      /** @description The rate already includes Flyviman's commission. It is reduced before commission is added. */
+      commissionInclusive: boolean;
+      /** @description Overrides the operator's minimum billable hours for this aircraft. */
+      minBillableHours: number | null;
+    };
+    AuditLogResponseDto: {
+      /** Format: uuid */
+      id: string;
+      /** Format: uuid */
+      actorId: string | null;
+      actorRole: components["schemas"]["Role"] | null;
+      /** @example auth.login */
+      action: string;
+      /** @example User */
+      entityType: string;
+      entityId: string;
+      before: Record<string, never> | null;
+      after: Record<string, never> | null;
+      reason: string | null;
+      ipAddress: string | null;
+      requestId: string | null;
+      /** Format: date-time */
+      createdAt: string;
+    };
     /** @enum {string} */
     EnquiryTopic:
       | "GENERAL"
@@ -2578,25 +2719,6 @@ export interface components {
        * @example 2026-11-13T09:30:00.000Z
        */
       receivedAt: string;
-    };
-    AuditLogResponseDto: {
-      /** Format: uuid */
-      id: string;
-      /** Format: uuid */
-      actorId: string | null;
-      actorRole: components["schemas"]["Role"] | null;
-      /** @example auth.login */
-      action: string;
-      /** @example User */
-      entityType: string;
-      entityId: string;
-      before: Record<string, never> | null;
-      after: Record<string, never> | null;
-      reason: string | null;
-      ipAddress: string | null;
-      requestId: string | null;
-      /** Format: date-time */
-      createdAt: string;
     };
   };
   responses: never;
@@ -4464,28 +4586,90 @@ export interface operations {
       };
     };
   };
-  EnquiriesController_create: {
+  OperatorPricingController_getOperator: {
     parameters: {
       query?: never;
-      header: {
-        /** @description A UUID, new for each enquiry and reused on retry. */
-        "Idempotency-Key": string;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["OperatorPricingResponseDto"];
+        };
       };
+    };
+  };
+  OperatorPricingController_setOperator: {
+    parameters: {
+      query?: never;
+      header?: never;
       path?: never;
       cookie?: never;
     };
     requestBody: {
       content: {
-        "application/json": components["schemas"]["CreateEnquiryDto"];
+        "application/json": components["schemas"]["OperatorPricingDto"];
       };
     };
     responses: {
-      201: {
+      200: {
         headers: {
           [name: string]: unknown;
         };
         content: {
-          "application/json": components["schemas"]["EnquiryResponseDto"];
+          "application/json": components["schemas"]["OperatorPricingResponseDto"];
+        };
+      };
+    };
+  };
+  OperatorPricingController_getAircraft: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["AircraftPricingResponseDto"];
+        };
+      };
+    };
+  };
+  OperatorPricingController_setAircraft: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["AircraftPricingDto"];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["AircraftPricingResponseDto"];
         };
       };
     };
@@ -4516,6 +4700,32 @@ export interface operations {
         };
         content: {
           "application/json": components["schemas"]["AuditLogResponseDto"][];
+        };
+      };
+    };
+  };
+  EnquiriesController_create: {
+    parameters: {
+      query?: never;
+      header: {
+        /** @description A UUID, new for each enquiry and reused on retry. */
+        "Idempotency-Key": string;
+      };
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["CreateEnquiryDto"];
+      };
+    };
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["EnquiryResponseDto"];
         };
       };
     };

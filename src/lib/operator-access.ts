@@ -41,6 +41,7 @@ const DASHBOARD = { href: "/operator", label: "Dashboard" };
 const FLEET = { href: "/operator/aircraft", label: "Fleet" };
 const AVAILABILITY = { href: "/operator/availability", label: "Availability" };
 const TEAM = { href: "/operator/team", label: "Team" };
+const PRICING = { href: "/operator/pricing", label: "Pricing" };
 const APPLICATION = {
   href: "/operator/onboarding",
   label: "Company and documents",
@@ -60,8 +61,8 @@ export function operatorNav(
   if (isOperatorAdmin(access)) {
     if (!live) return [APPLICATION];
     return status === "APPROVED"
-      ? [DASHBOARD, FLEET, AVAILABILITY, TEAM, APPLICATION]
-      : [FLEET, AVAILABILITY, TEAM, APPLICATION];
+      ? [DASHBOARD, FLEET, AVAILABILITY, PRICING, TEAM, APPLICATION]
+      : [FLEET, AVAILABILITY, PRICING, TEAM, APPLICATION];
   }
   if (!live) return [];
   return [

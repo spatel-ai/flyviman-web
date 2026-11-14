@@ -76,7 +76,7 @@ src/
                            (images/) and image-credits.ts
   features/<feature>/      feature UI, hooks, schemas (auth, account, home, about, services, charter, contact, legal,
                            search (results, filters, detail), search-landing,
-                           operator-onboarding, operator-aircraft, operator-availability, operator-staff,
+                           operator-onboarding, operator-aircraft, operator-availability, operator-staff, operator-pricing,
                            admin-operators, admin-users, admin-aircraft, admin-locations)
   lib/
     api/                   apiFetch, ApiError, messages by error code, query keys, generated types

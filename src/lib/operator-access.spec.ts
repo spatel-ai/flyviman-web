@@ -38,6 +38,7 @@ describe("operatorNav", () => {
       "/operator",
       "/operator/aircraft",
       "/operator/availability",
+      "/operator/pricing",
       "/operator/team",
       "/operator/onboarding",
     ]);
