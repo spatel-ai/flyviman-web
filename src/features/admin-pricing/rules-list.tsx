@@ -27,7 +27,9 @@ import { formatDateTime } from "@/lib/format/date";
 import { AddRuleDialog, ChangeRuleDialog } from "./rule-dialog";
 import {
   appliesTo,
+  canManage,
   describeConfig,
+  listIsStale,
   ruleLabel,
   type PricingRule,
 } from "./rules";
@@ -75,7 +77,15 @@ export function RulesList() {
         queryKey: ["admin", "pricing-rules"],
       });
     },
-    onError: (failure) => toast({ title: messageFor(failure), tone: "danger" }),
+    onError: (failure) => {
+      toast({ title: messageFor(failure), tone: "danger" });
+      if (listIsStale(failure)) {
+        setEnding(null);
+        void queryClient.invalidateQueries({
+          queryKey: ["admin", "pricing-rules"],
+        });
+      }
+    },
   });
 
   function show(next: { view: View; page: number }) {
@@ -99,12 +109,7 @@ export function RulesList() {
 
   // Operations can reach the address but not the rules (finance only).
   if (isError && error instanceof ApiError && error.code === "FORBIDDEN") {
-    return (
-      <p className="mt-6 max-w-reading text-body text-muted">
-        Pricing rules are managed by finance. You can see how any estimate was
-        worked out under Price calculations.
-      </p>
-    );
+    return <ManagedByFinance />;
   }
 
   return (
@@ -175,7 +180,11 @@ export function RulesList() {
                           {rule.version}
                         </TableCell>
                         <TableCell>{formatDateTime(rule.validFrom)}</TableCell>
-                        {view === "current" ? (
+                        {view === "current" && !canManage(rule) ? (
+                          <TableCell className="text-body-sm text-muted">
+                            Not managed here
+                          </TableCell>
+                        ) : view === "current" ? (
                           <TableCell>
                             <div className="flex flex-wrap gap-2">
                               <Button
@@ -247,5 +256,19 @@ export function RulesList() {
         }}
       />
     </div>
+  );
+}
+
+/**
+ * What operations see at this address. The page picks it from the session
+ * before anything loads (so finance controls never flash); the list falls
+ * back to it if the API still says FORBIDDEN, for a role changed mid-visit.
+ */
+export function ManagedByFinance() {
+  return (
+    <p className="mt-6 max-w-reading text-body text-muted">
+      Pricing rules are managed by finance. You can see how any estimate was
+      worked out under Price calculations.
+    </p>
   );
 }

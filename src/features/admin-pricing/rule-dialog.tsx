@@ -25,6 +25,8 @@ import {
   CATEGORY_OPTIONS,
   configToDraft,
   describeConfig,
+  isRuleType,
+  listIsStale,
   RULE_META,
   RULE_TYPE_OPTIONS,
   ruleLabel,
@@ -128,9 +130,9 @@ export function ChangeRuleDialog({
         }
         className="max-h-[90vh] overflow-y-auto sm:max-w-lg"
       >
-        {rule ? (
+        {rule && isRuleType(rule.type) ? (
           <RuleForm
-            type={rule.type as RuleType}
+            type={rule.type}
             rule={rule}
             onDone={() => onOpenChange(false)}
           />
@@ -197,6 +199,9 @@ function RuleForm({
       void queryClient.invalidateQueries({ queryKey: RULES_KEY });
       onDone();
     } catch (error) {
+      if (listIsStale(error)) {
+        void queryClient.invalidateQueries({ queryKey: RULES_KEY });
+      }
       setFormError(applyApiError(error, setError, fieldPaths(type) as never));
     }
   }

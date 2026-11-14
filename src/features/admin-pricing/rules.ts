@@ -1,4 +1,5 @@
 import type { AircraftCategory, Schemas } from "@/lib/api/types";
+import { ApiError } from "@/lib/api/errors";
 import { formatMoney, paiseToRupees } from "@/lib/format/money";
 
 export type PricingRule = Schemas["PricingRuleResponseDto"];
@@ -278,4 +279,36 @@ export function configToDraft(
     }
   }
   return draft;
+}
+
+/**
+ * Refusals that mean the list on screen is out of date: another admin
+ * changed, added or ended a rule since it loaded. The list is refetched so
+ * trying again works on the latest version (security review, web M1).
+ */
+const STALE_LIST_CODES: ReadonlySet<string> = new Set([
+  "PRICING_RULE_NOT_CURRENT",
+  "PRICING_RULE_EXISTS",
+  "NOT_FOUND",
+]);
+
+export function listIsStale(error: unknown): boolean {
+  return error instanceof ApiError && STALE_LIST_CODES.has(error.code);
+}
+
+/** A rule type this screen has a form for. */
+export function isRuleType(type: string): type is RuleType {
+  return Object.hasOwn(RULE_META, type);
+}
+
+/**
+ * Whether Change (and, for a category rule, End) is offered. The API says
+ * which rules finance may manage (`editable`); the screen also needs a form
+ * for the type, so a rule type added to the API later is listed but never
+ * opened in a form that does not know it (security review, web M2).
+ */
+export function canManage(
+  rule: Pick<PricingRule, "type" | "editable">,
+): boolean {
+  return rule.editable && isRuleType(rule.type);
 }

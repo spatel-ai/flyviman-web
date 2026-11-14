@@ -39,6 +39,11 @@ export interface PriceLabelProps {
   /** Replaces the price type's standard note, for a price that is not a
    *  flight (a course fee). The type's badge always stays. */
   note?: string;
+  /** `compact`: badge and amount on one line, no note, for a card where the
+   *  full label does not fit (a popular route over a photo). `lead` goes
+   *  before the amount ("from"). The badge always stays. */
+  variant?: "default" | "compact";
+  lead?: string;
   className?: string;
 }
 
@@ -53,11 +58,30 @@ export function PriceLabel({
   validUntil,
   expired = false,
   note: noteOverride,
+  variant = "default",
+  lead,
   className,
 }: PriceLabelProps) {
   const presentation = PRESENTATION[priceType];
   const { label, tone } = presentation;
   const note = noteOverride ?? presentation.note;
+
+  if (variant === "compact") {
+    return (
+      <span className={cn("flex flex-col items-end gap-1", className)}>
+        <Badge tone={expired ? "neutral" : tone}>{label}</Badge>
+        <span
+          className={cn(
+            "text-title tabular-nums",
+            expired && "text-muted line-through",
+          )}
+        >
+          {lead ? `${lead} ` : null}
+          {formatMoney(amountMinor, currency)}
+        </span>
+      </span>
+    );
+  }
 
   return (
     <div className={cn("flex flex-col items-start gap-1", className)}>

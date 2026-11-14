@@ -177,7 +177,11 @@ export function CalculationDetail({ id }: { id: string }) {
                   {line.basis ?? "—"}
                 </TableCell>
                 <TableCell className="text-right tabular-nums">
-                  {formatMoney(line.amountMinor, calc.currency)}
+                  {line.amountMinor === null ? (
+                    <span className="text-muted">Finance only</span>
+                  ) : (
+                    formatMoney(line.amountMinor, calc.currency)
+                  )}
                 </TableCell>
               </TableRow>
             ))}
@@ -202,8 +206,9 @@ export function CalculationDetail({ id }: { id: string }) {
           </dl>
         ) : (
           <p className="text-body-sm text-muted">
-            Operator payable, Flyviman revenue and rule settings are shown to
-            finance only.
+            Line amounts, operator payable, Flyviman revenue and rule settings
+            are shown to finance only. The total and tax are what the customer
+            was told.
           </p>
         )}
       </Card>

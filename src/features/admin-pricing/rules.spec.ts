@@ -1,5 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { appliesTo, configToDraft, describeConfig, RULE_TYPES } from "./rules";
+import { ApiError } from "@/lib/api/errors";
+import {
+  appliesTo,
+  canManage,
+  configToDraft,
+  describeConfig,
+  listIsStale,
+  RULE_TYPES,
+} from "./rules";
 import { ruleSchema } from "./schema";
 
 describe("describeConfig", () => {
@@ -93,5 +101,34 @@ describe("ruleSchema", () => {
     for (const type of RULE_TYPES) {
       expect(() => ruleSchema(type)).not.toThrow();
     }
+  });
+});
+
+describe("listIsStale", () => {
+  it("refreshes the list when another admin got there first", () => {
+    for (const code of [
+      "PRICING_RULE_NOT_CURRENT",
+      "PRICING_RULE_EXISTS",
+      "NOT_FOUND",
+    ]) {
+      expect(listIsStale(new ApiError(409, code, "refused"))).toBe(true);
+    }
+  });
+
+  it("leaves the list alone for other failures", () => {
+    expect(listIsStale(new ApiError(400, "VALIDATION_ERROR", "bad"))).toBe(
+      false,
+    );
+    expect(listIsStale(new Error("network"))).toBe(false);
+  });
+});
+
+describe("canManage", () => {
+  it("offers Change only for editable rules this screen has a form for", () => {
+    expect(canManage({ type: "COMMISSION", editable: true })).toBe(true);
+    expect(canManage({ type: "COMMISSION", editable: false })).toBe(false);
+    // A type the API may add later, such as a promotional markup.
+    expect(canManage({ type: "MARKUP", editable: true })).toBe(false);
+    expect(canManage({ type: "constructor", editable: true })).toBe(false);
   });
 });

@@ -24,10 +24,12 @@ const MESSAGES: Record<string, string> = {
   UNAUTHENTICATED: "Your session has ended. Sign in again.",
   FORBIDDEN: "You do not have access to this.",
   LOCATION_CODE_IN_USE: "Another location already has this code.",
+  OPERATOR_NOT_APPROVED:
+    "Your organisation must be approved by Flyviman before you can change this.",
   PRICING_RULE_EXISTS:
     "A rule of this kind is already in force for these aircraft. Change that rule instead.",
   PRICING_RULE_NOT_CURRENT:
-    "Someone changed or ended this rule since you opened it. Close this and try again with the latest version.",
+    "Someone changed or ended this rule since you opened it. The list now shows the latest version: close this and choose Change again.",
   PRICING_RULE_REQUIRED:
     "A rule for all aircraft cannot be ended, because every price relies on it. Change its value instead.",
   INTERNAL_ERROR: "Something went wrong on our side. Please try again.",
@@ -50,11 +52,15 @@ export function applyApiError<T extends FieldValues>(
   error: unknown,
   setError: UseFormSetError<T>,
   fields: readonly Path<T>[],
+  /** API field names that differ from the form's ("hourlyRateMinor" → "hourlyRate"). */
+  aliases: Partial<Record<string, Path<T>>> = {},
 ): string | null {
   if (error instanceof ApiError && error.code === "VALIDATION_ERROR") {
     let placed = 0;
     for (const detail of error.details) {
-      const field = fields.find((name) => name === detail.field);
+      const field =
+        (detail.field ? aliases[detail.field] : undefined) ??
+        fields.find((name) => name === detail.field);
       if (field) {
         setError(field, { type: "server", message: sentence(detail.issue) });
         placed += 1;

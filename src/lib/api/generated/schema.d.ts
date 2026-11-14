@@ -1498,7 +1498,7 @@ export interface paths {
     };
     /**
      * List audit records
-     * @description Newest first. Filter by entity, actor, action and time range.
+     * @description Newest first. Filter by entity, actor, action and time range. Pricing rule records show before, after and reason to finance and super admins only; other roles get null for those fields.
      */
     get: operations["AdminAuditController_list"];
     put?: never;
@@ -2838,7 +2838,8 @@ export interface components {
     CalculationLineDto: {
       code: string;
       label: string;
-      amountMinor: number;
+      /** @description The line amount. Finance and super administrators see every line; operations see the tax line only, since the other amounts give away operator payable and platform revenue. */
+      amountMinor: number | null;
       /** @description How the line was worked out (hours × rate). Finance and super administrators only; null for operations. */
       basis?: string | null;
     };
@@ -2881,8 +2882,10 @@ export interface components {
         [key: string]: unknown;
       };
       breakdown: components["schemas"]["CalculationLineDto"][];
-      baseMinor: number;
-      feesMinor: number;
+      /** @description Operator charges. Finance and super administrators only. */
+      baseMinor: number | null;
+      /** @description Platform fees. Finance and super administrators only. */
+      feesMinor: number | null;
       taxMinor: number;
       discountMinor: number;
       appliedRules: components["schemas"]["AppliedRuleDto"][];

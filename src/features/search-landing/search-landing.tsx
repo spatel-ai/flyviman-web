@@ -4,13 +4,13 @@ import { ArrowRight } from "lucide-react";
 import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 import { useRef, useState } from "react";
-import { shortRupees } from "@/components/booking/format";
 import {
   SearchWidget,
   type Service,
   type WidgetInitial,
 } from "@/components/booking/search-widget";
 import { Reveal } from "@/components/motion/reveal";
+import { PriceLabel } from "@/components/shared/price-label";
 import { IMAGES } from "@/content/image-credits";
 import { areaOf, SEARCH_LANDING } from "@/content/search";
 import { useLocationByCode, useRouteFare } from "./use-route-fare";
@@ -230,15 +230,14 @@ function RouteCard({
           </span>
         </span>
         <span className="flex flex-col items-end">
-          {fare != null ? (
-            <>
-              <span className="text-caption text-on-photo/80">
-                Estimate from
-              </span>
-              <span className="text-title tabular-nums">
-                {shortRupees(fare)}
-              </span>
-            </>
+          {fare ? (
+            <PriceLabel
+              variant="compact"
+              lead="from"
+              amountMinor={fare.amountMinor}
+              currency={fare.currency}
+              priceType={fare.priceType}
+            />
           ) : (
             <span className="text-body-sm text-on-photo/80">See options</span>
           )}

@@ -92,7 +92,49 @@ test("finance adds, changes and ends a category commission", async ({
   await expect(page.getByText("Commission changed").first()).toBeVisible();
   await expect(row).toContainText("7.5%, added on top");
 
-  // History keeps both versions.
+  // Another admin changes it while this one has the dialog open: the refusal
+  // refreshes the list, so trying again works on the latest version.
+  await page
+    .getByRole("button", { name: `Change commission for ${name}` })
+    .click();
+  await change.getByRole("textbox", { name: "Commission (%)" }).fill("6");
+  await change.getByRole("textbox", { name: "Reason" }).fill("Stale tab");
+  const current = await page.request.get(`${API_URL}admin/pricing-rules`, {
+    params: { scope: "CATEGORY", type: "COMMISSION", pageSize: 100 },
+  });
+  const inForce = (
+    (await current.json()).data as {
+      id: string;
+      scopeRef: string;
+    }[]
+  ).find((rule) => rule.scopeRef === category.value);
+  const elsewhere = await page.request.patch(
+    `${API_URL}admin/pricing-rules/${inForce?.id}`,
+    {
+      headers: await csrf(page),
+      data: {
+        config: { percent: 7, mode: "ADD_ON" },
+        reason: "Changed in another tab",
+      },
+    },
+  );
+  expect(elsewhere.status()).toBe(200);
+  await change.getByRole("button", { name: "Save new version" }).click();
+  await expect(
+    change.getByText(/Someone changed or ended this rule/),
+  ).toBeVisible();
+  // The open dialog hides the page from the accessibility tree: look after.
+  await change.getByRole("button", { name: "Cancel" }).click();
+  await expect(row).toContainText("7%, added on top");
+  await page
+    .getByRole("button", { name: `Change commission for ${name}` })
+    .click();
+  await change.getByRole("textbox", { name: "Commission (%)" }).fill("6");
+  await change.getByRole("textbox", { name: "Reason" }).fill("Second try");
+  await change.getByRole("button", { name: "Save new version" }).click();
+  await expect(row).toContainText("6%, added on top");
+
+  // History keeps every version.
   await page.getByRole("tab", { name: "History" }).click();
   await expect(page).toHaveURL(/view=history/);
   const versions = page
@@ -213,6 +255,9 @@ test("finance traces an estimate in the calculation viewer; operations see it wi
   await expect(page.getByText(/shown to finance only/)).toBeVisible();
   await expect(page.getByText("Payable to the operator")).toHaveCount(0);
   await expect(page.getByText("₹1,80,000 an hour")).toHaveCount(0);
+  // Line amounts would give the split away; the tax line keeps its amount.
+  await expect(page.getByText("Finance only").first()).toBeVisible();
+  await expect(page.getByRole("row", { name: /^GST/ })).toContainText("₹");
 });
 
 test("operations cannot change pricing rules", async ({ page }) => {

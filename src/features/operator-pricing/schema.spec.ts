@@ -56,6 +56,18 @@ describe("operator pricing form", () => {
     ).toBe(false);
   });
 
+  it("refuses what the API would refuse, so errors stay under the fields", () => {
+    const refused = (patch: Partial<typeof values>) =>
+      operatorPricingSchema.safeParse({ ...values, ...patch }).success;
+    // The factor is kept to two decimals: whole percents only.
+    expect(refused({ positioningPercent: "12.5" })).toBe(false);
+    expect(refused({ freeWithinKm: "40.5" })).toBe(false);
+    expect(refused({ minBillableHours: "1e1" })).toBe(false);
+    expect(refused({ minBillableHours: "1.255" })).toBe(false);
+    expect(refused({ landingFallback: "10,00,00,001" })).toBe(false);
+    expect(refused({ positioningPercent: "75", freeWithinKm: "0" })).toBe(true);
+  });
+
   it("round-trips what the API returns", () => {
     const body = toOperatorPricingBody(operatorPricingSchema.parse(values));
     expect(fromOperatorPricing({ ...body, currency: "INR" })).toEqual({

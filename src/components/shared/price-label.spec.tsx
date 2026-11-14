@@ -59,4 +59,18 @@ describe("PriceLabel", () => {
     expect(screen.getByText("₹5,21,796")).toHaveClass("line-through");
     expect(screen.getByText(/This price has expired/)).toBeInTheDocument();
   });
+
+  it("keeps the badge in the compact form used on cards", () => {
+    render(
+      <PriceLabel
+        variant="compact"
+        lead="from"
+        amountMinor={42_000_000}
+        currency="INR"
+        priceType="ESTIMATE"
+      />,
+    );
+    expect(screen.getByText("Estimate")).toBeInTheDocument();
+    expect(screen.getByText(/from ₹4,20,000/)).toBeInTheDocument();
+  });
 });

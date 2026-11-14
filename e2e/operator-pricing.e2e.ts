@@ -36,7 +36,8 @@ test("an operator administrator sets pricing defaults and an aircraft's rate", a
     .getByRole("textbox", { name: "Landing charge (₹)" })
     .fill("15,000");
   await page.getByRole("button", { name: "Save pricing" }).click();
-  await expect(page.getByText("Pricing saved")).toBeVisible();
+  // The toast and its screen-reader copy both say it: take the first.
+  await expect(page.getByText("Pricing saved").first()).toBeVisible();
   await page.reload();
   await expect(
     page.getByRole("textbox", { name: "Landing charge (₹)" }),
@@ -53,7 +54,8 @@ test("an operator administrator sets pricing defaults and an aircraft's rate", a
     .getByRole("checkbox", { name: "The rate includes GST" })
     .click();
   await pricing.getByRole("button", { name: "Save pricing" }).click();
-  await expect(page.getByText("Aircraft pricing saved")).toBeVisible();
+  // The toast and its screen-reader copy both say it: take the first.
+  await expect(page.getByText("Aircraft pricing saved").first()).toBeVisible();
   await page.reload();
   await expect(
     page

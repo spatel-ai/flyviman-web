@@ -17,6 +17,7 @@ import { queryKeys } from "@/lib/api/query-keys";
 import type { Schemas } from "@/lib/api/types";
 import {
   fromOperatorPricing,
+  OPERATOR_PRICING_ALIASES,
   operatorPricingSchema,
   toOperatorPricingBody,
   type OperatorPricingValues,
@@ -75,7 +76,10 @@ function Editor({ initial }: { initial: OperatorPricingValues }) {
       reset(fromOperatorPricing(data));
       toast({ title: "Pricing saved", tone: "success" });
     },
-    onError: (error) => setFormError(applyApiError(error, setError, FIELDS)),
+    onError: (error) =>
+      setFormError(
+        applyApiError(error, setError, FIELDS, OPERATOR_PRICING_ALIASES),
+      ),
   });
 
   return (

@@ -1,7 +1,11 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { RulesList } from "@/features/admin-pricing/rules-list";
+import {
+  ManagedByFinance,
+  RulesList,
+} from "@/features/admin-pricing/rules-list";
+import { getSession } from "@/lib/auth/session";
 
 export const metadata: Metadata = { title: "Pricing rules" };
 
@@ -15,8 +19,19 @@ export default function AdminPricingRulesPage() {
         audit record with its reason.
       </p>
       <Suspense fallback={<Skeleton className="mt-6 h-96" />}>
-        <RulesList />
+        <RulesForRole />
       </Suspense>
     </>
+  );
+}
+
+/** Finance and super admins manage rules; operations get the note at once. */
+async function RulesForRole() {
+  const session = await getSession();
+  return session?.role === "FINANCE_ADMIN" ||
+    session?.role === "SUPER_ADMIN" ? (
+    <RulesList />
+  ) : (
+    <ManagedByFinance />
   );
 }

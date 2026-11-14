@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatMoney, paiseToRupees, rupeesToPaise } from "./money";
+import { formatMoney, MAX_MINOR, paiseToRupees, rupeesToPaise } from "./money";
 
 describe("formatMoney", () => {
   it("formats whole rupee amounts with Indian digit grouping", () => {
@@ -31,6 +31,12 @@ describe("rupeesToPaise and paiseToRupees", () => {
     expect(() => rupeesToPaise("abc")).toThrow();
     expect(() => rupeesToPaise("-5")).toThrow();
     expect(() => rupeesToPaise("1.234")).toThrow();
+  });
+
+  it("stops at ₹10 crore, the most any pricing input takes", () => {
+    expect(rupeesToPaise("10,00,00,000")).toBe(MAX_MINOR);
+    expect(() => rupeesToPaise("10,00,00,000.01")).toThrow();
+    expect(() => rupeesToPaise("99999999999999999")).toThrow();
   });
 
   it("writes paise back as rupees for a form", () => {

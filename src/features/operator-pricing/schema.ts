@@ -17,18 +17,31 @@ const rupees = z
         return false;
       }
     },
-    { message: "Enter an amount in rupees, for example 15000." },
+    {
+      message: "Enter an amount in rupees up to ₹10 crore, for example 15000.",
+    },
   );
 
-/** A number field that may be left empty (not set). */
-const optionalNumber = (min: number, max: number, message: string) =>
+/**
+ * A number field that may be left empty (not set). Plain decimals only
+ * ("1e1" and "0x10" are refused), with at most `decimals` places, matching
+ * what the API accepts so it never refuses what the form let through.
+ */
+const optionalNumber = (
+  min: number,
+  max: number,
+  message: string,
+  decimals = 2,
+) =>
   z
     .string()
     .trim()
     .refine(
       (value) =>
         value === "" ||
-        (Number.isFinite(Number(value)) &&
+        (new RegExp(
+          decimals > 0 ? `^\\d+(\\.\\d{1,${decimals}})?$` : "^\\d+$",
+        ).test(value) &&
           Number(value) >= min &&
           Number(value) <= max),
       { message },
@@ -37,8 +50,19 @@ const optionalNumber = (min: number, max: number, message: string) =>
 export const operatorPricingSchema = z
   .object({
     minBillableHours: optionalNumber(0.5, 12, "Between 0.5 and 12 hours."),
-    positioningPercent: optionalNumber(0, 200, "Between 0 and 200 percent."),
-    freeWithinKm: optionalNumber(0, 1000, "Between 0 and 1,000 km."),
+    // The API keeps the factor to two decimals, so the percent is whole.
+    positioningPercent: optionalNumber(
+      0,
+      200,
+      "A whole number between 0 and 200 percent.",
+      0,
+    ),
+    freeWithinKm: optionalNumber(
+      0,
+      1000,
+      "A whole number between 0 and 1,000 km.",
+      0,
+    ),
     landingFallback: rupees,
     handlingFallback: rupees,
   })
@@ -60,9 +84,7 @@ export function toOperatorPricingBody(values: OperatorPricingValues): Body {
     minBillableHours: numberOrNull(values.minBillableHours),
     positioningRateFactor: percent == null ? null : percent / 100,
     freeWithinKm:
-      percent == null
-        ? null
-        : Math.round(numberOrNull(values.freeWithinKm) ?? 0),
+      percent == null ? null : (numberOrNull(values.freeWithinKm) ?? 0),
     landingFallbackMinor: rupeesToPaise(values.landingFallback),
     handlingFallbackMinor: rupeesToPaise(values.handlingFallback),
   };
@@ -81,3 +103,10 @@ export function fromOperatorPricing(pricing: Pricing): OperatorPricingValues {
     handlingFallback: paiseToRupees(pricing.handlingFallbackMinor),
   };
 }
+
+/** API field names that differ from this form's. */
+export const OPERATOR_PRICING_ALIASES = {
+  positioningRateFactor: "positioningPercent",
+  landingFallbackMinor: "landingFallback",
+  handlingFallbackMinor: "handlingFallback",
+} as const;

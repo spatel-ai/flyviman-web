@@ -27,19 +27,28 @@ export function formatMoney(amountMinor: number, currency: string): string {
   }).format(amountMinor / divisor);
 }
 
+/** ₹10 crore in paise: the most any pricing input takes (the API's ceiling). */
+export const MAX_MINOR = 10_000_000_000;
+
 /**
  * Rupees typed by a person ("1,80,000", "₹ 2500.50") as paise, or null when
- * the field is empty. Throws on anything else, so a form can say so.
- * Money is held as integer paise (CLAUDE.md, working conventions).
+ * the field is empty. Throws on anything else, and above ₹10 crore, so a form
+ * can say so. Money is held as integer paise (CLAUDE.md, working conventions).
  */
 export function rupeesToPaise(input: string): number | null {
   const cleaned = input.replace(/[₹,\s]/g, "");
   if (cleaned === "") return null;
-  if (!/^\d+(\.\d{1,2})?$/.test(cleaned)) {
+  // At most 9 rupee digits: anything longer is over the ceiling anyway, and
+  // a very long one would lose precision as a number.
+  if (!/^\d{1,9}(\.\d{1,2})?$/.test(cleaned)) {
     throw new TypeError(`Not an amount in rupees: ${input}`);
   }
   const [whole, fraction = ""] = cleaned.split(".");
-  return Number(whole) * 100 + Number(fraction.padEnd(2, "0"));
+  const paise = Number(whole) * 100 + Number(fraction.padEnd(2, "0"));
+  if (paise > MAX_MINOR) {
+    throw new RangeError(`Over ₹10 crore: ${input}`);
+  }
+  return paise;
 }
 
 /** Paise as a plain rupee figure for a form field ("180000", "2500.5"). */

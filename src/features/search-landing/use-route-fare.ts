@@ -46,10 +46,18 @@ export function useRouteFare(originId?: string, destinationId?: string) {
           passengerCount: 2,
         },
       });
-      const prices = data.days.flatMap((day) =>
-        day.lowest ? [day.lowest.amountMinor] : [],
-      );
-      return prices.length > 0 ? Math.min(...prices) : null;
+      // The whole price, with its type and currency, so the card shows it
+      // through PriceLabel (business rule 1), not as a bare figure.
+      let lowest: (typeof data.days)[number]["lowest"] = null;
+      for (const day of data.days) {
+        if (
+          day.lowest &&
+          (!lowest || day.lowest.amountMinor < lowest.amountMinor)
+        ) {
+          lowest = day.lowest;
+        }
+      }
+      return lowest;
     },
     enabled: Boolean(originId && destinationId),
     staleTime: 5 * 60_000,

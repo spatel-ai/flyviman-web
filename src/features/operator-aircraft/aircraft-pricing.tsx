@@ -30,9 +30,24 @@ const parses = (value: string) => {
 };
 
 const schema = z.object({
-  hourlyRate: z.string().trim().refine(parses, {
-    message: "Enter the rate in rupees, for example 180000.",
-  }),
+  // The API takes ₹1 to ₹10 crore an hour; empty means "price on request".
+  hourlyRate: z
+    .string()
+    .trim()
+    .refine(parses, {
+      message: "Enter the rate in rupees up to ₹10 crore, for example 180000.",
+    })
+    .refine(
+      (value) => {
+        try {
+          const paise = rupeesToPaise(value);
+          return paise === null || paise >= 100;
+        } catch {
+          return true;
+        }
+      },
+      { message: "At least ₹1 an hour, or leave empty." },
+    ),
   taxInclusive: z.boolean(),
   commissionInclusive: z.boolean(),
   minBillableHours: z
@@ -41,7 +56,7 @@ const schema = z.object({
     .refine(
       (value) =>
         value === "" ||
-        (Number.isFinite(Number(value)) &&
+        (/^\d+(\.\d{1,2})?$/.test(value) &&
           Number(value) >= 0.5 &&
           Number(value) <= 12),
       { message: "Between 0.5 and 12 hours, or leave empty." },
@@ -137,7 +152,12 @@ function Editor({
       reset(fromPricing(data));
       toast({ title: "Aircraft pricing saved", tone: "success" });
     },
-    onError: (error) => setFormError(applyApiError(error, setError, FIELDS)),
+    onError: (error) =>
+      setFormError(
+        applyApiError(error, setError, FIELDS, {
+          hourlyRateMinor: "hourlyRate",
+        }),
+      ),
   });
 
   return (
