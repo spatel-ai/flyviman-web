@@ -2736,7 +2736,7 @@ export interface components {
       taxInclusive: boolean;
       /** @description The rate already includes Flyviman's commission. It is reduced before commission is added. */
       commissionInclusive: boolean;
-      /** @description Overrides the operator's minimum billable hours for this aircraft. */
+      /** @description Overrides the operator's minimum billable hours for this aircraft. Required; `null` clears the override. */
       minBillableHours: number | null;
       /** Format: uuid */
       aircraftId: string;
@@ -2753,7 +2753,7 @@ export interface components {
       taxInclusive: boolean;
       /** @description The rate already includes Flyviman's commission. It is reduced before commission is added. */
       commissionInclusive: boolean;
-      /** @description Overrides the operator's minimum billable hours for this aircraft. */
+      /** @description Overrides the operator's minimum billable hours for this aircraft. Required; `null` clears the override. */
       minBillableHours: number | null;
     };
     PricingRuleResponseDto: {
@@ -5024,6 +5024,7 @@ export interface operations {
   AdminPriceCalculationsController_list: {
     parameters: {
       query?: {
+        /** @description At most 100; narrow with from, to or an id to look further back. */
         page?: number;
         pageSize?: number;
         searchId?: string;
