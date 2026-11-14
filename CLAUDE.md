@@ -56,7 +56,8 @@ src/
     (operator)/operator/   operator portal: dashboard, onboarding, aircraft (list, new, [id]),
                            availability (fleet timeline, [aircraftId] calendar), team
     (admin)/admin/         admin portal: dashboard, operators, operators/[id], users, aircraft,
-                           aircraft/[id], locations
+                           aircraft/[id], locations, documents, pricing/rules,
+                           pricing/calculations, pricing/calculations/[id]
     layout.tsx             root: font, theme script, providers
     globals.css            design tokens
   components/
@@ -77,7 +78,8 @@ src/
   features/<feature>/      feature UI, hooks, schemas (auth, account, home, about, services, charter, contact, legal,
                            search (results, filters, detail), search-landing,
                            operator-onboarding, operator-aircraft, operator-availability, operator-staff, operator-pricing,
-                           admin-operators, admin-users, admin-aircraft, admin-locations)
+                           admin-operators, admin-users, admin-aircraft, admin-locations, admin-documents,
+                           admin-pricing)
   lib/
     api/                   apiFetch, ApiError, messages by error code, query keys, generated types
     auth/                  session and server-side API reads (server only), roles

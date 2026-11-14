@@ -1391,6 +1391,104 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/admin/pricing-rules": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * List pricing rules
+     * @description Platform and category rules. `active=true` (default): in force now; `active=false`: every version.
+     */
+    get: operations["AdminPricingRulesController_list"];
+    put?: never;
+    /**
+     * Create a pricing rule
+     * @description Takes effect at once. One rule per type and scope: 409 `PRICING_RULE_EXISTS` when one is in force. Audited with the reason.
+     */
+    post: operations["AdminPricingRulesController_create"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/admin/pricing-rules/{id}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    /**
+     * Change a pricing rule (creates a new version)
+     * @description Closes the version in force and creates the next; identical settings write nothing. 409 `PRICING_RULE_NOT_CURRENT` if it was changed or ended meanwhile. Audited with before, after and the reason.
+     */
+    patch: operations["AdminPricingRulesController_change"];
+    trace?: never;
+  };
+  "/api/v1/admin/pricing-rules/{id}/deactivate": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * End a pricing rule
+     * @description Category rules only; the platform default then applies. Platform rules answer 409 `PRICING_RULE_REQUIRED`. Audited with the reason.
+     */
+    post: operations["AdminPricingRulesController_deactivate"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/admin/price-calculations": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** List stored price calculations, newest first */
+    get: operations["AdminPriceCalculationsController_list"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/admin/price-calculations/{id}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** One calculation: inputs, rules and breakdown */
+    get: operations["AdminPriceCalculationsController_detail"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/v1/admin/audit-logs": {
     parameters: {
       query?: never;
@@ -2657,6 +2755,145 @@ export interface components {
       commissionInclusive: boolean;
       /** @description Overrides the operator's minimum billable hours for this aircraft. */
       minBillableHours: number | null;
+    };
+    PricingRuleResponseDto: {
+      /** Format: uuid */
+      id: string;
+      type: string;
+      scope: string;
+      scopeRef: string | null;
+      config: {
+        [key: string]: unknown;
+      };
+      priority: number;
+      version: number;
+      /** Format: date-time */
+      validFrom: string;
+      /** Format: date-time */
+      validTo: string | null;
+      /** @description Applied to new prices now. */
+      inForce: boolean;
+      /** @description Whether this screen may change it (types the engine applies, platform or category scope). */
+      editable: boolean;
+      /** Format: uuid */
+      createdById: string | null;
+      /** Format: date-time */
+      createdAt: string;
+    };
+    CreatePricingRuleDto: {
+      /** @description Why the change is made. Kept in the audit record. */
+      reason: string;
+      /** @enum {string} */
+      type:
+        | "COMMISSION"
+        | "TAX"
+        | "MIN_CHARGE"
+        | "ROUTING_FACTOR"
+        | "TIME_ALLOWANCE"
+        | "VALIDITY"
+        | "MIN_BILLABLE_HOURS"
+        | "POSITIONING";
+      /** @enum {string} */
+      scope: "PLATFORM" | "CATEGORY";
+      /** @description The aircraft category of a CATEGORY rule; none for PLATFORM. */
+      scopeRef?: string | null;
+      /** @description Settings of the rule type, checked exactly: COMMISSION { percent, mode }, TAX { name, percent }, MIN_CHARGE { amountMinor }, ROUTING_FACTOR { factor }, TIME_ALLOWANCE { minutes }, VALIDITY { minutes }, MIN_BILLABLE_HOURS { hours }, POSITIONING { rateFactor, freeWithinKm? }. */
+      config: {
+        [key: string]: unknown;
+      };
+    };
+    UpdatePricingRuleDto: {
+      /** @description Why the change is made. Kept in the audit record. */
+      reason: string;
+      /** @description The complete new settings; checked as on create. */
+      config: {
+        [key: string]: unknown;
+      };
+    };
+    DeactivatePricingRuleDto: {
+      /** @description Why the change is made. Kept in the audit record. */
+      reason: string;
+    };
+    PriceCalculationSummaryDto: {
+      /** Format: uuid */
+      id: string;
+      /** Format: uuid */
+      searchId: string | null;
+      /** Format: uuid */
+      aircraftId: string;
+      /** @description Registration. */
+      aircraftLabel: string | null;
+      /** Format: uuid */
+      operatorId: string;
+      operatorName: string | null;
+      totalMinor: number;
+      currency: string;
+      priceType: components["schemas"]["PriceType"];
+      /** Format: date-time */
+      validUntil: string;
+      warningCount: number;
+      /** Format: date-time */
+      createdAt: string;
+    };
+    CalculationLineDto: {
+      code: string;
+      label: string;
+      amountMinor: number;
+      /** @description How the line was worked out (hours × rate). Finance and super administrators only; null for operations. */
+      basis?: string | null;
+    };
+    AppliedRuleDto: {
+      /** Format: uuid */
+      id: string;
+      type: string;
+      scope: string;
+      version: number;
+      /** @description The rule version as applied. Finance and super administrators only; null for operations. */
+      config?: {
+        [key: string]: unknown;
+      } | null;
+    };
+    CalculationFinanceDto: {
+      operatorPayableMinor: number;
+      platformRevenueMinor: number;
+    };
+    PriceCalculationDetailDto: {
+      /** Format: uuid */
+      id: string;
+      /** Format: uuid */
+      searchId: string | null;
+      /** Format: uuid */
+      aircraftId: string;
+      /** @description Registration. */
+      aircraftLabel: string | null;
+      /** Format: uuid */
+      operatorId: string;
+      operatorName: string | null;
+      totalMinor: number;
+      currency: string;
+      priceType: components["schemas"]["PriceType"];
+      /** Format: date-time */
+      validUntil: string;
+      warningCount: number;
+      /** Format: date-time */
+      createdAt: string;
+      inputs: {
+        [key: string]: unknown;
+      };
+      breakdown: components["schemas"]["CalculationLineDto"][];
+      baseMinor: number;
+      feesMinor: number;
+      taxMinor: number;
+      discountMinor: number;
+      appliedRules: components["schemas"]["AppliedRuleDto"][];
+      assumptions: string[];
+      exclusions: string[];
+      warnings: string[];
+      /** Format: date-time */
+      availabilityCheckedAt: string;
+      overrideReason: string | null;
+      /** @description Finance and super administrators only; null for operations. */
+      finance: components["schemas"]["CalculationFinanceDto"] | null;
     };
     AuditLogResponseDto: {
       /** Format: uuid */
@@ -4670,6 +4907,163 @@ export interface operations {
         };
         content: {
           "application/json": components["schemas"]["AircraftPricingResponseDto"];
+        };
+      };
+    };
+  };
+  AdminPricingRulesController_list: {
+    parameters: {
+      query?: {
+        page?: number;
+        pageSize?: number;
+        scope?: "PLATFORM" | "CATEGORY";
+        type?:
+          | "COMMISSION"
+          | "TAX"
+          | "MIN_CHARGE"
+          | "ROUTING_FACTOR"
+          | "TIME_ALLOWANCE"
+          | "VALIDITY"
+          | "MIN_BILLABLE_HOURS"
+          | "POSITIONING";
+        /** @description true (the default): rules in force now. false: every version, newest first, ended ones included. */
+        active?: boolean;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["PricingRuleResponseDto"][];
+        };
+      };
+    };
+  };
+  AdminPricingRulesController_create: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["CreatePricingRuleDto"];
+      };
+    };
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["PricingRuleResponseDto"];
+        };
+      };
+    };
+  };
+  AdminPricingRulesController_change: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["UpdatePricingRuleDto"];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["PricingRuleResponseDto"];
+        };
+      };
+    };
+  };
+  AdminPricingRulesController_deactivate: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["DeactivatePricingRuleDto"];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["PricingRuleResponseDto"];
+        };
+      };
+    };
+  };
+  AdminPriceCalculationsController_list: {
+    parameters: {
+      query?: {
+        page?: number;
+        pageSize?: number;
+        searchId?: string;
+        aircraftId?: string;
+        operatorId?: string;
+        /** @description Made at or after. */
+        from?: string;
+        /** @description Made before. */
+        to?: string;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["PriceCalculationSummaryDto"][];
+        };
+      };
+    };
+  };
+  AdminPriceCalculationsController_detail: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["PriceCalculationDetailDto"];
         };
       };
     };

@@ -197,6 +197,8 @@ export async function approvedAircraft(
       wingType: "FIXED_WING",
       passengerCapacity: 8,
       rangeKm: 3200,
+      // As the API tests' jet; without an hourly rate it is still "price on request".
+      cruiseSpeedKmh: 770,
       homeBaseId,
     },
   });

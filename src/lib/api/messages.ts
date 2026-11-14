@@ -24,6 +24,12 @@ const MESSAGES: Record<string, string> = {
   UNAUTHENTICATED: "Your session has ended. Sign in again.",
   FORBIDDEN: "You do not have access to this.",
   LOCATION_CODE_IN_USE: "Another location already has this code.",
+  PRICING_RULE_EXISTS:
+    "A rule of this kind is already in force for these aircraft. Change that rule instead.",
+  PRICING_RULE_NOT_CURRENT:
+    "Someone changed or ended this rule since you opened it. Close this and try again with the latest version.",
+  PRICING_RULE_REQUIRED:
+    "A rule for all aircraft cannot be ended, because every price relies on it. Change its value instead.",
   INTERNAL_ERROR: "Something went wrong on our side. Please try again.",
 };
 
