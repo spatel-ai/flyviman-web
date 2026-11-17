@@ -309,12 +309,15 @@ test.describe("the admin shell", () => {
 
 test("the home page offers sign-in to a visitor and an account menu to a customer", async ({
   page,
-}) => {
+}, info) => {
   await page.goto("/");
   await expect(page.getByRole("link", { name: "Sign in" })).toBeVisible();
-  await expect(
-    page.getByRole("link", { name: "Create account" }),
-  ).toBeVisible();
+  // On phones the tab bar holds Sign in and the login page offers the rest.
+  if (info.project.name !== "mobile") {
+    await expect(
+      page.getByRole("link", { name: "Create account" }),
+    ).toBeVisible();
+  }
 
   await signIn(page, "customer");
   await expect(page).toHaveURL("/");
