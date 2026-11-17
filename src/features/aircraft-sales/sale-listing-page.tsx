@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { EnquiryLink } from "@/components/marketing/enquiry-link";
+import { StickyActionBar } from "@/components/layout/sticky-action-bar";
 import { Magnetic } from "@/components/motion/magnetic";
 import { Reveal } from "@/components/motion/reveal";
 import type { SaleListing } from "@/content/aircraft-sales";
@@ -7,7 +8,7 @@ import type { SaleListing } from "@/content/aircraft-sales";
 /** One aircraft for sale: its details and specification, and one action. */
 export function SaleListingPage({ listing }: { listing: SaleListing }) {
   return (
-    <article className="mx-auto max-w-wide px-4 py-12 md:px-6 md:py-20 lg:px-8">
+    <article className="mx-auto max-w-wide px-4 py-16 md:px-6 md:py-20 lg:px-8">
       <Link
         href="/aircraft-sales"
         className="text-body-sm text-accent hover:underline"
@@ -20,9 +21,9 @@ export function SaleListingPage({ listing }: { listing: SaleListing }) {
             {listing.category === "AIRCRAFT" ? "Aircraft" : "Helicopter"} for
             sale
           </p>
-          <h1 className="mt-3 text-h1 md:text-display">{listing.title}</h1>
+          <h1 className="mt-3 text-h2 md:text-display">{listing.title}</h1>
         </div>
-        <div className="lg:col-span-5 lg:text-right">
+        <div className="max-md:hidden lg:col-span-5 lg:text-right">
           <Magnetic>
             <EnquiryLink topic="AIRCRAFT_SALES" variant="primary">
               Enquire now
@@ -66,6 +67,15 @@ export function SaleListingPage({ listing }: { listing: SaleListing }) {
           </Reveal>
         ))}
       </div>
+
+      <StickyActionBar
+        label="Enquire about this aircraft"
+        className="[&_a]:w-full"
+      >
+        <EnquiryLink topic="AIRCRAFT_SALES" variant="primary">
+          Enquire now
+        </EnquiryLink>
+      </StickyActionBar>
     </article>
   );
 }
