@@ -79,7 +79,11 @@ export function CategoryTiles() {
         <div aria-hidden="true" className="absolute inset-0 bg-scrim" />
         <div
           aria-hidden="true"
-          className="absolute inset-0 bg-linear-to-t from-scrim to-transparent"
+          className="absolute inset-0 bg-linear-to-t from-scrim via-scrim to-transparent"
+        />
+        <div
+          aria-hidden="true"
+          className="absolute inset-0 bg-linear-to-r from-scrim to-transparent md:w-2/3"
         />
         <div className="relative p-6 text-on-photo md:p-10">
           <h3 className="text-h3">Private charter</h3>

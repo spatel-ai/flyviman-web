@@ -11,7 +11,11 @@ import { CHARTER } from "@/content/charter";
 /** Route-arc motif, the site's one illustration. */
 function Arc() {
   return (
-    <svg viewBox="0 0 400 120" aria-hidden="true" className="w-full">
+    <svg
+      viewBox="0 0 400 120"
+      aria-hidden="true"
+      className="hidden w-full sm:block"
+    >
       <path
         d="M20 110 Q200 -40 380 110"
         fill="none"
@@ -44,7 +48,7 @@ export function CharterPage() {
         <ul className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {kinds.map((kind, position) => {
             const body = (
-              <div className="flex h-full flex-col gap-6 rounded-xl bg-surface p-6">
+              <div className="flex h-full flex-col gap-4 rounded-xl bg-surface p-6 sm:gap-6">
                 <IconBadge icon={kind.icon} />
                 <Arc />
                 <div className="mt-auto">

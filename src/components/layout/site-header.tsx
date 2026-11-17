@@ -74,7 +74,7 @@ export function SiteHeader() {
         <div className="flex items-center gap-2">
           <Link
             href={CHARTER_HREF}
-            className={`${LINK} hidden bg-accent-fill text-accent-foreground hover:bg-accent-fill-hover md:flex`}
+            className={`${LINK} hidden bg-accent/10 text-accent hover:bg-accent/20 md:flex`}
           >
             Request a charter
           </Link>
