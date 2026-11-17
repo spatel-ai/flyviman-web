@@ -89,7 +89,7 @@ export function CategoryTiles() {
           <div className="mt-5 flex flex-wrap items-center gap-x-6 gap-y-2">
             <Link
               href="/search?service=charter"
-              className={buttonClasses({ size: "md" })}
+              className={buttonClasses({ variant: "secondary", size: "md" })}
             >
               Search charter
             </Link>

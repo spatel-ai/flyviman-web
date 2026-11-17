@@ -15,7 +15,7 @@ export function LandingHero() {
     <section aria-labelledby="home-hero" className="relative isolate">
       <div
         aria-hidden="true"
-        className="absolute inset-x-0 top-0 -z-10 h-72 overflow-hidden bg-surface md:h-104"
+        className="absolute inset-x-0 top-0 -z-10 h-56 overflow-hidden bg-surface md:h-104"
       >
         <Image
           src="/hero/desktop/poster-first.webp"
@@ -27,14 +27,14 @@ export function LandingHero() {
         />
         <div className="absolute inset-0 bg-scrim" />
       </div>
-      <div className="mx-auto max-w-wide px-4 pt-5 pb-10 md:px-6 md:pt-16 md:pb-14 lg:px-8">
+      <div className="mx-auto max-w-wide px-4 pt-2 pb-8 md:px-6 md:pt-16 md:pb-14 lg:px-8">
         <h1
           id="home-hero"
-          className="max-w-xl text-h3 text-on-photo sm:text-h2 md:text-h1"
+          className="max-w-xl text-title text-on-photo sm:text-h2 md:text-h1"
         >
           {headline}
         </h1>
-        <div className="mt-4 md:mt-10">
+        <div className="mt-2 md:mt-10">
           <SearchWidget initial={{ service: "charter" }} />
         </div>
       </div>
