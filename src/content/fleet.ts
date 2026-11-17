@@ -17,6 +17,7 @@ export const FLEET = {
   groups: [
     {
       id: "jets",
+      icon: "plane",
       title: "Jets and turboprops",
       topic: "PRIVATE_CHARTER",
       aircraft: [
@@ -38,6 +39,7 @@ export const FLEET = {
     },
     {
       id: "helicopters",
+      icon: "helicopter",
       title: "Helicopters",
       topic: "PRIVATE_CHARTER",
       aircraft: [

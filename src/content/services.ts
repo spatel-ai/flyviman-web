@@ -1,3 +1,4 @@
+import type { ConceptIcon } from "@/components/marketing/concept-icons";
 import type { EnquiryTopic } from "./contact";
 
 /**
@@ -14,6 +15,7 @@ export interface Service {
   /** Anchor on the page, and the enquiry topic it leads to. */
   id: string;
   topic: EnquiryTopic;
+  icon: ConceptIcon;
   title: string;
   tagline: string;
   paragraphs: readonly string[];
@@ -38,6 +40,7 @@ export const SERVICES_PAGE = {
   services: [
     {
       id: "sale-purchase",
+      icon: "plane",
       topic: "AIRCRAFT_SALES",
       title: "Aircraft sale & purchase",
       tagline: "Aircraft transactions made clear and confident",
@@ -70,6 +73,7 @@ export const SERVICES_PAGE = {
     },
     {
       id: "leasing",
+      icon: "lease",
       topic: "AIRCRAFT_SALES",
       title: "Aircraft leasing",
       tagline: "Leasing solutions that support your growth",
@@ -102,6 +106,7 @@ export const SERVICES_PAGE = {
     },
     {
       id: "charter",
+      icon: "plane",
       topic: "PRIVATE_CHARTER",
       title: "Charter services",
       tagline: "A tailored private travel experience",
@@ -136,6 +141,7 @@ export const SERVICES_PAGE = {
     },
     {
       id: "consultancy",
+      icon: "consultancy",
       topic: "CONSULTANCY",
       title: "Aviation consultancy",
       tagline: "Expert advisory for an evolving aviation landscape",
@@ -168,6 +174,7 @@ export const SERVICES_PAGE = {
     },
     {
       id: "investment",
+      icon: "investment",
       topic: "CONSULTANCY",
       title: "Aviation investment",
       tagline: "A refined approach to investing in aviation",

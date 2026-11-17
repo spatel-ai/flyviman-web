@@ -1,3 +1,5 @@
+import { IconBadge } from "@/components/marketing/icon-badge";
+import { ReadMore } from "@/components/marketing/read-more";
 import { SectionHeading } from "@/components/marketing/section-heading";
 import { PageHero } from "@/components/marketing/page-hero";
 import { Magnetic } from "@/components/motion/magnetic";
@@ -7,15 +9,12 @@ import { buttonClasses } from "@/components/ui/button-classes";
 import { ABOUT } from "@/content/about";
 import Link from "next/link";
 
+/** The first paragraph, and the rest behind "Read more" on a phone. */
 function Prose({ paragraphs }: { paragraphs: readonly string[] }) {
   return (
-    <div className="space-y-5">
-      {paragraphs.map((paragraph, index) => (
-        <Reveal key={paragraph} index={index}>
-          <p className="max-w-reading text-body-lg text-muted">{paragraph}</p>
-        </Reveal>
-      ))}
-    </div>
+    <Reveal>
+      <ReadMore paragraphs={paragraphs} />
+    </Reveal>
   );
 }
 
@@ -45,8 +44,9 @@ export function AboutPage() {
             {visionMission.items.map((item, index) => (
               <li key={item.title}>
                 <Reveal index={index} className="h-full">
-                  <TiltCard className="h-full rounded-xl bg-surface-raised p-8">
-                    <h3 className="text-overline text-accent uppercase">
+                  <TiltCard className="h-full rounded-xl bg-surface-raised p-6 md:p-8">
+                    <IconBadge icon={item.icon} />
+                    <h3 className="mt-5 text-overline text-accent uppercase">
                       {item.title}
                     </h3>
                     <p className="mt-4 text-h3">{item.text}</p>
@@ -66,6 +66,7 @@ export function AboutPage() {
         >
           <div className="mx-auto grid max-w-wide gap-8 px-4 py-16 md:px-6 md:py-24 lg:grid-cols-12 lg:gap-12 lg:px-8">
             <div className="lg:col-span-5">
+              <IconBadge icon={block.icon} className="mb-5" />
               <SectionHeading
                 id={`about-${index}-heading`}
                 overline={block.overline}
@@ -82,6 +83,9 @@ export function AboutPage() {
 
       <section aria-labelledby="closing-heading" className="bg-surface">
         <div className="mx-auto max-w-content px-4 py-16 text-center md:px-6 md:py-24 lg:px-8">
+          <div className="mb-5">
+            <IconBadge icon="partnership" />
+          </div>
           <SectionHeading id="closing-heading">
             {closing.heading}
           </SectionHeading>

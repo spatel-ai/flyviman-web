@@ -1,4 +1,5 @@
 import { EnquiryLink } from "@/components/marketing/enquiry-link";
+import { CheckMark, IconBadge } from "@/components/marketing/icon-badge";
 import { PageHero } from "@/components/marketing/page-hero";
 import { SectionHeading } from "@/components/marketing/section-heading";
 import { Magnetic } from "@/components/motion/magnetic";
@@ -27,18 +28,18 @@ export function AviationSolutionsPage() {
             {groups.map((group, index) => (
               <li key={group.title}>
                 <Reveal index={index % 2} className="h-full">
-                  <TiltCard className="h-full rounded-xl bg-surface-raised p-8">
-                    <h3 className="text-title">{group.title}</h3>
+                  <TiltCard className="h-full rounded-xl bg-surface-raised p-6 md:p-8">
+                    <div className="flex items-center gap-4">
+                      <IconBadge icon={group.icon} />
+                      <h3 className="text-title">{group.title}</h3>
+                    </div>
                     <ul className="mt-5 space-y-3">
                       {group.items.map((item) => (
                         <li
                           key={item}
                           className="flex gap-3 text-body text-muted"
                         >
-                          <span
-                            aria-hidden="true"
-                            className="mt-2.5 size-1.5 shrink-0 rounded-full bg-accent"
-                          />
+                          <CheckMark />
                           {item}
                         </li>
                       ))}

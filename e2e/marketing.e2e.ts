@@ -241,8 +241,13 @@ test.describe("services", () => {
   }) => {
     await page.goto("/services");
 
-    await expect(page.getByText(/medical needs/i)).toBeVisible();
+    // The notice is always in view; the wording near it opens on a phone.
     await expect(page.getByText(/In an emergency, call 112/)).toBeVisible();
+    const charter = page.locator("#charter");
+    if (await charter.getByText("Read more").first().isVisible()) {
+      await charter.getByText("Read more").first().click();
+    }
+    await expect(page.getByText(/medical needs/i)).toBeVisible();
     await expect(page.getByText(/Investor-exclusive access/i)).toBeVisible();
     await expect(
       page
@@ -250,6 +255,23 @@ test.describe("services", () => {
         .filter({ has: page.getByText("Insights", { exact: true }) }),
     ).toHaveCount(5);
   });
+});
+
+test("long copy is short on a phone and open on a desktop (CR-2)", async ({
+  page,
+}, info) => {
+  await page.goto("/about");
+  const rest = page.getByText(/^Driven by a commitment to professionalism/);
+  const more = page.getByText("Read more").first();
+  if (info.project.name === "mobile") {
+    await expect(more).toBeVisible();
+    await expect(rest).toBeHidden();
+    await more.click();
+    await expect(rest).toBeVisible();
+  } else {
+    await expect(more).toBeHidden();
+    await expect(rest).toBeVisible();
+  }
 });
 
 test.describe("full migration (D-092)", () => {

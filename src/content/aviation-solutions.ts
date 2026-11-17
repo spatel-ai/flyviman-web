@@ -17,6 +17,7 @@ export const AVIATION_SOLUTIONS = {
   groups: [
     {
       title: "Aircraft and charter",
+      icon: "plane",
       items: [
         "Charter services",
         "Aircraft sales & purchases",
@@ -27,6 +28,7 @@ export const AVIATION_SOLUTIONS = {
     },
     {
       title: "Permits and setup",
+      icon: "permits",
       items: [
         "Charter airline (permit) NSOP",
         "Providing permit (aircraft)",
@@ -38,6 +40,7 @@ export const AVIATION_SOLUTIONS = {
     },
     {
       title: "Pilots and people",
+      icon: "pilots",
       items: [
         "Providing pilot jobs assistance",
         "Pilot courses (CPL)",
@@ -49,6 +52,7 @@ export const AVIATION_SOLUTIONS = {
     },
     {
       title: "Supply and support",
+      icon: "supply",
       items: [
         "Aircrafts & helicopters spare parts & consumables",
         "Business plans for investors",

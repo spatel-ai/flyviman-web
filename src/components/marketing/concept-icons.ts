@@ -1,0 +1,68 @@
+import {
+  Ambulance,
+  Briefcase,
+  Building2,
+  Check,
+  Clock,
+  Compass,
+  Crown,
+  Eye,
+  Fan,
+  FileBadge,
+  Flower2,
+  GraduationCap,
+  Handshake,
+  Heart,
+  KeyRound,
+  Landmark,
+  Lightbulb,
+  MapPin,
+  Package,
+  Plane,
+  Scale,
+  ShieldCheck,
+  Target,
+  TrendingUp,
+  UserRound,
+  Users,
+  Vote,
+  type LucideIcon,
+} from "lucide-react";
+
+/**
+ * One icon per concept across the marketing pages. Content files name the
+ * concept; this is the only place that picks the drawing. Charter, helicopter,
+ * air ambulance, aircraft sales, pilots and the fleet reuse the icons of the
+ * navigation and the home tiles (site-nav.ts, category-tiles.tsx).
+ */
+export const CONCEPT_ICONS = {
+  plane: Plane,
+  helicopter: Fan,
+  ambulance: Ambulance,
+  fleet: Building2,
+  pilots: Compass,
+  lease: KeyRound,
+  consultancy: Briefcase,
+  investment: TrendingUp,
+  celebrity: Crown,
+  election: Vote,
+  marriage: Heart,
+  pilgrimage: Landmark,
+  group: Users,
+  flowers: Flower2,
+  vision: Eye,
+  mission: Target,
+  founder: UserRound,
+  philosophy: Scale,
+  partnership: Handshake,
+  permits: FileBadge,
+  supply: Package,
+  training: GraduationCap,
+  safety: ShieldCheck,
+  insight: Lightbulb,
+  location: MapPin,
+  hours: Clock,
+  check: Check,
+} as const satisfies Record<string, LucideIcon>;
+
+export type ConceptIcon = keyof typeof CONCEPT_ICONS;
