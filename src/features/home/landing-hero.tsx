@@ -27,7 +27,7 @@ export function LandingHero() {
         />
         <div className="absolute inset-0 bg-scrim" />
       </div>
-      <div className="mx-auto max-w-wide px-4 pt-2 pb-8 md:px-6 md:pt-16 md:pb-14 lg:px-8">
+      <div className="mx-auto max-w-wide px-4 pt-4 pb-8 md:px-6 md:pt-16 md:pb-14 lg:px-8">
         <h1
           id="home-hero"
           className="max-w-xl text-title text-on-photo sm:text-h2 md:text-h1"

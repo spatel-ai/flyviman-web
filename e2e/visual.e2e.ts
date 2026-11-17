@@ -118,6 +118,11 @@ for (const scheme of ["light", "dark"] as const) {
           )
           .toBe(true);
         await page.evaluate(() => window.scrollTo(0, 0));
+        // A full-page capture would draw the fixed phone tab bar part-way
+        // down the image: lay it out in the page for the capture only.
+        await page.addStyleTag({
+          content: 'nav[aria-label="Primary"] { position: static !important; }',
+        });
 
         await expect(page).toHaveScreenshot(`${shot.name}-${scheme}.png`, {
           fullPage: true,

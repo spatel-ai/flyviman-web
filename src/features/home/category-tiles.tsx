@@ -79,7 +79,11 @@ export function CategoryTiles() {
         <div aria-hidden="true" className="absolute inset-0 bg-scrim" />
         <div
           aria-hidden="true"
-          className="absolute inset-0 bg-linear-to-t from-scrim to-transparent"
+          className="absolute inset-0 bg-linear-to-t from-scrim via-scrim to-transparent"
+        />
+        <div
+          aria-hidden="true"
+          className="absolute inset-0 bg-linear-to-r from-scrim to-transparent md:w-2/3"
         />
         <div className="relative p-6 text-on-photo md:p-10">
           <h3 className="text-h3">Private charter</h3>
@@ -89,7 +93,12 @@ export function CategoryTiles() {
           <div className="mt-5 flex flex-wrap items-center gap-x-6 gap-y-2">
             <Link
               href="/search?service=charter"
-              className={buttonClasses({ variant: "secondary", size: "md" })}
+              className={buttonClasses({
+                variant: "secondary",
+                size: "md",
+                className:
+                  "border border-on-photo bg-on-photo/10 text-on-photo hover:bg-on-photo/20",
+              })}
             >
               Search charter
             </Link>
