@@ -1,4 +1,5 @@
 import { EnquiryLink } from "@/components/marketing/enquiry-link";
+import { IconBadge } from "@/components/marketing/icon-badge";
 import { PageHero } from "@/components/marketing/page-hero";
 import { SectionHeading } from "@/components/marketing/section-heading";
 import { Magnetic } from "@/components/motion/magnetic";
@@ -20,6 +21,7 @@ export function PilotsPage() {
         className="mx-auto grid max-w-wide scroll-mt-16 gap-8 px-4 py-16 md:px-6 md:py-24 lg:grid-cols-12 lg:gap-12 lg:px-8"
       >
         <div className="lg:col-span-5">
+          <IconBadge icon="pilots" className="mb-5" />
           <SectionHeading id="pilot-jobs-heading" overline={jobs.overline}>
             {jobs.heading}
           </SectionHeading>
@@ -53,6 +55,7 @@ export function PilotsPage() {
               <li key={course.name}>
                 <Reveal index={index} className="h-full">
                   <div className="flex h-full flex-col gap-6 rounded-xl bg-surface-raised p-6">
+                    <IconBadge icon="training" />
                     <h3 className="text-title">{course.name}</h3>
                     {/* A fee is a price: never animated, always labelled. */}
                     <PriceLabel
@@ -101,10 +104,11 @@ export function PilotsPage() {
             <li key={training.code}>
               <Reveal index={index % 4} className="h-full">
                 <TiltCard className="h-full rounded-xl bg-surface p-6">
-                  <p className="text-overline text-accent uppercase">
+                  <IconBadge icon="safety" />
+                  <p className="mt-4 text-overline text-accent uppercase">
                     {training.code}
                   </p>
-                  <h3 className="mt-4 text-title">{training.name}</h3>
+                  <h3 className="mt-2 text-title">{training.name}</h3>
                 </TiltCard>
               </Reveal>
             </li>

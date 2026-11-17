@@ -21,15 +21,18 @@ export const ABOUT = {
     items: [
       {
         title: "Vision",
+        icon: "vision",
         text: "To become a trusted, full-spectrum aviation partner that empowers clients to fly smarter, safer, and with complete confidence.",
       },
       {
         title: "Mission",
+        icon: "mission",
         text: "To provide refined aviation services anchored in transparency, operational excellence, and uncompromising safety — creating a seamless bridge between aircraft solutions, strategic advisory, and client-focused support.",
       },
     ],
   },
   founder: {
+    icon: "founder",
     overline: "Founder’s note",
     heading: "Clear, neutral advice for decisions that matter",
     paragraphs: [
@@ -39,6 +42,7 @@ export const ABOUT = {
     ],
   },
   team: {
+    icon: "group",
     overline: "Our team",
     heading: "Aviation understood beyond the paperwork",
     paragraphs: [
@@ -49,6 +53,7 @@ export const ABOUT = {
     ],
   },
   philosophy: {
+    icon: "philosophy",
     overline: "Our working philosophy",
     heading: "Discipline and foresight",
     paragraphs: [

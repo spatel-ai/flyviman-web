@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { EnquiryLink } from "@/components/marketing/enquiry-link";
+import { CONCEPT_ICONS } from "@/components/marketing/concept-icons";
+import { IconBadge } from "@/components/marketing/icon-badge";
 import { PageHero } from "@/components/marketing/page-hero";
 import { SectionHeading } from "@/components/marketing/section-heading";
 import { Reveal } from "@/components/motion/reveal";
@@ -26,6 +28,10 @@ export function AircraftSalesPage() {
           className={index % 2 === 1 ? "bg-surface" : undefined}
         >
           <div className="mx-auto max-w-wide px-4 py-16 md:px-6 md:py-24 lg:px-8">
+            <IconBadge
+              icon={category.id === "HELICOPTER" ? "helicopter" : "plane"}
+              className="mb-5"
+            />
             <SectionHeading id={`sales-${category.id}`}>
               {category.title}
             </SectionHeading>
@@ -34,9 +40,15 @@ export function AircraftSalesPage() {
                 .filter((listing) => listing.category === category.id)
                 .map((listing, position) => {
                   const facts = [
-                    detail(listing, "Location"),
-                    detail(listing, "Total Time"),
-                  ].filter(Boolean);
+                    {
+                      icon: CONCEPT_ICONS.location,
+                      value: detail(listing, "Location"),
+                    },
+                    {
+                      icon: CONCEPT_ICONS.hours,
+                      value: detail(listing, "Total Time"),
+                    },
+                  ].filter((fact) => fact.value);
                   return (
                     <li key={listing.title}>
                       <Reveal index={position % 3} className="h-full">
@@ -50,9 +62,21 @@ export function AircraftSalesPage() {
                             </p>
                           ) : null}
                           {facts.length ? (
-                            <p className="mt-3 text-body-sm text-muted">
-                              {facts.join(" · ")}
-                            </p>
+                            <ul className="mt-3 space-y-1.5 text-body-sm text-muted">
+                              {facts.map(({ icon: Icon, value }) => (
+                                <li
+                                  key={value}
+                                  className="flex items-center gap-2"
+                                >
+                                  <Icon
+                                    aria-hidden="true"
+                                    strokeWidth={1.5}
+                                    className="size-5 shrink-0"
+                                  />
+                                  {value}
+                                </li>
+                              ))}
+                            </ul>
                           ) : null}
                           <div className="mt-auto flex flex-wrap gap-2 pt-6">
                             {listing.slug ? (

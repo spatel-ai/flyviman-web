@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { EnquiryLink } from "@/components/marketing/enquiry-link";
 import { buttonClasses } from "@/components/ui/button-classes";
+import { IconBadge } from "@/components/marketing/icon-badge";
 import { PageHero } from "@/components/marketing/page-hero";
 import { SectionHeading } from "@/components/marketing/section-heading";
 import { Reveal } from "@/components/motion/reveal";
@@ -43,7 +44,8 @@ export function CharterPage() {
         <ul className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {kinds.map((kind, position) => {
             const body = (
-              <div className="flex h-full flex-col gap-8 rounded-xl bg-surface p-6">
+              <div className="flex h-full flex-col gap-6 rounded-xl bg-surface p-6">
+                <IconBadge icon={kind.icon} />
                 <Arc />
                 <div className="mt-auto">
                   <h3 className="text-title">{kind.name}</h3>

@@ -1,6 +1,9 @@
 import Link from "next/link";
 import { EnquiryLink } from "@/components/marketing/enquiry-link";
+import { CONCEPT_ICONS } from "@/components/marketing/concept-icons";
+import { CheckMark, IconBadge } from "@/components/marketing/icon-badge";
 import { PageHero } from "@/components/marketing/page-hero";
+import { ReadMore } from "@/components/marketing/read-more";
 import { SectionHeading } from "@/components/marketing/section-heading";
 import { Reveal } from "@/components/motion/reveal";
 import { TiltCard } from "@/components/motion/tilt-card";
@@ -17,16 +20,24 @@ function Index({ services }: { services: readonly Service[] }) {
       className="mx-auto max-w-wide px-4 pt-12 md:px-6 lg:px-8"
     >
       <ul className="flex flex-wrap gap-2">
-        {services.map((service) => (
-          <li key={service.id}>
-            <a
-              href={`#${service.id}`}
-              className="flex min-h-11 items-center rounded-pill bg-surface px-4 text-body-sm font-medium transition-colors duration-150 ease-standard hover:bg-border/60"
-            >
-              {service.title}
-            </a>
-          </li>
-        ))}
+        {services.map((service) => {
+          const Icon = CONCEPT_ICONS[service.icon];
+          return (
+            <li key={service.id}>
+              <a
+                href={`#${service.id}`}
+                className="flex min-h-11 items-center gap-2 rounded-pill bg-surface px-4 text-body-sm font-medium transition-colors duration-150 ease-standard hover:bg-border/60"
+              >
+                <Icon
+                  aria-hidden="true"
+                  strokeWidth={1.5}
+                  className="size-5 text-accent"
+                />
+                {service.title}
+              </a>
+            </li>
+          );
+        })}
       </ul>
     </nav>
   );
@@ -47,18 +58,15 @@ function ServiceSection({
       className={cn("scroll-mt-16", band && "bg-surface")}
     >
       <div className="mx-auto max-w-wide px-4 py-16 md:px-6 md:py-24 lg:px-8">
+        <IconBadge icon={service.icon} className="mb-5" />
         <SectionHeading id={headingId} overline={service.title}>
           {service.tagline}
         </SectionHeading>
         <div className="mt-10 grid gap-10 lg:grid-cols-12 lg:gap-12">
           <div className="space-y-5 lg:col-span-7">
-            {service.paragraphs.map((paragraph, index) => (
-              <Reveal key={paragraph} index={index}>
-                <p className="max-w-reading text-body-lg text-muted">
-                  {paragraph}
-                </p>
-              </Reveal>
-            ))}
+            <Reveal>
+              <ReadMore paragraphs={service.paragraphs} />
+            </Reveal>
             <Reveal>
               <blockquote className="max-w-reading border-l-2 border-accent pl-5 text-h3">
                 “{service.quote}”
@@ -77,10 +85,7 @@ function ServiceSection({
                 <ul className="mt-4 space-y-3">
                   {service.points.map((point) => (
                     <li key={point} className="flex gap-3 text-body">
-                      <span
-                        aria-hidden="true"
-                        className="mt-2.5 size-1.5 shrink-0 rounded-full bg-accent"
-                      />
+                      <CheckMark />
                       {point}
                     </li>
                   ))}
@@ -92,11 +97,10 @@ function ServiceSection({
         <div className="mt-12 grid gap-8 border-t border-border/60 pt-10 lg:grid-cols-12 lg:gap-12">
           <h3 className="text-h3 lg:col-span-5">{service.detailTitle}</h3>
           <div className="space-y-4 lg:col-span-7">
-            {service.detail.map((paragraph) => (
-              <p key={paragraph} className="max-w-reading text-body text-muted">
-                {paragraph}
-              </p>
-            ))}
+            <ReadMore
+              paragraphs={service.detail}
+              textClassName="text-body text-muted"
+            />
             <aside
               aria-label={service.insights.title}
               className={cn(
@@ -104,7 +108,8 @@ function ServiceSection({
                 band ? "bg-surface-raised" : "bg-surface",
               )}
             >
-              <p className="text-overline text-muted">Insights</p>
+              <IconBadge icon="insight" />
+              <p className="mt-4 text-overline text-muted">Insights</p>
               <h4 className="mt-3 text-title">{service.insights.title}</h4>
               <p className="mt-2 text-body-sm text-muted">
                 {service.insights.lead}
@@ -114,8 +119,9 @@ function ServiceSection({
               </p>
             </aside>
             {service.notice ? (
-              <p className="max-w-reading text-body-sm font-medium text-foreground">
-                {service.notice}
+              <p className="flex max-w-reading items-start gap-3 text-body-sm font-medium text-foreground">
+                <IconBadge icon="ambulance" className="size-8" />
+                <span className="pt-1">{service.notice}</span>
               </p>
             ) : null}
             <div className="pt-2">
