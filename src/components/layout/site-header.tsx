@@ -3,8 +3,8 @@ import { Suspense } from "react";
 import { getSession } from "@/lib/auth/session";
 import { homeFor, surfaceFor } from "@/lib/auth/roles";
 import { HeaderScrollState } from "./header-scroll-state";
-import { MobileNav } from "./mobile-nav";
-import { MORE_NAV, SITE_NAV } from "./site-nav";
+import { MoreSheet, MoreSheetView } from "./more-sheet";
+import { CHARTER_HREF } from "./site-nav";
 import { SiteNavLinks, SiteNavList } from "./site-nav-links";
 import { UserMenu } from "./user-menu";
 
@@ -19,7 +19,9 @@ const CUSTOMER_LINKS = [
 
 function SignedOut() {
   return (
-    <div className="flex items-center gap-1">
+    // On phones the tab bar holds Sign in, and the login page offers
+    // Create account.
+    <div className="hidden items-center gap-1 md:flex">
       <Link
         href="/login"
         className={`${LINK} text-foreground hover:bg-border/50`}
@@ -28,7 +30,7 @@ function SignedOut() {
       </Link>
       <Link
         href="/register"
-        className={`${LINK} bg-accent-fill text-accent-foreground hover:bg-accent-fill-hover`}
+        className={`${LINK} border border-border text-foreground hover:bg-border/50`}
       >
         Create account
       </Link>
@@ -57,12 +59,6 @@ export function SiteHeader() {
       <HeaderScrollState />
       <div className="mx-auto flex h-(--header-height) max-w-wide items-center justify-between px-4 md:px-6 lg:px-8">
         <div className="flex items-center gap-1 md:gap-6">
-          <div className="-ml-2 lg:hidden">
-            <MobileNav
-              surface="Site"
-              items={[{ href: "/", label: "Home" }, ...SITE_NAV, ...MORE_NAV]}
-            />
-          </div>
           <Link
             href="/"
             className="text-title tracking-tight"
@@ -75,10 +71,23 @@ export function SiteHeader() {
             <SiteNavLinks />
           </Suspense>
         </div>
-        {/* The page shell is static; the account area streams in. */}
-        <Suspense fallback={<div className="h-9 w-24" aria-hidden="true" />}>
-          <Account />
-        </Suspense>
+        <div className="flex items-center gap-2">
+          <Link
+            href={CHARTER_HREF}
+            className={`${LINK} hidden bg-accent-fill text-accent-foreground hover:bg-accent-fill-hover md:flex`}
+          >
+            Request a charter
+          </Link>
+          <div className="md:hidden">
+            <Suspense fallback={<MoreSheetView active={null} />}>
+              <MoreSheet />
+            </Suspense>
+          </div>
+          {/* The page shell is static; the account area streams in. */}
+          <Suspense fallback={<div className="h-9 w-24" aria-hidden="true" />}>
+            <Account />
+          </Suspense>
+        </div>
       </div>
     </header>
   );

@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 
 /**
  * The customer site's marketing pages, imported from flyviman.com (M4,
@@ -27,7 +27,7 @@ const PAGES = [
   { path: "/contact", nav: "Contact", heading: "Get in touch" },
 ] as const;
 
-/** Linked from their parent pages and the footer, not the header. */
+/** Linked from their parent pages and the More menu. */
 const MORE_PAGES = [
   { path: "/aviation-solutions", heading: "Powering the future of flight" },
   {
@@ -62,42 +62,53 @@ for (const { path, heading } of [...PAGES, ...MORE_PAGES]) {
   });
 }
 
-test("the header leads to every page and marks the current one", async ({
+/** The header's More menu on desktop, its bottom sheet on a phone. */
+async function openMore(page: Page, mobile: boolean) {
+  await page.getByRole("button", { name: "More", exact: true }).click();
+  return mobile
+    ? page.getByRole("navigation", { name: "More" })
+    : page.getByRole("menu");
+}
+
+test("the More menu leads to the pages and marks the current one", async ({
   page,
 }, info) => {
   await page.goto("/");
   const mobile = info.project.name === "mobile";
 
-  for (const { nav, heading } of PAGES) {
-    if (mobile) {
-      await page.getByRole("button", { name: "Open navigation" }).click();
-      await page
-        .getByRole("navigation", { name: "Site navigation" })
-        .getByRole("link", { name: nav, exact: true })
-        .click();
-    } else {
-      await page
-        .getByRole("navigation", { name: "Site" })
-        .getByRole("link", { name: nav, exact: true })
-        .click();
-    }
+  for (const { nav, heading } of [
+    ...PAGES.filter(({ nav }) => nav !== "Charter"),
+    { nav: "Aviation solutions", heading: MORE_PAGES[0].heading },
+    { nav: "Charter fleet", heading: MORE_PAGES[1].heading },
+  ]) {
+    const more = await openMore(page, mobile);
+    await more.getByRole(mobile ? "link" : "menuitem", { name: nav }).click();
     await expect(
       page.getByRole("heading", { level: 1, name: heading }),
     ).toBeVisible();
-    if (!mobile) {
-      await expect(
-        page
-          .getByRole("navigation", { name: "Site" })
-          .getByRole("link", { name: nav, exact: true }),
-      ).toHaveAttribute("aria-current", "page");
-    }
   }
+
+  // Marked by aria-current as well as colour.
+  const current = await openMore(page, mobile);
+  await expect(
+    current.getByRole(mobile ? "link" : "menuitem", {
+      name: "Charter fleet",
+    }),
+  ).toHaveAttribute("aria-current", "page");
+});
+
+test("the header offers a charter request", async ({ page }, info) => {
+  test.skip(info.project.name === "mobile", "Phones use the tab bar");
+  await page.goto("/");
+  await expect(
+    page.getByRole("link", { name: "Request a charter" }),
+  ).toHaveAttribute("href", "/search?service=charter");
 });
 
 test("the header marks Search as the current page on /search", async ({
   page,
 }, info) => {
-  test.skip(info.project.name === "mobile", "Phones show the menu button");
+  test.skip(info.project.name === "mobile", "Phones show the tab bar");
   await page.goto("/search");
   const link = page
     .getByRole("navigation", { name: "Site" })
@@ -107,15 +118,59 @@ test("the header marks Search as the current page on /search", async ({
   await expect(link).toHaveCSS("font-weight", "500");
 });
 
-test("the footer lists the pages", async ({ page }) => {
+test("the footer holds the legal links and no page navigation", async ({
+  page,
+}) => {
   await page.goto("/");
   const footer = page.getByRole("navigation", { name: "Footer" });
 
-  for (const { path, nav } of PAGES) {
-    await expect(
-      footer.getByRole("link", { name: nav, exact: true }),
-    ).toHaveAttribute("href", path);
-  }
+  await expect(footer.getByRole("link")).toHaveText([
+    "Terms",
+    "Privacy",
+    "Image credits",
+  ]);
+});
+
+test.describe("phone tab bar", () => {
+  test.beforeEach(({}, info) => {
+    test.skip(info.project.name !== "mobile", "Phones only");
+  });
+
+  test("leads to Home, Charter, Enquire and Sign in and marks the current one", async ({
+    page,
+  }) => {
+    await page.goto("/contact");
+    const bar = page.getByRole("navigation", { name: "Primary" });
+    await expect(bar.getByRole("link", { name: "Enquire" })).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
+    await expect(bar.getByRole("link", { name: "Home" })).toHaveAttribute(
+      "href",
+      "/",
+    );
+    await expect(bar.getByRole("link", { name: "Charter" })).toHaveAttribute(
+      "href",
+      "/search?service=charter",
+    );
+    await bar.getByRole("link", { name: "Sign in" }).click();
+    await expect(page).toHaveURL("/login");
+  });
+
+  test("never covers the foot of the page, and the footer has no wordmark", async ({
+    page,
+  }) => {
+    await page.goto("/about");
+    await page.evaluate(() =>
+      window.scrollTo({ top: document.documentElement.scrollHeight }),
+    );
+    const bar = await page
+      .getByRole("navigation", { name: "Primary" })
+      .boundingBox();
+    const copyright = await page.getByText("© Flyviman").boundingBox();
+    expect(copyright!.y + copyright!.height).toBeLessThanOrEqual(bar!.y);
+    await expect(page.locator(".site-footer__wordmark")).toBeHidden();
+  });
 });
 
 test("the home page leads on to About, Services and Charter", async ({
@@ -255,7 +310,10 @@ test("the header fits a 320 px wide phone", async ({ page }) => {
       document.documentElement.clientWidth,
   );
   expect(overflow).toBeLessThanOrEqual(0);
+  await expect(page.getByRole("button", { name: "More" })).toBeVisible();
   await expect(
-    page.getByRole("link", { name: "Create account" }),
+    page
+      .getByRole("navigation", { name: "Primary" })
+      .getByRole("link", { name: "Sign in" }),
   ).toBeVisible();
 });

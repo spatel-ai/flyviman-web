@@ -2,15 +2,7 @@ import Link from "next/link";
 import { ScrollScrub } from "@/components/motion/scroll-scrub";
 import { ThemeSwitch } from "@/components/theme/theme-switch";
 import { CONTACT } from "@/content/contact";
-import { MORE_NAV, SITE_NAV } from "./site-nav";
-
-const LINKS = [
-  ...SITE_NAV,
-  ...MORE_NAV,
-  { href: "/legal/terms", label: "Terms" },
-  { href: "/legal/privacy", label: "Privacy" },
-  { href: "/legal/image-credits", label: "Image credits" },
-];
+import { LEGAL_NAV } from "./site-nav";
 
 const LINK =
   "text-muted transition-colors duration-150 ease-standard hover:text-foreground";
@@ -18,19 +10,20 @@ const LINK =
 const CONTACT_LINK = `${LINK} inline-flex min-h-11 items-center`;
 
 export function SiteFooter() {
+  // On phones the tab bar covers the foot of the page, so it is padded.
   return (
-    <footer className="site-footer border-t border-border/60 bg-surface">
+    <footer className="site-footer border-t border-border/60 bg-surface max-md:pb-[calc(3.5rem+env(safe-area-inset-bottom))]">
       <div className="mx-auto flex max-w-wide flex-col gap-8 px-4 py-10 md:px-6 lg:px-8">
         <div className="flex flex-col gap-8 md:flex-row md:items-end md:justify-between">
-          {/* Decorative: the header already names the site. It starts
-              narrower, never wider, so it cannot overflow a phone. */}
+          {/* Decorative: the header already names the site. Not shown on
+              phones, where it would only add height. */}
           <ScrollScrub
             aria-hidden="true"
             start="top bottom"
             end="clamp(top 75%)"
             from={{ opacity: 0.2, scaleX: 0.92 }}
             to={{ opacity: 1, scaleX: 1 }}
-            className="site-footer__wordmark origin-left text-display tracking-tight"
+            className="site-footer__wordmark hidden origin-left text-display tracking-tight md:block"
           >
             Flyviman
           </ScrollScrub>
@@ -56,7 +49,7 @@ export function SiteFooter() {
         <div className="flex flex-wrap items-center justify-between gap-4">
           <nav aria-label="Footer">
             <ul className="flex flex-wrap gap-x-6 gap-y-2 text-caption">
-              {LINKS.map((link) => (
+              {LEGAL_NAV.map((link) => (
                 <li key={link.href}>
                   <Link href={link.href} className={LINK}>
                     {link.label}
