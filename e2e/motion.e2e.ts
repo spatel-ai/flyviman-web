@@ -270,7 +270,11 @@ test.describe("scroll-linked motion", () => {
 
   test("the footer wordmark settles as it scrolls in, and scrolling stays native", async ({
     page,
-  }) => {
+  }, info) => {
+    test.skip(
+      info.project.name !== "desktop",
+      "Phones get no scroll-linked motion.",
+    );
     await page.goto("/");
     // GSAP loads once the page is idle and sets the starting state.
     await expect(wordmark(page)).toHaveCSS("opacity", "0.2");
@@ -290,6 +294,38 @@ test.describe("scroll-linked motion", () => {
 
     await scrollTo(page, 0);
     await expect(wordmark(page)).toHaveCSS("opacity", "0.2");
+  });
+
+  // Chunk names are hashed, so GSAP is recognised by its licence banner.
+  async function gsapScripts(page: Page, visit: () => Promise<void>) {
+    const pending: Promise<boolean>[] = [];
+    page.on("response", (response) => {
+      if (response.request().resourceType() !== "script") return;
+      pending.push(
+        response
+          .text()
+          .then((body) => body.includes("GreenSock"))
+          .catch(() => false),
+      );
+    });
+    await visit();
+    return (await Promise.all(pending)).filter(Boolean).length;
+  }
+
+  test("GSAP loads on wide screens and never on a phone", async ({
+    page,
+  }, info) => {
+    const loaded = await gsapScripts(page, async () => {
+      await page.goto("/");
+      await page.waitForLoadState("networkidle");
+      await scrollTo(page, 3000);
+      await page.waitForLoadState("networkidle");
+    });
+    if (info.project.name === "desktop") expect(loaded).toBeGreaterThan(0);
+    else {
+      expect(loaded).toBe(0);
+      await expect(wordmark(page)).not.toHaveAttribute("style", /.+/);
+    }
   });
 
   test("with reduced motion nothing follows the scroll", async ({ page }) => {
@@ -339,6 +375,30 @@ test.describe("pointer feedback", () => {
     await expect
       .poll(() => card.evaluate((el) => (el as HTMLElement).style.transform))
       .toBe("");
+  });
+
+  test("on a phone a service card does not lean on pointer move", async ({
+    page,
+  }, info) => {
+    test.skip(info.project.name !== "mobile", "Phone only.");
+    await page.goto("/services");
+    await page.waitForLoadState("networkidle");
+    const card = page
+      .getByRole("heading", {
+        level: 3,
+        name: "What our sale & purchase service ensures",
+      })
+      .locator("xpath=..");
+    await card.scrollIntoViewIfNeeded();
+    const box = (await card.boundingBox())!;
+    await card.dispatchEvent("pointermove", {
+      clientX: box.x + box.width - 8,
+      clientY: box.y + 8,
+    });
+    await page.mouse.move(box.x + box.width - 8, box.y + 8);
+
+    await expect(card).toHaveCSS("transform", "none");
+    await expect(card).not.toHaveAttribute("style", /transform/);
   });
 
   test("the air ambulance tile never leans", async ({ page }, info) => {
