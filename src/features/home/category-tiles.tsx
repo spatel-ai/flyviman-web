@@ -1,128 +1,156 @@
+import {
+  Ambulance,
+  Fan,
+  TicketsPlane,
+  Timer,
+  type LucideIcon,
+} from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { IMAGES, type SiteImageName } from "@/content/image-credits";
+import { IMAGES } from "@/content/image-credits";
 import { Reveal } from "@/components/motion/reveal";
-import { cn } from "@/lib/utils";
+import { buttonClasses } from "@/components/ui/button-classes";
 
-interface Category {
+interface Tile {
   name: string;
   description: string;
-  image: SiteImageName;
-  /** Shown under the description; never animated or hidden. */
-  notice?: string;
-  /** The first two tiles are wide; the rest sit three to a row. */
-  wide?: boolean;
+  icon: LucideIcon;
   /** Opens the search with this service chosen. */
   href: string;
-  linkLabel: string;
+  /** Not bookable yet: said on the tile, never hidden (business rule 4). */
+  soon?: boolean;
+  /** Shown under the tile; never animated or hidden (business rule 7). */
+  notice?: string;
 }
 
-const CATEGORIES: Category[] = [
-  {
-    name: "Scheduled airlines",
-    description: "Compare live fares across airlines.",
-    image: "scheduled",
-    wide: true,
-    href: "/search?service=flights",
-    linkLabel: "Search flights",
-  },
-  {
-    name: "Private charter",
-    description: "Aircraft matched to your route, with a clear estimate.",
-    image: "charter",
-    wide: true,
-    href: "/search?service=charter",
-    linkLabel: "Search private jets",
-  },
+const TILES: Tile[] = [
   {
     name: "Helicopter",
-    description: "Point-to-point travel between heliports and airports.",
-    image: "helicopter",
+    description: "Between heliports and airports.",
+    icon: Fan,
     href: "/search?service=helicopter",
-    linkLabel: "Search helicopters",
   },
   {
-    name: "Empty-leg deals",
-    description: "Repositioning flights offered at reduced prices.",
-    image: "emptyLeg",
+    name: "Empty legs",
+    description: "Repositioning flights at reduced prices.",
+    icon: Timer,
     href: "/search?service=empty-legs",
-    linkLabel: "See empty legs",
+    soon: true,
+  },
+  {
+    name: "Scheduled flights",
+    description: "Compare live fares across airlines.",
+    icon: TicketsPlane,
+    href: "/search?service=flights",
+    soon: true,
   },
   {
     name: "Air ambulance",
     description: "Medical transfers coordinated by our operations team.",
-    image: "airAmbulance",
-    notice: "In an emergency, call 112 or your local emergency services first.",
+    icon: Ambulance,
     href: "/search?service=air-ambulance",
-    linkLabel: "Request an air ambulance",
+    notice: "In an emergency, call 112 or your local emergency services first.",
   },
 ];
 
-/** The five ways to travel, each with a photograph. */
+const photo = IMAGES.charter;
+
+/** Charter leads: one large card, then the four other ways to travel. */
 export function CategoryTiles() {
   return (
     <section
       id="ways-to-fly"
       aria-labelledby="categories-heading"
-      className="mx-auto max-w-wide scroll-mt-16 px-4 py-16 md:px-6 md:py-24 lg:px-8"
+      className="mx-auto max-w-wide scroll-mt-16 px-4 pb-16 md:px-6 md:pb-24 lg:px-8"
     >
       <h2 id="categories-heading" className="text-h2">
         Choose how you travel
       </h2>
-      <ul className="mt-8 grid gap-4 md:grid-cols-6">
-        {CATEGORIES.map((category, position) => {
-          const image = IMAGES[category.image];
-          // Staggered per row: the two wide tiles, then the three narrow ones.
-          const index = category.wide ? position : position - 2;
-          // A tile with a safety notice (air ambulance) is never animated:
-          // it is simply there, like the notice itself.
-          const Tile = category.notice ? "div" : Reveal;
-          return (
-            <li
-              key={category.name}
-              className={category.wide ? "md:col-span-3" : "md:col-span-2"}
+      <Reveal className="relative mt-8 flex aspect-4/3 flex-col justify-end overflow-hidden rounded-xl bg-surface md:aspect-3/1">
+        <Image
+          src={photo.src}
+          alt={photo.alt}
+          fill
+          placeholder="blur"
+          sizes="(min-width: 1200px) 1136px, 100vw"
+          className="object-cover"
+        />
+        {/* Two layers of the scrim, so white text stays legible on a light photograph. */}
+        <div aria-hidden="true" className="absolute inset-0 bg-scrim" />
+        <div
+          aria-hidden="true"
+          className="absolute inset-0 bg-linear-to-t from-scrim to-transparent"
+        />
+        <div className="relative p-6 text-on-photo md:p-10">
+          <h3 className="text-h3">Private charter</h3>
+          <p className="mt-2 max-w-reading text-body">
+            Aircraft matched to your route, with a clear estimate.
+          </p>
+          <div className="mt-5 flex flex-wrap items-center gap-x-6 gap-y-2">
+            <Link
+              href="/search?service=charter"
+              className={buttonClasses({ variant: "secondary", size: "md" })}
             >
-              <Tile
-                index={category.notice ? undefined : index}
-                className="flex h-full flex-col overflow-hidden rounded-xl bg-surface"
+              Search charter
+            </Link>
+            <Link
+              href="/charter"
+              className="inline-flex min-h-11 items-center text-body font-medium underline underline-offset-4"
+            >
+              About charter
+            </Link>
+          </div>
+        </div>
+      </Reveal>
+      <ul className="mt-4 grid grid-cols-2 gap-4 md:grid-cols-4">
+        {TILES.map((tile, index) => {
+          const Icon = tile.icon;
+          const body = (
+            <div
+              className={
+                tile.notice
+                  ? "flex h-full flex-col rounded-xl bg-surface p-5"
+                  : "flex h-full flex-col rounded-xl bg-surface p-5 transition-colors duration-150 ease-standard hover:bg-border/60"
+              }
+            >
+              <Link
+                href={tile.href}
+                className="flex min-h-11 flex-1 flex-col items-start"
               >
-                <div
-                  className={cn(
-                    "relative aspect-3/2",
-                    category.wide ? "md:aspect-video" : "md:aspect-4/3",
-                  )}
+                <span
+                  aria-hidden="true"
+                  className="flex size-11 items-center justify-center rounded-pill bg-accent/10 text-accent"
                 >
-                  <Image
-                    src={image.src}
-                    alt={image.alt}
-                    fill
-                    placeholder="blur"
-                    sizes={
-                      category.wide
-                        ? "(min-width: 768px) 50vw, 100vw"
-                        : "(min-width: 768px) 33vw, 100vw"
-                    }
-                    className="object-cover"
-                  />
-                </div>
-                <div className="flex flex-1 flex-col p-6">
-                  <h3 className="text-title">{category.name}</h3>
-                  <p className="mt-2 text-body-sm text-muted">
-                    {category.description}
-                  </p>
-                  {category.notice ? (
-                    <p className="mt-3 text-body-sm font-medium text-foreground">
-                      {category.notice}
-                    </p>
-                  ) : null}
-                  <Link
-                    href={category.href}
-                    className="mt-4 text-body-sm font-medium text-accent hover:underline"
-                  >
-                    {category.linkLabel}
-                  </Link>
-                </div>
-              </Tile>
+                  <Icon className="size-6" strokeWidth={1.5} />
+                </span>
+                <h3 className="mt-4 text-title">{tile.name}</h3>
+                <p className="mt-1 text-body-sm text-muted">
+                  {tile.description}
+                </p>
+                {tile.soon ? (
+                  <span className="mt-2 text-caption font-medium text-muted">
+                    Coming soon
+                  </span>
+                ) : null}
+              </Link>
+              {tile.notice ? (
+                <p className="mt-3 text-body-sm font-medium text-foreground">
+                  {tile.notice}
+                </p>
+              ) : null}
+            </div>
+          );
+          return (
+            <li key={tile.name}>
+              {/* The air ambulance tile is never animated: no reveal, no
+                  hover transition. It is simply there, like its notice. */}
+              {tile.notice ? (
+                body
+              ) : (
+                <Reveal index={index} className="h-full">
+                  {body}
+                </Reveal>
+              )}
             </li>
           );
         })}

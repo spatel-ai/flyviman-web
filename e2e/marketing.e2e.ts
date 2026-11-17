@@ -173,20 +173,24 @@ test.describe("phone tab bar", () => {
   });
 });
 
-test("the home page leads on to About, Services and Charter", async ({
+test("the home page leads on to charter, and About and Services are in More", async ({
   page,
 }) => {
   await page.goto("/");
 
   await expect(
+    page.getByRole("link", { name: "Search charter" }),
+  ).toHaveAttribute("href", "/search?service=charter");
+  await expect(
+    page.getByRole("link", { name: "About charter" }),
+  ).toHaveAttribute("href", "/charter");
+  // The company pages are no longer sections of the home page.
+  await expect(
     page.getByRole("link", { name: "View about Flyviman" }),
-  ).toHaveAttribute("href", "/about");
+  ).toHaveCount(0);
   await expect(
     page.getByRole("link", { name: "View more services" }),
-  ).toHaveAttribute("href", "/services");
-  await expect(
-    page.getByRole("link", { name: "View more charter services" }),
-  ).toHaveAttribute("href", "/charter");
+  ).toHaveCount(0);
 });
 
 test.describe("about", () => {

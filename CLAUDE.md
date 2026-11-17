@@ -42,7 +42,6 @@ Run from this directory.
 | Browser tests | `npm run test:e2e` (starts the API and the app itself; needs `npm run db:up` in `flyviman-api`; first run needs `npx playwright install chromium`) |
 | Regenerate API types | `npm run api:types` (after `npm run openapi:export` in `flyviman-api`) |
 | Build | `npm run build` |
-| Hero film frames | `node scripts/extract-hero-frames.mjs` (after replacing `media-src/hero/hero-desktop.mp4`; needs ffmpeg, ffprobe and cwebp) |
 | Format | `npm run format` |
 
 ## Layout
@@ -90,8 +89,7 @@ src/
   providers/               QueryProvider
   proxy.ts                 first-line route protection, session rotation, 404s for unknown slugs
 e2e/                       Playwright browser journeys; helpers in e2e/support
-public/hero/               hero film frames and posters (made by scripts/extract-hero-frames.mjs, committed)
-scripts/                   extract-hero-frames.mjs: clip in media-src/ (git-ignored) to WebP frames
+public/hero/               the home page hero photograph (desktop/poster-first.webp)
 ```
 
 Full structure and the page map: `../docs/frontend/frontend-design.md`.
@@ -111,7 +109,7 @@ Full structure and the page map: `../docs/frontend/frontend-design.md`.
 - **Never cache** prices, availability or statuses beyond the validity the API returns.
 - **Portal navigation:** add an item to a portal's `NAV` in the same change as its page, never before.
 - **Environment:** `NEXT_PUBLIC_` values plus the server-only `API_PROXY_TARGET` (hosting, D-065), declared in `src/lib/env.ts` and `.env.example`. No secrets: they live in the API.
-- **Motion** follows the five-level scale in `../docs/frontend/motion-design.md`; use the `motion-effect` skill to add or change one. Wrap each new customer page's content in `PageTransition`; use `Reveal` only for content that starts below the first screen (`variant="slit"` for a section heading); never animate safety notices, prices, forms or status badges. Anything that plays on load is CSS. `gsap` is imported only inside `components/motion/load-gsap.ts`, dynamically; scrolling stays native, and only the home page's hero film (`features/home/hero.tsx`, values in `hero-config.ts`, frames made by `scripts/extract-hero-frames.mjs` from `media-src/`, which is not committed) and its showpiece (`ScrollFilm`) are pinned, with CSS `position: sticky`. `TiltCard` and `Magnetic` are for customer marketing sections only.
+- **Motion** follows the five-level scale in `../docs/frontend/motion-design.md`; use the `motion-effect` skill to add or change one. Wrap each new customer page's content in `PageTransition`; use `Reveal` only for content that starts below the first screen (`variant="slit"` for a section heading); never animate safety notices, prices, forms or status badges. Anything that plays on load is CSS. `gsap` is imported only inside `components/motion/load-gsap.ts`, dynamically; scrolling stays native, and nothing is pinned (the hero film and the charter showpiece were retired with the compact landing page, M12). `TiltCard` and `Magnetic` are for customer marketing sections only.
 - **Marketing copy** lives in typed modules in `src/content/` (`home.ts`, `about.ts`, `services.ts`, `charter.ts`, `contact.ts`), imported from flyviman.com with the `site-content-import` skill. Components do not hold copy inline. Claims the business has not confirmed stay out (`../docs/open-decisions.md`).
 - **Pages with a dynamic segment** (`[slug]`, `[id]`): a public one gets its slugs added to `KNOWN_SLUGS` in `proxy.ts` so an unknown address answers 404; a signed-in detail page shows `RecordNotFound` when `isNotFoundError(error)`. The not-found guard (`src/proxy.spec.ts`, `e2e/not-found.e2e.ts`) finds new pages by itself and fails until they are handled (D-094).
 - **Redirecting into a page with a form** from a page that streams: use `ClientRedirect`, not `redirect()` (which also reloads the destination a moment later).

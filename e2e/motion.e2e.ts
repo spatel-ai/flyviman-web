@@ -3,8 +3,8 @@ import { expect, test, type Page } from "@playwright/test";
 /**
  * Motion on the customer site (docs/frontend/motion-design.md): the header
  * hairline and pointer feedback (level 1), page cross-fades (level 3),
- * section reveals (level 4), scroll-linked motion and the home page hero
- * (level 5), and that reduced motion and layout stability are respected.
+ * section reveals (level 4), scroll-linked motion, and that reduced motion
+ * and layout stability are respected. The home page hero is a still.
  */
 
 async function scrollTo(page: Page, y: number) {
@@ -33,7 +33,7 @@ test.describe("section reveals", () => {
   }) => {
     await page.goto("/");
     const step = page
-      .getByRole("heading", { level: 3, name: "Strong global network" })
+      .getByRole("heading", { level: 2, name: "Strong global network" })
       .locator("xpath=ancestor::*[@data-reveal][1]");
 
     await expect(step).toHaveAttribute("data-reveal", "waiting");
@@ -154,196 +154,64 @@ test.describe("page cross-fade", () => {
 
 test.describe("home page hero", () => {
   const root = (page: Page) => page.locator("html");
-  const track = (page: Page) => page.locator(".hero-track");
-  const canvas = (page: Page) => page.locator(".hero-canvas");
-  const heading = (page: Page) => page.getByRole("heading", { level: 1 });
-  const action = (page: Page) =>
-    track(page).getByRole("link", { name: "Explore ways to fly" });
-  const headerGlass = (page: Page) =>
-    page
-      .locator(".site-header")
-      .evaluate((el) => getComputedStyle(el).backgroundColor);
-  /** Scrolls to a fraction of the hero's scroll distance. */
-  const scrollHero = (page: Page, fraction: number) =>
-    page.evaluate((f) => {
-      const el = document.querySelector<HTMLElement>(".hero-track")!;
-      window.scrollTo({ top: (el.offsetHeight - window.innerHeight) * f });
-    }, fraction);
-  const lastFrame = (page: Page) =>
-    (page.viewportSize()?.width ?? 0) < 768 ? "79" : "117";
-  const screens = (page: Page) =>
-    track(page).evaluate((el) =>
-      Math.round((el as HTMLElement).offsetHeight / window.innerHeight),
-    );
+  const photo = (page: Page) => page.locator('img[src*="poster-first"]');
+  const box = (page: Page) =>
+    photo(page).locator("xpath=ancestor::div[@aria-hidden='true'][1]");
 
-  test("opens on the sky, behind a clear header, with the headline waiting", async ({
+  test("is a still: the photograph sits in a fixed box and nothing moves", async ({
     page,
   }) => {
     await page.goto("/");
 
-    await expect(root(page)).toHaveAttribute("data-hero-film", "");
-    expect(await screens(page)).toBe(lastFrame(page) === "79" ? 3 : 4);
-    // It starts at the very top of the page, under the header.
-    expect(
-      await track(page).evaluate((el) => el.getBoundingClientRect().top),
-    ).toBe(0);
-    expect(await headerGlass(page)).toBe("rgba(0, 0, 0, 0)");
-    await expect(canvas(page)).toHaveAttribute("data-frame", "0");
-    await expect(page.getByText("Above it all")).toBeVisible();
-
-    // Unseen until the film ends, but always there to read.
-    await expect(heading(page)).toHaveCSS("opacity", "0");
-    await expect(heading(page)).toHaveAccessibleName(
-      "Your trusted partner for every aviation decision",
-    );
-    await expect(action(page)).toHaveAttribute("href", "#ways-to-fly");
-  });
-
-  test("the scroll plays the film to the cabin and back", async ({ page }) => {
-    await page.goto("/");
-    await expect(canvas(page)).toHaveAttribute("data-frame", "0");
-    const opening = page.locator(".hero-opening");
-
-    await scrollHero(page, 0.5);
-    await expect
-      .poll(async () => Number(await canvas(page).getAttribute("data-frame")))
-      .toBeGreaterThan(20);
-    await expect(opening).toHaveCSS("opacity", "0");
-    await expect(heading(page)).toHaveCSS("opacity", "0");
-    // The stage is held: the track has moved, the canvas has not. Sticky
-    // positioning can leave a sub-pixel offset (-0.0046 seen), so "held"
-    // means within a pixel of the top.
-    await expect
-      .poll(async () =>
-        Math.abs(
-          await canvas(page).evaluate((el) => el.getBoundingClientRect().top),
-        ),
-      )
-      .toBeLessThan(1);
-
-    await scrollHero(page, 1);
-    await expect(canvas(page)).toHaveAttribute("data-frame", lastFrame(page));
-    await expect(heading(page)).toHaveCSS("opacity", "1");
-    await expect(page.locator(".hero-scrim")).toHaveCSS("opacity", "1");
-    await expect(action(page)).toBeVisible();
-    await expect(root(page)).toHaveAttribute("data-over-hero", "");
-
-    await scrollHero(page, 0);
-    await expect(canvas(page)).toHaveAttribute("data-frame", "0");
-    await expect(heading(page)).toHaveCSS("opacity", "0");
-    await expect(opening).toHaveCSS("opacity", "1");
-  });
-
-  test("the header is its usual bar again below the hero", async ({ page }) => {
-    await page.goto("/");
-    await expect(root(page)).toHaveAttribute("data-over-hero", "");
-
-    await page.locator("#ways-to-fly").scrollIntoViewIfNeeded();
-    await expect(root(page)).not.toHaveAttribute("data-over-hero");
-    expect(await headerGlass(page)).not.toBe("rgba(0, 0, 0, 0)");
-
-    await scrollTo(page, 0);
-    await expect(root(page)).toHaveAttribute("data-over-hero", "");
-  });
-
-  test("the sky drifts only while the page rests at the top", async ({
-    page,
-  }) => {
-    await page.goto("/");
-    const media = page.locator(".hero-media");
-    await expect(media).toHaveCSS("animation-name", "hero-drift");
-
-    await scrollHero(page, 0.2);
-    await expect(media).toHaveCSS("animation-name", "none");
-    await expect(media).toHaveCSS("transform", "none");
-
-    await scrollHero(page, 0);
-    await expect(media).toHaveCSS("animation-name", "hero-drift");
-  });
-
-  test("a keyboard that reaches the button early is taken to it", async ({
-    page,
-  }) => {
-    await page.goto("/");
-    await expect(canvas(page)).toHaveAttribute("data-frame", "0");
-
-    await action(page).focus();
-    await expect(action(page).locator("xpath=ancestor::div[1]")).toHaveCSS(
-      "opacity",
-      "1",
-    );
-    await expect(action(page)).toBeFocused();
-    const gap = await track(page).evaluate(
-      (el) => el.getBoundingClientRect().bottom - window.innerHeight,
-    );
-    expect(Math.abs(gap)).toBeLessThanOrEqual(1);
-  });
-
-  test("arriving by a link from another page starts the film too", async ({
-    page,
-  }) => {
-    await page.goto("/legal/image-credits");
-    await page.getByRole("link", { name: "Flyviman home" }).click();
-
-    await expect(root(page)).toHaveAttribute("data-hero-film", "");
-    await expect(canvas(page)).toHaveAttribute("data-frame", "0");
-
-    // And leaving the home page gives the header back.
-    await page.goBack();
-    await expect(
-      page.getByRole("heading", { level: 1, name: "Image credits" }),
-    ).toBeVisible();
-    await expect(root(page)).not.toHaveAttribute("data-over-hero");
+    await expect(photo(page)).toBeVisible();
+    // No film, no pinned stage and no clear header over it.
     await expect(root(page)).not.toHaveAttribute("data-hero-film");
+    await expect(root(page)).not.toHaveAttribute("data-over-hero");
+    await expect(page.locator("canvas")).toHaveCount(0);
+    await expect(photo(page)).toHaveCSS("animation-name", "none");
+    await expect(box(page)).toHaveCSS("overflow", "hidden");
   });
 
-  async function expectStill(page: Page) {
-    await expect(root(page)).not.toHaveAttribute("data-hero-film");
-    expect(await screens(page)).toBe(1);
-    await expect(heading(page)).toBeVisible();
-    await expect(heading(page)).toHaveCSS("opacity", "1");
-    await expect(heading(page)).not.toHaveAttribute("style", /.+/);
-    await expect(action(page)).toBeVisible();
-    await expect(canvas(page)).toBeHidden();
-    await expect(page.getByText("Above it all")).toBeHidden();
-    // The cabin, not the sky.
-    await expect(page.locator(".hero-poster--last")).toBeVisible();
-    await expect(page.locator(".hero-poster--first")).toBeHidden();
-    await expect(page.locator(".hero-scrim")).toHaveCSS("opacity", "1");
-  }
+  test("the photograph's box keeps its size while it loads", async ({
+    page,
+  }) => {
+    await page.goto("/");
+    const before = (await box(page).boundingBox())!;
+    await expect
+      .poll(() => photo(page).evaluate((img: HTMLImageElement) => img.complete))
+      .toBe(true);
+    const after = (await box(page).boundingBox())!;
+    expect(after.height).toBe(before.height);
+    expect(after.width).toBe(before.width);
+  });
 
-  test("under reduced motion it is a still, one screen tall", async ({
+  test("keeps its headline, search card and photograph under reduced motion", async ({
     page,
   }) => {
     await page.emulateMedia({ reducedMotion: "reduce" });
     await page.goto("/");
     await page.waitForLoadState("networkidle");
 
-    await expectStill(page);
-    await expect(page.locator(".hero-media")).toHaveCSS(
-      "animation-name",
-      "none",
+    await expect(page.getByRole("heading", { level: 1 })).toHaveCSS(
+      "opacity",
+      "1",
     );
+    await expect(photo(page)).toBeVisible();
+    await expect(page.getByRole("tablist")).toBeVisible();
   });
 
-  test("on a data-saver connection it is a still, and no frame is fetched", async ({
-    page,
-  }) => {
-    const frames: string[] = [];
-    page.on("request", (request) => {
-      if (/\/hero\/.*\/frame-/.test(request.url())) frames.push(request.url());
-    });
-    await page.addInitScript(() => {
-      Object.defineProperty(navigator, "connection", {
-        value: { saveData: true },
-        configurable: true,
-      });
-    });
+  test("the page is whole without JavaScript", async ({ browser }) => {
+    const context = await browser.newContext({ javaScriptEnabled: false });
+    const page = await context.newPage();
     await page.goto("/");
-    await page.waitForLoadState("networkidle");
 
-    await expectStill(page);
-    expect(frames).toHaveLength(0);
+    await expect(photo(page)).toBeVisible();
+    await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+    await expect(page.locator('[data-reveal="waiting"]')).toHaveCount(0);
+    await expect(
+      page.getByRole("link", { name: "Search charter" }),
+    ).toBeVisible();
+    await context.close();
   });
 
   test("the other marketing pages keep their photograph's slow drift", async ({
@@ -354,7 +222,6 @@ test.describe("home page hero", () => {
       "animation-name",
       "page-hero-drift",
     );
-    await expect(root(page)).not.toHaveAttribute("data-over-hero");
 
     await page.emulateMedia({ reducedMotion: "reduce" });
     await expect(page.locator(".page-hero-drift")).toHaveCSS(
@@ -362,34 +229,17 @@ test.describe("home page hero", () => {
       "none",
     );
   });
-
-  test("the page is whole without JavaScript", async ({ browser }) => {
-    const context = await browser.newContext({ javaScriptEnabled: false });
-    const page = await context.newPage();
-    await page.goto("/");
-
-    await expectStill(page);
-    await expect(page.locator('[data-reveal="waiting"]')).toHaveCount(0);
-    await page
-      .getByRole("heading", {
-        level: 3,
-        name: "How can I request a quote or make a booking?",
-      })
-      .click();
-    await expect(page.getByText("You can request a quote by:")).toBeVisible();
-    await context.close();
-  });
 });
 
 test.describe("slit reveal", () => {
   test("a section heading waits masked, then resolves fully", async ({
     page,
   }) => {
-    await page.goto("/");
+    await page.goto("/services");
     const heading = page
       .getByRole("heading", {
         level: 2,
-        name: "Your gateway to effortless luxury travel",
+        name: "All your queries in one place",
       })
       .locator("xpath=ancestor::*[@data-reveal-variant='slit'][1]");
 
@@ -403,7 +253,7 @@ test.describe("slit reveal", () => {
 
   test("with reduced motion a heading carries no mask", async ({ page }) => {
     await page.emulateMedia({ reducedMotion: "reduce" });
-    await page.goto("/");
+    await page.goto("/services");
 
     const masks = await page
       .locator('[data-reveal-variant="slit"]')
@@ -460,9 +310,12 @@ test.describe("pointer feedback", () => {
       info.project.name !== "desktop",
       "Tilt needs a mouse or trackpad.",
     );
-    await page.goto("/");
+    await page.goto("/services");
     const card = page
-      .getByRole("heading", { level: 3, name: "Strong global network" })
+      .getByRole("heading", {
+        level: 3,
+        name: "What our sale & purchase service ensures",
+      })
       .locator("xpath=..");
     await card.scrollIntoViewIfNeeded();
     await expect(card).toHaveCSS("transform", "none");
@@ -503,140 +356,5 @@ test.describe("pointer feedback", () => {
 
     await expect(tile).toHaveCSS("transform", "none");
     await expect(tile).not.toHaveAttribute("style", /transform/);
-  });
-});
-
-test.describe("charter scenes showpiece", () => {
-  const film = (page: Page) => page.locator(".scroll-film");
-  const active = (page: Page) =>
-    page.locator('.scroll-film__scene[data-film-active="true"] h3');
-
-  /** Scrolls to a fraction (0 to 1) of the film's pinned range. */
-  async function scrollFilm(page: Page, fraction: number) {
-    await page.evaluate((f) => {
-      const el = document.querySelector(".scroll-film") as HTMLElement;
-      const top = el.getBoundingClientRect().top + window.scrollY;
-      const header = 48;
-      const start = top - header;
-      const end = top + el.offsetHeight - window.innerHeight;
-      window.scrollTo({ top: start + (end - start) * f });
-    }, fraction);
-  }
-
-  test("on a wide screen it pins and plays the scenes in turn, and reverses", async ({
-    page,
-  }, info) => {
-    test.skip(
-      info.project.name !== "desktop",
-      "The film plays on wide screens.",
-    );
-    await page.setViewportSize({ width: 1280, height: 800 });
-    await page.goto("/");
-    await expect(film(page)).toHaveAttribute("data-film", "on");
-
-    await scrollFilm(page, 0.05);
-    await expect(active(page)).toHaveText("Private charter");
-    // Held below the header while it plays.
-    const stageTop = () =>
-      page
-        .locator(".scroll-film__stage")
-        .evaluate((el) => Math.round(el.getBoundingClientRect().top));
-    await expect.poll(stageTop).toBe(48);
-
-    await scrollFilm(page, 0.5);
-    await expect(active(page)).toHaveText("Celebrity charter");
-    await expect.poll(stageTop).toBe(48);
-
-    // At a scene change the blinds are closed.
-    await scrollFilm(page, 1 / 3);
-    await expect
-      .poll(() =>
-        page
-          .locator(".scroll-film__blind")
-          .nth(7)
-          .evaluate((el) => (el as HTMLElement).style.transform),
-      )
-      .toBe("scaleX(1)");
-
-    await scrollFilm(page, 0.95);
-    await expect(active(page)).toHaveText("Election charter");
-    await expect(
-      page.locator('.scroll-film__marker[aria-current="step"]'),
-    ).toHaveCount(1);
-
-    await scrollFilm(page, 0.05);
-    await expect(active(page)).toHaveText("Private charter");
-  });
-
-  test("every scene stays reachable by keyboard and screen reader while it plays", async ({
-    page,
-  }, info) => {
-    test.skip(
-      info.project.name !== "desktop",
-      "The film plays on wide screens.",
-    );
-    await page.setViewportSize({ width: 1280, height: 800 });
-    await page.goto("/");
-    await expect(film(page)).toHaveAttribute("data-film", "on");
-
-    // All three scenes are in the accessibility tree, not just the one on show.
-    for (const name of [
-      "Private charter",
-      "Celebrity charter",
-      "Election charter",
-    ]) {
-      await expect(
-        film(page).getByRole("heading", { level: 3, name }),
-      ).toBeAttached();
-    }
-    // Focusing a scene that is not on show brings it on show.
-    await film(page)
-      .getByRole("link", { name: "Send an enquiry about election charter" })
-      .focus();
-    await expect(active(page)).toHaveText("Election charter");
-  });
-
-  test("it turns on only while it is below the screen", async ({
-    page,
-  }, info) => {
-    test.skip(
-      info.project.name !== "desktop",
-      "The film plays on wide screens.",
-    );
-    await page.setViewportSize({ width: 1280, height: 800 });
-    // Arrive with the section already on screen: it stays a plain section,
-    // so the page does not grow under the visitor.
-    await page.goto("/#charter-heading");
-    await page.waitForLoadState("networkidle");
-    await page.waitForTimeout(500);
-    await expect(film(page)).not.toHaveAttribute("data-film", "on");
-  });
-
-  test("on phones, under reduced motion and without JavaScript it is a plain section", async ({
-    page,
-    browser,
-  }) => {
-    await page.emulateMedia({ reducedMotion: "reduce" });
-    await page.goto("/");
-    await page.waitForLoadState("networkidle");
-    await expect(film(page)).not.toHaveAttribute("data-film", "on");
-    for (const name of [
-      "Private charter",
-      "Celebrity charter",
-      "Election charter",
-    ]) {
-      await expect(
-        film(page).getByRole("heading", { level: 3, name }),
-      ).toBeVisible();
-    }
-
-    const context = await browser.newContext({ javaScriptEnabled: false });
-    const plain = await context.newPage();
-    await plain.goto("/");
-    await expect(film(plain)).not.toHaveAttribute("data-film", "on");
-    await expect(
-      film(plain).getByRole("heading", { level: 3, name: "Election charter" }),
-    ).toBeVisible();
-    await context.close();
   });
 });

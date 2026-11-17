@@ -13,7 +13,7 @@ import type { NavItem } from "./nav-links";
 /**
  * The customer site's navigation. Each destination is linked from one place:
  * the header (Search, the charter button, the More menu) or the footer (legal
- * pages). nav-links.spec.ts keeps the two lists apart.
+ * pages). site-nav.spec.ts keeps the two lists apart.
  */
 
 /** The header's primary button. */

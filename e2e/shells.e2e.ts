@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 
 test.describe("customer home", () => {
-  test("shows the headline and the five service categories", async ({
+  test("shows the headline, the charter search card and the categories", async ({
     page,
   }) => {
     await page.goto("/");
@@ -12,48 +12,98 @@ test.describe("customer home", () => {
         name: "Your trusted partner for every aviation decision",
       }),
     ).toBeVisible();
+    await expect(
+      page.getByRole("tab", { name: "Private jet", selected: true }),
+    ).toBeVisible();
 
     const ways = page.locator("#ways-to-fly");
     for (const category of [
-      "Scheduled airlines",
       "Private charter",
       "Helicopter",
-      "Empty-leg deals",
+      "Empty legs",
+      "Scheduled flights",
       "Air ambulance",
     ]) {
       await expect(
         ways.getByRole("heading", { level: 3, name: category }),
       ).toBeVisible();
     }
+    // Where each tile leads; the unbuilt ones say so (business rule 4).
+    for (const [name, href] of [
+      ["Helicopter", "/search?service=helicopter"],
+      ["Empty legs", "/search?service=empty-legs"],
+      ["Scheduled flights", "/search?service=flights"],
+      ["Air ambulance", "/search?service=air-ambulance"],
+    ]) {
+      await expect(
+        ways.getByRole("link", { name: new RegExp(name) }),
+      ).toHaveAttribute("href", href);
+    }
+    await expect(ways.getByText("Coming soon")).toHaveCount(2);
   });
 
-  test("carries the company's sections from flyviman.com", async ({ page }) => {
+  test("the search card is on the first screen of a phone", async ({
+    page,
+  }, info) => {
+    test.skip(info.project.name !== "mobile", "Phones only");
+    await page.setViewportSize({ width: 375, height: 812 });
+    await page.goto("/");
+    // Laid out once the fonts and the photograph are in.
+    await page.evaluate(() => document.fonts.ready);
+    await expect
+      .poll(() =>
+        page
+          .locator('img[src*="poster-first"]')
+          .evaluate((img: HTMLImageElement) => img.complete),
+      )
+      .toBe(true);
+
+    // The tabs and the first fields sit above the tab bar (56 px). The
+    // Search button follows after a short scroll: the card is shared with
+    // /search and stacks its fields on a phone.
+    const above = 812 - 56;
+    const bottomOf = (name: string | RegExp, exact = true) =>
+      page
+        .getByText(name, { exact })
+        .first()
+        .evaluate((el) => el.getBoundingClientRect().bottom);
+    await expect
+      .poll(() =>
+        page
+          .getByRole("tablist")
+          .evaluate((el) => el.getBoundingClientRect().bottom),
+      )
+      .toBeLessThanOrEqual(above);
+    await expect.poll(() => bottomOf("Departure")).toBeLessThanOrEqual(above);
+  });
+
+  test("shows three of the company's claims, and no longer its About, Services or questions", async ({
+    page,
+  }) => {
     await page.goto("/");
 
-    for (const heading of [
+    for (const point of [
+      "One-stop aviation hub",
+      "Strong global network",
+      "Regulatory & operational expertise",
+    ]) {
+      await expect(
+        page.getByRole("heading", { level: 2, name: point }),
+      ).toBeVisible();
+    }
+    for (const gone of [
       "Your strategic partner in the sky and on the ground.",
-      "Fly without limits – where possibilities take flight",
       "Your gateway to effortless luxury travel",
       "All your queries in one place",
     ]) {
-      await expect(
-        page.getByRole("heading", { level: 2, name: heading }),
-      ).toBeVisible();
-    }
-    for (const card of [
-      "One-stop aviation hub",
-      "Regulatory & operational expertise",
-      "Celebrity charter",
-      "Election charter",
-    ]) {
-      await expect(
-        page.getByRole("heading", { level: 3, name: card }),
-      ).toBeVisible();
+      await expect(page.getByRole("heading", { name: gone })).toHaveCount(0);
     }
   });
 
-  test("a question opens to its answer, one at a time", async ({ page }) => {
-    await page.goto("/");
+  test("a question on the Services page opens to its answer, one at a time", async ({
+    page,
+  }) => {
+    await page.goto("/services");
     const first = page.getByText("FlyViman delivers a complete range");
     const last = page.getByText("through approved agents in India");
     await expect(first).toBeHidden();
@@ -80,10 +130,12 @@ test.describe("customer home", () => {
   test("the claims approved in the full migration are shown", async ({
     page,
   }) => {
-    await page.goto("/");
+    await page.goto("/services");
 
     await expect(page.getByText("24/7 operations support")).toBeAttached();
-    await expect(page.getByText("Transparent pricing")).toBeAttached();
+    await expect(
+      page.getByText("Transparent pricing", { exact: true }),
+    ).toBeAttached();
   });
 
   test("does not scroll sideways", async ({ page }) => {
@@ -109,15 +161,12 @@ test.describe("customer home, photography and footer", () => {
   }) => {
     await page.goto("/");
 
-    // The hero's own pictures are scenery, described once in words.
-    const poster = page.locator(".hero-poster--first");
+    // The hero's picture is scenery: empty alt text, hidden from readers.
+    const poster = page.locator('img[src*="poster-first"]');
     await expect(poster).toHaveAttribute("alt", "");
     await expect
       .poll(() => poster.evaluate((img: HTMLImageElement) => img.naturalWidth))
       .toBeGreaterThan(0);
-    await expect(
-      page.getByText(/A view through a private jet window/),
-    ).toBeAttached();
     await expect(page.locator("main img:not([alt])")).toHaveCount(0);
   });
 
