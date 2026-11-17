@@ -19,31 +19,9 @@ export const HOME = {
   hero: {
     /** One entry per line of the headline. */
     headline: ["Your trusted partner", "for every aviation decision"],
-    action: { label: "Explore ways to fly", href: "#ways-to-fly" },
-    // Our own words for the scroll film (features/home/hero.tsx); not from
-    // the live site. Placeholders until the business supplies its own.
-    opening: "Above it all",
-    eyebrow: "Flyviman Aviation",
-    /** Read out once in place of the film. */
-    scene:
-      "A view through a private jet window of clouds at sunset, drawing back into a cabin with cream leather seats.",
   },
-  about: {
-    overline: "About Flyviman",
-    heading: "Your strategic partner in the sky and on the ground.",
-    image: "cabinTan",
-    action: { label: "View about", href: "/about" },
-    paragraphs: [
-      "FlyViman Aviation is a premium aviation solutions company built on clarity, trust, and operational discipline. We support businesses, operators, and private clients with structured aircraft services including sales, leasing, charters, and aviation advisory.",
-      "Driven by a commitment to professionalism and safety, we approach every project with strategic insight and a deep understanding of aviation standards. Our goal is simple: deliver solutions that give our clients confidence in every decision they make.",
-    ],
-  },
+  /** The trust strip draws three of these claims (features/home/trust-strip.tsx). */
   services: {
-    overline: "Our services",
-    heading: "Fly without limits – where possibilities take flight",
-    lead: "Experience aviation services designed to exceed your ambitions — and redefine what’s possible.",
-    image: "jetNose",
-    action: { label: "View more", href: "/services" },
     points: [
       {
         title: "One-stop aviation hub",
@@ -66,29 +44,6 @@ export const HOME = {
           "Processes aligned with DGCA and international aviation standards.",
       },
     ],
-  },
-  charter: {
-    overline: "Our luxury charter",
-    heading: "Your gateway to effortless luxury travel",
-    lead: "Discover personalized charter booking services crafted to meet your exact preferences, ensuring every journey is smooth, stylish, and stress-free.",
-    scenes: [
-      {
-        name: "Private charter",
-        image: "charterJetDusk",
-        topic: "PRIVATE_CHARTER",
-      },
-      {
-        name: "Celebrity charter",
-        image: "cabinCream",
-        topic: "CELEBRITY_CHARTER",
-      },
-      {
-        name: "Election charter",
-        image: "heliport",
-        topic: "ELECTION_CHARTER",
-      },
-    ],
-    action: "View more",
   },
   faq: {
     overline: "FAQs",
