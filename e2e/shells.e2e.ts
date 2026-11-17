@@ -44,20 +44,37 @@ test.describe("customer home", () => {
 
   test("the search card is on the first screen of a phone", async ({
     page,
-  }) => {
+  }, info) => {
+    test.skip(info.project.name !== "mobile", "Phones only");
     await page.setViewportSize({ width: 375, height: 812 });
     await page.goto("/");
+    // Laid out once the fonts and the photograph are in.
+    await page.evaluate(() => document.fonts.ready);
+    await expect
+      .poll(() =>
+        page
+          .locator('img[src*="poster-first"]')
+          .evaluate((img: HTMLImageElement) => img.complete),
+      )
+      .toBe(true);
 
     // The tabs and the first fields sit above the tab bar (56 px). The
     // Search button follows after a short scroll: the card is shared with
     // /search and stacks its fields on a phone.
-    const tabs = (await page.getByRole("tablist").boundingBox())!;
-    expect(tabs.y + tabs.height).toBeLessThanOrEqual(812 - 56);
-    const departure = (await page
-      .getByText("Departure", { exact: true })
-      .first()
-      .boundingBox())!;
-    expect(departure.y + departure.height).toBeLessThanOrEqual(812 - 56);
+    const above = 812 - 56;
+    const bottomOf = (name: string | RegExp, exact = true) =>
+      page
+        .getByText(name, { exact })
+        .first()
+        .evaluate((el) => el.getBoundingClientRect().bottom);
+    await expect
+      .poll(() =>
+        page
+          .getByRole("tablist")
+          .evaluate((el) => el.getBoundingClientRect().bottom),
+      )
+      .toBeLessThanOrEqual(above);
+    await expect.poll(() => bottomOf("Departure")).toBeLessThanOrEqual(above);
   });
 
   test("shows three of the company's claims, and no longer its About, Services or questions", async ({
