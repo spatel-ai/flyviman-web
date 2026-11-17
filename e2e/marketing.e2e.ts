@@ -46,11 +46,14 @@ for (const { path, heading } of [...PAGES, ...MORE_PAGES]) {
     await expect(
       page.getByRole("heading", { level: 1, name: heading }),
     ).toBeVisible();
-    // Scroll-linked motion sets its starting states once the page is idle.
-    await expect(page.locator(".site-footer__wordmark")).toHaveCSS(
-      "opacity",
-      "0.2",
-    );
+    // Scroll-linked motion sets its starting states once the page is idle;
+    // below 768 px it does not run at all (CR-2).
+    if ((page.viewportSize()?.width ?? 0) >= 768) {
+      await expect(page.locator(".site-footer__wordmark")).toHaveCSS(
+        "opacity",
+        "0.2",
+      );
+    }
     const overflow = await page.evaluate(
       () =>
         document.documentElement.scrollWidth -

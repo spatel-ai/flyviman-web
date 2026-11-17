@@ -140,11 +140,14 @@ test.describe("customer home", () => {
 
   test("does not scroll sideways", async ({ page }) => {
     await page.goto("/");
-    // Scroll-linked motion sets its starting states once the page is idle.
-    await expect(page.locator(".site-footer__wordmark")).toHaveCSS(
-      "opacity",
-      "0.2",
-    );
+    // Scroll-linked motion sets its starting states once the page is idle;
+    // below 768 px it does not run at all (CR-2).
+    if ((page.viewportSize()?.width ?? 0) >= 768) {
+      await expect(page.locator(".site-footer__wordmark")).toHaveCSS(
+        "opacity",
+        "0.2",
+      );
+    }
 
     const overflow = await page.evaluate(
       () =>
