@@ -20,7 +20,7 @@ async function Results({
 export default function Page({ params }: PageProps<"/search/[searchId]">) {
   return (
     <PageTransition>
-      <div className="mx-auto w-full max-w-wide px-4 py-12 md:px-6 md:py-16">
+      <div className="mx-auto w-full max-w-wide px-4 py-16 md:px-6 md:py-16">
         <Suspense fallback={<Skeleton className="h-96" />}>
           <Results params={params} />
         </Suspense>

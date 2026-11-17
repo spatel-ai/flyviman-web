@@ -37,7 +37,7 @@ async function PolicyText({ params }: { params: Promise<{ slug: string }> }) {
 
   return (
     <article>
-      <h1 className="text-h1">{policy.title}</h1>
+      <h1 className="text-h2 md:text-h1">{policy.title}</h1>
       <p className="mt-2 text-body-sm text-muted">Version {policy.version}</p>
       <div className="mt-8 flex flex-col gap-4 text-body-lg">
         {policy.body.split(/\n{2,}/).map((paragraph) => (
@@ -51,7 +51,7 @@ async function PolicyText({ params }: { params: Promise<{ slug: string }> }) {
 export default function LegalPage({ params }: PageProps<"/legal/[slug]">) {
   return (
     <PageTransition>
-      <div className="mx-auto w-full max-w-reading px-4 py-12 md:px-6 md:py-16">
+      <div className="mx-auto w-full max-w-reading px-4 py-16 md:px-6 md:py-16">
         <Suspense fallback={<Skeleton className="h-96" />}>
           <PolicyText params={params} />
         </Suspense>

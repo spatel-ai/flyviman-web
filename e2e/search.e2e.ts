@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 import { API_URL, expectNoSidewaysScroll } from "./support/api";
+import { expectBarAboveTabBar, expectPageEndClear } from "./support/phone";
 import { approvedAircraft, csrf } from "./support/operators";
 
 /** Charter search (M5, slice 1): search, results, detail, enquiry. */
@@ -133,8 +134,23 @@ test("a visitor searches, opens a result and requests the aircraft as an enquiry
       .first(),
   ).toBeVisible();
   await expect(
-    page.getByText(/Cancellation conditions/).filter({ visible: true }),
+    page
+      .getByText(/Cancellation conditions/)
+      .filter({ visible: true })
+      .first(),
   ).toBeVisible();
+  if (isMobile) {
+    // The sticky bar carries the action, the label and the note (rules 1, 9).
+    const bar = page.getByRole("region", { name: "Request this aircraft" });
+    await expectBarAboveTabBar(page, bar);
+    await expect(
+      bar
+        .getByText("Estimate", { exact: true })
+        .or(bar.getByText("Price on request")),
+    ).toBeVisible();
+    await expect(bar.getByText(/Cancellation conditions/)).toBeVisible();
+    await expectPageEndClear(page);
+  }
 
   await page.getByRole("link", { name: "Request this aircraft" }).click();
   await expect(page).toHaveURL(/\/contact\?topic=PRIVATE_CHARTER/);

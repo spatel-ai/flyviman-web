@@ -6,6 +6,7 @@ import { useNow } from "@/components/booking/use-now";
 import Link from "next/link";
 import { LoadError } from "@/components/shared/load-error";
 import { PriceLabel } from "@/components/shared/price-label";
+import { StickyActionBar } from "@/components/layout/sticky-action-bar";
 import { RecordNotFound } from "@/components/shared/record-not-found";
 import { buttonClasses } from "@/components/ui/button-classes";
 import { Card } from "@/components/ui/card";
@@ -78,7 +79,7 @@ export function ResultDetail({
         >
           All results
         </Link>
-        <h1 className="text-h2">
+        <h1 className="text-h3 md:text-h2">
           {detail.aircraft.manufacturer} {detail.aircraft.model}
         </h1>
         <p className="text-body text-muted">
@@ -206,7 +207,10 @@ export function ResultDetail({
           </p>
           <Link
             href={requestHref(detail)}
-            className={buttonClasses({ size: "lg" })}
+            className={buttonClasses({
+              size: "lg",
+              className: "max-md:hidden",
+            })}
           >
             Request this aircraft
           </Link>
@@ -216,6 +220,32 @@ export function ResultDetail({
           </p>
         </aside>
       </div>
+
+      <StickyActionBar label="Request this aircraft">
+        <div className="flex items-center justify-between gap-3">
+          {detail.price ? (
+            <PriceLabel
+              amountMinor={detail.price.amountMinor}
+              currency={detail.price.currency}
+              priceType={detail.price.priceType}
+              validUntil={detail.validUntil}
+              expired={expired}
+              variant="compact"
+            />
+          ) : (
+            <p className="text-title">Price on request</p>
+          )}
+          <Link
+            href={requestHref(detail)}
+            className={buttonClasses({ size: "md" })}
+          >
+            Request this aircraft
+          </Link>
+        </div>
+        <p className="mt-2 line-clamp-2 text-caption text-muted">
+          {detail.cancellationNote}
+        </p>
+      </StickyActionBar>
     </div>
   );
 }
