@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, type HTMLAttributes } from "react";
 import { whenGsapReady } from "./load-gsap";
+import { WIDE_QUERY, whenMedia } from "./when-media";
 
 /** Only opacity and transforms follow the scroll (motion-design.md). */
 export interface ScrubValues {
@@ -26,7 +27,8 @@ export interface ScrollScrubProps extends HTMLAttributes<HTMLDivElement> {
  * Motion level 5 (scroll-linked): the content moves between two states as
  * the page scrolls, and back again. The server renders the resting state;
  * GSAP and ScrollTrigger load after the page is idle, so nothing waits on
- * them. Native scrolling is never taken over. Not under reduced motion.
+ * them. Native scrolling is never taken over. Not under reduced motion, and not below 768 px (phones get no
+ * scroll-linked motion and never load GSAP).
  *
  * The scroll range is measured again whenever the page's height changes (a
  * client navigation under a shared layout, an answer opening), so an
@@ -51,25 +53,28 @@ export function ScrollScrub({
       return;
     }
 
-    return whenGsapReady(({ gsap }) => {
-      const { from, to, trigger, start, end } = config.current;
-      const context = gsap.context(() => {
-        gsap.fromTo(element, from, {
-          ...to,
-          ease: "none",
-          scrollTrigger: {
-            trigger:
-              trigger === "section"
-                ? (element.closest("section, footer") ?? element)
-                : element,
-            start,
-            end,
-            scrub: true,
-          },
+    // Below 768 px nothing follows the scroll and GSAP is never fetched.
+    return whenMedia(WIDE_QUERY, () =>
+      whenGsapReady(({ gsap }) => {
+        const { from, to, trigger, start, end } = config.current;
+        const context = gsap.context(() => {
+          gsap.fromTo(element, from, {
+            ...to,
+            ease: "none",
+            scrollTrigger: {
+              trigger:
+                trigger === "section"
+                  ? (element.closest("section, footer") ?? element)
+                  : element,
+              start,
+              end,
+              scrub: true,
+            },
+          });
         });
-      });
-      return () => context.revert();
-    });
+        return () => context.revert();
+      }),
+    );
   }, []);
 
   return <div ref={ref} {...props} />;
