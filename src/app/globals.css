@@ -308,6 +308,14 @@ body {
 
 .hero-track {
   position: relative;
+  /* Air between the hero and the categories. */
+  margin-bottom: 2rem;
+}
+
+@media (min-width: 48rem) {
+  .hero-track {
+    margin-bottom: 3rem;
+  }
 }
 
 .hero-stage {
