@@ -10,10 +10,17 @@ describe("ThemeSwitch", () => {
     delete document.documentElement.dataset.theme;
   });
 
-  it("follows the system until a theme is chosen", () => {
+  it("offers Light and Dark only, with Light chosen by default", () => {
     render(<ThemeSwitch />);
-    expect(screen.getByRole("radio", { name: "System" })).toBeChecked();
-    expect(document.documentElement.dataset.theme).toBeUndefined();
+    expect(screen.getAllByRole("radio")).toHaveLength(2);
+    expect(screen.getByRole("radio", { name: "Light" })).toBeChecked();
+    expect(screen.queryByRole("radio", { name: "System" })).toBeNull();
+  });
+
+  it("reads an old stored system choice as light", () => {
+    localStorage.setItem(THEME_STORAGE_KEY, "system");
+    render(<ThemeSwitch />);
+    expect(screen.getByRole("radio", { name: "Light" })).toBeChecked();
   });
 
   it("forces and remembers the chosen theme", async () => {
@@ -23,17 +30,15 @@ describe("ThemeSwitch", () => {
     expect(document.documentElement.dataset.theme).toBe("dark");
     expect(localStorage.getItem(THEME_STORAGE_KEY)).toBe("dark");
     expect(screen.getByRole("radio", { name: "Dark" })).toBeChecked();
-    expect(screen.getByRole("radio", { name: "System" })).not.toBeChecked();
+    expect(screen.getByRole("radio", { name: "Light" })).not.toBeChecked();
   });
 
-  it("goes back to following the system", async () => {
-    localStorage.setItem(THEME_STORAGE_KEY, "light");
-    document.documentElement.dataset.theme = "light";
+  it("stores light when Light is chosen", async () => {
+    localStorage.setItem(THEME_STORAGE_KEY, "dark");
     render(<ThemeSwitch />);
-    expect(screen.getByRole("radio", { name: "Light" })).toBeChecked();
+    await userEvent.click(screen.getByRole("radio", { name: "Light" }));
 
-    await userEvent.click(screen.getByRole("radio", { name: "System" }));
-    expect(document.documentElement.dataset.theme).toBeUndefined();
-    expect(localStorage.getItem(THEME_STORAGE_KEY)).toBeNull();
+    expect(document.documentElement.dataset.theme).toBe("light");
+    expect(localStorage.getItem(THEME_STORAGE_KEY)).toBe("light");
   });
 });

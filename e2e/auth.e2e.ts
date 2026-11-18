@@ -284,7 +284,6 @@ test.describe("the admin shell", () => {
   });
 
   test("the theme can be forced and is remembered", async ({ page }) => {
-    await page.emulateMedia({ colorScheme: "light" });
     await page.getByRole("button", { name: "Account menu" }).click();
     await page.getByRole("radio", { name: "Dark" }).click();
     await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");

@@ -238,10 +238,12 @@ test.describe("customer home, photography and footer", () => {
 
 test.describe("themes", () => {
   for (const scheme of ["light", "dark"] as const) {
-    test(`the page background follows the ${scheme} scheme`, async ({
+    test(`the page background follows the stored ${scheme} choice`, async ({
       page,
     }) => {
-      await page.emulateMedia({ colorScheme: scheme });
+      await page.addInitScript((value) => {
+        localStorage.setItem("flyviman-theme", value);
+      }, scheme);
       await page.goto("/");
 
       const background = await page.evaluate(
