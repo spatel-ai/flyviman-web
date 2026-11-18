@@ -166,6 +166,7 @@ export function AirportPicker({
         <FieldTile
           label={label}
           value={current ? place(current) : undefined}
+          phoneSuffix={current ? code(current) : undefined}
           placeholder="Choose airport"
           hint={
             current

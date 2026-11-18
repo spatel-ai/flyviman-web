@@ -54,7 +54,7 @@ export function SearchLanding() {
   return (
     <>
       <section aria-labelledby="search-hero" className="relative">
-        <div className="relative h-112 overflow-hidden md:h-136">
+        <div className="relative h-96 overflow-hidden sm:h-112 md:h-136">
           <Image
             src={IMAGES.hero.src}
             alt={IMAGES.hero.alt}
