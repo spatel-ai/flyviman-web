@@ -75,8 +75,9 @@ export interface FrameStore {
   /** The decoded frame nearest to `index`, if any is decoded. */
   nearest(index: number): { index: number; image: Frame } | null;
   /**
-   * Where the film is: frames within the decode window around it are
-   * decoded, and decoded frames outside it are closed.
+   * Where the film is: frames within the decode window around it (mostly
+   * ahead, in the direction it last moved) are decoded, and decoded frames
+   * outside it are closed.
    */
   focus(index: number): void;
   /** The slice of each frame that is kept, in source pixels. */
@@ -90,8 +91,10 @@ interface LoadOptions {
   eager: number;
   coarseStep: number;
   concurrency: number;
-  /** Frames either side of the focus kept decoded at once. */
-  decodeWindow: number;
+  /** Frames kept decoded ahead of the focus, in the direction it moves. */
+  decodeAhead: number;
+  /** And behind it. */
+  decodeBehind: number;
   /** Frame height in source pixels, and the slice of its width to keep. */
   height: number;
   keep: { x: number; width: number };
@@ -108,7 +111,7 @@ interface LoadOptions {
  * (old browsers) the images are kept and the browser manages decoding.
  */
 export function loadFrames(options: LoadOptions): FrameStore {
-  const { count, path, height, decodeWindow, onLoad } = options;
+  const { count, path, height, decodeAhead, decodeBehind, onLoad } = options;
   const bitmaps = typeof createImageBitmap === "function";
   const keep = bitmaps
     ? {
@@ -123,8 +126,13 @@ export function loadFrames(options: LoadOptions): FrameStore {
   const abort = new AbortController();
   let alive = true;
   let focus = 0;
+  /** 1 while the film plays forwards, -1 backwards. */
+  let direction = 1;
 
-  const near = (index: number) => Math.abs(index - focus) <= decodeWindow;
+  const near = (index: number) => {
+    const ahead = (index - focus) * direction;
+    return ahead >= -decodeBehind && ahead <= decodeAhead;
+  };
 
   async function decode(index: number) {
     const file = files[index];
@@ -192,6 +200,7 @@ export function loadFrames(options: LoadOptions): FrameStore {
     },
     focus(index) {
       if (!bitmaps || index === focus) return;
+      direction = index > focus ? 1 : -1;
       focus = index;
       decoded.forEach((frame, i) => {
         if (frame && !near(i) && "close" in frame) {
@@ -200,8 +209,11 @@ export function loadFrames(options: LoadOptions): FrameStore {
         }
       });
       // Nearest first, so the frame wanted now is ready soonest.
-      for (let d = 0; d <= decodeWindow; d += 1) {
-        for (const i of d === 0 ? [index] : [index - d, index + d]) {
+      for (let d = 0; d <= Math.max(decodeAhead, decodeBehind); d += 1) {
+        const ahead = d <= decodeAhead ? [index + d * direction] : [];
+        const behind =
+          d > 0 && d <= decodeBehind ? [index - d * direction] : [];
+        for (const i of [...ahead, ...behind]) {
           if (i >= 0 && i < count) void decode(i);
         }
       }
@@ -218,14 +230,52 @@ export function loadFrames(options: LoadOptions): FrameStore {
   };
 }
 
+/**
+ * The filters a frame is enlarged with, best first. The frame is enlarged
+ * about twice on a Retina screen, so the film starts with the best; where
+ * that is slow (a canvas drawn without a GPU) it steps down.
+ */
+export const SMOOTHING = ["high", "medium", "low"] as const;
+
+export interface SlowDraws {
+  /** A draw that takes longer than this, in ms, counts as slow. */
+  slowMs: number;
+  /** This many slow draws among the last `of` step the filter down. */
+  slowDraws: number;
+  of: number;
+}
+
+/**
+ * Records how long a draw took (`times` keeps the last `rule.of`) and
+ * returns the `SMOOTHING` level to draw with next. It only ever steps
+ * down, one level at a time, and starts counting afresh after each step.
+ */
+export function smoothingAfter(
+  level: number,
+  times: number[],
+  ms: number,
+  rule: SlowDraws,
+) {
+  times.push(ms);
+  if (times.length > rule.of) times.shift();
+  const slow = times.filter((t) => t > rule.slowMs).length;
+  if (slow < rule.slowDraws || level >= SMOOTHING.length - 1) return level;
+  times.length = 0;
+  return level + 1;
+}
+
 /** Draws `rect` of the source frame over the whole canvas. */
 export function drawFrame(
   context: CanvasRenderingContext2D,
   image: Frame,
   rect: SourceRect,
   keepX: number,
+  smoothing: ImageSmoothingQuality = "high",
 ) {
   const { width, height } = context.canvas;
+  // Set on every draw: resizing a canvas resets them.
+  context.imageSmoothingEnabled = true;
+  context.imageSmoothingQuality = smoothing;
   context.drawImage(
     image,
     rect.sx - keepX,

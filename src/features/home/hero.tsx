@@ -11,10 +11,12 @@ import {
 } from "react";
 import { SearchWidget } from "@/components/booking/search-widget";
 import { IMAGES } from "@/content/image-credits";
-import { HERO } from "./hero-config";
+import { HERO, type HeroSequence } from "./hero-config";
 import {
   coverRect,
   drawFrame,
+  smoothingAfter,
+  SMOOTHING,
   frameAt,
   loadFrames,
   type FrameStore,
@@ -23,25 +25,34 @@ import {
 import { segment, useScrollProgress } from "./use-scroll-progress";
 
 const REDUCED_MOTION = "(prefers-reduced-motion: reduce)";
+/** Where the film plays: a screen it fits (HERO.film), motion allowed. */
+const FILM_SCREEN = HERO.film.phones ? "all" : HERO.film.media;
 
 /**
- * Reduced motion, a data-saver connection, or a page whose scripts came so
- * late that the inline script gave the film up: the still hero, no film.
+ * A phone, reduced motion, a data-saver connection, or a page whose
+ * scripts came so late that the inline script gave the film up: the still
+ * hero, no film.
  */
 function wantsFilm() {
   const connection = (navigator as { connection?: { saveData?: boolean } })
     .connection;
   return (
+    window.matchMedia(FILM_SCREEN).matches &&
     !window.matchMedia(REDUCED_MOTION).matches &&
     !connection?.saveData &&
     !document.documentElement.hasAttribute("data-hero-gave-up")
   );
 }
 
-function onMotionPreference(changed: () => void) {
-  const query = window.matchMedia(REDUCED_MOTION);
-  query.addEventListener("change", changed);
-  return () => query.removeEventListener("change", changed);
+/** Turning a tablet or resizing a window across the film's limits. */
+function onFilmConditions(changed: () => void) {
+  const queries = [FILM_SCREEN, REDUCED_MOTION].map((q) =>
+    window.matchMedia(q),
+  );
+  for (const query of queries) query.addEventListener("change", changed);
+  return () => {
+    for (const query of queries) query.removeEventListener("change", changed);
+  };
 }
 
 // Runs before the hero paints on a full page load, so the film's first
@@ -51,7 +62,7 @@ function onMotionPreference(changed: () => void) {
 // arrive, the film is given up after a while rather than left stuck, and
 // stays given up for this view of the page: starting it later would push
 // everything below down by two or three screens.
-const SCRIPT = `(function(){try{var r=document.documentElement,c=navigator.connection;if(matchMedia(${JSON.stringify(REDUCED_MOTION)}).matches||(c&&c.saveData))return;r.setAttribute("data-hero-film","");setTimeout(function(){if(!r.hasAttribute("data-hero-live")){r.removeAttribute("data-hero-film");r.setAttribute("data-hero-gave-up","")}},8000)}catch(e){}})()`;
+const SCRIPT = `(function(){try{var r=document.documentElement,c=navigator.connection;if(!matchMedia(${JSON.stringify(FILM_SCREEN)}).matches||matchMedia(${JSON.stringify(REDUCED_MOTION)}).matches||(c&&c.saveData))return;r.setAttribute("data-hero-film","");setTimeout(function(){if(!r.hasAttribute("data-hero-live")){r.removeAttribute("data-hero-film");r.setAttribute("data-hero-gave-up","")}},8000)}catch(e){}})()`;
 
 const easeOut = (t: number) => 1 - (1 - t) ** 3;
 
@@ -64,9 +75,11 @@ const easeOut = (t: number) => 1 - (1 - t) ** 3;
  * (rules and timeline: docs/frontend/motion-design.md; values:
  * hero-config.ts).
  *
- * Under reduced motion, on a data-saver connection, without JavaScript and
- * in print it is a still: the last frame with the card in place. The
- * headline and the card are in the document and the tab order throughout.
+ * On a phone (HERO.film) it is a still: the first frame as a photo band
+ * under the headline, the card overlapping its foot. Under reduced motion,
+ * on a data-saver connection, without JavaScript and in print it is the
+ * last frame with the card in place. The headline and the card are in the
+ * document and the tab order throughout.
  */
 export function Hero() {
   const { timeline } = HERO;
@@ -75,7 +88,7 @@ export function Hero() {
   const canvas = useRef<HTMLCanvasElement>(null);
   const card = useRef<HTMLDivElement>(null);
 
-  const film = useSyncExternalStore(onMotionPreference, wantsFilm, () => false);
+  const film = useSyncExternalStore(onFilmConditions, wantsFilm, () => false);
   const [posterFailed, setPosterFailed] = useState(false);
 
   // What the canvas is showing, kept outside React: it changes every frame.
@@ -85,6 +98,11 @@ export function Hero() {
     previous: null as FrameStore | null,
     rect: null as SourceRect | null,
     wanted: 0,
+    /** How far the card has risen, as last set (0 to 1). */
+    shown: -1,
+    /** The SMOOTHING level drawn with, and the last draws' times (ms). */
+    smoothing: 0,
+    drawTimes: [] as number[],
     drawn: -1,
     stale: false,
   });
@@ -125,20 +143,41 @@ export function Hero() {
     }
     if (!source || !hit) return;
     if (hit.index === state.drawn && !state.stale) return;
-    drawFrame(context, hit.image, state.rect, source.keep.x);
+    const start = performance.now();
+    drawFrame(
+      context,
+      hit.image,
+      state.rect,
+      source.keep.x,
+      SMOOTHING[state.smoothing],
+    );
+    // Timed to the next frame's start, not around drawImage: the browser
+    // paints the canvas later, so the cost of a slow filter shows as a
+    // late frame, not a slow call.
+    requestAnimationFrame((next) => {
+      state.smoothing = smoothingAfter(
+        state.smoothing,
+        state.drawTimes,
+        next - start,
+        HERO.slowDraws,
+      );
+    });
     state.drawn = hit.index;
     state.stale = source !== state.store;
     context.canvas.dataset.frame = String(hit.index);
   }
 
   const { snap } = useScrollProgress(track, {
-    lerp: film ? HERO.lerp : 1,
+    settleMs: film ? HERO.settleMs : 0,
     onFrame(progress) {
       if (!film) return;
       const state = view.current;
-      const shown = easeOut(segment(progress, timeline.card));
-      stage.current?.style.setProperty("--hero-card", shown.toFixed(3));
-      if (card.current) {
+      const shown = Number(
+        easeOut(segment(progress, timeline.card)).toFixed(3),
+      );
+      if (shown !== state.shown && card.current) {
+        state.shown = shown;
+        stage.current?.style.setProperty("--hero-card", String(shown));
         card.current.style.opacity = shown.toFixed(3);
         card.current.style.transform = `translate3d(0, ${((1 - shown) * timeline.cardRise).toFixed(2)}px, 0)`;
         // An unseen card takes no clicks; it stays in the tab order.
@@ -220,6 +259,7 @@ export function Hero() {
       state.store = null;
       state.previous = null;
       state.drawn = -1;
+      state.shown = -1;
       // Back to the still hero: the style sheet decides again.
       cardElement?.removeAttribute("style");
       box.style.removeProperty("--hero-card");
@@ -237,7 +277,7 @@ export function Hero() {
     window.scrollTo({ top: end, behavior: "instant" });
   }
 
-  const { desktop, mobile } = HERO.sequences;
+  const { desktop } = HERO.sequences;
   const { posters } = HERO;
   const poster = (src: string) => (posterFailed ? IMAGES.hero.src : src);
   return (
@@ -248,9 +288,9 @@ export function Hero() {
       style={
         {
           "--hero-track": HERO.track.desktop,
-          "--hero-track-mobile": HERO.track.mobile,
+          "--hero-track-phone": HERO.track.phone,
           "--hero-focal": `${desktop.focalX * 100}%`,
-          "--hero-focal-mobile": `${mobile.focalX * 100}%`,
+          "--hero-band-focal": `${HERO.bandFocalX * 100}%`,
           "--hero-card-rise": `${timeline.cardRise}px`,
         } as CSSProperties
       }
@@ -264,15 +304,18 @@ export function Hero() {
       />
       <div ref={stage} className="hero-stage">
         <div aria-hidden="true" className="hero-media">
-          {/* The film's first frame: on screen before any script runs. */}
+          {/* The film's first frame: on screen before any script runs, and
+              a phone's still. Served as made (quality 92, the clip's own
+              width): the optimiser would only encode it again at 75. */}
           <Image
             src={poster(posters.first)}
             alt=""
             fill
-            // The film's first view, so the page's largest paint. Fetched
-            // for still visitors too: the server cannot know who they are.
+            unoptimized
+            // The film's first view or the phone's band, so the page's
+            // largest paint. Fetched for still visitors too: the server
+            // cannot know who they are.
             preload
-            sizes="(max-width: 767px) 300vw, 100vw"
             className="hero-poster hero-poster--first"
             onError={() => setPosterFailed(true)}
           />
@@ -281,9 +324,9 @@ export function Hero() {
             src={poster(posters.last)}
             alt=""
             fill
+            unoptimized
             // The still hero, on screen at once for those who see it.
             loading="eager"
-            sizes="(max-width: 767px) 300vw, 100vw"
             className="hero-poster hero-poster--last"
             onError={() => setPosterFailed(true)}
           />
@@ -306,12 +349,14 @@ export function Hero() {
   );
 }
 
-/** Chosen once, by the width of the window when the film starts. */
-let chosen: (typeof HERO.sequences)[keyof typeof HERO.sequences] | null = null;
+/**
+ * Chosen once, by the window when the film starts: the phone set only
+ * where phones have the film (HERO.film.phones) and one was made.
+ */
+let chosen: HeroSequence | null = null;
 function sequenceFor() {
+  const { desktop, phone } = HERO.sequences;
   chosen ??=
-    window.innerWidth < HERO.mobileBelow
-      ? HERO.sequences.mobile
-      : HERO.sequences.desktop;
+    phone && !window.matchMedia(HERO.film.media).matches ? phone : desktop;
   return chosen;
 }
