@@ -60,9 +60,23 @@ export function SiteFooter() {
           </nav>
           <ThemeSwitch />
         </div>
-        <p className="text-caption text-muted">
-          © Flyviman. All rights reserved.
-        </p>
+        {/* The same closing line on every screen: stacked on phones, one row
+            from tablets up. */}
+        <div className="flex flex-col gap-1 border-t border-border/60 pt-6 text-caption text-muted sm:flex-row sm:items-center sm:justify-between">
+          <p>© Flyviman. All rights reserved.</p>
+          <p>
+            Powered by{" "}
+            <a
+              href="https://technotribes.ai"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex min-h-11 items-center font-medium text-foreground/80 transition-colors duration-150 ease-standard hover:text-foreground"
+            >
+              Technotribes
+              <span className="sr-only"> (opens in a new tab)</span>
+            </a>
+          </p>
+        </div>
       </div>
     </footer>
   );
