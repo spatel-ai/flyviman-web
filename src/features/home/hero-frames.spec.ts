@@ -8,6 +8,7 @@ import {
   loadOrder,
   nearestLoaded,
   smoothingAfter,
+  tooSlow,
 } from "./hero-frames";
 import { segment } from "./use-scroll-progress";
 
@@ -272,5 +273,30 @@ describe("smoothingAfter", () => {
     const times: number[] = [];
     expect(run(2, times, [30, 30, 30, 30])).toBe(2);
     expect(run(2, times, Array(20).fill(1))).toBe(2);
+  });
+});
+
+describe("tooSlow", () => {
+  const rule = { slowMs: 50, slowDraws: 4, of: 10 };
+  const run = (times: number[], draws: number[]) =>
+    draws.map((ms) => tooSlow(times, ms, rule)).at(-1);
+
+  it("keeps the film through a few late frames", () => {
+    const times: number[] = [];
+    expect(run(times, [60, 16, 70, 16, 16, 80, 16, 16, 16, 16])).toBe(false);
+    expect(times).toHaveLength(10);
+  });
+
+  it("gives up once four of the last ten draws are over 50 ms", () => {
+    const times: number[] = [];
+    expect(run(times, [60, 16, 70, 16, 80])).toBe(false);
+    expect(run(times, [55])).toBe(true);
+  });
+
+  it("forgets late frames older than the last ten", () => {
+    const times: number[] = [];
+    run(times, [60, 60, 60]);
+    expect(run(times, Array(10).fill(16))).toBe(false);
+    expect(run(times, [60])).toBe(false);
   });
 });

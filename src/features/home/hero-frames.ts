@@ -264,6 +264,18 @@ export function smoothingAfter(
   return level + 1;
 }
 
+/**
+ * Records how long a draw held the next frame back (`times` keeps the last
+ * `rule.of`) and says whether `rule.slowDraws` of them took longer than
+ * `rule.slowMs`: frames that late, already with the cheapest filter, mean
+ * the film cannot keep up on this device.
+ */
+export function tooSlow(times: number[], ms: number, rule: SlowDraws) {
+  times.push(ms);
+  if (times.length > rule.of) times.shift();
+  return times.filter((t) => t > rule.slowMs).length >= rule.slowDraws;
+}
+
 /** Draws `rect` of the source frame over the whole canvas. */
 export function drawFrame(
   context: CanvasRenderingContext2D,

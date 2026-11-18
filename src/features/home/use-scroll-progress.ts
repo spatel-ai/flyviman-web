@@ -16,6 +16,13 @@ interface Options {
   settleMs: number;
   /** Called with the eased progress whenever it, or the track, moves. */
   onFrame: (progress: number, frame: ScrollFrame) => void;
+  /**
+   * The element held in place (CSS `position: sticky`) while the track
+   * passes. When it is held, progress reaches 1 where it lets go, and the
+   * window's own height (which changes as a phone browser's toolbar hides)
+   * plays no part.
+   */
+  hold?: RefObject<HTMLElement | null>;
 }
 
 /** Below this the eased value counts as arrived. */
@@ -37,14 +44,18 @@ export function segment(progress: number, range: readonly [number, number]) {
  * touched. The track's place on the page is measured only when it or the
  * window changes size, so the frame loop reads no layout. The loop stops
  * when progress arrives and while the track is off screen. Returns `snap`, which makes the next frame land on the
- * target without easing (after a jump made for keyboard focus).
+ * target without easing (after a jump made for keyboard focus), and `end`,
+ * the scroll position where progress reaches 1.
  */
 export function useScrollProgress(
   track: RefObject<HTMLElement | null>,
-  { settleMs, onFrame }: Options,
+  { settleMs, onFrame, hold }: Options,
 ) {
   const latest = useRef(onFrame);
   const snapNext = useRef(true);
+  // The track's top on the page, its height, and the height of the screen
+  // it passes through: the window's, or where the held element lets go.
+  const box = useRef({ top: 0, height: 0, screen: 0 });
   useEffect(() => {
     latest.current = onFrame;
   });
@@ -56,20 +67,26 @@ export function useScrollProgress(
     let frame = 0;
     let visible = true;
 
-    // The track's top on the page, its height and the window's height.
-    const box = { top: 0, height: 0, screen: 0 };
     const place = () => {
       const rect = element.getBoundingClientRect();
-      box.top = rect.top + window.scrollY;
-      box.height = rect.height;
-      box.screen = window.innerHeight;
+      const held = hold?.current;
+      const style = held && getComputedStyle(held);
+      box.current = {
+        top: rect.top + window.scrollY,
+        height: rect.height,
+        screen:
+          held && style?.position === "sticky"
+            ? parseFloat(style.top) + held.offsetHeight
+            : window.innerHeight,
+      };
     };
     const measure = (): ScrollFrame => {
-      const top = box.top - window.scrollY;
-      const distance = box.height - box.screen;
+      const { height, screen } = box.current;
+      const top = box.current.top - window.scrollY;
+      const distance = height - screen;
       return {
         target: distance > 0 ? Math.min(1, Math.max(0, -top / distance)) : 1,
-        bottom: top + box.height,
+        bottom: top + height,
       };
     };
     // Exponential easing: 95% of the gap closes in `settleMs`.
@@ -100,6 +117,7 @@ export function useScrollProgress(
     };
     const sizes = new ResizeObserver(resized);
     sizes.observe(element);
+    if (hold?.current) sizes.observe(hold.current);
     const observer = new IntersectionObserver(([entry]) => {
       visible = entry.isIntersecting;
       // One more frame on the way out, so the last state is the true one.
@@ -119,11 +137,15 @@ export function useScrollProgress(
       window.removeEventListener("resize", resized);
       cancelAnimationFrame(frame);
     };
-  }, [track, settleMs]);
+  }, [track, settleMs, hold]);
 
   return {
     snap: () => {
       snapNext.current = true;
+    },
+    end: () => {
+      const { top, height, screen } = box.current;
+      return top + height - screen;
     },
   };
 }

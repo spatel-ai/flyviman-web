@@ -287,12 +287,14 @@ body {
  * scroll, then the charter booking card over its last frame. By default a
  * still: the last frame with the headline and the card in place, as tall as
  * its content; on a phone (narrower than 744 px or shorter than 600 px,
- * HERO.film.media) the first frame as a photo band with the card over its
- * foot. With `data-hero-film` on the root element (set before paint, only
- * with JavaScript, on a screen the film fits, motion allowed and no data
- * saver) the track grows tall and its stage is held below the header
- * (above the tab bar below 768 px) while the script plays the frames and
- * raises the card. Only opacity and transforms change.
+ * HERO.film.screens.phone) the first frame as a photo band with the card
+ * over its foot. With `data-hero-film` on the root element (set before
+ * paint, only with JavaScript, motion allowed and no data saver) the track
+ * grows tall and its stage is held below the header (above the tab bar
+ * below 768 px) while the script plays the frames and raises the card.
+ * Phones and upright tablets play portrait frame sets (CR-2d); until the
+ * canvas draws, the first poster is cropped to match them. Only opacity
+ * and transforms change.
  */
 :root {
   /* What a held stage may fill: the screen below the header (1 px hairline)
@@ -409,13 +411,19 @@ body {
     min-height: var(--hero-stage-height);
   }
 
-  /* The phone film, only with HERO.film.phones: the card needs the whole
-     stage, so the headline gives way to it as it rises (--hero-card runs 0
-     to 1). It stays in the document. On a short phone the card's top
-     stays in view and its foot comes up as the track ends. */
-  @media (max-width: 743.98px) {
+  /* The phone film (HERO.film.screens.phone, upright or turned): the card
+     needs the whole stage, so the headline gives way to it as it rises
+     (--hero-card runs 0 to 1). It stays in the document. Where the card is
+     taller than the stage (a turned phone) its top stays in view and its
+     foot comes up as the track ends. */
+  @media (max-width: 743.98px), (max-height: 599.98px) {
     :root[data-hero-film] .hero-track {
       height: var(--hero-track-phone);
+    }
+
+    /* The first poster shows what the phone set's first frame shows. */
+    :root[data-hero-film] .hero-poster--first {
+      object-position: var(--hero-focal-phone) 50%;
     }
 
     :root[data-hero-film] .hero-content {
@@ -434,6 +442,13 @@ body {
   :root[data-hero-film] .hero-canvas,
   :root[data-hero-film] .hero-poster--first {
     display: block;
+  }
+
+  /* Upright tablets (HERO.film.screens["tablet-portrait"]). */
+  @media (min-width: 744px) and (min-height: 600px) and (orientation: portrait) {
+    :root[data-hero-film] .hero-poster--first {
+      object-position: var(--hero-focal-tablet) 50%;
+    }
   }
 
   :root[data-hero-film] .hero-poster--last {
