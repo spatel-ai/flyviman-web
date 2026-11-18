@@ -173,14 +173,15 @@ describe("loadFrames", () => {
     );
   }
 
-  function start(onLoad = vi.fn()) {
+  function start(onLoad = vi.fn(), decodeAhead = 2, decodeBehind = 2) {
     return loadFrames({
       count: 30,
       path: (n) => String(n),
       eager: 4,
       coarseStep: 4,
       concurrency: 3,
-      decodeWindow: 2,
+      decodeAhead,
+      decodeBehind,
       height: 10,
       keep: { x: 0, width: 10 },
       onLoad,
@@ -205,6 +206,32 @@ describe("loadFrames", () => {
     expect(store.nearest(20)?.index).toBe(20);
     expect([...closed].sort((a, b) => a - b)).toEqual([0, 1, 2]);
     expect(store.nearest(0)?.index).toBe(18);
+    store.destroy();
+  });
+
+  it("decodes further ahead in the direction the film moves", async () => {
+    stub();
+    const onLoad = vi.fn();
+    const store = start(onLoad, 3, 1);
+    await settle();
+    // Forwards from 0: three ahead, nothing behind the first frame.
+    expect(onLoad.mock.calls.map(([i]) => i).sort((a, b) => a - b)).toEqual([
+      0, 1, 2, 3,
+    ]);
+
+    store.focus(20);
+    await settle();
+    for (const i of [19, 20, 23]) expect(store.nearest(i)?.index).toBe(i);
+    expect(store.nearest(18)?.index).toBe(19);
+
+    // Backwards: the window turns round.
+    onLoad.mockClear();
+    store.focus(15);
+    await settle();
+    expect(onLoad.mock.calls.map(([i]) => i).sort((a, b) => a - b)).toEqual([
+      12, 13, 14, 15, 16,
+    ]);
+    expect(store.nearest(17)?.index).toBe(16);
     store.destroy();
   });
 

@@ -286,11 +286,13 @@ body {
  * Home page hero (features/home/hero.tsx, level 5): a film played by the
  * scroll, then the charter booking card over its last frame. By default a
  * still: the last frame with the headline and the card in place, as tall as
- * its content. With `data-hero-film` on the root element (set before paint,
- * only with JavaScript, motion allowed and no data saver) the track grows
- * tall and its stage is held below the header (above the tab bar on a
- * phone) while the script plays the frames and raises the card. Only
- * opacity and transforms change.
+ * its content; on a phone (narrower than 744 px or shorter than 600 px,
+ * HERO.film.media) the first frame as a photo band with the card over its
+ * foot. With `data-hero-film` on the root element (set before paint, only
+ * with JavaScript, on a screen the film fits, motion allowed and no data
+ * saver) the track grows tall and its stage is held below the header
+ * (above the tab bar below 768 px) while the script plays the frames and
+ * raises the card. Only opacity and transforms change.
  */
 :root {
   /* What a held stage may fill: the screen below the header (1 px hairline)
@@ -354,7 +356,7 @@ body {
 
 .hero-poster {
   object-fit: cover;
-  object-position: var(--hero-focal-mobile) 50%;
+  object-position: var(--hero-focal) 50%;
 }
 
 .hero-poster--first {
@@ -392,10 +394,6 @@ body {
   .hero-content {
     padding-inline: 2rem;
   }
-
-  .hero-poster {
-    object-position: var(--hero-focal) 50%;
-  }
 }
 
 @media screen {
@@ -411,12 +409,15 @@ body {
     min-height: var(--hero-stage-height);
   }
 
-  /* On a phone the card needs the whole stage: the headline gives way to
-     it as it rises (--hero-card runs 0 to 1). It stays in the document.
-     Without the stage's padding the card (about 730 px) fits between the
-     header and the tab bar of a 412 x 839 phone; on a shorter one its top
+  /* The phone film, only with HERO.film.phones: the card needs the whole
+     stage, so the headline gives way to it as it rises (--hero-card runs 0
+     to 1). It stays in the document. On a short phone the card's top
      stays in view and its foot comes up as the track ends. */
-  @media (max-width: 47.99rem) {
+  @media (max-width: 743.98px) {
+    :root[data-hero-film] .hero-track {
+      height: var(--hero-track-phone);
+    }
+
     :root[data-hero-film] .hero-content {
       justify-content: flex-end;
       padding-block: 0;
@@ -447,10 +448,44 @@ body {
     will-change: opacity, transform;
   }
 
-  @media (min-width: 48rem) {
-    :root[data-hero-film] .hero-track {
-      height: var(--hero-track);
-    }
+  :root[data-hero-film] .hero-track {
+    height: var(--hero-track);
+  }
+}
+
+/* The phone still: the first frame as a band under the headline, and the
+   card in the page's flow, over the band's foot. */
+@media (max-width: 743.98px), (max-height: 599.98px) {
+  :root:not([data-hero-film]) .hero-stage {
+    --hero-band: 15rem;
+    --hero-band-overlap: 3rem;
+  }
+
+  :root:not([data-hero-film]) .hero-media,
+  :root:not([data-hero-film]) .hero-shade {
+    bottom: auto;
+    height: var(--hero-band);
+  }
+
+  :root:not([data-hero-film]) .hero-poster--first {
+    display: block;
+    object-position: var(--hero-band-focal) 50%;
+  }
+
+  :root:not([data-hero-film]) .hero-poster--last {
+    display: none;
+  }
+
+  :root:not([data-hero-film]) .hero-content {
+    justify-content: flex-start;
+    gap: 0;
+    padding-block: 1rem 0;
+  }
+
+  /* The headline fills the band down to where the card begins. */
+  :root:not([data-hero-film]) .hero-headline {
+    min-height: calc(var(--hero-band) - var(--hero-band-overlap) - 1rem);
+    padding-bottom: 1rem;
   }
 }
 

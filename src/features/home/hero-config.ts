@@ -1,4 +1,5 @@
 import { HOME } from "@/content/home";
+import FRAMES from "./hero-frames.json";
 
 /** One numbered WebP sequence made by scripts/extract-hero-frames.mjs. */
 export interface HeroSequence {
@@ -16,19 +17,20 @@ export interface HeroSequence {
   focalX: number;
 }
 
-const sequence = (
-  name: string,
-  count: number,
-  width: number,
-  height: number,
-  focalX: number,
-): HeroSequence => ({
-  count,
-  width,
-  height,
+/** Count and size as the script wrote them (hero-frames.json). */
+interface Made {
+  count: number;
+  width: number;
+  height: number;
+}
+
+const sequence = (name: string, made: Made, focalX: number): HeroSequence => ({
+  ...made,
   focalX,
   path: (n) => `/hero/${name}/frame-${String(n).padStart(3, "0")}.webp`,
 });
+
+const phoneFrames = (FRAMES as { phone?: Made }).phone;
 
 /**
  * Every value that tunes the home page hero (hero.tsx). Progress `p` runs
@@ -36,35 +38,63 @@ const sequence = (
  * below is the stretch of `p` over which something happens.
  */
 export const HERO = {
+  film: {
+    /**
+     * Where the film plays: tablets (portrait and landscape), laptops and
+     * desktops. Elsewhere, and under reduced motion or data saver, the hero
+     * is a still. Kept in step with the media queries in globals.css.
+     */
+    media: "(min-width: 744px) and (min-height: 600px)",
+    /**
+     * Phones (and landscape phones) get the still hero: the first frame as
+     * a photo band, the card below it. To give them the film instead: run
+     * `node scripts/extract-hero-frames.mjs --phone` (writes
+     * public/hero/phone/ and its entry in hero-frames.json), set this to
+     * true, and check the phone film rules in globals.css (`max-width:
+     * 743.98px` under `data-hero-film`) and the hero tests in
+     * e2e/motion.e2e.ts on the mobile project.
+     */
+    phones: false,
+  },
   /** Height of the scroll track; the stage is about one screen of it. */
-  track: { desktop: "280vh", mobile: "240vh" },
-  /** Below this width the mobile sequence and layout are used. */
-  mobileBelow: 768,
-  /** How far the drawn progress closes on the scroll each frame (0 to 1). */
-  lerp: 0.12,
+  track: { desktop: "280vh", phone: "240vh" },
+  /**
+   * How long the drawn film takes to catch up with the scroll, in ms
+   * (about 95% of the way), whatever the screen's refresh rate.
+   */
+  settleMs: 150,
   /** The canvas is never sharper than this many device pixels per pixel. */
   maxPixelRatio: 2,
   /**
    * The film's first and last frames as stills, from the desktop sequence:
-   * the first paints before any script, the last is the still hero.
+   * the first paints before any script and is the phone still's band; the
+   * last is the still hero where the film could play but does not (reduced
+   * motion, data saver, no JavaScript).
    */
   posters: {
     first: "/hero/desktop/poster-first.webp",
     last: "/hero/desktop/poster-last.webp",
   },
   sequences: {
-    desktop: sequence("desktop", 96, 1280, 720, 0.5),
-    // On a phone only a tall slice of the frame fits: keep the window in it.
-    mobile: sequence("mobile", 60, 960, 540, 0.5),
-  },
+    desktop: sequence("desktop", FRAMES.desktop, 0.5),
+    // Only made with --phone (see `film.phones`).
+    ...(phoneFrames && { phone: sequence("phone", phoneFrames, 0.5) }),
+  } as { desktop: HeroSequence; phone?: HeroSequence },
+  /** Where the phone still's band is cropped (object-position x). */
+  bandFocalX: 0.62,
   loading: {
     /** Frames fetched at once, from the start of the sequence. */
     eager: 10,
     /** Then every nth frame across the sequence, then the rest. */
     coarseStep: 4,
     concurrency: 6,
-    /** Frames either side of the current one kept decoded (memory). */
-    decodeWindow: 8,
+    /**
+     * Frames kept decoded around the current one, most of them ahead in
+     * the scroll's direction. A 1280 x 720 frame decodes to 3.7 MB, so 32
+     * frames hold about 120 MB.
+     */
+    decodeAhead: 24,
+    decodeBehind: 8,
   },
   timeline: {
     /** The frames play from first to last. */

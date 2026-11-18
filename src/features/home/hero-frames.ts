@@ -75,8 +75,9 @@ export interface FrameStore {
   /** The decoded frame nearest to `index`, if any is decoded. */
   nearest(index: number): { index: number; image: Frame } | null;
   /**
-   * Where the film is: frames within the decode window around it are
-   * decoded, and decoded frames outside it are closed.
+   * Where the film is: frames within the decode window around it (mostly
+   * ahead, in the direction it last moved) are decoded, and decoded frames
+   * outside it are closed.
    */
   focus(index: number): void;
   /** The slice of each frame that is kept, in source pixels. */
@@ -90,8 +91,10 @@ interface LoadOptions {
   eager: number;
   coarseStep: number;
   concurrency: number;
-  /** Frames either side of the focus kept decoded at once. */
-  decodeWindow: number;
+  /** Frames kept decoded ahead of the focus, in the direction it moves. */
+  decodeAhead: number;
+  /** And behind it. */
+  decodeBehind: number;
   /** Frame height in source pixels, and the slice of its width to keep. */
   height: number;
   keep: { x: number; width: number };
@@ -108,7 +111,7 @@ interface LoadOptions {
  * (old browsers) the images are kept and the browser manages decoding.
  */
 export function loadFrames(options: LoadOptions): FrameStore {
-  const { count, path, height, decodeWindow, onLoad } = options;
+  const { count, path, height, decodeAhead, decodeBehind, onLoad } = options;
   const bitmaps = typeof createImageBitmap === "function";
   const keep = bitmaps
     ? {
@@ -123,8 +126,13 @@ export function loadFrames(options: LoadOptions): FrameStore {
   const abort = new AbortController();
   let alive = true;
   let focus = 0;
+  /** 1 while the film plays forwards, -1 backwards. */
+  let direction = 1;
 
-  const near = (index: number) => Math.abs(index - focus) <= decodeWindow;
+  const near = (index: number) => {
+    const ahead = (index - focus) * direction;
+    return ahead >= -decodeBehind && ahead <= decodeAhead;
+  };
 
   async function decode(index: number) {
     const file = files[index];
@@ -192,6 +200,7 @@ export function loadFrames(options: LoadOptions): FrameStore {
     },
     focus(index) {
       if (!bitmaps || index === focus) return;
+      direction = index > focus ? 1 : -1;
       focus = index;
       decoded.forEach((frame, i) => {
         if (frame && !near(i) && "close" in frame) {
@@ -200,8 +209,11 @@ export function loadFrames(options: LoadOptions): FrameStore {
         }
       });
       // Nearest first, so the frame wanted now is ready soonest.
-      for (let d = 0; d <= decodeWindow; d += 1) {
-        for (const i of d === 0 ? [index] : [index - d, index + d]) {
+      for (let d = 0; d <= Math.max(decodeAhead, decodeBehind); d += 1) {
+        const ahead = d <= decodeAhead ? [index + d * direction] : [];
+        const behind =
+          d > 0 && d <= decodeBehind ? [index - d * direction] : [];
+        for (const i of [...ahead, ...behind]) {
           if (i >= 0 && i < count) void decode(i);
         }
       }
@@ -226,6 +238,10 @@ export function drawFrame(
   keepX: number,
 ) {
   const { width, height } = context.canvas;
+  // The frame is enlarged about twice on a Retina screen: the browser's
+  // best filter, not its fastest. (Resizing a canvas resets these.)
+  context.imageSmoothingEnabled = true;
+  context.imageSmoothingQuality = "high";
   context.drawImage(
     image,
     rect.sx - keepX,
