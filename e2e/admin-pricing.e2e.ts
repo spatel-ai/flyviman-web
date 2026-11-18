@@ -234,8 +234,12 @@ test("finance traces an estimate in the calculation viewer; operations see it wi
   await expect(page.getByRole("heading", { level: 1 })).toContainText(
     registration,
   );
-  await expect(page.getByText("Payable to the operator")).toBeVisible();
-  await expect(page.getByText("Flyviman revenue")).toBeVisible();
+  await expect(
+    page.getByRole("main").getByText("Payable to the operator"),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("main").getByText("Flyviman revenue"),
+  ).toBeVisible();
   await expect(
     page.getByRole("heading", { name: "Rules applied" }),
   ).toBeVisible();
@@ -252,7 +256,9 @@ test("finance traces an estimate in the calculation viewer; operations see it wi
   await expect(page.getByRole("heading", { level: 1 })).toContainText(
     registration,
   );
-  await expect(page.getByText(/shown to finance only/)).toBeVisible();
+  await expect(
+    page.getByRole("main").getByText(/shown to finance only/),
+  ).toBeVisible();
   await expect(page.getByText("Payable to the operator")).toHaveCount(0);
   await expect(page.getByText("₹1,80,000 an hour")).toHaveCount(0);
   // Line amounts would give the split away; the tax line keeps its amount.
@@ -276,6 +282,8 @@ test("operations cannot change pricing rules", async ({ page }) => {
     );
   }
   await page.goto("/admin/pricing/rules");
-  await expect(page.getByText(/managed by finance/)).toBeVisible();
+  await expect(
+    page.getByRole("main").getByText(/managed by finance/),
+  ).toBeVisible();
   await expect(page.getByRole("button", { name: "Add rule" })).toHaveCount(0);
 });
