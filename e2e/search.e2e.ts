@@ -202,26 +202,40 @@ test("the airport picker works from the keyboard", async ({ page }) => {
   );
   await page.goto("/search");
   const from = page.getByRole("button", { name: /^From:/ });
-  await from.focus();
-  await page.keyboard.press("Enter");
   const box = page.getByRole("combobox", { name: "Search from airports" });
-  await expect(box).toBeFocused();
+  // A key pressed before the page has hydrated does nothing: press again
+  // until the picker has opened.
+  await expect(async () => {
+    await from.focus();
+    await page.keyboard.press("Enter");
+    await expect(box).toBeFocused({ timeout: 1000 });
+  }).toPass();
   // Popular airports are listed before anything is typed (F1).
   await expect(
     page.getByRole("listbox", { name: "Popular airports" }),
   ).toContainText("Mumbai");
   await box.fill("GOI");
-  await expect(page.getByRole("option", { name: /GOI/ })).toBeVisible();
+  // The popular list (which also holds Goa) stays until the live results
+  // replace it; Enter before then would choose the popular list's first row.
+  const results = page.getByRole("listbox", { name: "Results" });
+  await expect(results.getByRole("option", { name: /GOI/ })).toBeVisible();
+  await expect(results.getByRole("option").first()).toHaveAttribute(
+    "aria-selected",
+    "true",
+  );
   await page.keyboard.press("Enter");
   await expect(page.getByRole("button", { name: /^From:/ })).toContainText(
     "GOI",
   );
   // Escape closes without choosing.
-  await page.getByRole("button", { name: /^To:/ }).focus();
-  await page.keyboard.press("Enter");
-  await expect(
-    page.getByRole("combobox", { name: "Search to airports" }),
-  ).toBeFocused();
+  // The From picker gives focus back to its tile as it closes; press again
+  // until the To picker has opened.
+  const toBox = page.getByRole("combobox", { name: "Search to airports" });
+  await expect(async () => {
+    await page.getByRole("button", { name: /^To:/ }).focus();
+    await page.keyboard.press("Enter");
+    await expect(toBox).toBeFocused({ timeout: 1000 });
+  }).toPass();
   await page.keyboard.press("Escape");
   await expect(
     page.getByRole("combobox", { name: "Search to airports" }),
