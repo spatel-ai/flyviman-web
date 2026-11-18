@@ -398,7 +398,7 @@ body {
 
 @media screen {
   :root[data-hero-film] .hero-track {
-    height: var(--hero-track-mobile);
+    height: var(--hero-track);
   }
 
   :root[data-hero-film] .hero-stage {
@@ -446,10 +446,6 @@ body {
     transform: translate3d(0, var(--hero-card-rise), 0);
     pointer-events: none;
     will-change: opacity, transform;
-  }
-
-  :root[data-hero-film] .hero-track {
-    height: var(--hero-track);
   }
 }
 
