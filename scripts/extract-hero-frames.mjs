@@ -190,7 +190,9 @@ for (const set of CONFIG.sets) {
           "0",
           String(slice),
           String(sourceHeight),
-          ...(height < sourceHeight ? ["-resize", "0", String(height)] : []),
+          ...(height < sourceHeight
+            ? ["-resize", String(width), String(height)]
+            : []),
         ]
       : [];
     run("cwebp", [

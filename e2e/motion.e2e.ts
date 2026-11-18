@@ -260,7 +260,7 @@ test.describe("home page hero", () => {
   test.describe("film", () => {
     test.skip(
       ({ isMobile }) => isMobile,
-      "Phones get the still hero (HERO.film.phones is false)",
+      "Phones play their own set (film on a phone, below)",
     );
 
     test("opens on the first frame with the headline showing and the card waiting", async ({
@@ -408,6 +408,73 @@ test.describe("home page hero", () => {
     });
   });
 
+  /**
+   * The portrait sets open on the wing. The focal path starts at 0.8 of
+   * the frame's width: the wing crosses the slice's lower right, grey over
+   * orange clouds, and the clouds fill its lower left. Share of light,
+   * nearly colourless pixels in each patch (checked by eye on the frames:
+   * about 0.6 to 1 on the wing, under 0.3 on the clouds).
+   */
+  async function expectWing(page: Page) {
+    await page.goto("/");
+    await expect(canvas(page)).toHaveAttribute("data-frame", "0");
+    await expect
+      .poll(() =>
+        canvas(page).evaluate((el) => {
+          const c = el as HTMLCanvasElement;
+          const context = c.getContext("2d")!;
+          const grey = (x: number) => {
+            const { data } = context.getImageData(
+              Math.round(c.width * x),
+              Math.round(c.height * 0.8),
+              Math.round(c.width * 0.2),
+              Math.round(c.height * 0.1),
+            );
+            let count = 0;
+            for (let i = 0; i < data.length; i += 4) {
+              const max = Math.max(data[i], data[i + 1], data[i + 2]);
+              const min = Math.min(data[i], data[i + 1], data[i + 2]);
+              if (max > 80 && (max - min) / max < 0.3) count += 1;
+            }
+            return count / (data.length / 4);
+          };
+          return { wing: grey(0.6) > 0.5, clouds: grey(0.05) < 0.4 };
+        }),
+      )
+      .toEqual({ wing: true, clouds: true });
+  }
+
+  /**
+   * A phone browser's bar coming and going (here the window's height
+   * changing by 60 px) moves neither the held stage nor the film. In a test
+   * browser `svh` follows the window, so this proves the stage's top stays
+   * and the film goes on, not that its height stays.
+   */
+  async function expectSteadyStage(
+    page: Page,
+    size: { width: number; height: number },
+  ) {
+    await page.goto("/");
+    await scrollHero(page, 0.3);
+    await expect.poll(() => frame(page)).toBeGreaterThan(15);
+    const stageTop = () =>
+      page
+        .locator(".hero-stage")
+        .evaluate((el) => el.getBoundingClientRect().top);
+    const held = await stageTop();
+    for (const change of [60, -60]) {
+      await page.setViewportSize({
+        width: size.width,
+        height: size.height + change,
+      });
+      await expect.poll(stageTop).toBe(held);
+      await expect(root(page)).toHaveAttribute("data-hero-film", "");
+    }
+    const before = await frame(page);
+    await scrollHero(page, 0.5);
+    await expect.poll(() => frame(page)).toBeGreaterThan(before);
+  }
+
   /** Every frame the page asked for, by set. */
   function frameRequests(page: Page) {
     const sets: string[] = [];
@@ -446,6 +513,16 @@ test.describe("home page hero", () => {
         page,
       }) => {
         await expectCardHolds(page);
+      });
+
+      test("opens on the wing", async ({ page }) => {
+        await expectWing(page);
+      });
+
+      test("a browser bar coming and going moves neither the stage nor the film", async ({
+        page,
+      }) => {
+        await expectSteadyStage(page, size);
       });
     });
   }
@@ -490,36 +567,7 @@ test.describe("home page hero", () => {
       });
 
       test("opens on the wing", async ({ page }) => {
-        await page.goto("/");
-        await expect(canvas(page)).toHaveAttribute("data-frame", "0");
-        // The focal path starts at 0.8 of the frame's width: the wing
-        // crosses the slice's lower right, grey over orange clouds, and the
-        // clouds fill its lower left. Share of light, nearly colourless
-        // pixels in each patch (checked by eye on the frames).
-        await expect
-          .poll(() =>
-            canvas(page).evaluate((el) => {
-              const c = el as HTMLCanvasElement;
-              const context = c.getContext("2d")!;
-              const grey = (x: number) => {
-                const { data } = context.getImageData(
-                  Math.round(c.width * x),
-                  Math.round(c.height * 0.8),
-                  Math.round(c.width * 0.2),
-                  Math.round(c.height * 0.1),
-                );
-                let count = 0;
-                for (let i = 0; i < data.length; i += 4) {
-                  const max = Math.max(data[i], data[i + 1], data[i + 2]);
-                  const min = Math.min(data[i], data[i + 1], data[i + 2]);
-                  if (max > 80 && (max - min) / max < 0.3) count += 1;
-                }
-                return count / (data.length / 4);
-              };
-              return { wing: grey(0.6) > 0.5, clouds: grey(0.05) < 0.3 };
-            }),
-          )
-          .toEqual({ wing: true, clouds: true });
+        await expectWing(page);
       });
 
       test("the card holds whole below the header and above the tab bar", async ({
@@ -533,25 +581,7 @@ test.describe("home page hero", () => {
       test("a browser bar coming and going moves neither the stage nor the film", async ({
         page,
       }) => {
-        await page.goto("/");
-        await scrollHero(page, 0.3);
-        await expect.poll(() => frame(page)).toBeGreaterThan(15);
-        const stageTop = () =>
-          page
-            .locator(".hero-stage")
-            .evaluate((el) => el.getBoundingClientRect().top);
-        const held = await stageTop();
-        for (const change of [60, -60]) {
-          await page.setViewportSize({
-            width: size.width,
-            height: size.height + change,
-          });
-          await expect.poll(stageTop).toBe(held);
-          await expect(root(page)).toHaveAttribute("data-hero-film", "");
-        }
-        const before = await frame(page);
-        await scrollHero(page, 0.5);
-        await expect.poll(() => frame(page)).toBeGreaterThan(before);
+        await expectSteadyStage(page, size);
       });
     });
   }
@@ -598,11 +628,13 @@ test.describe("home page hero", () => {
   test("under reduced motion it is a still with the card in place", async ({
     page,
   }) => {
+    const frames = frameRequests(page);
     await page.emulateMedia({ reducedMotion: "reduce" });
     await page.goto("/");
     await page.waitForLoadState("networkidle");
 
     await expectStill(page);
+    expect(frames).toHaveLength(0);
   });
 
   test("on a data-saver connection it is a still, and no frame is fetched", async ({
