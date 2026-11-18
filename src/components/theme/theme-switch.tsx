@@ -4,10 +4,9 @@ import { useSyncExternalStore } from "react";
 import { cn } from "@/lib/utils";
 import { THEME_STORAGE_KEY } from "./theme-script";
 
-export type Theme = "system" | "light" | "dark";
+export type Theme = "light" | "dark";
 
 const OPTIONS: { value: Theme; label: string }[] = [
-  { value: "system", label: "System" },
   { value: "light", label: "Light" },
   { value: "dark", label: "Dark" },
 ];
@@ -17,9 +16,9 @@ const EVENT = "flyviman-theme-change";
 function read(): Theme {
   try {
     const stored = localStorage.getItem(THEME_STORAGE_KEY);
-    return stored === "light" || stored === "dark" ? stored : "system";
+    return stored === "dark" ? "dark" : "light";
   } catch {
-    return "system";
+    return "light";
   }
 }
 
@@ -33,15 +32,10 @@ function subscribe(onChange: () => void): () => void {
 }
 
 export function applyTheme(theme: Theme): void {
-  if (theme === "system") {
-    delete document.documentElement.dataset.theme;
-  } else {
-    document.documentElement.dataset.theme = theme;
-  }
+  document.documentElement.dataset.theme = theme;
   try {
     // A display preference, not a credential: it is fine in local storage.
-    if (theme === "system") localStorage.removeItem(THEME_STORAGE_KEY);
-    else localStorage.setItem(THEME_STORAGE_KEY, theme);
+    localStorage.setItem(THEME_STORAGE_KEY, theme);
   } catch {
     // Storage can be unavailable (private mode); the choice then lasts
     // until the page reloads.
@@ -49,9 +43,9 @@ export function applyTheme(theme: Theme): void {
   window.dispatchEvent(new Event(EVENT));
 }
 
-/** Follow the operating system, or force light or dark. */
+/** Light is the default; a visitor can choose dark. */
 export function ThemeSwitch({ className }: { className?: string }) {
-  const theme = useSyncExternalStore(subscribe, read, () => "system" as Theme);
+  const theme = useSyncExternalStore(subscribe, read, () => "light" as Theme);
 
   return (
     <div

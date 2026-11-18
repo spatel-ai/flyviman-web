@@ -86,10 +86,11 @@ for (const scheme of ["light", "dark"] as const) {
   test.describe(`visual baseline, ${scheme}`, () => {
     for (const shot of SHOTS) {
       test(`${shot.name} matches`, async ({ page }) => {
-        await page.emulateMedia({
-          colorScheme: scheme,
-          reducedMotion: "reduce",
-        });
+        // Dark is a stored choice, not the device preference.
+        await page.addInitScript((value) => {
+          localStorage.setItem("flyviman-theme", value);
+        }, scheme);
+        await page.emulateMedia({ reducedMotion: "reduce" });
         if (shot.account) {
           await signIn(page, shot.account, shot.path);
           await page.waitForURL((url) => !url.pathname.startsWith("/login"));
