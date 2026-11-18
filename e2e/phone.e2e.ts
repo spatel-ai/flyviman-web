@@ -18,6 +18,11 @@ test("the landing page's charter card leads to a labelled result and an enquiry"
   await seedOfferedAircraft(browser);
 
   await page.goto("/");
+  // The film plays with the scroll; at its end the charter card has risen.
+  await page.evaluate(() =>
+    window.scrollTo({ top: document.documentElement.scrollHeight }),
+  );
+  await expect(page.locator(".hero-card")).toHaveCSS("opacity", "1");
   // The charter card is the landing's search, with charter chosen.
   await expect(page.getByRole("tab", { name: /^Private jet/ })).toHaveAttribute(
     "aria-selected",

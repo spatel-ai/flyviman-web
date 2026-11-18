@@ -43,3 +43,6 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+
+# source clips for the hero film (never committed)
+/media-src/

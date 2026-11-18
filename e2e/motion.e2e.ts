@@ -154,50 +154,167 @@ test.describe("page cross-fade", () => {
 
 test.describe("home page hero", () => {
   const root = (page: Page) => page.locator("html");
-  const photo = (page: Page) => page.locator('img[src*="poster-first"]');
-  const box = (page: Page) =>
-    photo(page).locator("xpath=ancestor::div[@aria-hidden='true'][1]");
+  const track = (page: Page) => page.locator(".hero-track");
+  const canvas = (page: Page) => page.locator(".hero-canvas");
+  const card = (page: Page) => page.locator(".hero-card");
+  const heading = (page: Page) => page.getByRole("heading", { level: 1 });
+  const search = (page: Page) =>
+    card(page).getByRole("button", { name: "Search", exact: true });
+  const phone = (page: Page) => (page.viewportSize()?.width ?? 0) < 768;
+  const lastFrame = (page: Page) => (phone(page) ? "59" : "95");
+  /** Scrolls to a fraction of the hero's scroll distance. */
+  const scrollHero = (page: Page, fraction: number) =>
+    page.evaluate((f) => {
+      const el = document.querySelector<HTMLElement>(".hero-track")!;
+      const top = el.getBoundingClientRect().top + window.scrollY;
+      window.scrollTo({
+        top: top + (el.offsetHeight - window.innerHeight) * f,
+      });
+    }, fraction);
 
-  test("is a still: the photograph sits in a fixed box and nothing moves", async ({
+  test("opens on the first frame with the headline showing and the card waiting", async ({
     page,
   }) => {
     await page.goto("/");
 
-    await expect(photo(page)).toBeVisible();
-    // No film, no pinned stage and no clear header over it.
-    await expect(root(page)).not.toHaveAttribute("data-hero-film");
-    await expect(root(page)).not.toHaveAttribute("data-over-hero");
-    await expect(page.locator("canvas")).toHaveCount(0);
-    await expect(photo(page)).toHaveCSS("animation-name", "none");
-    await expect(box(page)).toHaveCSS("overflow", "hidden");
+    await expect(root(page)).toHaveAttribute("data-hero-film", "");
+    await expect(canvas(page)).toHaveAttribute("data-frame", "0");
+    // 250vh on a desktop, 200vh on a phone.
+    const screens = await track(page).evaluate(
+      (el) => (el as HTMLElement).offsetHeight / window.innerHeight,
+    );
+    expect(screens).toBeCloseTo(phone(page) ? 2 : 2.5, 1);
+
+    await expect(heading(page)).toBeVisible();
+    await expect(heading(page)).toHaveAccessibleName(
+      "Your trusted partner for every aviation decision",
+    );
+    // Unseen until the film ends, but always in the page.
+    await expect(card(page)).toHaveCSS("opacity", "0");
+    await expect(search(page)).toBeAttached();
   });
 
-  test("the photograph's box keeps its size while it loads", async ({
+  test("the scroll plays the film, then the booking card rises over its last frame, and back", async ({
     page,
   }) => {
     await page.goto("/");
-    const before = (await box(page).boundingBox())!;
+    await expect(canvas(page)).toHaveAttribute("data-frame", "0");
+
+    await scrollHero(page, 0.4);
     await expect
-      .poll(() => photo(page).evaluate((img: HTMLImageElement) => img.complete))
-      .toBe(true);
-    const after = (await box(page).boundingBox())!;
-    expect(after.height).toBe(before.height);
-    expect(after.width).toBe(before.width);
+      .poll(async () => Number(await canvas(page).getAttribute("data-frame")))
+      .toBeGreaterThan(20);
+    await expect(card(page)).toHaveCSS("opacity", "0");
+    // The stage is held: the track has moved, the canvas has not. Sticky
+    // positioning can leave a sub-pixel offset, so "held" means the canvas
+    // stays within the screen's first pixels below the header.
+    const held = await canvas(page).evaluate(
+      (el) => el.getBoundingClientRect().top,
+    );
+    expect(held).toBeLessThan(60);
+    expect(held).toBeGreaterThan(40);
+
+    await scrollHero(page, 1);
+    await expect(canvas(page)).toHaveAttribute("data-frame", lastFrame(page));
+    await expect(card(page)).toHaveCSS("opacity", "1");
+    await expect(card(page)).toHaveCSS("transform", "matrix(1, 0, 0, 1, 0, 0)");
+    await expect(search(page)).toBeVisible();
+    await expect(heading(page)).toBeVisible();
+
+    await scrollHero(page, 0);
+    await expect(canvas(page)).toHaveAttribute("data-frame", "0");
+    await expect(card(page)).toHaveCSS("opacity", "0");
   });
 
-  test("keeps its headline, search card and photograph under reduced motion", async ({
+  test("the card is a real form once the film ends", async ({ page }) => {
+    await page.goto("/");
+    await scrollHero(page, 1);
+    await expect(card(page)).toHaveCSS("opacity", "1");
+
+    await page.getByRole("button", { name: /^From:/ }).click();
+    await expect(page.getByRole("option", { name: /BOM/ })).toBeVisible();
+    await page.keyboard.press("Escape");
+    await expect(search(page)).toBeEnabled();
+  });
+
+  test("a keyboard that reaches the card early is taken to it", async ({
+    page,
+  }) => {
+    await page.goto("/");
+    await expect(canvas(page)).toHaveAttribute("data-frame", "0");
+
+    await page.getByRole("button", { name: /^From:/ }).focus();
+    await expect(card(page)).toHaveCSS("opacity", "1");
+    await expect(page.getByRole("button", { name: /^From:/ })).toBeFocused();
+    await expect(canvas(page)).toHaveAttribute("data-frame", lastFrame(page));
+    const gap = await track(page).evaluate(
+      (el) => el.getBoundingClientRect().bottom - window.innerHeight,
+    );
+    expect(Math.abs(gap)).toBeLessThanOrEqual(1);
+  });
+
+  test("arriving by a link from another page starts the film too", async ({
+    page,
+  }) => {
+    await page.goto("/legal/image-credits");
+    await page.getByRole("link", { name: "Flyviman home" }).click();
+
+    await expect(root(page)).toHaveAttribute("data-hero-film", "");
+    await expect(canvas(page)).toHaveAttribute("data-frame", "0");
+
+    // And leaving the home page leaves no film behind.
+    await page.goBack();
+    await expect(
+      page.getByRole("heading", { level: 1, name: "Image credits" }),
+    ).toBeVisible();
+    await expect(root(page)).not.toHaveAttribute("data-hero-film");
+  });
+
+  /** The last frame with the card in place, no film. */
+  async function expectStill(page: Page) {
+    await expect(root(page)).not.toHaveAttribute("data-hero-film");
+    await expect(heading(page)).toBeVisible();
+    await expect(card(page)).toBeVisible();
+    await expect(card(page)).toHaveCSS("opacity", "1");
+    await expect(search(page)).toBeVisible();
+    await expect(canvas(page)).toBeHidden();
+    await expect(page.locator(".hero-poster--last")).toBeVisible();
+    await expect(page.locator(".hero-poster--first")).toBeHidden();
+    // No scroll track: the hero is only as tall as its content.
+    const screens = await track(page).evaluate(
+      (el) => (el as HTMLElement).offsetHeight / window.innerHeight,
+    );
+    expect(screens).toBeLessThan(phone(page) ? 1.6 : 1.1);
+  }
+
+  test("under reduced motion it is the last frame with the card in place", async ({
     page,
   }) => {
     await page.emulateMedia({ reducedMotion: "reduce" });
     await page.goto("/");
     await page.waitForLoadState("networkidle");
 
-    await expect(page.getByRole("heading", { level: 1 })).toHaveCSS(
-      "opacity",
-      "1",
-    );
-    await expect(photo(page)).toBeVisible();
-    await expect(page.getByRole("tablist")).toBeVisible();
+    await expectStill(page);
+  });
+
+  test("on a data-saver connection it is a still, and no frame is fetched", async ({
+    page,
+  }) => {
+    const frames: string[] = [];
+    page.on("request", (request) => {
+      if (/\/hero\/.*\/frame-/.test(request.url())) frames.push(request.url());
+    });
+    await page.addInitScript(() => {
+      Object.defineProperty(navigator, "connection", {
+        value: { saveData: true },
+        configurable: true,
+      });
+    });
+    await page.goto("/");
+    await page.waitForLoadState("networkidle");
+
+    await expectStill(page);
+    expect(frames).toHaveLength(0);
   });
 
   test("the page is whole without JavaScript", async ({ browser }) => {
@@ -205,12 +322,8 @@ test.describe("home page hero", () => {
     const page = await context.newPage();
     await page.goto("/");
 
-    await expect(photo(page)).toBeVisible();
-    await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+    await expectStill(page);
     await expect(page.locator('[data-reveal="waiting"]')).toHaveCount(0);
-    await expect(
-      page.getByRole("link", { name: "Search charter" }),
-    ).toBeVisible();
     await context.close();
   });
 

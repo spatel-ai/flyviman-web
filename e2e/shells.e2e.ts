@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { expectNotCovered } from "./support/phone";
 
 test.describe("customer home", () => {
   test("shows the headline, the charter search card and the categories", async ({
@@ -42,39 +43,22 @@ test.describe("customer home", () => {
     await expect(ways.getByText("Coming soon")).toHaveCount(2);
   });
 
-  test("the search card is on the first screen of a phone", async ({
+  test("the booking card is visible when the film ends, clear of the tab bar", async ({
     page,
   }, info) => {
-    test.skip(info.project.name !== "mobile", "Phones only");
-    await page.setViewportSize({ width: 375, height: 812 });
     await page.goto("/");
-    // Laid out once the fonts and the photograph are in.
-    await page.evaluate(() => document.fonts.ready);
-    await expect
-      .poll(() =>
-        page
-          .locator('img[src*="poster-first"]')
-          .evaluate((img: HTMLImageElement) => img.complete),
-      )
-      .toBe(true);
-
-    // The tabs and the first fields sit above the tab bar (56 px). The
-    // Search button follows after a short scroll: the card is shared with
-    // /search and stacks its fields on a phone.
-    const above = 812 - 56;
-    const bottomOf = (name: string | RegExp, exact = true) =>
-      page
-        .getByText(name, { exact })
-        .first()
-        .evaluate((el) => el.getBoundingClientRect().bottom);
-    await expect
-      .poll(() =>
-        page
-          .getByRole("tablist")
-          .evaluate((el) => el.getBoundingClientRect().bottom),
-      )
-      .toBeLessThanOrEqual(above);
-    await expect.poll(() => bottomOf("Departure")).toBeLessThanOrEqual(above);
+    await page.evaluate(() =>
+      window.scrollTo({ top: document.documentElement.scrollHeight }),
+    );
+    const card = page.locator(".hero-card");
+    await expect(card).toHaveCSS("opacity", "1");
+    // From, To, Date, Travellers and Search all show.
+    for (const name of [/^From:/, /^To:/, /^Departure:/, /^Travellers:/]) {
+      await expect(page.getByRole("button", { name })).toBeVisible();
+    }
+    const search = card.getByRole("button", { name: "Search", exact: true });
+    await expect(search).toBeVisible();
+    if (info.project.name === "mobile") await expectNotCovered(search);
   });
 
   test("shows three of the company's claims, and no longer its About, Services or questions", async ({

@@ -283,6 +283,174 @@ body {
 }
 
 /*
+ * Home page hero (features/home/hero.tsx, level 5): a film played by the
+ * scroll, then the charter booking card over its last frame. By default a
+ * still: the last frame with the headline and the card in place, as tall as
+ * its content. With `data-hero-film` on the root element (set before paint,
+ * only with JavaScript, motion allowed and no data saver) the track grows
+ * tall and its stage is held below the header (above the tab bar on a
+ * phone) while the script plays the frames and raises the card. Only
+ * opacity and transforms change.
+ */
+:root {
+  /* What a held stage may fill: the screen below the header (1 px hairline)
+     and, on a phone, above the tab bar (h-14 plus the bottom inset). */
+  --hero-stage-height: calc(
+    100svh - var(--header-height) - 1px - 3.5rem - env(safe-area-inset-bottom)
+  );
+}
+
+@media (min-width: 48rem) {
+  :root {
+    --hero-stage-height: calc(100svh - var(--header-height) - 1px);
+  }
+}
+
+.hero-track {
+  position: relative;
+  /* Air between the hero and the categories. */
+  margin-bottom: 2rem;
+}
+
+@media (min-width: 48rem) {
+  .hero-track {
+    margin-bottom: 3rem;
+  }
+}
+
+.hero-stage {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  color: var(--color-on-photo);
+}
+
+.hero-media,
+.hero-shade {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+}
+
+.hero-media {
+  overflow: hidden;
+}
+
+.hero-canvas {
+  display: none;
+  width: 100%;
+  height: 100%;
+}
+
+.hero-poster {
+  object-fit: cover;
+  object-position: var(--hero-focal-mobile) 50%;
+}
+
+.hero-poster--first {
+  display: none;
+}
+
+/* Keeps the headline legible over a bright ceiling or sky: two layers of
+   the scrim, as the cards' captions have. */
+.hero-shade {
+  background:
+    linear-gradient(to bottom, var(--color-scrim) 20%, transparent 60%),
+    linear-gradient(to bottom, var(--color-scrim), transparent 40%);
+  pointer-events: none;
+}
+
+.hero-content {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 1.5rem;
+  width: 100%;
+  max-width: var(--container-wide);
+  margin-inline: auto;
+  padding: 1rem 1rem 1.5rem;
+}
+
+@media (min-width: 48rem) {
+  .hero-content {
+    padding: 3rem 1.5rem 2.5rem;
+  }
+}
+
+@media (min-width: 64rem) {
+  .hero-content {
+    padding-inline: 2rem;
+  }
+
+  .hero-poster {
+    object-position: var(--hero-focal) 50%;
+  }
+}
+
+@media screen {
+  :root[data-hero-film] .hero-track {
+    height: var(--hero-track-mobile);
+  }
+
+  :root[data-hero-film] .hero-stage {
+    position: sticky;
+    top: calc(var(--header-height) + 1px);
+    /* Taller than the screen only when the card is (a short phone): the
+       foot then comes into view as the track ends. */
+    min-height: var(--hero-stage-height);
+  }
+
+  /* On a phone the card needs the whole stage: the headline gives way to
+     it as it rises (--hero-card runs 0 to 1). It stays in the document. */
+  @media (max-width: 47.99rem) {
+    :root[data-hero-film] .hero-content {
+      justify-content: flex-end;
+    }
+
+    :root[data-hero-film] .hero-headline {
+      position: absolute;
+      inset-inline: 1rem;
+      top: 1rem;
+      opacity: calc(1 - var(--hero-card, 0));
+    }
+  }
+
+  :root[data-hero-film] .hero-canvas,
+  :root[data-hero-film] .hero-poster--first {
+    display: block;
+  }
+
+  :root[data-hero-film] .hero-poster--last {
+    display: none;
+  }
+
+  /* Until the scroll brings it in. The script takes over from here. */
+  :root[data-hero-film] .hero-card {
+    opacity: 0;
+    transform: translate3d(0, var(--hero-card-rise), 0);
+    pointer-events: none;
+    will-change: opacity, transform;
+  }
+
+  @media (min-width: 48rem) {
+    :root[data-hero-film] .hero-track {
+      height: var(--hero-track);
+    }
+  }
+}
+
+/* Paper gets the still, whatever the script last set. */
+@media print {
+  .hero-card {
+    opacity: 1 !important;
+    transform: none !important;
+    pointer-events: auto !important;
+  }
+}
+
+/*
  * Questions and answers (features/services/services-page.tsx), level 2: the answer fades
  * and rises 8 px as it opens; the mark turns from a plus into a minus.
  */
