@@ -15,6 +15,8 @@ interface Shot {
   name: string;
   path: string;
   account?: AccountName;
+  /** Only the light baseline is kept. */
+  lightOnly?: boolean;
   /** Visible once the page has its data. */
   ready: (page: Page) => ReturnType<Page["getByRole"]>;
   /** Extra wait for data that loads after the first paint. */
@@ -25,6 +27,12 @@ const SHOTS: Shot[] = [
   {
     name: "home",
     path: "/",
+    ready: (page) => page.getByRole("heading", { level: 1 }),
+  },
+  {
+    name: "compare-home-v1",
+    path: "/compare/home-v1",
+    lightOnly: true,
     ready: (page) => page.getByRole("heading", { level: 1 }),
   },
   {
@@ -85,6 +93,7 @@ const SHOTS: Shot[] = [
 for (const scheme of ["light", "dark"] as const) {
   test.describe(`visual baseline, ${scheme}`, () => {
     for (const shot of SHOTS) {
+      if (shot.lightOnly && scheme === "dark") continue;
       test(`${shot.name} matches`, async ({ page }) => {
         // Dark is a stored choice, not the device preference.
         await page.addInitScript((value) => {
