@@ -26,7 +26,9 @@ import { segment, useScrollProgress } from "./use-scroll-progress";
 
 const REDUCED_MOTION = "(prefers-reduced-motion: reduce)";
 /** Where the film plays: a screen it fits (HERO.film), motion allowed. */
-const FILM_SCREEN = HERO.film.phones ? "all" : HERO.film.media;
+const FILM_SCREEN = HERO.film.phones
+  ? `not all and ${HERO.film.turnedPhone}`
+  : HERO.film.media;
 
 /**
  * Set when the film could not keep up on this device (HERO.giveUp): the
@@ -38,7 +40,8 @@ const TOO_SLOW = "hero-too-slow";
 /**
  * Reduced motion, a data-saver connection, a device too slow for the film,
  * a page whose scripts came so late that the inline script gave the film
- * up, or (without HERO.film.phones) a phone: the still hero, no film.
+ * up, a turned phone, or (without HERO.film.phones) any phone: the still
+ * hero, no film.
  */
 function wantsFilm() {
   const connection = (navigator as { connection?: { saveData?: boolean } })
@@ -98,9 +101,9 @@ const easeOut = (t: number) => 1 - (1 - t) ** 3;
  * (rules and timeline: docs/frontend/motion-design.md; values:
  * hero-config.ts).
  *
- * Phones and upright tablets play portrait frame sets cropped along the
+ * Upright phones and tablets play portrait frame sets cropped along the
  * focal path (CR-2d; HERO.film.screens); on a phone the headline gives way
- * as the card rises. Under reduced motion, on a data-saver connection, on a
+ * as the card rises. A turned phone gets the still. Under reduced motion, on a data-saver connection, on a
  * device too slow for the film, without JavaScript and in print it is a
  * still with the card in place: on a phone the first frame as a photo band
  * under the headline, the card overlapping its foot; elsewhere the last

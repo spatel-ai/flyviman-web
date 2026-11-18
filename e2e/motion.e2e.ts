@@ -1,4 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
+import { expectNotCovered } from "./support/phone";
 
 /**
  * Motion on the customer site (docs/frontend/motion-design.md): the header
@@ -586,14 +587,45 @@ test.describe("home page hero", () => {
     });
   }
 
-  test.describe("film on a phone turned sideways", () => {
+  test.describe("on a phone turned sideways, 852 by 393", () => {
     test.skip(({ isMobile }) => !isMobile, "Phones only");
+    test.use({ viewport: { width: 852, height: 393 } });
 
-    test("keeps the phone set and goes on playing", async ({ page }) => {
+    test("it is a still with the card in the page, and no frame is fetched", async ({
+      page,
+    }) => {
+      const sets = frameRequests(page);
+      await page.goto("/");
+      await page.waitForLoadState("networkidle");
+
+      await expectStill(page);
+      // The card is in the page's flow: scrolled to, Search can be tapped.
+      await expectNotCovered(search(page));
+      expect(sets).toHaveLength(0);
+    });
+  });
+
+  test.describe("a phone turned and turned back", () => {
+    test.skip(({ isMobile }) => !isMobile, "Phones only");
+    test.use({ viewport: { width: 393, height: 852 } });
+
+    test("goes from the film to the still and back, keeping no frames", async ({
+      page,
+    }) => {
       const sets = frameRequests(page);
       await page.goto("/");
       await expect(canvas(page)).toHaveAttribute("data-set", "phone");
-      await page.setViewportSize({ width: 915, height: 412 });
+      await page.waitForLoadState("networkidle");
+      const fetched = sets.length;
+
+      await page.setViewportSize({ width: 852, height: 393 });
+      await expectStill(page);
+      // Its frames were let go: nothing more is fetched while turned.
+      await page.mouse.wheel(0, 300);
+      await page.waitForLoadState("networkidle");
+      expect(sets).toHaveLength(fetched);
+
+      await page.setViewportSize({ width: 393, height: 852 });
       await expect(root(page)).toHaveAttribute("data-hero-film", "");
       await scrollHero(page, 0.3);
       await expect.poll(() => frame(page)).toBeGreaterThan(15);

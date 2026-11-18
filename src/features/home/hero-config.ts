@@ -77,18 +77,25 @@ export const HERO = {
      */
     media: "(min-width: 744px) and (min-height: 600px)",
     /**
-     * Phones and upright tablets play the film too (CR-2d), from portrait
+     * Upright phones and tablets play the film too (CR-2d), from portrait
      * frame sets cropped along the focal path (`focalPath`). False gives
      * phones the still hero (the first frame as a band, the card below)
      * and every other screen the desktop set.
      */
     phones: true,
     /**
+     * A turned phone (short and wide): the still hero even with `phones`,
+     * since the card is taller than the stage and a portrait slice would
+     * be enlarged several times. The film comes back when it is turned
+     * upright.
+     */
+    turnedPhone: "(max-height: 599.98px) and (orientation: landscape)",
+    /**
      * Which set plays where; anything else gets the desktop set. Kept in
      * step with the media queries in globals.css.
      */
     screens: {
-      /** Phones, upright or turned: narrower than 744 px or under 600 px tall. */
+      /** Phones: narrower than 744 px or under 600 px tall (upright only, `turnedPhone`). */
       phone: "(max-width: 743.98px), (max-height: 599.98px)",
       /** Upright tablets. */
       "tablet-portrait":
