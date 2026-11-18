@@ -57,14 +57,26 @@ for (const path of ["/", "/search"]) {
   }) => {
     await page.setViewportSize({ width: 375, height: 667 });
     await page.goto(path);
+    if (path === "/") {
+      // The phone film (CR-2d): the card rises as the film ends, then holds.
+      await page.evaluate(() => {
+        const track = document.querySelector<HTMLElement>(".hero-track")!;
+        const top = track.getBoundingClientRect().top + window.scrollY;
+        window.scrollTo({ top: top + track.offsetHeight * 0.5 });
+      });
+      await expect(page.locator(".hero-card")).toHaveCSS("opacity", "1");
+    }
     const search = page
       .locator(path === "/" ? ".hero-card" : "main")
       .getByRole("button", { name: "Search", exact: true })
       .first();
     await expect(search).toBeVisible();
-    const box = await search.boundingBox();
-    expect(box).not.toBeNull();
-    expect(box!.y + box!.height).toBeLessThanOrEqual(667 - TAB_BAR_HEIGHT);
+    await expect
+      .poll(async () => {
+        const box = await search.boundingBox();
+        return box ? box.y + box.height : Infinity;
+      })
+      .toBeLessThanOrEqual(667 - TAB_BAR_HEIGHT);
   });
 }
 

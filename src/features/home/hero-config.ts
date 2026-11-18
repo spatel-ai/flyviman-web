@@ -1,8 +1,13 @@
 import { HOME } from "@/content/home";
+import { FOCAL_PATH, focalXAt, objectPositionX } from "./focal-path";
 import FRAMES from "./hero-frames.json";
+
+/** The frame sets scripts/extract-hero-frames.mjs makes (CR-2d). */
+export type HeroSet = "desktop" | "phone" | "tablet-portrait";
 
 /** One numbered WebP sequence made by scripts/extract-hero-frames.mjs. */
 export interface HeroSequence {
+  name: HeroSet;
   /** Number of frames; must match the script's output. */
   count: number;
   /** Pixel size of each frame. */
@@ -15,6 +20,18 @@ export interface HeroSequence {
    * CSS `object-position` counts it: 0 keeps the left edge, 1 the right.
    */
   focalX: number;
+  /**
+   * The same for the first poster (a desktop frame) on a screen this set
+   * plays on, so it shows what the set's first frame shows: the portrait
+   * sets are slices along the focal path.
+   */
+  posterFocalX: number;
+  /**
+   * Frames kept decoded around the current one, most of them ahead in
+   * the scroll's direction.
+   */
+  decodeAhead: number;
+  decodeBehind: number;
 }
 
 /** Count and size as the script wrote them (hero-frames.json). */
@@ -24,13 +41,26 @@ interface Made {
   height: number;
 }
 
-const sequence = (name: string, made: Made, focalX: number): HeroSequence => ({
-  ...made,
-  focalX,
-  path: (n) => `/hero/${name}/frame-${String(n).padStart(3, "0")}.webp`,
-});
-
-const phoneFrames = (FRAMES as { phone?: Made }).phone;
+const sequence = (
+  name: HeroSet,
+  decode: { ahead: number; behind: number },
+): HeroSequence => {
+  const made: Made = FRAMES[name];
+  const portrait = name !== "desktop";
+  // The slice's width in the desktop frame's pixels.
+  const slice = (made.width / made.height) * FRAMES.desktop.height;
+  return {
+    name,
+    ...made,
+    focalX: 0.5,
+    posterFocalX: portrait
+      ? objectPositionX(focalXAt(FOCAL_PATH, 0), slice, FRAMES.desktop.width)
+      : 0.5,
+    decodeAhead: decode.ahead,
+    decodeBehind: decode.behind,
+    path: (n) => `/hero/${name}/frame-${String(n).padStart(3, "0")}.webp`,
+  };
+};
 
 /**
  * Every value that tunes the home page hero (hero.tsx). Progress `p` runs
@@ -40,21 +70,37 @@ const phoneFrames = (FRAMES as { phone?: Made }).phone;
 export const HERO = {
   film: {
     /**
-     * Where the film plays: tablets (portrait and landscape), laptops and
-     * desktops. Elsewhere, and under reduced motion or data saver, the hero
-     * is a still. Kept in step with the media queries in globals.css.
+     * Where the film plays without the phone sets: tablets (portrait and
+     * landscape), laptops and desktops. Under reduced motion or data
+     * saver, or after sustained slow frames (`giveUp`), the hero is a
+     * still everywhere. Kept in step with the media queries in globals.css.
      */
     media: "(min-width: 744px) and (min-height: 600px)",
     /**
-     * Phones (and landscape phones) get the still hero: the first frame as
-     * a photo band, the card below it. To give them the film instead: run
-     * `node scripts/extract-hero-frames.mjs --phone` (writes
-     * public/hero/phone/ and its entry in hero-frames.json), set this to
-     * true, and check the phone film rules in globals.css (`max-width:
-     * 743.98px` under `data-hero-film`) and the hero tests in
-     * e2e/motion.e2e.ts on the mobile project.
+     * Upright phones and tablets play the film too (CR-2d), from portrait
+     * frame sets cropped along the focal path (`focalPath`). False gives
+     * phones the still hero (the first frame as a band, the card below)
+     * and every other screen the desktop set.
      */
-    phones: false,
+    phones: true,
+    /**
+     * A turned phone (short and wide): the still hero even with `phones`,
+     * since the card is taller than the stage and a portrait slice would
+     * be enlarged several times. The film comes back when it is turned
+     * upright.
+     */
+    turnedPhone: "(max-height: 599.98px) and (orientation: landscape)",
+    /**
+     * Which set plays where; anything else gets the desktop set. Kept in
+     * step with the media queries in globals.css.
+     */
+    screens: {
+      /** Phones: narrower than 744 px or under 600 px tall (upright only, `turnedPhone`). */
+      phone: "(max-width: 743.98px), (max-height: 599.98px)",
+      /** Upright tablets. */
+      "tablet-portrait":
+        "(min-width: 744px) and (min-height: 600px) and (orientation: portrait)",
+    },
   },
   /** Height of the scroll track; the stage is about one screen of it. */
   track: { desktop: "280vh", phone: "240vh" },
@@ -75,6 +121,13 @@ export const HERO = {
    */
   slowDraws: { slowMs: 25, slowDraws: 2, of: 10 },
   /**
+   * When the cheapest filter is already in use and frames still run late
+   * (4 of the last 10 draws hold the next frame back by more than 50 ms,
+   * under 20 frames a second), the film gives way to the still hero with
+   * the card for the rest of the visit.
+   */
+  giveUp: { slowMs: 50, slowDraws: 4, of: 10 },
+  /**
    * The film's first and last frames as stills, from the desktop sequence:
    * the first paints before any script and is the phone still's band; the
    * last is the still hero where the film could play but does not (reduced
@@ -85,10 +138,15 @@ export const HERO = {
     last: "/hero/desktop/poster-last.webp",
   },
   sequences: {
-    desktop: sequence("desktop", FRAMES.desktop, 0.5),
-    // Only made with --phone (see `film.phones`).
-    ...(phoneFrames && { phone: sequence("phone", phoneFrames, 0.5) }),
-  } as { desktop: HeroSequence; phone?: HeroSequence },
+    // A 1280 x 720 frame decodes to 3.7 MB, so 32 frames hold about 120 MB.
+    desktop: sequence("desktop", { ahead: 24, behind: 8 }),
+    // A 380 x 720 slice decodes to 1.1 MB: 16 hold about 18 MB.
+    phone: sequence("phone", { ahead: 12, behind: 4 }),
+    // A 520 x 720 slice decodes to 1.5 MB: 16 hold about 24 MB.
+    "tablet-portrait": sequence("tablet-portrait", { ahead: 12, behind: 4 }),
+  } satisfies Record<HeroSet, HeroSequence>,
+  /** Where the portrait sets are cropped (focal-path.ts). */
+  focalPath: FOCAL_PATH,
   /** Where the phone still's band is cropped (object-position x). */
   bandFocalX: 0.62,
   loading: {
@@ -97,13 +155,6 @@ export const HERO = {
     /** Then every nth frame across the sequence, then the rest. */
     coarseStep: 4,
     concurrency: 6,
-    /**
-     * Frames kept decoded around the current one, most of them ahead in
-     * the scroll's direction. A 1280 x 720 frame decodes to 3.7 MB, so 32
-     * frames hold about 120 MB.
-     */
-    decodeAhead: 24,
-    decodeBehind: 8,
   },
   timeline: {
     /** The frames play from first to last. */

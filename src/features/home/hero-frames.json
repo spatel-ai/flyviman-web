@@ -3,5 +3,15 @@
     "count": 96,
     "width": 1280,
     "height": 720
+  },
+  "phone": {
+    "count": 60,
+    "width": 380,
+    "height": 720
+  },
+  "tablet-portrait": {
+    "count": 60,
+    "width": 520,
+    "height": 720
   }
 }

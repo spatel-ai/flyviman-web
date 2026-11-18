@@ -1,11 +1,13 @@
 import { expect, test, type Page } from "@playwright/test";
+import { expectNotCovered } from "./support/phone";
 
 /**
  * Motion on the customer site (docs/frontend/motion-design.md): the header
  * hairline and pointer feedback (level 1), page cross-fades (level 3),
  * section reveals (level 4), scroll-linked motion, and that reduced motion
- * and layout stability are respected. The home page hero film plays on
- * tablets and larger; phones get a still.
+ * and layout stability are respected. The home page hero film plays
+ * everywhere: the desktop set on wide screens, portrait sets on phones and
+ * upright tablets (CR-2d).
  */
 
 async function scrollTo(page: Page, y: number) {
@@ -161,22 +163,32 @@ test.describe("home page hero", () => {
   const heading = (page: Page) => page.getByRole("heading", { level: 1 });
   const search = (page: Page) =>
     card(page).getByRole("button", { name: "Search", exact: true });
-  /** Where the film does not play (HERO.film.media): the phone still. */
+  /** Where the still hero is a band over the card (HERO.film.screens.phone). */
   const phoneStill = (page: Page) => {
     const size = page.viewportSize()!;
     return size.width < 744 || size.height < 600;
   };
   /** The desktop sequence's last frame (src/features/home/hero-frames.json). */
   const LAST_FRAME = 95;
-  /** Scrolls to a fraction of the hero's scroll distance. */
+  /**
+   * Scrolls to a fraction of the hero's scroll distance: from the top of
+   * the page to where the held stage lets go (its foot reaches the track's
+   * foot), as the hero measures it.
+   */
   const scrollHero = (page: Page, fraction: number) =>
     page.evaluate((f) => {
       const el = document.querySelector<HTMLElement>(".hero-track")!;
+      const stage = document.querySelector<HTMLElement>(".hero-stage")!;
+      const style = getComputedStyle(stage);
+      const screen =
+        style.position === "sticky"
+          ? parseFloat(style.top) + stage.offsetHeight
+          : window.innerHeight;
       const top = el.getBoundingClientRect().top + window.scrollY;
-      window.scrollTo({
-        top: top + (el.offsetHeight - window.innerHeight) * f,
-      });
+      window.scrollTo({ top: top + (el.offsetHeight - screen) * f });
     }, fraction);
+  const frame = async (page: Page) =>
+    Number(await canvas(page).getAttribute("data-frame"));
 
   /** The canvas paints above both posters while the film plays. */
   async function expectFilmOnTop(page: Page) {
@@ -242,12 +254,14 @@ test.describe("home page hero", () => {
         .toEqual({ belowHeader: true, aboveFloor: true });
     }
     await expect(search(page)).toBeVisible();
+    // The film kept up: it did not give way to the still.
+    await expect(root(page)).not.toHaveAttribute("data-hero-too-slow");
   }
 
   test.describe("film", () => {
     test.skip(
       ({ isMobile }) => isMobile,
-      "Phones get the still hero (HERO.film.phones is false)",
+      "Phones play their own set (film on a phone, below)",
     );
 
     test("opens on the first frame with the headline showing and the card waiting", async ({
@@ -395,73 +409,228 @@ test.describe("home page hero", () => {
     });
   });
 
-  test.describe("film on a tablet", () => {
-    test.skip(
-      ({ isMobile }) => isMobile,
-      "Run once, in the desktop project, at a portrait tablet's size",
-    );
+  /**
+   * The portrait sets open on the wing. The focal path starts at 0.8 of
+   * the frame's width: the wing crosses the slice's lower right, grey over
+   * orange clouds, and the clouds fill its lower left. Share of light,
+   * nearly colourless pixels in each patch (checked by eye on the frames:
+   * about 0.6 to 1 on the wing, under 0.3 on the clouds).
+   */
+  async function expectWing(page: Page) {
+    await page.goto("/");
+    await expect(canvas(page)).toHaveAttribute("data-frame", "0");
+    await expect
+      .poll(() =>
+        canvas(page).evaluate((el) => {
+          const c = el as HTMLCanvasElement;
+          const context = c.getContext("2d")!;
+          const grey = (x: number) => {
+            const { data } = context.getImageData(
+              Math.round(c.width * x),
+              Math.round(c.height * 0.8),
+              Math.round(c.width * 0.2),
+              Math.round(c.height * 0.1),
+            );
+            let count = 0;
+            for (let i = 0; i < data.length; i += 4) {
+              const max = Math.max(data[i], data[i + 1], data[i + 2]);
+              const min = Math.min(data[i], data[i + 1], data[i + 2]);
+              if (max > 80 && (max - min) / max < 0.3) count += 1;
+            }
+            return count / (data.length / 4);
+          };
+          return { wing: grey(0.6) > 0.5, clouds: grey(0.05) < 0.4 };
+        }),
+      )
+      .toEqual({ wing: true, clouds: true });
+  }
+
+  /**
+   * A phone browser's bar coming and going (here the window's height
+   * changing by 60 px) moves neither the held stage nor the film. In a test
+   * browser `svh` follows the window, so this proves the stage's top stays
+   * and the film goes on, not that its height stays.
+   */
+  async function expectSteadyStage(
+    page: Page,
+    size: { width: number; height: number },
+  ) {
+    await page.goto("/");
+    await scrollHero(page, 0.3);
+    await expect.poll(() => frame(page)).toBeGreaterThan(15);
+    const stageTop = () =>
+      page
+        .locator(".hero-stage")
+        .evaluate((el) => el.getBoundingClientRect().top);
+    const held = await stageTop();
+    for (const change of [60, -60]) {
+      await page.setViewportSize({
+        width: size.width,
+        height: size.height + change,
+      });
+      await expect.poll(stageTop).toBe(held);
+      await expect(root(page)).toHaveAttribute("data-hero-film", "");
+    }
+    const before = await frame(page);
+    await scrollHero(page, 0.5);
+    await expect.poll(() => frame(page)).toBeGreaterThan(before);
+  }
+
+  /** Every frame the page asked for, by set. */
+  function frameRequests(page: Page) {
+    const sets: string[] = [];
+    page.on("request", (request) => {
+      const match = /\/hero\/([^/]+)\/frame-/.exec(request.url());
+      if (match) sets.push(match[1]);
+    });
+    return sets;
+  }
+
+  for (const size of [
+    { width: 744, height: 1133 },
+    { width: 820, height: 1180 },
+  ]) {
+    test.describe(`film on an upright tablet, ${size.width} by ${size.height}`, () => {
+      test.skip(
+        ({ isMobile }) => isMobile,
+        "Run once, in the desktop project, at a portrait tablet's size",
+      );
+      test.use({ viewport: size });
+
+      test("the visitor sees the portrait set play, not a still over it", async ({
+        page,
+      }) => {
+        const sets = frameRequests(page);
+        await expectFilmOnTop(page);
+        await expect(root(page)).toHaveAttribute("data-hero-film", "");
+        await expect(canvas(page)).toHaveAttribute(
+          "data-set",
+          "tablet-portrait",
+        );
+        expect(new Set(sets)).toEqual(new Set(["tablet-portrait"]));
+      });
+
+      test("the card holds whole below the header before the stage lets go", async ({
+        page,
+      }) => {
+        await expectCardHolds(page);
+      });
+
+      test("opens on the wing", async ({ page }) => {
+        await expectWing(page);
+      });
+
+      test("a browser bar coming and going moves neither the stage nor the film", async ({
+        page,
+      }) => {
+        await expectSteadyStage(page, size);
+      });
+    });
+  }
+
+  test.describe("film on a tablet turned sideways", () => {
+    test.skip(({ isMobile }) => isMobile, "Desktop project only");
     test.use({ viewport: { width: 820, height: 1180 } });
 
-    test("the visitor sees the film play, not a still over it", async ({
-      page,
-    }) => {
-      await expectFilmOnTop(page);
-      await expect(root(page)).toHaveAttribute("data-hero-film", "");
-    });
-
-    test("the card holds whole below the header before the stage lets go", async ({
-      page,
-    }) => {
-      await expectCardHolds(page);
+    test("changes to the desktop set and goes on playing", async ({ page }) => {
+      await page.goto("/");
+      await scrollHero(page, 0.3);
+      await expect(canvas(page)).toHaveAttribute("data-set", "tablet-portrait");
+      await page.setViewportSize({ width: 1180, height: 820 });
+      await expect(canvas(page)).toHaveAttribute("data-set", "desktop");
+      await scrollHero(page, 0.5);
+      // The desktop set's frame for 0.5 of the way (0.5 / 0.6 of 95).
+      await expect.poll(() => frame(page)).toBeGreaterThan(70);
     });
   });
 
-  test.describe("on a phone", () => {
-    test.skip(({ isMobile }) => !isMobile, "Phones only");
+  for (const size of [
+    { width: 375, height: 667 },
+    { width: 393, height: 852 },
+    { width: 412, height: 915 },
+  ]) {
+    test.describe(`film on a phone, ${size.width} by ${size.height}`, () => {
+      test.skip(({ isMobile }) => !isMobile, "Phones only");
+      test.use({ viewport: size });
 
-    test("it is a still: no canvas, and no frame is fetched", async ({
+      test("plays the phone set, on top, with the scroll", async ({ page }) => {
+        const sets = frameRequests(page);
+        await expectFilmOnTop(page);
+        await expect(canvas(page)).toHaveAttribute("data-set", "phone");
+        const before = await frame(page);
+        await scrollHero(page, 0.5);
+        await expect.poll(() => frame(page)).toBeGreaterThan(before);
+        await scrollHero(page, 0.1);
+        await expect.poll(() => frame(page)).toBeLessThan(before);
+        // Only phone frames: never the desktop or tablet sets.
+        expect(sets.length).toBeGreaterThan(0);
+        expect(new Set(sets)).toEqual(new Set(["phone"]));
+      });
+
+      test("opens on the wing", async ({ page }) => {
+        await expectWing(page);
+      });
+
+      test("the card holds whole below the header and above the tab bar", async ({
+        page,
+      }) => {
+        await expectCardHolds(page);
+        // The headline has given way to the card.
+        await expect(heading(page)).toHaveCSS("opacity", "0");
+      });
+
+      test("a browser bar coming and going moves neither the stage nor the film", async ({
+        page,
+      }) => {
+        await expectSteadyStage(page, size);
+      });
+    });
+  }
+
+  test.describe("on a phone turned sideways, 852 by 393", () => {
+    test.skip(({ isMobile }) => !isMobile, "Phones only");
+    test.use({ viewport: { width: 852, height: 393 } });
+
+    test("it is a still with the card in the page, and no frame is fetched", async ({
       page,
     }) => {
-      const frames: string[] = [];
-      page.on("request", (request) => {
-        if (/\/hero\/.*\/frame-/.test(request.url()))
-          frames.push(request.url());
-      });
+      const sets = frameRequests(page);
       await page.goto("/");
       await page.waitForLoadState("networkidle");
 
       await expectStill(page);
-      // Turned sideways it stays a still.
-      await page.setViewportSize({ width: 915, height: 412 });
-      await page.waitForTimeout(300);
-      await expect(root(page)).not.toHaveAttribute("data-hero-film");
-      await expect(canvas(page)).toBeHidden();
-      expect(frames).toHaveLength(0);
+      // The card is in the page's flow: scrolled to, Search can be tapped.
+      await expectNotCovered(search(page));
+      expect(sets).toHaveLength(0);
     });
+  });
 
-    test.describe("at 393 by 852", () => {
-      test.use({ viewport: { width: 393, height: 852 } });
+  test.describe("a phone turned and turned back", () => {
+    test.skip(({ isMobile }) => !isMobile, "Phones only");
+    test.use({ viewport: { width: 393, height: 852 } });
 
-      test("the card starts on the first screen, below the header", async ({
-        page,
-      }) => {
-        await page.goto("/");
-        const box = await card(page).boundingBox();
-        const header = await page.locator("header.site-header").boundingBox();
-        expect(box!.y).toBeGreaterThanOrEqual(header!.y + header!.height);
-        expect(box!.y).toBeLessThan(852 / 2);
-      });
+    test("goes from the film to the still and back, keeping no frames", async ({
+      page,
+    }) => {
+      const sets = frameRequests(page);
+      await page.goto("/");
+      await expect(canvas(page)).toHaveAttribute("data-set", "phone");
+      await page.waitForLoadState("networkidle");
+      const fetched = sets.length;
 
-      test("Search is on the first screen, above the tab bar", async ({
-        page,
-      }) => {
-        await page.goto("/");
-        const button = await search(page).boundingBox();
-        const bar = await page
-          .getByRole("navigation", { name: "Primary" })
-          .boundingBox();
-        expect(button!.y + button!.height).toBeLessThanOrEqual(bar!.y);
-      });
+      await page.setViewportSize({ width: 852, height: 393 });
+      await expectStill(page);
+      // Its frames were let go: nothing more is fetched while turned.
+      await page.mouse.wheel(0, 300);
+      await page.waitForLoadState("networkidle");
+      expect(sets).toHaveLength(fetched);
+
+      await page.setViewportSize({ width: 393, height: 852 });
+      await expect(root(page)).toHaveAttribute("data-hero-film", "");
+      await scrollHero(page, 0.3);
+      await expect.poll(() => frame(page)).toBeGreaterThan(15);
+      await expect(canvas(page)).toHaveAttribute("data-set", "phone");
+      expect(new Set(sets)).toEqual(new Set(["phone"]));
     });
   });
 
@@ -491,11 +660,13 @@ test.describe("home page hero", () => {
   test("under reduced motion it is a still with the card in place", async ({
     page,
   }) => {
+    const frames = frameRequests(page);
     await page.emulateMedia({ reducedMotion: "reduce" });
     await page.goto("/");
     await page.waitForLoadState("networkidle");
 
     await expectStill(page);
+    expect(frames).toHaveLength(0);
   });
 
   test("on a data-saver connection it is a still, and no frame is fetched", async ({
