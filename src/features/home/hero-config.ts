@@ -36,8 +36,8 @@ const sequence = (
  * below is the stretch of `p` over which something happens.
  */
 export const HERO = {
-  /** Height of the scroll track; the stage is one screen of it. */
-  track: { desktop: "250vh", mobile: "200vh" },
+  /** Height of the scroll track; the stage is about one screen of it. */
+  track: { desktop: "280vh", mobile: "240vh" },
   /** Below this width the mobile sequence and layout are used. */
   mobileBelow: 768,
   /** How far the drawn progress closes on the scroll each frame (0 to 1). */
@@ -68,9 +68,12 @@ export const HERO = {
   },
   timeline: {
     /** The frames play from first to last. */
-    frames: [0, 0.8],
-    /** The charter card rises over the last frame, `cardRise` px. */
-    card: [0.8, 0.98],
+    frames: [0, 0.6],
+    /**
+     * Then the charter card rises over the last frame, `cardRise` px, and
+     * holds, whole and usable, for the last quarter while the stage stays.
+     */
+    card: [0.6, 0.75],
     cardRise: 40,
   },
   text: HOME.hero,

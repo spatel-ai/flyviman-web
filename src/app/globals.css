@@ -294,9 +294,11 @@ body {
  */
 :root {
   /* What a held stage may fill: the screen below the header (1 px hairline)
-     and, on a phone, above the tab bar (h-14 plus the bottom inset). */
+     and, on a phone, above the tab bar (h-14, its 1 px hairline and the
+     bottom inset). */
   --hero-stage-height: calc(
-    100svh - var(--header-height) - 1px - 3.5rem - env(safe-area-inset-bottom)
+    100svh - var(--header-height) - 1px - 3.5rem - 1px -
+      env(safe-area-inset-bottom)
   );
 }
 
@@ -331,6 +333,13 @@ body {
   position: absolute;
   inset: 0;
   z-index: -1;
+}
+
+/* Over the first frame's poster, which shows through until the canvas has
+   drawn a frame (a canvas is transparent until then). */
+.hero-canvas {
+  position: absolute;
+  inset: 0;
 }
 
 .hero-media {
@@ -403,10 +412,14 @@ body {
   }
 
   /* On a phone the card needs the whole stage: the headline gives way to
-     it as it rises (--hero-card runs 0 to 1). It stays in the document. */
+     it as it rises (--hero-card runs 0 to 1). It stays in the document.
+     Without the stage's padding the card (about 730 px) fits between the
+     header and the tab bar of a 412 x 839 phone; on a shorter one its top
+     stays in view and its foot comes up as the track ends. */
   @media (max-width: 47.99rem) {
     :root[data-hero-film] .hero-content {
       justify-content: flex-end;
+      padding-block: 0;
     }
 
     :root[data-hero-film] .hero-headline {
