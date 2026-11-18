@@ -1,0 +1,182 @@
+/* Frozen copy of the previous home page hero, for /compare/home-v1. Nothing here may depend on globals.css hero rules. */
+
+/*
+ * Home page hero (features/home-v1/hero.tsx, level 5): a film played by the
+ * scroll, then the charter booking card over its last frame. By default a
+ * still: the last frame with the headline and the card in place, as tall as
+ * its content. With `data-hero-v1-film` on the root element (set before paint,
+ * only with JavaScript, motion allowed and no data saver) the track grows
+ * tall and its stage is held below the header (above the tab bar on a
+ * phone) while the script plays the frames and raises the card. Only
+ * opacity and transforms change.
+ */
+.hero-v1-track {
+  /* What a held stage may fill: the screen below the header (1 px hairline)
+     and, on a phone, above the tab bar (h-14, its 1 px hairline and the
+     bottom inset). */
+  --hero-v1-stage-height: calc(
+    100svh - var(--header-height) - 1px - 3.5rem - 1px -
+      env(safe-area-inset-bottom)
+  );
+}
+
+@media (min-width: 48rem) {
+  .hero-v1-track {
+    --hero-v1-stage-height: calc(100svh - var(--header-height) - 1px);
+  }
+}
+
+.hero-v1-track {
+  position: relative;
+  /* Air between the hero and the categories. */
+  margin-bottom: 2rem;
+}
+
+@media (min-width: 48rem) {
+  .hero-v1-track {
+    margin-bottom: 3rem;
+  }
+}
+
+.hero-v1-stage {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  color: var(--color-on-photo);
+}
+
+.hero-v1-media,
+.hero-v1-shade {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+}
+
+/* Over the first frame's poster, which shows through until the canvas has
+   drawn a frame (a canvas is transparent until then). */
+.hero-v1-canvas {
+  position: absolute;
+  inset: 0;
+}
+
+.hero-v1-media {
+  overflow: hidden;
+}
+
+.hero-v1-canvas {
+  display: none;
+  width: 100%;
+  height: 100%;
+}
+
+.hero-v1-poster {
+  object-fit: cover;
+  object-position: var(--hero-v1-focal-mobile) 50%;
+}
+
+.hero-v1-poster--first {
+  display: none;
+}
+
+/* Keeps the headline legible over a bright ceiling or sky: two layers of
+   the scrim, as the cards' captions have. */
+.hero-v1-shade {
+  background:
+    linear-gradient(to bottom, var(--color-scrim) 20%, transparent 60%),
+    linear-gradient(to bottom, var(--color-scrim), transparent 40%);
+  pointer-events: none;
+}
+
+.hero-v1-content {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 1.5rem;
+  width: 100%;
+  max-width: var(--container-wide);
+  margin-inline: auto;
+  padding: 1rem 1rem 1.5rem;
+}
+
+@media (min-width: 48rem) {
+  .hero-v1-content {
+    padding: 3rem 1.5rem 2.5rem;
+  }
+}
+
+@media (min-width: 64rem) {
+  .hero-v1-content {
+    padding-inline: 2rem;
+  }
+
+  .hero-v1-poster {
+    object-position: var(--hero-v1-focal) 50%;
+  }
+}
+
+@media screen {
+  :root[data-hero-v1-film] .hero-v1-track {
+    height: var(--hero-v1-track-mobile);
+  }
+
+  :root[data-hero-v1-film] .hero-v1-stage {
+    position: sticky;
+    top: calc(var(--header-height) + 1px);
+    /* Taller than the screen only when the card is (a short phone): the
+       foot then comes into view as the track ends. */
+    min-height: var(--hero-v1-stage-height);
+  }
+
+  /* On a phone the card needs the whole stage: the headline gives way to
+     it as it rises (--hero-v1-card runs 0 to 1). It stays in the document.
+     Without the stage's padding the card (about 730 px) fits between the
+     header and the tab bar of a 412 x 839 phone; on a shorter one its top
+     stays in view and its foot comes up as the track ends. */
+  @media (max-width: 47.99rem) {
+    :root[data-hero-v1-film] .hero-v1-content {
+      justify-content: flex-end;
+      padding-block: 0;
+    }
+
+    :root[data-hero-v1-film] .hero-v1-headline {
+      position: absolute;
+      inset-inline: 1rem;
+      top: 1rem;
+      opacity: calc(1 - var(--hero-v1-card, 0));
+    }
+  }
+
+  :root[data-hero-v1-film] .hero-v1-canvas,
+  :root[data-hero-v1-film] .hero-v1-poster--first {
+    display: block;
+  }
+
+  :root[data-hero-v1-film] .hero-v1-poster--last {
+    display: none;
+  }
+
+  /* Until the scroll brings it in. The script takes over from here. */
+  :root[data-hero-v1-film] .hero-v1-card {
+    opacity: 0;
+    transform: translate3d(0, var(--hero-v1-card-rise), 0);
+    pointer-events: none;
+    will-change: opacity, transform;
+  }
+
+  @media (min-width: 48rem) {
+    :root[data-hero-v1-film] .hero-v1-track {
+      height: var(--hero-v1-track);
+    }
+  }
+}
+
+/* Paper gets the still, whatever the script last set. */
+@media print {
+  .hero-v1-card {
+    opacity: 1 !important;
+    transform: none !important;
+    pointer-events: auto !important;
+  }
+}
