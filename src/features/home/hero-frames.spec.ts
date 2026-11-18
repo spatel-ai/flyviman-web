@@ -7,6 +7,7 @@ import {
   loadFrames,
   loadOrder,
   nearestLoaded,
+  smoothingAfter,
 } from "./hero-frames";
 import { segment } from "./use-scroll-progress";
 
@@ -242,5 +243,34 @@ describe("loadFrames", () => {
     store.destroy();
     expect([...closed].sort((a, b) => a - b)).toEqual([0, 1, 2]);
     expect(store.nearest(0)).toBeNull();
+  });
+});
+
+describe("smoothingAfter", () => {
+  const rule = { slowMs: 8, slowDraws: 3, of: 10 };
+  const run = (level: number, times: number[], draws: number[]) => {
+    for (const ms of draws) level = smoothingAfter(level, times, ms, rule);
+    return level;
+  };
+
+  it("keeps the best filter while draws are quick, or only now and then slow", () => {
+    const times: number[] = [];
+    expect(run(0, times, [2, 3, 20, 2, 2, 2, 2, 2, 2, 2, 30, 2, 2])).toBe(0);
+    expect(times).toHaveLength(10);
+  });
+
+  it("steps down once three of the last ten draws are slow, then counts afresh", () => {
+    const times: number[] = [];
+    expect(run(0, times, [9, 2, 12, 2])).toBe(0);
+    expect(run(0, times, [15])).toBe(1);
+    expect(times).toHaveLength(0);
+    expect(run(1, times, [20, 20])).toBe(1);
+    expect(run(1, times, [20])).toBe(2);
+  });
+
+  it("never goes below the cheapest filter, nor back up", () => {
+    const times: number[] = [];
+    expect(run(2, times, [30, 30, 30, 30])).toBe(2);
+    expect(run(2, times, Array(20).fill(1))).toBe(2);
   });
 });

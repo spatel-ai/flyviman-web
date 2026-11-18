@@ -66,6 +66,15 @@ export const HERO = {
   /** The canvas is never sharper than this many device pixels per pixel. */
   maxPixelRatio: 2,
   /**
+   * When drawing with the best filter is slow (no GPU), the film steps
+   * down to a cheaper one, and never back up during the page view. A draw
+   * is slow when the next frame starts more than `slowMs` after it (1.5
+   * frames at 60 Hz: the draw held the frame up). Two slow draws of the
+   * last ten step down: with a GPU that never happens; without one it
+   * happens within the first few draws, before the film stutters.
+   */
+  slowDraws: { slowMs: 25, slowDraws: 2, of: 10 },
+  /**
    * The film's first and last frames as stills, from the desktop sequence:
    * the first paints before any script and is the phone still's band; the
    * last is the still hero where the film could play but does not (reduced

@@ -230,18 +230,52 @@ export function loadFrames(options: LoadOptions): FrameStore {
   };
 }
 
+/**
+ * The filters a frame is enlarged with, best first. The frame is enlarged
+ * about twice on a Retina screen, so the film starts with the best; where
+ * that is slow (a canvas drawn without a GPU) it steps down.
+ */
+export const SMOOTHING = ["high", "medium", "low"] as const;
+
+export interface SlowDraws {
+  /** A draw that takes longer than this, in ms, counts as slow. */
+  slowMs: number;
+  /** This many slow draws among the last `of` step the filter down. */
+  slowDraws: number;
+  of: number;
+}
+
+/**
+ * Records how long a draw took (`times` keeps the last `rule.of`) and
+ * returns the `SMOOTHING` level to draw with next. It only ever steps
+ * down, one level at a time, and starts counting afresh after each step.
+ */
+export function smoothingAfter(
+  level: number,
+  times: number[],
+  ms: number,
+  rule: SlowDraws,
+) {
+  times.push(ms);
+  if (times.length > rule.of) times.shift();
+  const slow = times.filter((t) => t > rule.slowMs).length;
+  if (slow < rule.slowDraws || level >= SMOOTHING.length - 1) return level;
+  times.length = 0;
+  return level + 1;
+}
+
 /** Draws `rect` of the source frame over the whole canvas. */
 export function drawFrame(
   context: CanvasRenderingContext2D,
   image: Frame,
   rect: SourceRect,
   keepX: number,
+  smoothing: ImageSmoothingQuality = "high",
 ) {
   const { width, height } = context.canvas;
-  // The frame is enlarged about twice on a Retina screen: the browser's
-  // best filter, not its fastest. (Resizing a canvas resets these.)
+  // Set on every draw: resizing a canvas resets them.
   context.imageSmoothingEnabled = true;
-  context.imageSmoothingQuality = "high";
+  context.imageSmoothingQuality = smoothing;
   context.drawImage(
     image,
     rect.sx - keepX,

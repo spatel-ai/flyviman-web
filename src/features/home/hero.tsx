@@ -15,6 +15,8 @@ import { HERO, type HeroSequence } from "./hero-config";
 import {
   coverRect,
   drawFrame,
+  smoothingAfter,
+  SMOOTHING,
   frameAt,
   loadFrames,
   type FrameStore,
@@ -98,6 +100,9 @@ export function Hero() {
     wanted: 0,
     /** How far the card has risen, as last set (0 to 1). */
     shown: -1,
+    /** The SMOOTHING level drawn with, and the last draws' times (ms). */
+    smoothing: 0,
+    drawTimes: [] as number[],
     drawn: -1,
     stale: false,
   });
@@ -138,7 +143,25 @@ export function Hero() {
     }
     if (!source || !hit) return;
     if (hit.index === state.drawn && !state.stale) return;
-    drawFrame(context, hit.image, state.rect, source.keep.x);
+    const start = performance.now();
+    drawFrame(
+      context,
+      hit.image,
+      state.rect,
+      source.keep.x,
+      SMOOTHING[state.smoothing],
+    );
+    // Timed to the next frame's start, not around drawImage: the browser
+    // paints the canvas later, so the cost of a slow filter shows as a
+    // late frame, not a slow call.
+    requestAnimationFrame((next) => {
+      state.smoothing = smoothingAfter(
+        state.smoothing,
+        state.drawTimes,
+        next - start,
+        HERO.slowDraws,
+      );
+    });
     state.drawn = hit.index;
     state.stale = source !== state.store;
     context.canvas.dataset.frame = String(hit.index);
