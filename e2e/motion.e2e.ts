@@ -345,12 +345,13 @@ test.describe("home page hero", () => {
         }, LAST_FRAME);
 
       // A mouse wheel's notches, down through the film and back up. After
-      // each one the film has had time to settle (HERO.settleMs is 150).
+      // each one the film has had time to settle (HERO.settleMs is 150; the
+      // old 0.12 lerp is about 4 frames behind at this point).
       const lags: number[] = [];
       for (const direction of [1, -1]) {
         for (let notch = 0; notch < 12; notch += 1) {
           await page.mouse.wheel(0, direction * 120);
-          await page.waitForTimeout(350);
+          await page.waitForTimeout(200);
           lags.push(await lag());
         }
       }
