@@ -142,7 +142,7 @@ export function SearchWidget({
       <div
         role="tablist"
         aria-label="What would you like to fly?"
-        className="-mx-1 flex gap-1 overflow-x-auto pb-1"
+        className="-mx-1 flex gap-1 overflow-x-auto pb-1 max-lg:pe-8 max-lg:[mask-image:linear-gradient(to_right,black_calc(100%-1.5rem),transparent)]"
       >
         {SERVICES.map(({ id, label, icon: Icon, soon }) => (
           <button
@@ -325,7 +325,7 @@ export function SearchWidget({
                     <div
                       role="radiogroup"
                       aria-label="Aircraft"
-                      className="-mx-4 flex gap-1.5 overflow-x-auto px-4 [scrollbar-width:none] sm:mx-0 sm:min-w-0 sm:px-0 lg:flex-wrap lg:overflow-visible [&::-webkit-scrollbar]:hidden"
+                      className="-mx-4 flex gap-1.5 overflow-x-auto px-4 [scrollbar-width:none] sm:mx-0 sm:min-w-0 sm:px-0 lg:flex-wrap lg:overflow-visible max-lg:pe-8 max-lg:[mask-image:linear-gradient(to_right,black_calc(100%-1.5rem),transparent)] [&::-webkit-scrollbar]:hidden"
                     >
                       {CHARTER_CATEGORIES.map((option) => (
                         <button

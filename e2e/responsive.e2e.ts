@@ -51,6 +51,23 @@ test("Search is in view without scrolling on a 375x812 phone", async ({
   expect(box!.y + box!.height).toBeLessThanOrEqual(812 - TAB_BAR_HEIGHT);
 });
 
+for (const path of ["/", "/search"]) {
+  test(`Search clears the tab bar on a 375x667 phone, ${path}`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 375, height: 667 });
+    await page.goto(path);
+    const search = page
+      .locator(path === "/" ? ".hero-card" : "main")
+      .getByRole("button", { name: "Search", exact: true })
+      .first();
+    await expect(search).toBeVisible();
+    const box = await search.boundingBox();
+    expect(box).not.toBeNull();
+    expect(box!.y + box!.height).toBeLessThanOrEqual(667 - TAB_BAR_HEIGHT);
+  });
+}
+
 test("on the landing page Search clears the tab bar once the card is in view", async ({
   page,
 }) => {

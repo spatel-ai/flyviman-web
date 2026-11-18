@@ -14,7 +14,9 @@ export default defineConfig({
   testMatch: "**/*.e2e.ts",
   // Screenshots are specific to the operating system that made them. CI
   // sets SKIP_VISUAL until it has its own Linux baselines (D-094).
-  testIgnore: process.env.SKIP_VISUAL ? ["**/visual.e2e.ts"] : [],
+  testIgnore: process.env.SKIP_VISUAL
+    ? ["**/visual.e2e.ts", "**/screen-matrix.e2e.ts"]
+    : [],
   fullyParallel: true,
   forbidOnly: Boolean(process.env.CI),
   retries: process.env.CI ? 1 : 0,

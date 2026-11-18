@@ -54,7 +54,7 @@ export function SearchLanding() {
   return (
     <>
       <section aria-labelledby="search-hero" className="relative">
-        <div className="relative h-96 overflow-hidden sm:h-112 md:h-136">
+        <div className="search-hero relative h-96 overflow-hidden sm:h-112 md:h-136">
           <Image
             src={IMAGES.hero.src}
             alt={IMAGES.hero.alt}
@@ -64,32 +64,32 @@ export function SearchLanding() {
             sizes="100vw"
             className="object-cover"
           />
-          <div className="absolute inset-0 bg-linear-to-b from-scrim/40 via-scrim/20 to-scrim" />
+          <div className="absolute inset-0 bg-linear-to-b from-scrim/50 via-scrim/40 to-scrim" />
           {/* The photo fades into the page behind the card's top (the card
               overlaps by -mt-28), instead of ending in a hard line. Kept
               below the hero text, which stays on the darkened photo. */}
           <div
             aria-hidden="true"
-            className="absolute inset-x-0 bottom-0 h-28 bg-linear-to-b from-transparent to-background"
+            className="absolute inset-x-0 bottom-0 h-10 bg-linear-to-b from-transparent to-background sm:h-28"
           />
-          <div className="relative mx-auto flex h-full w-full max-w-wide flex-col justify-center px-4 pb-24 md:px-6">
-            <p className="text-overline text-on-photo/80 uppercase">
+          <div className="relative mx-auto flex h-full w-full max-w-wide flex-col justify-center px-4 pb-24 md:px-6 search-hero-text">
+            <p className="search-hero-extra text-overline text-on-photo/80 uppercase">
               {hero.overline}
             </p>
             <h1
               id="search-hero"
-              className="mt-3 max-w-3xl text-display text-on-photo"
+              className="mt-3 max-w-3xl text-h1 text-on-photo sm:text-display"
             >
               {hero.title}
             </h1>
-            <p className="mt-4 max-w-reading text-body-lg text-on-photo/90">
+            <p className="search-hero-extra mt-4 max-w-reading text-body text-on-photo sm:text-body-lg">
               {hero.lead}
             </p>
           </div>
         </div>
         <div
           ref={widget}
-          className="relative mx-auto -mt-28 w-full max-w-wide scroll-mt-24 px-4 md:px-6"
+          className="search-hero-card relative mx-auto -mt-28 w-full max-w-wide scroll-mt-24 px-4 md:px-6"
         >
           <SearchWidget key={version} initial={initial} />
         </div>

@@ -485,6 +485,20 @@ body {
   }
 }
 
+/* Short phones (an iPhone SE): a shorter band and a smaller headline, so
+   Search stays above the tab bar on the first screen. */
+@media (max-width: 743.98px) and (max-height: 700px) {
+  :root:not([data-hero-film]) .hero-stage {
+    --hero-band: 11rem;
+  }
+
+  :root:not([data-hero-film]) .hero-headline {
+    font-size: var(--text-body-lg);
+    line-height: var(--text-body-lg--line-height);
+    letter-spacing: var(--text-body-lg--letter-spacing);
+  }
+}
+
 /* Paper gets the still, whatever the script last set. */
 @media print {
   .hero-card {
@@ -626,5 +640,38 @@ body {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+  }
+}
+
+/*
+ * Search page hero on phones (features/search-landing): shorter, with the
+ * card starting on the first screen. On a short phone (an iPhone SE) the
+ * overline and lead give way, so Search stays above the tab bar.
+ */
+@media (max-width: 639.98px) {
+  .search-hero {
+    height: 15rem;
+  }
+
+  .search-hero-text {
+    padding-bottom: 3.5rem;
+  }
+
+  .search-hero-card {
+    margin-top: -2.5rem;
+  }
+}
+
+@media (max-width: 639.98px) and (max-height: 700px) {
+  .search-hero {
+    height: 12rem;
+  }
+
+  .search-hero-text {
+    padding-bottom: 2.5rem;
+  }
+
+  .search-hero-extra {
+    display: none;
   }
 }
