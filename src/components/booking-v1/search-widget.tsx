@@ -31,9 +31,9 @@ import { applyApiError } from "@/lib/api/messages";
 import { queryKeys } from "@/lib/api/query-keys";
 import type { Schemas } from "@/lib/api/types";
 import { cn } from "@/lib/utils";
-import { AirportPicker } from "@/components/booking/airport-picker";
-import { FareCalendar } from "@/components/booking/fare-calendar";
-import { TravellerPicker } from "@/components/booking/traveller-picker";
+import { AirportPicker } from "./airport-picker";
+import { FareCalendar } from "./fare-calendar";
+import { TravellerPicker } from "./traveller-picker";
 
 type SearchResponse = Schemas["SearchResponseDto"];
 
