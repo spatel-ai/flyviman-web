@@ -135,7 +135,7 @@ export function SearchWidget({
     <div
       className={cn(
         "rounded-xl bg-surface-raised shadow-lg",
-        "sm:max-lg:mx-auto sm:max-lg:max-w-180",
+        "w-full sm:max-lg:mx-auto sm:max-lg:max-w-180",
         compact ? "p-4" : "p-4 lg:p-6",
       )}
     >
