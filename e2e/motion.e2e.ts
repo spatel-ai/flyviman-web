@@ -452,10 +452,7 @@ test.describe("home page hero", () => {
         expect(box!.y).toBeLessThan(852 / 2);
       });
 
-      // The card is being made shorter in parallel (M12 CR-2c); until that
-      // merges, Search sits below the first screen. The lead re-enables
-      // this after merging both.
-      test.fixme("Search is on the first screen, above the tab bar", async ({
+      test("Search is on the first screen, above the tab bar", async ({
         page,
       }) => {
         await page.goto("/");
