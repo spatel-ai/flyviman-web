@@ -135,7 +135,8 @@ export function SearchWidget({
     <div
       className={cn(
         "rounded-xl bg-surface-raised shadow-lg",
-        compact ? "p-4" : "p-4 md:p-6",
+        "sm:max-lg:mx-auto sm:max-lg:max-w-180",
+        compact ? "p-4" : "p-4 lg:p-6",
       )}
     >
       <div
@@ -227,50 +228,54 @@ export function SearchWidget({
             className="flex flex-col gap-4"
           >
             <FormAlert message={formError} />
-            <div className="grid gap-2 md:grid-cols-[1fr_auto_1fr_1fr_1fr] md:items-stretch [&>*]:min-w-0">
-              <Controller
-                control={control}
-                name="originId"
-                render={({ field }) => (
-                  <AirportPicker
-                    label="From"
-                    value={field.value}
-                    onChange={field.onChange}
-                    error={errors.originId?.message}
-                  />
-                )}
-              />
-              <div className="flex items-center justify-center">
-                <button
-                  type="button"
-                  aria-label="Swap from and to"
-                  onClick={() => {
-                    const { originId: from, destinationId: to } = getValues();
-                    setValue("originId", to);
-                    setValue("destinationId", from);
-                  }}
-                  // 44 px everywhere (touch target); the hairline keeps it
-                  // visible on the card, which shares its surface on desktop.
-                  className="relative z-10 flex size-11 items-center justify-center rounded-pill border border-foreground/12 bg-surface text-accent shadow-sm transition-colors duration-150 ease-standard hover:bg-border/60 md:-mx-5 md:bg-surface-raised"
-                >
-                  <ArrowLeftRight
-                    aria-hidden="true"
-                    className="size-4 max-md:rotate-90"
-                  />
-                </button>
+            <div className="grid grid-cols-2 gap-2 lg:grid-cols-[1fr_auto_1fr_1fr_1fr] lg:items-stretch [&>*]:min-w-0">
+              {/* Phones: From and To share one box, the swap on its right
+                  edge. 640 to 1023: their own row. 1024 up: part of the row. */}
+              <div className="relative col-span-2 grid overflow-hidden rounded-md bg-surface max-sm:[&>*:last-child_[data-field-tile]]:border-t max-sm:[&>*:last-child_[data-field-tile]]:border-border sm:grid-cols-2 sm:items-stretch sm:gap-2 sm:overflow-visible sm:bg-transparent lg:contents max-sm:[&_[data-field-tile]]:rounded-none max-sm:[&_[data-field-tile]]:bg-transparent max-sm:[&_[data-field-tile]]:pr-16 [&>*]:min-w-0">
+                <Controller
+                  control={control}
+                  name="originId"
+                  render={({ field }) => (
+                    <AirportPicker
+                      label="From"
+                      value={field.value}
+                      onChange={field.onChange}
+                      error={errors.originId?.message}
+                    />
+                  )}
+                />
+                <div className="absolute top-1/2 right-3 z-10 flex -translate-y-1/2 items-center justify-center sm:right-auto sm:left-1/2 sm:-translate-x-1/2 lg:static lg:translate-x-0 lg:translate-y-0">
+                  <button
+                    type="button"
+                    aria-label="Swap from and to"
+                    onClick={() => {
+                      const { originId: from, destinationId: to } = getValues();
+                      setValue("originId", to);
+                      setValue("destinationId", from);
+                    }}
+                    // 44 px everywhere (touch target); the hairline keeps it
+                    // visible on the card, which shares its surface on desktop.
+                    className="relative z-10 flex size-11 items-center justify-center rounded-pill border border-foreground/12 bg-surface text-accent shadow-sm transition-colors duration-150 ease-standard hover:bg-border/60 lg:-mx-5 sm:bg-surface-raised"
+                  >
+                    <ArrowLeftRight
+                      aria-hidden="true"
+                      className="size-4 rotate-90 sm:rotate-0"
+                    />
+                  </button>
+                </div>
+                <Controller
+                  control={control}
+                  name="destinationId"
+                  render={({ field }) => (
+                    <AirportPicker
+                      label="To"
+                      value={field.value}
+                      onChange={field.onChange}
+                      error={errors.destinationId?.message}
+                    />
+                  )}
+                />
               </div>
-              <Controller
-                control={control}
-                name="destinationId"
-                render={({ field }) => (
-                  <AirportPicker
-                    label="To"
-                    value={field.value}
-                    onChange={field.onChange}
-                    error={errors.destinationId?.message}
-                  />
-                )}
-              />
               <Controller
                 control={control}
                 name="date"
@@ -311,7 +316,7 @@ export function SearchWidget({
               />
             </div>
 
-            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
               {kind === "charter" ? (
                 <Controller
                   control={control}
@@ -320,7 +325,7 @@ export function SearchWidget({
                     <div
                       role="radiogroup"
                       aria-label="Aircraft"
-                      className="flex flex-wrap gap-1.5"
+                      className="-mx-4 flex gap-1.5 overflow-x-auto px-4 [scrollbar-width:none] sm:mx-0 sm:min-w-0 sm:px-0 lg:flex-wrap lg:overflow-visible [&::-webkit-scrollbar]:hidden"
                     >
                       {CHARTER_CATEGORIES.map((option) => (
                         <button
@@ -330,7 +335,7 @@ export function SearchWidget({
                           aria-checked={field.value === option.value}
                           onClick={() => field.onChange(option.value)}
                           className={cn(
-                            "h-9 rounded-pill border px-3 text-body-sm transition-colors duration-150 ease-standard",
+                            "h-11 shrink-0 rounded-pill border px-3 text-body-sm transition-colors sm:h-9 duration-150 ease-standard",
                             field.value === option.value
                               ? "border-accent bg-accent/10 text-accent"
                               : "border-border text-muted hover:text-foreground",
@@ -349,7 +354,7 @@ export function SearchWidget({
                 type="submit"
                 size="lg"
                 loading={isSubmitting}
-                className="md:min-w-48"
+                className="w-full sm:w-auto sm:min-w-48"
               >
                 <Search aria-hidden="true" className="size-4" />
                 Search

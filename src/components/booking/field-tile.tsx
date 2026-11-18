@@ -1,5 +1,5 @@
 import type { LucideIcon } from "lucide-react";
-import { forwardRef, type ButtonHTMLAttributes } from "react";
+import { forwardRef, useId, type ButtonHTMLAttributes } from "react";
 import { cn } from "@/lib/utils";
 
 export interface FieldTileProps extends ButtonHTMLAttributes<HTMLButtonElement> {
@@ -23,14 +23,17 @@ export const FieldTile = forwardRef<HTMLButtonElement, FieldTileProps>(
     { label, value, placeholder, hint, icon: Icon, error, className, ...props },
     ref,
   ) {
+    const hintId = useId();
     return (
       <div className="flex min-w-0 flex-col gap-1">
         <button
           ref={ref}
           type="button"
+          data-field-tile=""
           aria-label={`${label}: ${value ?? placeholder}`}
+          aria-describedby={hint ? hintId : undefined}
           className={cn(
-            "flex h-full min-h-24 w-full min-w-0 flex-col items-start gap-1 rounded-md bg-surface px-4 py-3 text-left",
+            "flex h-full min-h-14 w-full min-w-0 flex-col items-start gap-0.5 rounded-md bg-surface px-4 py-2 sm:min-h-24 sm:gap-1 sm:py-3 text-left",
             "transition duration-150 ease-standard hover:bg-border/40 active:scale-99 motion-reduce:active:scale-100",
             "outline-none focus-visible:ring-2 focus-visible:ring-accent",
             error && "ring-1 ring-danger",
@@ -44,14 +47,18 @@ export const FieldTile = forwardRef<HTMLButtonElement, FieldTileProps>(
           </span>
           <span
             className={cn(
-              "w-full truncate text-h3",
+              "w-full truncate text-title sm:text-h3",
               value ? "text-foreground" : "text-subtle",
             )}
           >
             {value ?? placeholder}
           </span>
           {hint ? (
-            <span className="w-full truncate text-body-sm text-muted">
+            // Phones: hidden, still the field's accessible description.
+            <span
+              id={hintId}
+              className="w-full truncate text-body-sm text-muted max-sm:sr-only"
+            >
               {hint}
             </span>
           ) : null}
