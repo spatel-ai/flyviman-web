@@ -179,11 +179,11 @@ test.describe("home page hero", () => {
 
     await expect(root(page)).toHaveAttribute("data-hero-film", "");
     await expect(canvas(page)).toHaveAttribute("data-frame", "0");
-    // 250vh on a desktop, 200vh on a phone.
+    // 280vh on a desktop, 240vh on a phone.
     const screens = await track(page).evaluate(
       (el) => (el as HTMLElement).offsetHeight / window.innerHeight,
     );
-    expect(screens).toBeCloseTo(phone(page) ? 2 : 2.5, 1);
+    expect(screens).toBeCloseTo(phone(page) ? 2.4 : 2.8, 1);
 
     await expect(heading(page)).toBeVisible();
     await expect(heading(page)).toHaveAccessibleName(
@@ -224,6 +224,74 @@ test.describe("home page hero", () => {
     await scrollHero(page, 0);
     await expect(canvas(page)).toHaveAttribute("data-frame", "0");
     await expect(card(page)).toHaveCSS("opacity", "0");
+  });
+
+  test("the visitor sees the film play, not a still over it", async ({
+    page,
+  }) => {
+    await page.goto("/");
+    await scrollHero(page, 0.3);
+    await expect
+      .poll(async () => Number(await canvas(page).getAttribute("data-frame")))
+      .toBeGreaterThan(15);
+    // What paints at the stage's centre, topmost first: the canvas must be
+    // above both posters (the headline and the card may be above it).
+    await expect
+      .poll(() =>
+        page.evaluate(() => {
+          const box = document
+            .querySelector(".hero-stage")!
+            .getBoundingClientRect();
+          const stack = document.elementsFromPoint(
+            box.left + box.width / 2,
+            box.top + box.height / 2,
+          );
+          return stack
+            .filter((el) => el.closest(".hero-media"))
+            .map((el) =>
+              el instanceof HTMLCanvasElement ? "canvas" : "poster",
+            )[0];
+        }),
+      )
+      .toBe("canvas");
+  });
+
+  test("the card holds whole between the header and the tab bar before the stage lets go", async ({
+    page,
+  }) => {
+    await page.goto("/");
+    await expect(canvas(page)).toHaveAttribute("data-frame", "0");
+
+    for (const fraction of [0.8, 0.95]) {
+      await scrollHero(page, fraction);
+      await expect(card(page)).toHaveCSS("opacity", "1");
+      await expect(card(page)).toHaveCSS("pointer-events", "auto");
+      await expect
+        .poll(() =>
+          page.evaluate(() => {
+            const box = document
+              .querySelector(".hero-card")!
+              .getBoundingClientRect();
+            const header = document
+              .querySelector("header.site-header")!
+              .getBoundingClientRect().bottom;
+            // The tab bar is shown on phones only.
+            const bar = document.querySelector<HTMLElement>(
+              'nav[aria-label="Primary"]',
+            );
+            const floor =
+              bar && getComputedStyle(bar).display !== "none"
+                ? bar.getBoundingClientRect().top
+                : window.innerHeight;
+            return {
+              belowHeader: box.top >= header - 0.5,
+              aboveFloor: box.bottom <= floor + 0.5,
+            };
+          }),
+        )
+        .toEqual({ belowHeader: true, aboveFloor: true });
+    }
+    await expect(search(page)).toBeVisible();
   });
 
   test("the card is a real form once the film ends", async ({ page }) => {
