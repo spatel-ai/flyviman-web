@@ -149,6 +149,19 @@ test.describe("customer home, photography and footer", () => {
     ).toHaveAttribute("href", "mailto:info@flyviman.com");
   });
 
+  test("the footer says it is powered by Technotribes", async ({ page }) => {
+    await page.goto("/");
+    const footer = page.getByRole("contentinfo");
+    const credit = footer.getByRole("link", { name: /^Technotribes/ });
+
+    await credit.scrollIntoViewIfNeeded();
+    await expect(credit).toBeVisible();
+    await expect(credit).toHaveAttribute("href", "https://technotribes.ai");
+    await expect(credit).toHaveAttribute("target", "_blank");
+    await expect(credit).toHaveAttribute("rel", /noopener/);
+    await expect(footer).toContainText("Powered by Technotribes");
+  });
+
   test("the footer leads to the policies and the image credits", async ({
     page,
   }) => {
