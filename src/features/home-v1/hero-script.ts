@@ -6,6 +6,7 @@ export const REDUCED_MOTION = "(prefers-reduced-motion: reduce)";
 // the still hero. If the page's scripts never
 // arrive, the film is given up after a while rather than left stuck, and
 // stays given up for this view of the page: starting it later would push
-// everything below down by two or three screens. The Content-Security-Policy
-// allows it by its hash, computed from this constant (lib/csp.ts).
+// everything below down by two or three screens.
+// Listed in INLINE_SCRIPTS (lib/inline-scripts.ts) for a nonce-based
+// Content-Security-Policy.
 export const HERO_V1_SCRIPT = `(function(){try{var r=document.documentElement,c=navigator.connection;if(matchMedia(${JSON.stringify(REDUCED_MOTION)}).matches||(c&&c.saveData))return;r.setAttribute("data-hero-v1-film","");setTimeout(function(){if(!r.hasAttribute("data-hero-v1-live")){r.removeAttribute("data-hero-v1-film");r.setAttribute("data-hero-v1-gave-up","")}},8000)}catch(e){}})()`;

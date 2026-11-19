@@ -2,9 +2,9 @@ import { expect, test, type Page } from "@playwright/test";
 import { signIn } from "./support/api";
 
 /**
- * The Content-Security-Policy (src/lib/csp.ts, set by src/proxy.ts) must not
- * block anything the site itself runs: the framework's scripts, the inline
- * theme and hero scripts, GSAP's dynamic import and calls to the API.
+ * The Content-Security-Policy (src/lib/csp.ts, set in next.config.ts) must
+ * not block anything the site itself runs: the framework's scripts, the
+ * inline theme and hero scripts, GSAP's dynamic import and calls to the API.
  */
 
 declare global {
@@ -42,20 +42,24 @@ test.beforeEach(async ({ page }) => {
   });
 });
 
-test("every page response carries an enforced policy with a fresh nonce", async ({
+test("every page carries the enforced policy; Razorpay only on payment", async ({
   request,
 }) => {
-  const nonce = async () => {
-    const response = await request.get("/contact");
-    const policy = response.headers()["content-security-policy"] ?? "";
-    expect(policy).toContain("'strict-dynamic'");
-    expect(policy).toContain("frame-ancestors 'none'");
-    expect(policy).not.toContain("razorpay");
-    return /'nonce-([^']+)'/.exec(policy)?.[1];
-  };
-  const first = await nonce();
-  expect(first).toBeTruthy();
-  expect(await nonce()).not.toBe(first);
+  const policy = async (path: string) =>
+    (await request.get(path, { maxRedirects: 0 })).headers()[
+      "content-security-policy"
+    ] ?? "";
+  for (const path of ["/", "/contact", "/login", "/register"]) {
+    const value = await policy(path);
+    expect(value, path).toContain("script-src 'self' 'unsafe-inline'");
+    expect(value, path).toContain("frame-ancestors 'none'");
+    expect(value, path).not.toContain("unsafe-eval");
+    expect(value, path).not.toContain("razorpay");
+  }
+  // Signed out, the payment page redirects to sign-in, with the policy.
+  expect(await policy("/book/FV-1/payment")).toContain(
+    "https://checkout.razorpay.com",
+  );
 });
 
 test("the home page and its hero film run with no violations", async ({
@@ -121,18 +125,16 @@ test("the theme script sets a stored theme before any bundle runs", async ({
   expect(await violations(page, errors)).toEqual([]);
 });
 
-test("injected markup cannot run script, and is reported", async ({ page }) => {
+test("a script from another origin is blocked and reported", async ({
+  page,
+}) => {
   await page.goto("/contact");
-  // The classic injection: markup with an inline event handler.
   await page.evaluate(() => {
-    const box = document.createElement("div");
-    box.innerHTML = `<img src="data:," onerror="window.__injected = true">`;
-    document.body.append(box);
+    const script = document.createElement("script");
+    script.src = "https://example.com/injected.js";
+    document.body.append(script);
   });
   await expect
-    .poll(() => page.evaluate(() => window.__cspViolations.length))
-    .toBeGreaterThan(0);
-  expect(
-    await page.evaluate(() => (window as { __injected?: boolean }).__injected),
-  ).toBeUndefined();
+    .poll(() => page.evaluate(() => window.__cspViolations.join("\n")))
+    .toMatch(/^script-src\S* blocked https:\/\/example\.com\/injected\.js$/);
 });

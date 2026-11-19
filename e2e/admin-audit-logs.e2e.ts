@@ -54,14 +54,10 @@ test("finance reads a pricing change; operations sees it as restricted", async (
 
   try {
     // Filters live in the URL; the newest record for this rule is listed.
-    // Role locators: for a moment after load React can hold the streamed
-    // server copy of the list in a hidden container beside its own render.
     await page.goto(
       `/admin/audit-logs?entityType=PricingRule&entityId=${ruleId}&action=pricing_rule.create`,
     );
-    await expect(page.getByRole("textbox", { name: "Entity ID" })).toHaveValue(
-      ruleId,
-    );
+    await expect(page.getByLabel("Entity ID")).toHaveValue(ruleId);
     await expect(page.getByText("pricing_rule.create").first()).toBeVisible();
     await page
       .getByRole("button", { name: /View pricing_rule.create/ })
@@ -77,7 +73,7 @@ test("finance reads a pricing change; operations sees it as restricted", async (
     await expect(sheet).toHaveCount(0);
 
     // A filter that matches nothing says so, and Clear returns to the list.
-    await page.getByRole("textbox", { name: "Action" }).fill("no.such.action");
+    await page.getByLabel("Action").fill("no.such.action");
     await page.getByRole("button", { name: "Apply filters" }).click();
     await expect(page).toHaveURL(/action=no\.such\.action/);
     await expect(
