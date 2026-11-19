@@ -1467,6 +1467,80 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/search/scheduled": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Search scheduled flights across airline suppliers
+     * @description Suppliers are called in parallel, each with a timeout. One that times out or fails is listed in `providers` and `partial` is true; the others' fares are still returned.
+     */
+    post: operations["ScheduledSearchController_search"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/search/scheduled/revalidate": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Recheck the fare and seats of a selected flight
+     * @description A changed fare is returned, never hidden. 503 `SEARCH_PROVIDER_UNAVAILABLE` when the airline does not answer.
+     */
+    post: operations["ScheduledSearchController_revalidate"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/search/scheduled/{searchId}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** A stored scheduled search and its results (404 once expired) */
+    get: operations["ScheduledSearchController_get"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/search/scheduled/{searchId}/offers/{offerId}/fare-rules": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Fare rules of one offer: baggage, cancellation and changes */
+    get: operations["ScheduledSearchController_fareRules"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/v1/search/charter": {
     parameters: {
       query?: never;
@@ -2993,6 +3067,168 @@ export interface components {
       /** Format: uuid */
       aircraftId: string | null;
       registration: string | null;
+    };
+    ScheduledPassengersDto: {
+      /** @example 1 */
+      adults: number;
+      /**
+       * @description Seated. Adults and children together at most 9.
+       * @example 0
+       */
+      children: number;
+      /**
+       * @description On a lap: at most one per adult.
+       * @example 0
+       */
+      infants: number;
+    };
+    /** @enum {string} */
+    ScheduledCabin: "ECONOMY" | "PREMIUM_ECONOMY" | "BUSINESS";
+    ScheduledSearchDto: {
+      /**
+       * Format: uuid
+       * @description An active airport with an IATA code (`GET /locations`).
+       */
+      originId: string;
+      /** Format: uuid */
+      destinationId: string;
+      /**
+       * Format: date
+       * @description Local date at the origin, `YYYY-MM-DD`: today there or later, within a year.
+       * @example 2026-12-05
+       */
+      departureDate: string;
+      /**
+       * Format: date
+       * @description For a return trip: local date at the destination, on or after `departureDate`, within a year. Results then hold both directions.
+       * @example 2026-12-08
+       */
+      returnDate?: string;
+      passengers: components["schemas"]["ScheduledPassengersDto"];
+      cabin: components["schemas"]["ScheduledCabin"];
+    };
+    /** @enum {string} */
+    ScheduledProviderStatus: "OK" | "TIMEOUT" | "ERROR";
+    ScheduledProviderStatusDto: {
+      /** @example mock */
+      name: string;
+      status: components["schemas"]["ScheduledProviderStatus"];
+    };
+    ScheduledCarrierDto: {
+      /** @example 6E */
+      code: string;
+      /** @example IndiGo */
+      name: string;
+    };
+    ScheduledLocationDto: {
+      /** Format: uuid */
+      id: string;
+      name: string;
+      iata: string | null;
+      icao: string | null;
+      /** @example Asia/Kolkata */
+      timeZone: string;
+    };
+    ScheduledSegmentDto: {
+      from: components["schemas"]["ScheduledLocationDto"];
+      to: components["schemas"]["ScheduledLocationDto"];
+      /**
+       * @description Local time at `from`, ISO 8601 with its offset.
+       * @example 2026-12-05T06:15:00+05:30
+       */
+      departAt: string;
+      /**
+       * @description Local time at `to`, ISO 8601 with its offset.
+       * @example 2026-12-05T08:25:00+05:30
+       */
+      arriveAt: string;
+      /** @example 6E 2131 */
+      flightNumber: string;
+      durationMinutes: number;
+    };
+    /** @enum {string} */
+    ScheduledDirection: "OUTBOUND" | "RETURN";
+    ScheduledFareDto: {
+      /** @description Paise, the total for all travellers: adults, children and infants together. */
+      amountMinor: number;
+      /** @enum {string} */
+      currency: "INR";
+      /**
+       * @description The supplier's price now; rechecked by revalidation before payment.
+       * @enum {string}
+       */
+      priceType: "LIVE_FARE";
+      /** @example SAVER */
+      fareFamily: string;
+    };
+    ScheduledBaggageDto: {
+      cabinKg: number;
+      checkedKg: number;
+    };
+    ScheduledOfferDto: {
+      /** Format: uuid */
+      offerId: string;
+      carrier: components["schemas"]["ScheduledCarrierDto"];
+      segments: components["schemas"]["ScheduledSegmentDto"][];
+      direction: components["schemas"]["ScheduledDirection"];
+      stops: number;
+      fare: components["schemas"]["ScheduledFareDto"];
+      baggage: components["schemas"]["ScheduledBaggageDto"];
+      refundable: boolean;
+      /**
+       * Format: date-time
+       * @description The fare holds until then. Set at search time, when the search itself expires; a revalidation may store a new fare and validity, never past that.
+       */
+      validUntil: string;
+    };
+    ScheduledSearchResponseDto: {
+      /** Format: uuid */
+      searchId: string;
+      /** @description True when a supplier timed out or failed: the results hold only the others. */
+      partial: boolean;
+      providers: components["schemas"]["ScheduledProviderStatusDto"][];
+      /** @description Outbound first, then return; each by departure, then fare. Only flights with seats for the whole party; an offer found sold out at revalidation is left out. */
+      results: components["schemas"]["ScheduledOfferDto"][];
+    };
+    RevalidateScheduledDto: {
+      /** Format: uuid */
+      searchId: string;
+      /** Format: uuid */
+      offerId: string;
+    };
+    /** @enum {string} */
+    ScheduledRevalidationStatus: "AVAILABLE" | "PRICE_CHANGED" | "SOLD_OUT";
+    ScheduledRevalidationDto: {
+      status: components["schemas"]["ScheduledRevalidationStatus"];
+      /** @description The fare now. Absent when sold out. */
+      fare?: components["schemas"]["ScheduledFareDto"];
+      /**
+       * Format: date-time
+       * @description How long the rechecked fare holds, never past the search's expiry. Absent when sold out.
+       */
+      validUntil?: string;
+    };
+    ScheduledFareRuleDto: {
+      /** @example Cancellation */
+      title: string;
+      text: string;
+    };
+    ScheduledCancellationDto: {
+      refundable: boolean;
+      /** @description Paise per passenger. Absent when the fare is not refundable. */
+      feeMinor?: number;
+    };
+    ScheduledChangeDto: {
+      allowed: boolean;
+      /** @description Paise per passenger, plus any fare difference. Absent when changes are not allowed. */
+      feeMinor?: number;
+    };
+    ScheduledFareRulesDto: {
+      /** Format: uuid */
+      offerId: string;
+      rules: components["schemas"]["ScheduledFareRuleDto"][];
+      cancellation: components["schemas"]["ScheduledCancellationDto"];
+      change: components["schemas"]["ScheduledChangeDto"];
     };
     /** @enum {string} */
     SearchTripType: "ONE_WAY" | "ROUND_TRIP";
@@ -5894,6 +6130,95 @@ export interface operations {
         };
         content: {
           "application/json": components["schemas"]["ExpiringDocumentDto"][];
+        };
+      };
+    };
+  };
+  ScheduledSearchController_search: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["ScheduledSearchDto"];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ScheduledSearchResponseDto"];
+        };
+      };
+    };
+  };
+  ScheduledSearchController_revalidate: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["RevalidateScheduledDto"];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ScheduledRevalidationDto"];
+        };
+      };
+    };
+  };
+  ScheduledSearchController_get: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        searchId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ScheduledSearchResponseDto"];
+        };
+      };
+    };
+  };
+  ScheduledSearchController_fareRules: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        searchId: string;
+        offerId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ScheduledFareRulesDto"];
         };
       };
     };
