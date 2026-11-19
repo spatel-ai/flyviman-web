@@ -66,7 +66,7 @@ src/
     ui/                    design-system primitives (Button; buttonClasses in button-classes.ts, Input, Select, Checkbox, Card, Badge,
                            Dialog and ConfirmDialog, Sheet, Tabs, Toast, Skeleton, Table and Pagination, Textarea)
     shared/                cross-feature pieces (PriceLabel, StatusBadge, ExpiryBadge, EmptyState, FormAlert, LoadError,
-                           ClientRedirect, RecordNotFound, LocationField)
+                           ClientRedirect, RecordNotFound, LocationField; restrictions/: RestrictionsEditor and its schema)
     layout/                customer: SiteHeader (SiteNavLinks, SITE_NAV, MoreMenu on desktop, MoreSheet on phones),
                            SiteTabBar and MobileTabBar (phone tab bar), StickyActionBar (phone detail pages), SiteFooter;
                            portals: AppShell, NavLinks, MobileNav, UserMenu

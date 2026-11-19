@@ -4,8 +4,8 @@ import { useQueryClient } from "@tanstack/react-query";
 import { apiFetch } from "@/lib/api/client";
 import { queryKeys } from "@/lib/api/query-keys";
 import type { Schemas } from "@/lib/api/types";
-import { RestrictionsEditor } from "@/features/restrictions/restrictions-editor";
-import type { Restrictions } from "@/features/restrictions/schema";
+import { RestrictionsEditor } from "@/components/shared/restrictions/restrictions-editor";
+import type { Restrictions } from "@/components/shared/restrictions/schema";
 
 type Aircraft = Schemas["AircraftResponseDto"];
 

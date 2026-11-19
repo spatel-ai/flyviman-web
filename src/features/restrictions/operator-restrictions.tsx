@@ -5,12 +5,12 @@ import { LoadError } from "@/components/shared/load-error";
 import { Skeleton } from "@/components/ui/skeleton";
 import { apiFetch } from "@/lib/api/client";
 import { queryKeys } from "@/lib/api/query-keys";
-import { RestrictionsEditor } from "./restrictions-editor";
+import { RestrictionsEditor } from "@/components/shared/restrictions/restrictions-editor";
 import type {
   OperatorRestrictionsBody,
   OperatorRestrictionsResponse,
   Restrictions,
-} from "./schema";
+} from "@/components/shared/restrictions/schema";
 
 /**
  * Restrictions for the whole organisation, on the pricing page. They apply
