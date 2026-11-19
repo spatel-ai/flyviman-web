@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 import { ACCOUNTS, expectNoSidewaysScroll, signIn } from "./support/api";
 
 test.describe("route protection", () => {
@@ -182,6 +182,16 @@ test.describe("signing in", () => {
   });
 });
 
+/** Follows a portal link, from the drawer on a phone. */
+async function openPortalLink(page: Page, name: string) {
+  const menu = page.getByRole("button", { name: "Open navigation" });
+  if (await menu.isVisible()) await menu.click();
+  await page
+    .getByRole("navigation", { name: "Admin navigation" })
+    .getByRole("link", { name })
+    .click();
+}
+
 test.describe("an idle session", () => {
   test.beforeEach(async ({ page, context }) => {
     await signIn(page, "superAdmin");
@@ -213,6 +223,29 @@ test.describe("an idle session", () => {
     expect(renewed.some((cookie) => cookie.name === "access_token")).toBe(true);
   });
 
+  test("is renewed when the user follows a link in the portal", async ({
+    page,
+    context,
+  }) => {
+    // The links' prefetches may still be on their way; the click must win
+    // whatever they do.
+    await openPortalLink(page, "Users");
+    await expect(page).toHaveURL("/admin/users");
+    await expect(
+      page.getByRole("heading", { level: 1, name: "Users" }),
+    ).toBeVisible();
+    // The heading can come from a prefetch at once; the session is renewed
+    // by the navigation's own request, which may still be on its way.
+    await expect
+      .poll(async () =>
+        (await context.cookies()).some(
+          (cookie) => cookie.name === "access_token",
+        ),
+      )
+      .toBe(true);
+    await expect(page).toHaveURL("/admin/users");
+  });
+
   test("can still be signed out, and stays signed out", async ({ page }) => {
     await page.getByRole("button", { name: "Account menu" }).click();
     await page.getByRole("menuitem", { name: "Sign out" }).click();
@@ -222,6 +255,40 @@ test.describe("an idle session", () => {
     await page.goto("/admin");
     await expect(page).toHaveURL("/login?next=%2Fadmin");
   });
+});
+
+// The account pages have their own layout, which checks the session, so
+// a link to them from the customer site is prefetched without passing the
+// proxy and the session gate is reached only by the click itself (D-111).
+test("an idle customer is renewed when following a link into their account", async ({
+  page,
+  context,
+}, info) => {
+  await signIn(page, "customer");
+  await expect(page).toHaveURL("/");
+  await context.clearCookies({ name: "access_token" });
+
+  if (info.project.name === "mobile") {
+    await page
+      .getByRole("navigation", { name: "Primary" })
+      .getByRole("link", { name: "Account" })
+      .click();
+  } else {
+    await page.getByRole("button", { name: "Account menu" }).click();
+    await page.getByRole("menuitem", { name: "Profile" }).click();
+  }
+  await expect(page).toHaveURL("/account");
+  await expect(
+    page.getByRole("heading", { level: 1, name: "Profile" }),
+  ).toBeVisible();
+  await expect
+    .poll(async () =>
+      (await context.cookies()).some(
+        (cookie) => cookie.name === "access_token",
+      ),
+    )
+    .toBe(true);
+  await expect(page).toHaveURL("/account");
 });
 
 test("every page is sent with headers that stop it being framed or sniffed", async ({

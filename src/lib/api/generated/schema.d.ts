@@ -175,7 +175,7 @@ export interface paths {
     put?: never;
     /**
      * Rotate the session tokens
-     * @description Reads the refresh cookie and replaces all three session cookies. Each refresh token works once.
+     * @description Reads the refresh cookie and replaces all three session cookies. Each refresh token works once; a request racing with the refresh that used it, within the grace period, receives the same new cookies.
      */
     post: operations["AuthController_refresh"];
     delete?: never;
