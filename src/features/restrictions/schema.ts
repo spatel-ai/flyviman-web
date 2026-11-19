@@ -4,14 +4,9 @@ import type { Schemas } from "@/lib/api/types";
 /** The restrictions an aircraft or an organisation carries (same shape). */
 export type Restrictions = Schemas["AircraftRestrictionsDto"];
 
-// TODO(W1-4): switch to Schemas["OperatorRestrictionsResponseDto"] and
-// Schemas["OperatorRestrictionsDto"] after `npm run api:types`.
-export interface OperatorRestrictionsResponse {
-  restrictions: Restrictions | null;
-}
-export interface OperatorRestrictionsBody {
-  restrictions: Restrictions | null;
-}
+export type OperatorRestrictionsResponse =
+  Schemas["OperatorRestrictionsResponseDto"];
+export type OperatorRestrictionsBody = Schemas["SetOperatorRestrictionsDto"];
 
 export const MAX_EXCLUDED_LOCATIONS = 100;
 export const MAX_NOTICE_MINUTES = 10_080;

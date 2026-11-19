@@ -64,8 +64,7 @@ test("restrictions explain what they need before they can be saved", async ({
   ).toBeVisible();
 });
 
-// TODO(W1-4): enable once PUT /operator/restrictions is on main.
-test.fixme("an operator administrator restricts the whole organisation", async ({
+test("an operator administrator restricts the whole organisation", async ({
   page,
   browser,
 }) => {
