@@ -7,11 +7,10 @@ import { proxyTarget } from "./src/lib/proxy-target";
  * they must not be framed by another site, sniffed as another type, or leak
  * their address (which can carry a one-time link) to other origins.
  *
- * A full Content-Security-Policy for scripts is not set yet: it needs
- * nonces for the framework's inline scripts and the inline theme script.
+ * The Content-Security-Policy is set per response by `src/proxy.ts`, because
+ * it carries a fresh nonce (lib/csp.ts).
  */
 const SECURITY_HEADERS = [
-  { key: "Content-Security-Policy", value: "frame-ancestors 'none'" },
   { key: "X-Frame-Options", value: "DENY" },
   { key: "X-Content-Type-Options", value: "nosniff" },
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },

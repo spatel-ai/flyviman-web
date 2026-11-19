@@ -1,4 +1,5 @@
 // @vitest-environment node
+import { unstable_doesMiddlewareMatch } from "next/experimental/testing/server";
 import { NextRequest } from "next/server";
 import { describe, expect, it } from "vitest";
 import {
@@ -11,15 +12,11 @@ import { AIRCRAFT_SALES } from "./content/aircraft-sales";
 import { POLICY_SLUGS } from "./features/legal/policies";
 import { config, proxy } from "./proxy";
 
-/** Next.js matcher syntax, as far as `config.matcher` uses it. */
 function matches(path: string): boolean {
-  return config.matcher.some((matcher) =>
-    new RegExp(
-      `^${matcher
-        .replace(/\/:[a-z]+\*/gi, "(?:/.*)?")
-        .replace(/:[a-z]+/gi, "[^/]+")}/?$`,
-    ).test(path),
-  );
+  return unstable_doesMiddlewareMatch({
+    config,
+    url: new URL(path, "http://localhost:3000").toString(),
+  });
 }
 
 async function run(path: string) {
@@ -92,5 +89,48 @@ describe("not-found guard for dynamic pages", () => {
     for (const prefix of SIGNED_IN_PREFIXES) {
       expect(matches(`${prefix}/anything`), prefix).toBe(true);
     }
+  });
+});
+
+describe("Content-Security-Policy", () => {
+  const policy = (response: Response) =>
+    response.headers.get("content-security-policy") ?? "";
+  const nonceOf = (value: string) => /'nonce-([^']+)'/.exec(value)?.[1];
+
+  it("is set on every page, public or protected, with a new nonce", async () => {
+    const [home, again, admin] = await Promise.all([
+      run("/"),
+      run("/"),
+      run("/admin"),
+    ]);
+    expect(nonceOf(policy(home))).toBeTruthy();
+    expect(nonceOf(policy(home))).not.toBe(nonceOf(policy(again)));
+    expect(policy(admin)).toContain("frame-ancestors 'none'");
+  });
+
+  it("hands the same policy to the page being rendered", async () => {
+    const response = await run("/contact");
+    expect(
+      response.headers.get("x-middleware-request-content-security-policy"),
+    ).toBe(policy(response));
+  });
+
+  it("leaves public pages public and still guards protected ones", async () => {
+    expect((await run("/contact")).headers.get("location")).toBeNull();
+    expect((await run("/admin")).headers.get("location")).toContain("/login");
+  });
+
+  it("allows Razorpay only on the payment page", async () => {
+    expect(policy(await run("/book/FV-1/payment"))).toContain(
+      "https://checkout.razorpay.com",
+    );
+    expect(policy(await run("/contact"))).not.toContain("razorpay");
+  });
+
+  it("does not touch the API or static files", async () => {
+    expect(policy(await run("/api/v1/health"))).toBe("");
+    expect(matches("/_next/static/chunks/main.js")).toBe(false);
+    expect(matches("/hero/desktop/0001.webp")).toBe(false);
+    expect(matches("/contact")).toBe(true);
   });
 });

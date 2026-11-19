@@ -5,7 +5,14 @@ import {
   CLIENT_ADDRESS_HEADER,
   visitorAddressHeaders,
 } from "@/lib/client-address";
-import { apiProxyTarget, serverApiUrl } from "@/lib/env";
+import {
+  contentSecurityPolicy,
+  createNonce,
+  cspHeaderName,
+  inlineScriptHashes,
+  isCheckoutPage,
+} from "@/lib/csp";
+import { apiProxyTarget, env, serverApiUrl } from "@/lib/env";
 
 const ACCESS = "access_token";
 const REFRESH = "refresh_token";
@@ -13,6 +20,9 @@ const CSRF = "csrf_token";
 
 /** Refresh when the access token has less than this long to live. */
 const EXPIRY_MARGIN_SECONDS = 30;
+
+/** Pages that need a session (docs/frontend/frontend-design.md). */
+const PROTECTED = /^\/(?:admin|operator|account|trips|book)(?:\/|$)/;
 
 /** Public pages that live under a protected prefix. */
 const PUBLIC_PATHS = new Set(["/operator/register"]);
@@ -37,8 +47,10 @@ const API_PATH = /^\/api\/v1(?:\/|$)/;
 
 /** Renders the site's not-found page with status 404 by rewriting to an
  *  address no route matches. */
-function notFound(request: NextRequest): NextResponse {
-  return NextResponse.rewrite(new URL("/_no-such-page", request.url));
+function notFound(request: NextRequest, headers: Headers): NextResponse {
+  return NextResponse.rewrite(new URL("/_no-such-page", request.url), {
+    request: { headers },
+  });
 }
 
 /**
@@ -108,6 +120,30 @@ async function proxyApi(request: NextRequest): Promise<NextResponse> {
 }
 
 /**
+ * Every page response carries a Content-Security-Policy with a fresh nonce
+ * (lib/csp.ts). The policy also goes on the request, where Next.js reads the
+ * nonce and puts it on the scripts it renders. Calls to `/api/v1` are the
+ * API's own responses and get none.
+ */
+export async function proxy(request: NextRequest): Promise<NextResponse> {
+  if (API_PATH.test(request.nextUrl.pathname)) return proxyApi(request);
+  const apiOrigin = new URL(env.NEXT_PUBLIC_API_URL).origin;
+  const policy = contentSecurityPolicy({
+    nonce: createNonce(),
+    scriptHashes: await inlineScriptHashes(),
+    apiOrigin: apiOrigin === request.nextUrl.origin ? undefined : apiOrigin,
+    checkout: isCheckoutPage(request.nextUrl.pathname),
+    development: process.env.NODE_ENV === "development",
+  });
+  const header = cspHeaderName();
+  const headers = new Headers(request.headers);
+  headers.set(header, policy);
+  const response = await page(request, headers);
+  response.headers.set(header, policy);
+  return response;
+}
+
+/**
  * First line of route protection for the portals and the signed-in customer
  * pages. It is an optimistic check only: it looks for a session cookie and
  * never verifies it. A visitor with none is sent to sign-in before anything
@@ -117,22 +153,27 @@ async function proxyApi(request: NextRequest): Promise<NextResponse> {
  * It also rotates an expired session before the page renders, because server
  * components cannot set cookies.
  */
-export async function proxy(request: NextRequest): Promise<NextResponse> {
-  if (API_PATH.test(request.nextUrl.pathname)) return proxyApi(request);
+async function page(
+  request: NextRequest,
+  headers: Headers,
+): Promise<NextResponse> {
+  const next = () => NextResponse.next({ request: { headers } });
   const slugPage = SLUG_PAGE.exec(request.nextUrl.pathname);
   if (slugPage) {
     // Slugs are plain ASCII, so the raw path segment is compared as it is.
     const [, section, slug] = slugPage;
-    return KNOWN_SLUGS[section].has(slug)
-      ? NextResponse.next()
-      : notFound(request);
+    return KNOWN_SLUGS[section].has(slug) ? next() : notFound(request, headers);
   }
-  if (PUBLIC_PATHS.has(request.nextUrl.pathname)) return NextResponse.next();
+  if (
+    !PROTECTED.test(request.nextUrl.pathname) ||
+    PUBLIC_PATHS.has(request.nextUrl.pathname)
+  )
+    return next();
 
   const access = request.cookies.get(ACCESS)?.value;
   const refresh = request.cookies.get(REFRESH)?.value;
 
-  if (isFresh(access)) return NextResponse.next();
+  if (isFresh(access)) return next();
   if (!refresh) return toLogin(request);
 
   let rotated: Response;
@@ -148,32 +189,31 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
     });
   } catch {
     // The API is unreachable: let the page render and show its own error.
-    return NextResponse.next();
+    return next();
   }
   // The session is over (or this request lost a refresh race): sign in.
   if (rotated.status === 401) return toLogin(request);
   // Rate limited or failing: not a reason to treat the user as signed out.
   // Let the page render; its layout and the API decide.
-  if (!rotated.ok) return NextResponse.next();
+  if (!rotated.ok) return next();
 
   // Hand the new cookies to the browser, and to this request so the page
   // being rendered already sees the new session. Values are passed through
   // exactly as received, never decoded and re-joined.
   const setCookies = rotated.headers.getSetCookie();
-  const jar = parseCookieHeader(request.headers.get("cookie"));
+  const jar = parseCookieHeader(headers.get("cookie"));
   for (const cookie of setCookies) {
     const [pair] = cookie.split(";");
     const index = pair.indexOf("=");
     if (index > 0)
       jar.set(pair.slice(0, index).trim(), pair.slice(index + 1).trim());
   }
-  const headers = new Headers(request.headers);
   headers.set(
     "cookie",
     [...jar].map(([name, value]) => `${name}=${value}`).join("; "),
   );
 
-  const response = NextResponse.next({ request: { headers } });
+  const response = next();
   for (const cookie of setCookies) {
     response.headers.append("set-cookie", cookie);
   }
@@ -182,15 +222,12 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
   return response;
 }
 
+/**
+ * Every request but the build's static files and public files (any path
+ * whose last segment has an extension), which need neither a policy nor a
+ * session. Prefetches are matched too: a protected page's prefetch must
+ * still have its session rotated.
+ */
 export const config = {
-  matcher: [
-    "/api/v1/:path*",
-    "/admin/:path*",
-    "/operator/:path*",
-    "/account/:path*",
-    "/trips/:path*",
-    "/book/:path*",
-    "/aircraft-sales/:slug",
-    "/legal/:slug",
-  ],
+  matcher: ["/api/v1/:path*", "/((?!_next/static|_next/image|.*\\.\\w+$).*)"],
 };
