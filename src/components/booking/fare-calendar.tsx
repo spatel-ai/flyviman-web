@@ -64,6 +64,7 @@ export function FareCalendar({
   error,
   label = "Departure",
   minDate,
+  roundTrip = false,
 }: {
   date: string;
   time: string;
@@ -76,6 +77,8 @@ export function FareCalendar({
   label?: string;
   /** Days before this one cannot be picked (the return is not before the departure). */
   minDate?: string;
+  /** A round-trip search: the day figures are one-way, and say so. */
+  roundTrip?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const desktop = useIsDesktop();
@@ -155,7 +158,9 @@ export function FareCalendar({
             {returning
               ? "Choose when you fly back."
               : ready
-                ? SEARCH_LANDING.calendarLegend
+                ? roundTrip
+                  ? SEARCH_LANDING.calendarLegendRoundTrip
+                  : SEARCH_LANDING.calendarLegend
                 : "Choose From and To to see estimates for each day."}
           </p>
           <Button
@@ -229,7 +234,7 @@ export function FareCalendar({
                       state === "none"
                         ? "no aircraft"
                         : price
-                          ? `estimate from ${price}${state === "cheapest" ? ", cheapest day" : ""}`
+                          ? `${roundTrip ? "one-way " : ""}estimate from ${price}${state === "cheapest" ? ", cheapest day" : ""}`
                           : "";
                     return (
                       <button

@@ -81,6 +81,8 @@ export const SEARCH_LANDING = {
   },
   calendarLegend:
     "Lowest estimates per day, for departures at 10:00. The operator confirms the final price.",
+  calendarLegendRoundTrip:
+    "One-way estimates per day, for departures at 10:00. Round-trip prices are shown in the results. The operator confirms the final price.",
   popularRoutes: {
     title: "Popular routes",
     lead: "Where people fly most. Choose one to start your search.",

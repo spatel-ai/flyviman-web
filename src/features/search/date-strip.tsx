@@ -19,6 +19,7 @@ export function DateStrip({
   today,
   route,
   busy,
+  roundTrip = false,
   onChoose,
 }: {
   date: string;
@@ -31,6 +32,8 @@ export function DateStrip({
     aircraftCategory?: string;
   };
   busy: boolean;
+  /** A round-trip search: the strip figures are one-way, and say so. */
+  roundTrip?: boolean;
   onChoose: (date: string) => void;
 }) {
   const days = Array.from({ length: 7 }, (_, index) =>
@@ -57,11 +60,17 @@ export function DateStrip({
   return (
     <div className="flex flex-col gap-1.5">
       <p className="text-caption text-muted">
-        Lowest estimates for a 10:00 departure. The operator confirms the price.
+        {roundTrip
+          ? "One-way estimates for a 10:00 departure; results show round-trip prices. The operator confirms the price."
+          : "Lowest estimates for a 10:00 departure. The operator confirms the price."}
       </p>
       <div
         role="group"
-        aria-label="Nearby dates, lowest estimates"
+        aria-label={
+          roundTrip
+            ? "Nearby dates, lowest one-way estimates"
+            : "Nearby dates, lowest estimates"
+        }
         className="-mx-4 flex gap-1 overflow-x-auto px-4 md:mx-0 md:px-0"
       >
         {days.map((day) => {
@@ -93,7 +102,7 @@ export function DateStrip({
                 )}
               >
                 {fare?.lowest
-                  ? `from ${shortRupees(fare.lowest.amountMinor)}`
+                  ? `${roundTrip ? "One way from" : "from"} ${shortRupees(fare.lowest.amountMinor)}`
                   : fare
                     ? "No aircraft"
                     : "—"}

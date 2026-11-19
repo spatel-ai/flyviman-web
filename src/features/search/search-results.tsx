@@ -213,6 +213,7 @@ export function SearchResults({ searchId }: { searchId: string }) {
         date={local.date}
         today={today}
         busy={rerunning}
+        roundTrip={Boolean(returnLocal)}
         route={{
           category:
             data.category === "HELICOPTER" ? "HELICOPTER" : "PRIVATE_CHARTER",

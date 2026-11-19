@@ -268,6 +268,10 @@ test("round-trip results and detail show the strategy and the extra lines", asyn
 
   await page.goto(`/search/${search.searchId}`);
   await expect(page.getByText(/ · returns /)).toBeVisible();
+  // The strip's figures are one-way, and say so.
+  await expect(page.getByText(/^One way from /).first()).toBeVisible({
+    timeout: 15_000,
+  });
   await expect(
     page
       .getByRole("list", { name: "Aircraft found" })

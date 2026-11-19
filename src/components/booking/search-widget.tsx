@@ -336,6 +336,7 @@ export function SearchWidget({
                         }}
                         onTimeChange={timeField.onChange}
                         error={errors.date?.message}
+                        roundTrip={roundTrip}
                         route={{
                           kind,
                           originId,
