@@ -36,7 +36,7 @@ import {
   type TopicFilter,
 } from "./filters";
 
-type Enquiry = Schemas["AdminEnquiryResponseDto"];
+type Enquiry = Schemas["AdminEnquirySummaryDto"];
 
 const COLUMNS = ["Received", "Reference", "From", "Topic", "Status"];
 

@@ -1538,7 +1538,7 @@ export interface paths {
     };
     /**
      * List sales enquiries
-     * @description Newest first. Personal data: contact details and message are never logged.
+     * @description Newest first. Summary rows only; contact details and the message come with the single enquiry. Personal data is never logged.
      */
     get: operations["AdminEnquiriesController_list"];
     put?: never;
@@ -3070,6 +3070,21 @@ export interface components {
        * @example 2026-11-13T09:30:00.000Z
        */
       receivedAt: string;
+    };
+    AdminEnquirySummaryDto: {
+      /** Format: uuid */
+      id: string;
+      /** @example FLY-ENQ-7K2M9Q */
+      reference: string;
+      name: string;
+      topic: components["schemas"]["EnquiryTopic"];
+      /**
+       * Format: date-time
+       * @description When operations marked it handled; null while unhandled.
+       */
+      handledAt: string | null;
+      /** Format: date-time */
+      createdAt: string;
     };
     AdminEnquiryResponseDto: {
       /** Format: uuid */
@@ -5277,7 +5292,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/json": components["schemas"]["AdminEnquiryResponseDto"][];
+          "application/json": components["schemas"]["AdminEnquirySummaryDto"][];
         };
       };
     };
