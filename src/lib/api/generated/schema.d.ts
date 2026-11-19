@@ -1424,13 +1424,13 @@ export interface paths {
     };
     /**
      * List pricing rules
-     * @description Platform and category rules. `active=true` (default): in force now; `active=false`: every version.
+     * @description Platform and category rules. `active=true` (default): in force now; `active=false`: every version. Operations see `MATCHING_LIMITS` only (another `type`: 403). `editable` is for the caller's role.
      */
     get: operations["AdminPricingRulesController_list"];
     put?: never;
     /**
      * Create a pricing rule
-     * @description Takes effect at once. One rule per type and scope: 409 `PRICING_RULE_EXISTS` when one is in force. Audited with the reason.
+     * @description Takes effect at once. One rule per type and scope: 409 `PRICING_RULE_EXISTS` when one is in force. `MATCHING_LIMITS`: operations and super administrators; other types: finance and super administrators (else 403). Audited with the reason.
      */
     post: operations["AdminPricingRulesController_create"];
     delete?: never;
@@ -1522,7 +1522,7 @@ export interface paths {
     };
     /**
      * List audit records
-     * @description Newest first. Filter by entity, actor, action and time range. Pricing rule records show before, after and reason to finance and super admins only; other roles get null for those fields.
+     * @description Newest first. Filter by entity, actor, action and time range. Pricing rule records show before, after and reason to finance and super admins only, and of matching limits (MATCHING_LIMITS) to operations; other roles get null for those fields.
      */
     get: operations["AdminAuditController_list"];
     put?: never;
@@ -2848,7 +2848,10 @@ export interface components {
       days: components["schemas"]["FareCalendarDayDto"][];
     };
     BreakdownLineDto: {
-      /** @example OPERATING */
+      /**
+       * @description `FLYING` is every flight (the legs, positioning and any return to base between them) in one line; other codes as the engine sets them (`WAITING`, `OVERNIGHT`, `CREW`, `LANDING_HANDLING`, `MIN_CHARGE`, `PLATFORM_FEE`, `TAX`).
+       * @example FLYING
+       */
       code: string;
       label: string;
       /** @description Paise. */
@@ -2975,7 +2978,7 @@ export interface components {
        */
       waitingHourlyMinor?: number | null;
       /**
-       * @description Hours of waiting not charged. Saved with `waitingHourlyMinor` (0 when left out or null); ignored without it.
+       * @description Hours of waiting not charged. Left out: unchanged (0 for a new waiting charge); `null` sets 0. Sent alone, it changes the free hours of the waiting charge in force; ignored when there is none.
        * @example 1
        */
       waitingFreeHours?: number | null;

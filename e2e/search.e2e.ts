@@ -283,12 +283,7 @@ test("round-trip results and detail show the strategy and the extra lines", asyn
   const main = page.getByRole("main");
   await expect(main.getByText(/^Round trip, returning /)).toBeVisible();
   await expect(main.getByText(/Aircraft waits at destination/)).toBeVisible();
-  for (const line of [
-    "Outbound flight operating cost",
-    "Return flight operating cost",
-    /^Overnight at /,
-    /^Crew allowance, /,
-  ]) {
+  for (const line of [/^Flying$/, /^Overnight at /, /^Crew allowance, /]) {
     await expect(main.getByText(line).first()).toBeVisible();
   }
 });
