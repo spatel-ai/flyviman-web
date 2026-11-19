@@ -41,6 +41,9 @@ export const queryKeys = {
   search: (id: string) => ["search", id] as const,
   searchResult: (searchId: string, resultId: string) =>
     ["search", searchId, "results", resultId] as const,
+  scheduledSearch: (id: string) => ["scheduled-search", id] as const,
+  scheduledFareRules: (searchId: string, offerId: string) =>
+    ["scheduled-search", searchId, "fare-rules", offerId] as const,
   location: (id: string) => ["locations", "one", id] as const,
   locationByCode: (code: string) => ["locations", "code", code] as const,
   fareCalendar: (params: object) => ["search", "calendar", params] as const,

@@ -34,6 +34,7 @@ import type { Schemas } from "@/lib/api/types";
 import { cn } from "@/lib/utils";
 import { AirportPicker } from "./airport-picker";
 import { FareCalendar } from "./fare-calendar";
+import { ScheduledSearchForm } from "./scheduled-search-form";
 import { TravellerPicker } from "./traveller-picker";
 
 type SearchResponse = Schemas["SearchResponseDto"];
@@ -50,7 +51,7 @@ const SERVICES: {
   { id: "charter", label: "Private jet", icon: Plane },
   { id: "helicopter", label: "Helicopter", icon: Fan },
   { id: "empty-legs", label: "Empty legs", icon: Timer, soon: true },
-  { id: "flights", label: "Flights", icon: TicketsPlane, soon: true },
+  { id: "flights", label: "Scheduled flights", icon: TicketsPlane },
   { id: "air-ambulance", label: "Air ambulance", icon: Ambulance },
 ];
 
@@ -81,8 +82,8 @@ const TRIP_TYPES: { value: TripType; label: string }[] = [
 
 /**
  * The search card: service tabs, then From, To, Departure and Travellers as
- * large tiles, and one primary action. Charter and helicopter search now;
- * empty legs and scheduled flights are marked as coming; air ambulance is a
+ * large tiles, and one primary action. Charter, helicopter and scheduled
+ * flights search now; empty legs are marked as coming; air ambulance is a
  * request, never a search (business rule 7).
  */
 export function SearchWidget({
@@ -237,13 +238,11 @@ export function SearchWidget({
               Request an air ambulance
             </Link>
           </div>
+        ) : service === "flights" ? (
+          <ScheduledSearchForm />
         ) : !searchable ? (
           <div className="flex flex-col items-start gap-3 rounded-md bg-surface p-5">
-            <p className="text-title">
-              {service === "empty-legs"
-                ? "Empty legs are coming soon"
-                : "Scheduled flights are coming soon"}
-            </p>
+            <p className="text-title">Empty legs are coming soon</p>
             <p className="text-body text-muted">
               Tell us your trip and our team will find you options in the
               meantime.
