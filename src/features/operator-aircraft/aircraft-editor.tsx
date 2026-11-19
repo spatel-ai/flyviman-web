@@ -31,6 +31,7 @@ import { can, isOperatorAdmin } from "@/lib/operator-access";
 import { AircraftDetailsDialog } from "./aircraft-details-dialog";
 import { AircraftPhotos } from "./aircraft-photos";
 import { AircraftPricing } from "./aircraft-pricing";
+import { AircraftRestrictions } from "./aircraft-restrictions";
 import { AvailabilityStatusControl } from "./availability-status-control";
 import { upload } from "./upload";
 
@@ -323,6 +324,13 @@ export function AircraftEditor({ id }: { id: string }) {
         )}
       </section>
       {isOperatorAdmin(access) ? <AircraftPricing aircraftId={id} /> : null}
+      {canAdd ? (
+        <AircraftRestrictions
+          base={base}
+          aircraftId={id}
+          restrictions={item.restrictions}
+        />
+      ) : null}
       <AircraftPhotos
         base={base}
         media={item.media}
