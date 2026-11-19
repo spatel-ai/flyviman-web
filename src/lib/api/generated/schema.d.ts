@@ -3796,6 +3796,8 @@ export interface components {
       roundTripStrategy: components["schemas"]["RoundTripStrategy"] | null;
       /** @description Always an `ESTIMATE`. Null when the price is on request. */
       price: components["schemas"]["SearchPriceDto"] | null;
+      /** @description True when the estimate leaves something out (landing, handling, positioning, waiting, tax and so on): the result detail lists what, under `exclusions`. False for a price on request. */
+      incomplete: boolean;
       /** Format: date-time */
       validUntil: string;
       warnings: string[];
@@ -3886,6 +3888,8 @@ export interface components {
       roundTripStrategy: components["schemas"]["RoundTripStrategy"] | null;
       /** @description Always an `ESTIMATE`. Null when the price is on request. */
       price: components["schemas"]["SearchPriceDto"] | null;
+      /** @description True when the estimate leaves something out (landing, handling, positioning, waiting, tax and so on): the result detail lists what, under `exclusions`. False for a price on request. */
+      incomplete: boolean;
       /** Format: date-time */
       validUntil: string;
       warnings: string[];

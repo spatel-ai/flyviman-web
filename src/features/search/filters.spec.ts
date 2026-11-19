@@ -39,6 +39,7 @@ const result = (
         : { priceType: "ESTIMATE", amountMinor: price, currency: "INR" },
     validUntil: "2026-12-01T00:00:00Z",
     warnings: [],
+    incomplete: false,
   }) as Result;
 
 const RESULTS = [
