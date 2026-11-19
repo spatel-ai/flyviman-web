@@ -3,7 +3,6 @@ import {
   canSubmit,
   companyDetailsSchema,
   fileProblem,
-  formatDay,
   MAX_UPLOAD_BYTES,
   missingChecklist,
   missingLabel,
@@ -356,16 +355,5 @@ describe("fileProblem", () => {
     expect(
       fileProblem({ type: "application/pdf", size: MAX_UPLOAD_BYTES + 1 }),
     ).toBe("This file is larger than 10 MB. Choose a smaller file.");
-  });
-});
-
-describe("formatDay", () => {
-  it("formats a calendar date without shifting it across time zones", () => {
-    expect(formatDay("2030-12-31")).toBe("31 Dec 2030");
-    expect(formatDay("2030-12-31T00:00:00.000Z")).toBe("31 Dec 2030");
-  });
-
-  it("shows a value it cannot read as it is", () => {
-    expect(formatDay("soon")).toBe("soon");
   });
 });

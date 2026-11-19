@@ -41,14 +41,14 @@ import {
   type UserFilter,
   type UserStatusFilter,
 } from "./filters";
-import { InlineError } from "./inline-error";
+import { InlineError } from "@/components/shared/inline-error";
 import {
   canManageUsers,
   ROW_ACTIONS,
   rowAction,
   type UserRowAction,
 } from "./row-action";
-import { useMe } from "./use-me";
+import { useMe } from "@/lib/api/use-me";
 
 type AdminUser = Schemas["AdminUserResponseDto"];
 

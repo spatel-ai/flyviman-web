@@ -34,7 +34,7 @@ import {
   type LocationFilter,
   type TypeFilter,
 } from "./filters";
-import { InlineError } from "./inline-error";
+import { InlineError } from "@/components/shared/inline-error";
 import { formatMoney } from "@/lib/format/money";
 import { TYPE_LABELS } from "./labels";
 import { AddLocationDialog, EditLocationDialog } from "./location-dialog";

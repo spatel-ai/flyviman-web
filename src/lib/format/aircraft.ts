@@ -49,14 +49,5 @@ export function searchBlockerLabel(code: string): string {
   }
 }
 
-/** A date-only value ("2030-12-31") as "31 Dec 2030", without shifting the day. */
-export function formatDay(day: string): string {
-  const date = new Date(`${day.slice(0, 10)}T00:00:00Z`);
-  if (Number.isNaN(date.getTime())) return day;
-  return new Intl.DateTimeFormat("en-IN", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-    timeZone: "UTC",
-  }).format(date);
-}
+/** Re-exported so the aircraft editor keeps its import; move it there when that file is free. */
+export { formatDay } from "./date";

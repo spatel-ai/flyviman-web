@@ -22,3 +22,15 @@ export function formatDateTime(
     timeZoneName: "short",
   }).format(date);
 }
+
+/** A date-only value ("2030-12-31") as "31 Dec 2030", without shifting the day. */
+export function formatDay(day: string): string {
+  const date = new Date(`${day.slice(0, 10)}T00:00:00Z`);
+  if (Number.isNaN(date.getTime())) return day;
+  return new Intl.DateTimeFormat("en-IN", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    timeZone: "UTC",
+  }).format(date);
+}
