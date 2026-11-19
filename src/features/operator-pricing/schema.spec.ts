@@ -99,6 +99,13 @@ describe("operator pricing form", () => {
         waitingFreeHours: null,
         overnightMinor: null,
         crewNightMinor: null,
+        // 4c charges have no fields on this form yet (W3).
+        minBillableHoursPer: null,
+        fuelSurchargePerFlightMinor: null,
+        permitPerFlightMinor: null,
+        navigationPerFlightMinor: null,
+        otherChargeMinor: null,
+        otherChargeLabel: null,
         ...body,
         currency: "INR",
       }),

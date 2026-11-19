@@ -172,6 +172,23 @@ export const RULE_META: Record<RuleType, RuleMeta> = {
       },
     ],
   },
+  // Platform-only 4c rules: listed by name, no form here until W3.
+  MARKUP: {
+    label: "Markup",
+    description:
+      "Flyviman's markup on the operator's price. Not managed here yet.",
+    fields: [],
+  },
+  SERVICE_FEE: {
+    label: "Service fee",
+    description: "Flyviman's fee per trip. Not managed here yet.",
+    fields: [],
+  },
+  DISCOUNT: {
+    label: "Discount",
+    description: "A promotion funded by Flyviman. Not managed here yet.",
+    fields: [],
+  },
   MATCHING_LIMITS: {
     label: "Matching limits",
     description: "Which trips an aircraft is offered for. Not managed here.",
