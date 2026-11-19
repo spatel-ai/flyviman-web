@@ -5,6 +5,7 @@ import {
   Info,
   Mail,
   Plane,
+  PlaneTakeoff,
   Sparkles,
   type LucideIcon,
 } from "lucide-react";
@@ -38,6 +39,7 @@ export const MORE_NAV: MoreItem[] = [
     icon: BriefcaseBusiness,
   },
   { href: "/charter/fleet", label: "Charter fleet", icon: Building2 },
+  { href: "/empty-legs", label: "Empty legs", icon: PlaneTakeoff },
   { href: "/contact", label: "Contact", icon: Mail },
 ];
 

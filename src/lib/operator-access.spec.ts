@@ -6,7 +6,7 @@ const B = "7c1e2d3f-4a5b-4c6d-8e9f-0a1b2c3d4e5f";
 
 const admin: OperatorAccess = {
   role: "OPERATOR_ADMIN",
-  capabilities: ["MANAGE_AIRCRAFT", "MANAGE_AVAILABILITY"],
+  capabilities: ["MANAGE_AIRCRAFT", "MANAGE_AVAILABILITY", "MANAGE_EMPTY_LEGS"],
   allAircraft: true,
   aircraftIds: [],
 };
@@ -38,6 +38,7 @@ describe("operatorNav", () => {
       "/operator",
       "/operator/aircraft",
       "/operator/availability",
+      "/operator/empty-legs",
       "/operator/pricing",
       "/operator/team",
       "/operator/onboarding",
@@ -71,6 +72,13 @@ describe("operatorNav", () => {
       "/operator",
       "/operator/aircraft",
     ]);
+    const emptyLegStaff: OperatorAccess = {
+      ...availabilityStaff,
+      capabilities: ["MANAGE_EMPTY_LEGS"],
+    };
+    expect(hrefs(operatorNav("APPROVED", emptyLegStaff))).toContain(
+      "/operator/empty-legs",
+    );
     expect(hrefs(operatorNav("DRAFT", availabilityStaff))).toEqual([]);
   });
 });

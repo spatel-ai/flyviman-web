@@ -28,6 +28,7 @@ export const RECORD_PAGES = [
   "/search/[searchId]",
   "/search/[searchId]/[resultId]",
   "/search/scheduled/[searchId]",
+  "/empty-legs/[id]",
 ];
 
 /** Address prefixes that need a session (the `matcher` in `src/proxy.ts`). */

@@ -32,7 +32,7 @@ test.describe("customer home", () => {
     // Where each tile leads; the unbuilt ones say so (business rule 4).
     for (const [name, href] of [
       ["Helicopter", "/search?service=helicopter"],
-      ["Empty legs", "/search?service=empty-legs"],
+      ["Empty legs", "/empty-legs"],
       ["Scheduled flights", "/search?service=flights"],
       ["Air ambulance", "/search?service=air-ambulance"],
     ]) {
