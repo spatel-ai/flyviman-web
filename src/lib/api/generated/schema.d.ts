@@ -1533,6 +1533,26 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/webhooks/payments/{provider}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Gateway notification
+     * @description For the payment gateway only. The signature over the exact body is verified before anything else; `:provider` is the configured gateway (`mock` in this build). Records nothing yet.
+     */
+    post: operations["PaymentWebhooksController_receive"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/v1/admin/category-config": {
     parameters: {
       query?: never;
@@ -3161,6 +3181,10 @@ export interface components {
       requestId: string | null;
       /** Format: date-time */
       createdAt: string;
+    };
+    WebhookAckResponseDto: {
+      /** @example true */
+      received: boolean;
     };
     /**
      * @description Platform setting. Operators may override it per category; air ambulance is always REQUEST.
@@ -5442,6 +5466,44 @@ export interface operations {
         content: {
           "application/json": components["schemas"]["AuditLogResponseDto"][];
         };
+      };
+    };
+  };
+  PaymentWebhooksController_receive: {
+    parameters: {
+      query?: never;
+      header: {
+        "x-razorpay-event-id": string;
+        "x-razorpay-signature": string;
+      };
+      path: {
+        provider: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["WebhookAckResponseDto"];
+        };
+      };
+      /** @description `WEBHOOK_SIGNATURE_INVALID`, or `VALIDATION_ERROR` for a signed body that is not a well-formed event */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Not the configured gateway */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
       };
     };
   };
