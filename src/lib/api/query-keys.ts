@@ -22,6 +22,7 @@ export const queryKeys = {
   operatorAircraftAll: ["operator", "aircraft", "all"] as const,
   operatorStaff: ["operator", "staff"] as const,
   operatorPricing: ["operator", "pricing"] as const,
+  operatorRestrictions: ["operator", "restrictions"] as const,
   aircraftPricing: (id: string) =>
     ["operator", "aircraft", id, "pricing"] as const,
   /** Every pricing rule key starts with ["admin", "pricing-rules"]. */

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { OperatorPricingForm } from "@/features/operator-pricing/operator-pricing-form";
+import { OperatorRestrictions } from "@/features/restrictions/operator-restrictions";
 import { AdministratorOnly } from "@/features/operator-staff/administrator-only";
 import type { Schemas } from "@/lib/api/types";
 import { serverGet } from "@/lib/auth/server-api";
@@ -21,6 +22,7 @@ export default async function OperatorPricingPage() {
         the final price on each request.
       </p>
       <OperatorPricingForm />
+      <OperatorRestrictions />
     </>
   );
 }
