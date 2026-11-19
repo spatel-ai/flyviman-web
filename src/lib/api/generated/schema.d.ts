@@ -1529,6 +1529,63 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/admin/enquiries": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * List sales enquiries
+     * @description Newest first. Personal data: contact details and message are never logged.
+     */
+    get: operations["AdminEnquiriesController_list"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/admin/enquiries/{id}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** One sales enquiry */
+    get: operations["AdminEnquiriesController_detail"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/admin/enquiries/{id}/handle": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Mark an enquiry handled
+     * @description Sets `handledAt` and writes an audit record (topic and ids only). Repeating the call on a handled enquiry changes nothing and records nothing.
+     */
+    post: operations["AdminEnquiriesController_handle"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -2959,6 +3016,24 @@ export interface components {
        * @example 2026-11-13T09:30:00.000Z
        */
       receivedAt: string;
+    };
+    AdminEnquiryResponseDto: {
+      /** Format: uuid */
+      id: string;
+      /** @example FLY-ENQ-7K2M9Q */
+      reference: string;
+      name: string;
+      email: string | null;
+      phone: string | null;
+      topic: components["schemas"]["EnquiryTopic"];
+      message: string;
+      /**
+       * Format: date-time
+       * @description When operations marked it handled; null while unhandled.
+       */
+      handledAt: string | null;
+      /** Format: date-time */
+      createdAt: string;
     };
   };
   responses: never;
@@ -5124,6 +5199,73 @@ export interface operations {
         };
         content: {
           "application/json": components["schemas"]["EnquiryResponseDto"];
+        };
+      };
+    };
+  };
+  AdminEnquiriesController_list: {
+    parameters: {
+      query?: {
+        page?: number;
+        pageSize?: number;
+        /** @description `true` for handled enquiries only, `false` for unhandled only. */
+        handled?: boolean;
+        topic?: components["schemas"]["EnquiryTopic"];
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["AdminEnquiryResponseDto"][];
+        };
+      };
+    };
+  };
+  AdminEnquiriesController_detail: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["AdminEnquiryResponseDto"];
+        };
+      };
+    };
+  };
+  AdminEnquiriesController_handle: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["AdminEnquiryResponseDto"];
         };
       };
     };
