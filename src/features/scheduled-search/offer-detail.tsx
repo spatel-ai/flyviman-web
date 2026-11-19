@@ -18,6 +18,7 @@ import { formatMoney } from "@/lib/format/money";
 import {
   clock,
   enquiryHref,
+  totalLabel,
   isExpired,
   placeCode,
   placeName,
@@ -39,13 +40,17 @@ function Fee({
 }) {
   if (!allowed) return <>Not allowed</>;
   return feeMinor ? (
-    <>Allowed for {formatMoney(feeMinor, currency)}</>
+    <>
+      Allowed for {formatMoney(feeMinor, currency)} per passenger, plus any fare
+      difference
+    </>
   ) : (
     <>Allowed, no fee</>
   );
 }
 
 function Outcome({
+  travellers,
   offer,
   result,
   now,
@@ -53,6 +58,7 @@ function Outcome({
   onPick,
   searchId,
 }: {
+  travellers: number;
   offer: ScheduledOffer;
   result: RevalidateResult;
   now: number;
@@ -128,7 +134,7 @@ function Outcome({
               amountMinor={offer.fare.amountMinor}
               currency={offer.fare.currency}
               priceType="LIVE_FARE"
-              note="The fare you were shown"
+              note={`${totalLabel(travellers)}, the fare you were shown`}
               className="text-muted"
             />
           </div>
@@ -138,6 +144,7 @@ function Outcome({
               amountMinor={fare.amountMinor}
               currency={fare.currency}
               priceType="LIVE_FARE"
+              note={`${totalLabel(travellers)}, rechecked before payment`}
               validUntil={validUntil}
               expired={expired}
             />
@@ -148,6 +155,7 @@ function Outcome({
           amountMinor={fare.amountMinor}
           currency={fare.currency}
           priceType="LIVE_FARE"
+          note={`${totalLabel(travellers)}, rechecked before payment`}
           validUntil={validUntil}
           expired={expired}
         />
@@ -184,6 +192,7 @@ function Outcome({
  * offered yet.
  */
 export function OfferDetail({
+  travellers,
   searchId,
   offer,
   alternatives,
@@ -191,6 +200,8 @@ export function OfferDetail({
   onClose,
   onPick,
 }: {
+  /** Everyone in the search, infants included; 0 when the address lacks it. */
+  travellers: number;
   searchId: string;
   offer: ScheduledOffer;
   alternatives: ScheduledOffer[];
@@ -299,6 +310,7 @@ export function OfferDetail({
 
         {result ? (
           <Outcome
+            travellers={travellers}
             offer={offer}
             result={result}
             now={now}
@@ -313,6 +325,7 @@ export function OfferDetail({
                 amountMinor={offer.fare.amountMinor}
                 currency={offer.fare.currency}
                 priceType="LIVE_FARE"
+                note={`${totalLabel(travellers)}, rechecked before payment`}
                 validUntil={offer.validUntil}
                 expired={expired}
               />

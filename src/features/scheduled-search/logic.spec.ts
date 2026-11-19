@@ -11,6 +11,14 @@ import {
 } from "./logic";
 import type { ScheduledOffer } from "./types";
 
+const LOC = {
+  id: "l",
+  name: "Airport",
+  iata: "AAA",
+  icao: null,
+  timeZone: "Asia/Kolkata",
+};
+
 function offer(
   id: string,
   over: {
@@ -26,8 +34,8 @@ function offer(
     carrier: { code: over.carrier ?? "AI", name: over.carrier ?? "Air" },
     segments: [
       {
-        from: { timeZone: "Asia/Kolkata" },
-        to: { timeZone: "Asia/Kolkata" },
+        from: LOC,
+        to: LOC,
         departAt: over.depart ?? "2030-01-01T02:30:00.000Z", // 08:00 IST
         arriveAt: over.arrive ?? "2030-01-01T04:30:00.000Z",
         flightNumber: "AI 1",

@@ -33,6 +33,7 @@ import {
   sortOffers,
   stopsLabel,
   TIMES_OF_DAY,
+  totalLabel,
   totalMinutes,
   writeFilters,
   zoneOf,
@@ -89,8 +90,10 @@ function toggle<T>(list: T[], value: T): T[] {
 function OfferCard({
   offer,
   expired,
+  travellers,
   onOpen,
 }: {
+  travellers: number;
   offer: ScheduledOffer;
   expired: boolean;
   onOpen: () => void;
@@ -134,6 +137,7 @@ function OfferCard({
           variant="compact"
           expired={expired}
         />
+        <p className="text-caption text-muted">{totalLabel(travellers)}</p>
         <Button
           variant="secondary"
           disabled={expired}
@@ -189,10 +193,22 @@ export function ScheduledResults({ searchId }: { searchId: string }) {
   const { filters, sort } = readFilters(new URLSearchParams(params.toString()));
   const outbound = data.results.filter((o) => o.direction === "OUTBOUND");
   const returning = data.results.filter((o) => o.direction === "RETURN");
+  // How many are travelling comes in the address from the search form: the
+  // API's fare is the party's total, and its answer does not repeat the party.
+  const travellers = Math.max(0, Math.floor(Number(params.get("pax")) || 0));
+  const keepTravellers = (query: string) => {
+    if (!travellers) return query;
+    const next = new URLSearchParams(query);
+    next.set("pax", String(travellers));
+    return `?${next.toString()}`;
+  };
   const update = (next: Filters, nextSort: Sort = sort) =>
-    router.replace(`${pathname}${writeFilters(next, nextSort)}`, {
-      scroll: false,
-    });
+    router.replace(
+      `${pathname}${keepTravellers(writeFilters(next, nextSort))}`,
+      {
+        scroll: false,
+      },
+    );
   const show = (offers: ScheduledOffer[]) =>
     sortOffers(applyFilters(offers, filters), sort);
   const allExpired =
@@ -239,6 +255,7 @@ export function ScheduledResults({ searchId }: { searchId: string }) {
                 key={offer.offerId}
                 offer={offer}
                 expired={isExpired(offer, now)}
+                travellers={travellers}
                 onOpen={() => setOpenId(offer.offerId)}
               />
             ))}
@@ -399,6 +416,7 @@ export function ScheduledResults({ searchId }: { searchId: string }) {
       {open ? (
         <OfferDetail
           key={open.offerId}
+          travellers={travellers}
           searchId={searchId}
           offer={open}
           now={now}

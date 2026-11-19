@@ -1,5 +1,10 @@
 import { utcToLocal } from "@/lib/format/zoned";
-import type { Cabin, ScheduledOffer, ScheduledSegment } from "./types";
+import type {
+  Cabin,
+  ScheduledLocation,
+  ScheduledOffer,
+  ScheduledSegment,
+} from "./types";
 
 export const DEFAULT_ZONE = "Asia/Kolkata";
 
@@ -31,7 +36,7 @@ export const CABINS: { value: Cabin; label: string }[] = [
 const SORTS: Sort[] = ["price", "departure", "duration"];
 
 export function zoneOf(segment: ScheduledSegment, end: "from" | "to") {
-  return segment[end].timeZone ?? DEFAULT_ZONE;
+  return segment[end].timeZone || DEFAULT_ZONE;
 }
 
 export function timeOfDay(hour: number): TimeOfDay {
@@ -171,21 +176,12 @@ export function dayOffset(
   return Math.round((b - a) / 86_400_000);
 }
 
-export function placeCode(place: {
-  code?: string | null;
-  iataCode?: string | null;
-  name?: string;
-}): string {
-  return place.iataCode ?? place.code ?? place.name ?? "";
+export function placeCode(place: ScheduledLocation): string {
+  return place.iata ?? place.icao ?? place.name;
 }
 
-export function placeName(place: {
-  city?: string;
-  name?: string;
-  code?: string | null;
-  iataCode?: string | null;
-}): string {
-  return place.city ?? place.name ?? placeCode(place);
+export function placeName(place: ScheduledLocation): string {
+  return place.name;
 }
 
 /** The enquiry that stands in for booking until wave 3 (business rules 1, 4). */
@@ -198,4 +194,11 @@ export function enquiryHref(offer: ScheduledOffer, searchId: string): string {
     `Search reference ${searchId}.`;
   const params = new URLSearchParams({ topic: "PRIVATE_CHARTER", message });
   return `/contact?${params.toString()}#enquiry`;
+}
+
+/** "Total for 2 travellers": the fare is for the whole party, infants included. */
+export function totalLabel(travellers: number): string {
+  return travellers >= 1
+    ? `Total for ${travellers} traveller${travellers === 1 ? "" : "s"}`
+    : "Total for all travellers";
 }

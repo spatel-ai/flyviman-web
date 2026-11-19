@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { expectNoSidewaysScroll } from "./support/api";
+import { API_URL, expectNoSidewaysScroll } from "./support/api";
 
 /**
  * Scheduled flights in the customer search (M6, web). The API half is built
@@ -11,8 +11,8 @@ import { expectNoSidewaysScroll } from "./support/api";
 const place = (code: string, city: string) => ({
   id: code,
   name: `${city} airport`,
-  city,
-  code,
+  iata: code,
+  icao: null,
   timeZone: "Asia/Kolkata",
 });
 
@@ -182,6 +182,7 @@ test("results sort, filter, say when airlines were missing and keep outbound and
   await expect(rows.first()).toContainText("Air India");
   // Every price is labelled a live fare (rule 1).
   await expect(outbound.getByText("Live fare", { exact: true })).toHaveCount(2);
+  await expect(outbound.getByText("Total for all travellers")).toHaveCount(2);
   await expect(
     page
       .getByRole("list", { name: "Return flights found" })
@@ -276,7 +277,113 @@ test("a search that has gone says so", async ({ page }) => {
   ).toHaveAttribute("href", "/search?service=flights");
 });
 
-test.fixme("a scheduled search against the real API returns labelled live fares (W2-2)", async () => {
-  // Needs POST /search/scheduled from W2-2 and the mock airline provider:
-  // fill From, To, Departure, Search flights, then open a result and check it.
+/** A date in India `days` from today, YYYY-MM-DD. */
+function inDays(days: number): string {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Kolkata" }).format(
+    new Date(Date.now() + days * 86_400_000),
+  );
+}
+
+async function chooseAirport(page: Page, label: "From" | "To", iata: string) {
+  const box = page.getByRole("combobox", {
+    name: `Search ${label.toLowerCase()} airports`,
+  });
+  // A click before the page has hydrated does nothing: click until it opens.
+  await expect(async () => {
+    if (!(await box.isVisible()))
+      await page
+        .getByRole("button", { name: new RegExp(`^${label}:`) })
+        .click();
+    await expect(box).toBeVisible({ timeout: 1000 });
+  }).toPass();
+  await box.fill(iata);
+  await page
+    .getByRole("option", { name: new RegExp(iata) })
+    .first()
+    .click();
+}
+
+// The two projects run at once: each takes its own routes, so the airline
+// mock's per-route behaviour of one cannot reach the other.
+const ROUTES = {
+  desktop: { search: ["DEL", "BLR"], partial: ["BOM", "DEL"] },
+  mobile: { search: ["BOM", "BLR"], partial: ["BLR", "DEL"] },
+} as const;
+
+test("a scheduled search against the real API returns labelled live fares and rechecks one", async ({
+  page,
+}, testInfo) => {
+  test.slow();
+  const [from, to] = ROUTES[testInfo.project.name as "desktop"].search;
+  await page.goto("/search?service=flights");
+  await chooseAirport(page, "From", from);
+  await chooseAirport(page, "To", to);
+  await page.getByLabel("Departure").fill(inDays(20));
+  const found = page.waitForResponse(
+    (r) =>
+      /\/search\/scheduled$/.test(r.url()) && r.request().method() === "POST",
+  );
+  await page.getByRole("button", { name: "Search flights" }).click();
+  expect((await found).status()).toBe(200);
+
+  await expect(page).toHaveURL(/\/search\/scheduled\/[0-9a-f-]{36}\?pax=1$/);
+  const list = page.getByRole("list", { name: "Flights found" });
+  const first = list.getByRole("listitem").first();
+  await expect(first).toBeVisible();
+  // The fare is a labelled live fare, and says it is for the whole party.
+  await expect(first.getByText("Live fare", { exact: true })).toBeVisible();
+  await expect(first.getByText("Total for 1 traveller")).toBeVisible();
+
+  const open = () => first.getByRole("button", { name: /^Details:/ }).click();
+  const dialog = page.getByRole("dialog");
+  await open();
+  // Fare rules and the cancellation conditions are shown before any check.
+  await expect(
+    dialog.getByRole("heading", { name: "Fare rules" }),
+  ).toBeVisible();
+  await expect(dialog.getByText("Cancellation", { exact: true })).toBeVisible();
+  await dialog.getByRole("button", { name: "Check price and seats" }).click();
+  const confirmed = dialog.getByText("Price and seats confirmed");
+  await expect(
+    confirmed.or(dialog.getByText("The price has changed")),
+  ).toBeVisible();
+  if (!(await confirmed.isVisible())) {
+    // A changed fare is stored: the second check finds it available.
+    await page.keyboard.press("Escape");
+    await open();
+    await dialog.getByRole("button", { name: "Check price and seats" }).click();
+  }
+  await expect(confirmed).toBeVisible();
+  await expect(
+    dialog.getByText(/Booking scheduled flights opens soon/),
+  ).toBeVisible();
+  await expect(dialog.getByRole("button", { name: /^Book/ })).toHaveCount(0);
+});
+
+test("airlines that do not answer give a partial notice", async ({
+  page,
+  request,
+}, testInfo) => {
+  test.slow();
+  const [origin, destination] =
+    ROUTES[testInfo.project.name as "desktop"].partial;
+  const behaviour = (value: "ERROR" | "NORMAL") =>
+    request.put(`${API_URL}dev/airline/behaviour`, {
+      data: { origin, destination, behaviour: value },
+    });
+  expect((await behaviour("ERROR")).status()).toBe(204);
+  try {
+    await page.goto("/search?service=flights");
+    await chooseAirport(page, "From", origin);
+    await chooseAirport(page, "To", destination);
+    await page.getByLabel("Departure").fill(inDays(21));
+    await page.getByRole("button", { name: "Search flights" }).click();
+    await expect(page).toHaveURL(/\/search\/scheduled\/[0-9a-f-]{36}/);
+    await expect(
+      page.getByRole("status").filter({ hasText: /did not answer in time/ }),
+    ).toBeVisible();
+    await expect(page.getByText("No flights found").first()).toBeVisible();
+  } finally {
+    await behaviour("NORMAL");
+  }
 });
