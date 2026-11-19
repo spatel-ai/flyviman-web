@@ -1643,7 +1643,7 @@ export interface paths {
     put?: never;
     /**
      * End a pricing rule
-     * @description Category rules only; the platform default then applies. Platform rules answer 409 `PRICING_RULE_REQUIRED`. Audited with the reason.
+     * @description Category rules, after which the platform default applies, and platform `MARKUP`, `SERVICE_FEE` and `DISCOUNT` rules, which are optional. Other platform rules answer 409 `PRICING_RULE_REQUIRED`. Audited with the reason.
      */
     post: operations["AdminPricingRulesController_deactivate"];
     delete?: never;
@@ -3134,7 +3134,7 @@ export interface components {
     };
     BreakdownLineDto: {
       /**
-       * @description `FLYING` is every flight (the legs, positioning and any return to base between them) in one line; other codes as the engine sets them (`WAITING`, `OVERNIGHT`, `CREW`, `LANDING_HANDLING`, `MIN_CHARGE`, `PLATFORM_FEE`, `TAX`).
+       * @description `FLYING` is every flight (the legs, priced hourly, per sector or at a fixed route price, with any minimum billable hours, positioning, any return to base between them and Flyviman's markup) in one line; other codes as the engine sets them (`WAITING`, `OVERNIGHT`, `CREW`, `PARKING`, `FUEL_SURCHARGE`, `PERMIT`, `NAVIGATION`, `OTHER` under the operator's label, `LANDING_HANDLING`, `MIN_CHARGE`, `PLATFORM_FEE`, `SERVICE_FEE`, `DISCOUNT` as a negative amount under the promotion's name, `TAX`).
        * @example FLYING
        */
       code: string;
@@ -3228,8 +3228,35 @@ export interface components {
        * @example 3000000
        */
       crewNightMinor: number | null;
+      /**
+       * @description Null when no minimum is set.
+       * @enum {string|null}
+       */
+      minBillableHoursPer: "LEG" | "DAY" | null;
+      /**
+       * @description Fuel surcharge per flight of the customer, in paise. Left out: unchanged; `null` clears.
+       * @example 500000
+       */
+      fuelSurchargePerFlightMinor: number | null;
+      /**
+       * @description Permits per flight of the customer, in paise. Left out: unchanged; `null` clears.
+       * @example 200000
+       */
+      permitPerFlightMinor: number | null;
+      /**
+       * @description Navigation charges per flight of the customer, in paise. Left out: unchanged; `null` clears.
+       * @example 100000
+       */
+      navigationPerFlightMinor: number | null;
+      /**
+       * @description One other charge per trip, in paise, shown to customers under `otherChargeLabel`. Left out: unchanged; `null` clears it and its label.
+       * @example 300000
+       */
+      otherChargeMinor: number | null;
       /** @example INR */
       currency: string;
+      /** @description Null when no other charge is set. */
+      otherChargeLabel: string | null;
     };
     OperatorPricingDto: {
       /**
@@ -3277,6 +3304,55 @@ export interface components {
        * @example 3000000
        */
       crewNightMinor?: number | null;
+      /**
+       * @description `LEG`: each flight bills at least the minimum. `DAY`: the flights together bill at least the minimum for each day from departure to return (multi-day trips). Hourly-priced aircraft only. Left out: unchanged (`LEG` for a new minimum); `null` sets `LEG`.
+       * @enum {string|null}
+       */
+      minBillableHoursPer?: "LEG" | "DAY" | null;
+      /**
+       * @description Fuel surcharge per flight of the customer, in paise. Left out: unchanged; `null` clears.
+       * @example 500000
+       */
+      fuelSurchargePerFlightMinor?: number | null;
+      /**
+       * @description Permits per flight of the customer, in paise. Left out: unchanged; `null` clears.
+       * @example 200000
+       */
+      permitPerFlightMinor?: number | null;
+      /**
+       * @description Navigation charges per flight of the customer, in paise. Left out: unchanged; `null` clears.
+       * @example 100000
+       */
+      navigationPerFlightMinor?: number | null;
+      /**
+       * @description One other charge per trip, in paise, shown to customers under `otherChargeLabel`. Left out: unchanged; `null` clears it and its label.
+       * @example 300000
+       */
+      otherChargeMinor?: number | null;
+      /**
+       * @description The other charge's name, shown to customers. Required with a new other charge; left out: unchanged.
+       * @example Catering
+       */
+      otherChargeLabel?: string;
+    };
+    FixedRouteResponseDto: {
+      /**
+       * Format: uuid
+       * @description An active location.
+       */
+      originId: string;
+      /**
+       * Format: uuid
+       * @description An active location other than the origin.
+       */
+      destinationId: string;
+      /**
+       * @description Price per flight in paise, under the aircraft's tax and commission flags.
+       * @example 25000000
+       */
+      amountMinor: number;
+      originName: string;
+      destinationName: string;
     };
     AircraftPricingResponseDto: {
       /**
@@ -3284,16 +3360,45 @@ export interface components {
        * @example 18000000
        */
       hourlyRateMinor: number | null;
-      /** @description The rate already includes GST. It is reduced before tax is added. */
+      /** @description The aircraft's rates (hourly, sector, fixed routes) already include GST. They are reduced before tax is added. */
       taxInclusive: boolean;
-      /** @description The rate already includes Flyviman's commission. It is reduced before commission is added. */
+      /** @description The aircraft's rates (hourly, sector, fixed routes) already include Flyviman's commission. They are reduced before commission is added. */
       commissionInclusive: boolean;
       /** @description Overrides the operator's minimum billable hours for this aircraft. Required; `null` clears the override. */
       minBillableHours: number | null;
+      /**
+       * @description Null when no minimum is set.
+       * @enum {string|null}
+       */
+      minBillableHoursPer: "LEG" | "DAY" | null;
+      /**
+       * @description Price per flight in paise, used when the aircraft's pricing model is `SECTOR`. Left out: unchanged; `null` clears.
+       * @example 25000000
+       */
+      sectorRateMinor: number | null;
+      /** @description Empty when none is set. */
+      fixedRoutes: components["schemas"]["FixedRouteResponseDto"][] | null;
       /** Format: uuid */
       aircraftId: string;
       /** @example INR */
       currency: string;
+    };
+    FixedRouteDto: {
+      /**
+       * Format: uuid
+       * @description An active location.
+       */
+      originId: string;
+      /**
+       * Format: uuid
+       * @description An active location other than the origin.
+       */
+      destinationId: string;
+      /**
+       * @description Price per flight in paise, under the aircraft's tax and commission flags.
+       * @example 25000000
+       */
+      amountMinor: number;
     };
     AircraftPricingDto: {
       /**
@@ -3301,12 +3406,24 @@ export interface components {
        * @example 18000000
        */
       hourlyRateMinor: number | null;
-      /** @description The rate already includes GST. It is reduced before tax is added. */
+      /** @description The aircraft's rates (hourly, sector, fixed routes) already include GST. They are reduced before tax is added. */
       taxInclusive: boolean;
-      /** @description The rate already includes Flyviman's commission. It is reduced before commission is added. */
+      /** @description The aircraft's rates (hourly, sector, fixed routes) already include Flyviman's commission. They are reduced before commission is added. */
       commissionInclusive: boolean;
       /** @description Overrides the operator's minimum billable hours for this aircraft. Required; `null` clears the override. */
       minBillableHours: number | null;
+      /**
+       * @description `LEG`: each flight bills at least the minimum. `DAY`: the flights together bill at least the minimum for each day from departure to return (multi-day trips). Hourly-priced aircraft only. Left out: unchanged (`LEG` for a new minimum); `null` sets `LEG`.
+       * @enum {string|null}
+       */
+      minBillableHoursPer?: "LEG" | "DAY" | null;
+      /**
+       * @description Price per flight in paise, used when the aircraft's pricing model is `SECTOR`. Left out: unchanged; `null` clears.
+       * @example 25000000
+       */
+      sectorRateMinor?: number | null;
+      /** @description Fixed prices per route, used when the aircraft's pricing model is `FIXED_ROUTE`; a route is priced in either direction and listed once. The complete list. Left out: unchanged; `null` or `[]` clears. */
+      fixedRoutes?: components["schemas"]["FixedRouteDto"][] | null;
     };
     PricingRuleResponseDto: {
       /** Format: uuid */
@@ -3345,12 +3462,15 @@ export interface components {
         | "VALIDITY"
         | "MIN_BILLABLE_HOURS"
         | "POSITIONING"
+        | "MARKUP"
+        | "SERVICE_FEE"
+        | "DISCOUNT"
         | "MATCHING_LIMITS";
       /** @enum {string} */
       scope: "PLATFORM" | "CATEGORY";
       /** @description The aircraft category of a CATEGORY rule; none for PLATFORM. */
       scopeRef?: string | null;
-      /** @description Settings of the rule type, checked exactly: COMMISSION { percent, mode }, TAX { name, percent }, MIN_CHARGE { amountMinor }, ROUTING_FACTOR { factor }, TIME_ALLOWANCE { minutes }, VALIDITY { minutes }, MIN_BILLABLE_HOURS { hours }, POSITIONING { rateFactor, freeWithinKm? }. */
+      /** @description Settings of the rule type, checked exactly: COMMISSION { percent, mode }, TAX { name, percent }, MIN_CHARGE { amountMinor }, ROUTING_FACTOR { factor }, TIME_ALLOWANCE { minutes }, VALIDITY { minutes }, MIN_BILLABLE_HOURS { hours, per?: LEG | DAY }, POSITIONING { rateFactor, freeWithinKm? }, MARKUP { percent }, SERVICE_FEE { amountMinor }, DISCOUNT { name, percent }, MATCHING_LIMITS { minLegKm?, maxLegKm?, minRunwayM?, minimumNoticeMinutes?, landingSites? }. */
       config: {
         [key: string]: unknown;
       };
@@ -5997,6 +6117,9 @@ export interface operations {
           | "VALIDITY"
           | "MIN_BILLABLE_HOURS"
           | "POSITIONING"
+          | "MARKUP"
+          | "SERVICE_FEE"
+          | "DISCOUNT"
           | "MATCHING_LIMITS";
         /** @description true (the default): rules in force now. false: every version, newest first, ended ones included. */
         active?: boolean;
