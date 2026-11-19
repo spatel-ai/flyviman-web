@@ -303,8 +303,13 @@ test("an idle customer is renewed when following a link into their account", asy
       .getByRole("link", { name: "Account" })
       .click();
   } else {
-    await page.getByRole("button", { name: "Account menu" }).click();
-    await page.getByRole("menuitem", { name: "Profile" }).click();
+    // A click before hydration is lost (D-116): open until it shows.
+    const profile = page.getByRole("menuitem", { name: "Profile" });
+    await expect(async () => {
+      await page.getByRole("button", { name: "Account menu" }).click();
+      await expect(profile).toBeVisible({ timeout: 1_000 });
+    }).toPass();
+    await profile.click();
   }
   await expect(page).toHaveURL("/account");
   await expect(
