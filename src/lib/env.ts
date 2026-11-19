@@ -7,6 +7,20 @@ const schema = z.object({
     .url()
     .default("http://localhost:4000/api/v1")
     .transform((value) => value.replace(/\/+$/, "")),
+  /**
+   * Business details the client supplies later (see `site-settings.ts`).
+   * Raw strings here; unset means "not shown", and a malformed value is
+   * ignored with a warning there, so none of these can fail the build.
+   */
+  NEXT_PUBLIC_WHATSAPP_NUMBER: z.string().optional(),
+  NEXT_PUBLIC_SOCIAL_INSTAGRAM: z.string().optional(),
+  NEXT_PUBLIC_SOCIAL_FACEBOOK: z.string().optional(),
+  NEXT_PUBLIC_SOCIAL_YOUTUBE: z.string().optional(),
+  NEXT_PUBLIC_SOCIAL_X: z.string().optional(),
+  NEXT_PUBLIC_SOCIAL_LINKEDIN: z.string().optional(),
+  NEXT_PUBLIC_LOGO_PATH: z.string().optional(),
+  NEXT_PUBLIC_CONTACT_EMAIL: z.string().optional(),
+  NEXT_PUBLIC_CONTACT_PHONES: z.string().optional(),
 });
 
 /**
@@ -15,6 +29,15 @@ const schema = z.object({
  */
 export const env = schema.parse({
   NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
+  NEXT_PUBLIC_WHATSAPP_NUMBER: process.env.NEXT_PUBLIC_WHATSAPP_NUMBER,
+  NEXT_PUBLIC_SOCIAL_INSTAGRAM: process.env.NEXT_PUBLIC_SOCIAL_INSTAGRAM,
+  NEXT_PUBLIC_SOCIAL_FACEBOOK: process.env.NEXT_PUBLIC_SOCIAL_FACEBOOK,
+  NEXT_PUBLIC_SOCIAL_YOUTUBE: process.env.NEXT_PUBLIC_SOCIAL_YOUTUBE,
+  NEXT_PUBLIC_SOCIAL_X: process.env.NEXT_PUBLIC_SOCIAL_X,
+  NEXT_PUBLIC_SOCIAL_LINKEDIN: process.env.NEXT_PUBLIC_SOCIAL_LINKEDIN,
+  NEXT_PUBLIC_LOGO_PATH: process.env.NEXT_PUBLIC_LOGO_PATH,
+  NEXT_PUBLIC_CONTACT_EMAIL: process.env.NEXT_PUBLIC_CONTACT_EMAIL,
+  NEXT_PUBLIC_CONTACT_PHONES: process.env.NEXT_PUBLIC_CONTACT_PHONES,
 });
 
 /**

@@ -1,5 +1,7 @@
+import Image from "next/image";
 import Link from "next/link";
 import { Suspense } from "react";
+import { siteSettings } from "@/lib/site-settings";
 import { getSession } from "@/lib/auth/session";
 import { homeFor, surfaceFor } from "@/lib/auth/roles";
 import { HeaderScrollState } from "./header-scroll-state";
@@ -64,7 +66,19 @@ export function SiteHeader() {
             className="text-title tracking-tight"
             aria-label="Flyviman home"
           >
-            Flyviman
+            {siteSettings.logoPath ? (
+              <Image
+                src={siteSettings.logoPath}
+                alt="Flyviman"
+                width={160}
+                height={32}
+                unoptimized
+                priority
+                className="h-8 w-auto"
+              />
+            ) : (
+              "Flyviman"
+            )}
           </Link>
           {/* The current page is marked once the address is known. */}
           <Suspense fallback={<SiteNavList active={null} />}>

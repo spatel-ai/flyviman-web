@@ -3,6 +3,7 @@ import { PageHero } from "@/components/marketing/page-hero";
 import { SectionHeading } from "@/components/marketing/section-heading";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CONTACT, CONTACT_PAGE } from "@/content/contact";
+import { siteSettings } from "@/lib/site-settings";
 import { EnquiryForm } from "./enquiry-form";
 
 const LINK =
@@ -41,19 +42,32 @@ export function ContactPage() {
           <dl className="space-y-8">
             <div>
               <dt className="text-overline text-muted uppercase">Phone</dt>
-              {CONTACT.phones.map((phone) => (
+              {siteSettings.phones.map((phone) => (
                 <dd key={phone.href}>
                   <a href={phone.href} className={LINK}>
                     {phone.label}
                   </a>
                 </dd>
               ))}
+              {siteSettings.whatsappHref ? (
+                <dd>
+                  <a
+                    href={siteSettings.whatsappHref}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={LINK}
+                  >
+                    WhatsApp
+                    <span className="sr-only"> (opens in a new tab)</span>
+                  </a>
+                </dd>
+              ) : null}
             </div>
             <div>
               <dt className="text-overline text-muted uppercase">Email</dt>
               <dd>
-                <a href={`mailto:${CONTACT.email}`} className={LINK}>
-                  {CONTACT.email}
+                <a href={`mailto:${siteSettings.email}`} className={LINK}>
+                  {siteSettings.email}
                 </a>
               </dd>
             </div>

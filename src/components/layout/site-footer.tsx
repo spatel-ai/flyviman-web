@@ -1,8 +1,26 @@
+import {
+  Facebook,
+  Instagram,
+  Linkedin,
+  MessageCircle,
+  Twitter,
+  Youtube,
+} from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { ScrollScrub } from "@/components/motion/scroll-scrub";
 import { ThemeSwitch } from "@/components/theme/theme-switch";
 import { CONTACT } from "@/content/contact";
+import { type SocialNetwork, siteSettings } from "@/lib/site-settings";
 import { LEGAL_NAV } from "./site-nav";
+
+const SOCIAL_ICONS = {
+  instagram: Instagram,
+  facebook: Facebook,
+  youtube: Youtube,
+  x: Twitter,
+  linkedin: Linkedin,
+} satisfies Record<SocialNetwork, typeof Instagram>;
 
 const LINK =
   "text-muted transition-colors duration-150 ease-standard hover:text-foreground";
@@ -25,21 +43,64 @@ export function SiteFooter() {
             to={{ opacity: 1, scaleX: 1 }}
             className="site-footer__wordmark hidden origin-left text-display tracking-tight md:block"
           >
-            Flyviman
+            {siteSettings.logoPath ? (
+              <Image
+                src={siteSettings.logoPath}
+                alt="Flyviman"
+                width={320}
+                height={64}
+                unoptimized
+                className="h-16 w-auto"
+              />
+            ) : (
+              "Flyviman"
+            )}
           </ScrollScrub>
           <address className="text-body-sm text-muted not-italic">
             <p className="text-foreground">{CONTACT.officeLabel}</p>
             <p className="mt-1">{CONTACT.address}</p>
             <p className="mt-1 flex flex-wrap gap-x-4">
-              {CONTACT.phones.map((phone) => (
+              {siteSettings.phones.map((phone) => (
                 <a key={phone.href} href={phone.href} className={CONTACT_LINK}>
                   {phone.label}
                 </a>
               ))}
-              <a href={`mailto:${CONTACT.email}`} className={CONTACT_LINK}>
-                {CONTACT.email}
+              <a href={`mailto:${siteSettings.email}`} className={CONTACT_LINK}>
+                {siteSettings.email}
               </a>
+              {siteSettings.whatsappHref ? (
+                <a
+                  href={siteSettings.whatsappHref}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={`${CONTACT_LINK} gap-1.5`}
+                >
+                  <MessageCircle className="size-4" aria-hidden="true" />
+                  WhatsApp
+                  <span className="sr-only"> (opens in a new tab)</span>
+                </a>
+              ) : null}
             </p>
+            {siteSettings.social.length > 0 ? (
+              <ul aria-label="Social media" className="mt-1 flex gap-1">
+                {siteSettings.social.map(({ network, label, href }) => {
+                  const Icon = SOCIAL_ICONS[network];
+                  return (
+                    <li key={network}>
+                      <a
+                        href={href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        aria-label={`${label} (opens in a new tab)`}
+                        className={`${LINK} inline-flex size-11 items-center justify-center`}
+                      >
+                        <Icon className="size-5" aria-hidden="true" />
+                      </a>
+                    </li>
+                  );
+                })}
+              </ul>
+            ) : null}
           </address>
         </div>
         <p className="text-caption text-muted">
