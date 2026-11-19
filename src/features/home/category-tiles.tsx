@@ -34,8 +34,7 @@ const TILES: Tile[] = [
     name: "Empty legs",
     description: "Repositioning flights at reduced prices.",
     icon: Timer,
-    href: "/search?service=empty-legs",
-    soon: true,
+    href: "/empty-legs",
   },
   {
     name: "Scheduled flights",

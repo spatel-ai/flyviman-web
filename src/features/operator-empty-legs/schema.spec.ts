@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { EmptyLegOffer } from "@/features/empty-legs/types";
+import type { OperatorEmptyLeg } from "@/features/empty-legs/types";
 import {
   EMPTY_VALUES,
   emptyLegSchema,
@@ -44,13 +44,14 @@ describe("emptyLegSchema", () => {
     expect(issues({ seatsAvailable: "0" })).toHaveLength(1);
     expect(issues({ price: "0" })).toHaveLength(1);
     expect(issues({ conditions: "ok" })).toHaveLength(1);
+    expect(issues({ validDay: "2026-12-02" })[0].path).toEqual(["validDay"]);
   });
 });
 
 describe("toEmptyLegBody", () => {
   it("sends paise and UTC instants from the airport's own time", () => {
     const body = toEmptyLegBody(GOOD, "Asia/Kolkata");
-    expect(body.price).toEqual({ amountMinor: 20000000, currency: "INR" });
+    expect(body.priceMinor).toBe(20000000);
     expect(body.departureFrom).toBe("2026-12-01T04:00:00.000Z");
     expect(body.seatsAvailable).toBe(6);
   });
@@ -67,11 +68,15 @@ describe("toEmptyLegBody", () => {
       departureFrom: body.departureFrom,
       departureTo: body.departureTo,
       seatsAvailable: body.seatsAvailable,
-      price: { ...body.price, priceType: "QUOTE" },
+      price: {
+        amountMinor: body.priceMinor,
+        currency: "INR",
+        priceType: "QUOTE",
+      },
       validUntil: body.validUntil,
       conditions: body.conditions,
       status: "DRAFT",
-    } as EmptyLegOffer;
+    } as unknown as OperatorEmptyLeg;
     expect(fromOffer(offer, "Asia/Kolkata")).toEqual({
       ...GOOD,
       price: "200000",

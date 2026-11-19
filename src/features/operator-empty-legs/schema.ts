@@ -1,9 +1,10 @@
 import { z } from "zod";
-import type { EmptyLegInput, EmptyLegOffer } from "@/features/empty-legs/types";
+import type {
+  EmptyLegInput,
+  OperatorEmptyLeg,
+} from "@/features/empty-legs/types";
 import { paiseToRupees, rupeesToPaise } from "@/lib/format/money";
 import { localToUtc, utcToLocal } from "@/lib/format/zoned";
-
-const CURRENCY = "INR";
 
 function paise(value: string): number | null {
   try {
@@ -54,6 +55,17 @@ export const emptyLegSchema = z
         message: "The destination must differ from the departure airport.",
       });
     }
+    if (
+      value.toDay &&
+      value.validDay &&
+      `${value.validDay}T${value.validTime}` > `${value.toDay}T${value.toTime}`
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["validDay"],
+        message: "The offer must not stay valid past the latest departure.",
+      });
+    }
     // Same zone, so the wall-clock strings sort in time order.
     if (
       value.fromDay &&
@@ -90,8 +102,7 @@ export const EMPTY_LEG_ALIASES = {
   departureFrom: "fromDay",
   departureTo: "toDay",
   validUntil: "validDay",
-  "price.amountMinor": "price",
-  amountMinor: "price",
+  priceMinor: "price",
 } as const;
 
 /**
@@ -109,14 +120,17 @@ export function toEmptyLegBody(
     departureFrom: localToUtc(values.fromDay, values.fromTime, zone),
     departureTo: localToUtc(values.toDay, values.toTime, zone),
     seatsAvailable: Number(values.seatsAvailable),
-    price: { amountMinor: paise(values.price) ?? 0, currency: CURRENCY },
+    priceMinor: paise(values.price) ?? 0,
     validUntil: localToUtc(values.validDay, values.validTime, zone),
     conditions: values.conditions.trim(),
   };
 }
 
 /** Form values for an existing offer, in its origin's local time. */
-export function fromOffer(offer: EmptyLegOffer, zone: string): EmptyLegValues {
+export function fromOffer(
+  offer: OperatorEmptyLeg,
+  zone: string,
+): EmptyLegValues {
   const from = utcToLocal(offer.departureFrom, zone);
   const to = utcToLocal(offer.departureTo, zone);
   const valid = utcToLocal(offer.validUntil, zone);

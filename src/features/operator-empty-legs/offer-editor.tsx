@@ -18,7 +18,7 @@ import {
   validUntilLabel,
   windowLabel,
 } from "@/features/empty-legs/format";
-import type { EmptyLegOffer } from "@/features/empty-legs/types";
+import type { OperatorEmptyLeg } from "@/features/empty-legs/types";
 import { apiFetch } from "@/lib/api/client";
 import { isNotFoundError } from "@/lib/api/errors";
 import { messageFor } from "@/lib/api/messages";
@@ -29,10 +29,6 @@ import { fromOffer } from "./schema";
 
 type Location = Schemas["LocationResponseDto"];
 
-/** Statuses an operator may still edit; others are read-only here. */
-const EDITABLE = ["DRAFT", "REJECTED"];
-const WITHDRAWABLE = ["PENDING_REVIEW", "PUBLISHED"];
-
 export function OfferEditor({ id }: { id: string }) {
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -41,7 +37,7 @@ export function OfferEditor({ id }: { id: string }) {
   const base = `operator/empty-legs/${encodeURIComponent(id)}`;
   const offer = useQuery({
     queryKey: queryKeys.operatorEmptyLeg(id),
-    queryFn: () => apiFetch<EmptyLegOffer>(base),
+    queryFn: () => apiFetch<OperatorEmptyLeg>(base),
   });
   const originId = offer.data?.data.origin.id;
   const origin = useQuery({
@@ -53,7 +49,7 @@ export function OfferEditor({ id }: { id: string }) {
 
   const act = useMutation({
     mutationFn: (action: "publish" | "withdraw") =>
-      apiFetch<EmptyLegOffer>(`${base}/${action}`, { method: "POST" }),
+      apiFetch<OperatorEmptyLeg>(`${base}/${action}`, { method: "POST" }),
     onSuccess: async ({ data }, action) => {
       setConfirmWithdraw(false);
       setError(null);
@@ -94,7 +90,7 @@ export function OfferEditor({ id }: { id: string }) {
     );
   }
   const item = offer.data.data;
-  const editable = EDITABLE.includes(item.status);
+  const editable = item.editable;
   const zone = item.origin.timeZone ?? origin.data?.data.timeZone;
 
   return (
@@ -117,7 +113,7 @@ export function OfferEditor({ id }: { id: string }) {
           {error}
         </p>
       ) : null}
-      {item.status === "REJECTED" && item.reviewNote ? (
+      {item.reviewNote ? (
         <Card variant="raised">
           <p className="text-body-sm font-medium">Why it was not approved</p>
           <p className="text-body-sm">{item.reviewNote}</p>
@@ -157,7 +153,7 @@ export function OfferEditor({ id }: { id: string }) {
         </Card>
       )}
       <div className="flex flex-wrap gap-3">
-        {editable ? (
+        {item.publishable ? (
           <Button
             onClick={() => act.mutate("publish")}
             loading={act.isPending && act.variables === "publish"}
@@ -165,13 +161,13 @@ export function OfferEditor({ id }: { id: string }) {
             Publish
           </Button>
         ) : null}
-        {WITHDRAWABLE.includes(item.status) ? (
+        {item.withdrawable ? (
           <Button variant="secondary" onClick={() => setConfirmWithdraw(true)}>
             Withdraw
           </Button>
         ) : null}
       </div>
-      {editable ? (
+      {item.publishable ? (
         <p className="text-body-sm text-muted">
           Save your changes before publishing. Publishing may send the offer to
           operations for review first.

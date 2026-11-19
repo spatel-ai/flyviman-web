@@ -12,7 +12,10 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/toast";
-import type { EmptyLegOffer } from "@/features/empty-legs/types";
+import type {
+  EmptyLegAircraft,
+  OperatorEmptyLeg,
+} from "@/features/empty-legs/types";
 import { apiFetch } from "@/lib/api/client";
 import { applyApiError } from "@/lib/api/messages";
 import { queryKeys } from "@/lib/api/query-keys";
@@ -25,7 +28,7 @@ import {
   type EmptyLegValues,
 } from "./schema";
 
-type Aircraft = Schemas["AircraftSummaryResponseDto"];
+type Aircraft = EmptyLegAircraft;
 type Location = Schemas["LocationResponseDto"];
 
 const FIELDS = [
@@ -47,7 +50,7 @@ export function OfferForm({
   initial = EMPTY_VALUES,
 }: {
   /** The offer being edited; absent when creating. */
-  offer?: EmptyLegOffer;
+  offer?: OperatorEmptyLeg;
   initial?: EmptyLegValues;
 }) {
   const router = useRouter();
@@ -66,12 +69,11 @@ export function OfferForm({
   });
 
   const fleet = useQuery({
-    queryKey: queryKeys.operatorAircraft,
-    queryFn: () => apiFetch<Aircraft[]>("operator/aircraft"),
+    queryKey: [...queryKeys.operatorEmptyLegs, "aircraft"] as const,
+    queryFn: () => apiFetch<Aircraft[]>("operator/empty-legs/aircraft"),
   });
-  const approved = (fleet.data?.data ?? []).filter(
-    (item) => item.listingStatus === "APPROVED",
-  );
+  // The API lists only approved aircraft within the caller's reach.
+  const approved = fleet.data?.data ?? [];
   const originId = useWatch({ control, name: "originId" });
   const origin = useQuery({
     queryKey: queryKeys.location(originId),
@@ -84,11 +86,11 @@ export function OfferForm({
   const save = useMutation({
     mutationFn: (body: ReturnType<typeof toEmptyLegBody>) =>
       offer
-        ? apiFetch<EmptyLegOffer>(
+        ? apiFetch<OperatorEmptyLeg>(
             `operator/empty-legs/${encodeURIComponent(offer.id)}`,
             { method: "PATCH", body },
           )
-        : apiFetch<EmptyLegOffer>("operator/empty-legs", {
+        : apiFetch<OperatorEmptyLeg>("operator/empty-legs", {
             method: "POST",
             body,
           }),
@@ -118,7 +120,7 @@ export function OfferForm({
           }
           const capacity = approved.find(
             (item) => item.id === values.aircraftId,
-          )?.passengerCapacity;
+          )?.seats;
           if (
             capacity !== undefined &&
             Number(values.seatsAvailable) > capacity
@@ -152,7 +154,7 @@ export function OfferForm({
             }
             options={approved.map((item) => ({
               value: item.id,
-              label: `${item.registration} · ${item.manufacturer} ${item.model}`,
+              label: `${item.registration} · ${item.type}`,
             }))}
             value={field.value}
             onValueChange={field.onChange}

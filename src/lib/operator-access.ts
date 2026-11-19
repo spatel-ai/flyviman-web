@@ -71,7 +71,7 @@ export function operatorNav(
     ...(status === "APPROVED" ? [DASHBOARD] : []),
     ...(access.capabilities.length > 0 ? [FLEET] : []),
     ...(can(access, "MANAGE_AVAILABILITY") ? [AVAILABILITY] : []),
-    ...(status === "APPROVED" && can(access, "MANAGE_AIRCRAFT")
+    ...(status === "APPROVED" && can(access, "MANAGE_EMPTY_LEGS")
       ? [EMPTY_LEGS]
       : []),
   ];

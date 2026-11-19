@@ -1,8 +1,7 @@
 import { formatDateTime } from "@/lib/format/date";
 import { categoryLabel } from "@/features/search/format";
+// The operator and admin shapes carry more, so they pass as an EmptyLegOffer too.
 import type { EmptyLegLocation, EmptyLegOffer } from "./types";
-
-const DEFAULT_ZONE = "Asia/Kolkata";
 
 /** "Mumbai (BOM)", falling back to the name. */
 export function placeLabel(location: EmptyLegLocation): string {
@@ -17,12 +16,12 @@ export function routeLabel(offer: EmptyLegOffer): string {
 
 /** The departure window in the origin's local time, zone shown. */
 export function windowLabel(offer: EmptyLegOffer): string {
-  const zone = offer.origin.timeZone ?? DEFAULT_ZONE;
+  const zone = offer.origin.timeZone;
   return `${formatDateTime(offer.departureFrom, zone)} to ${formatDateTime(offer.departureTo, zone)}`;
 }
 
 export function validUntilLabel(offer: EmptyLegOffer): string {
-  return `Until ${formatDateTime(offer.validUntil, offer.origin.timeZone ?? DEFAULT_ZONE)}`;
+  return `Until ${formatDateTime(offer.validUntil, offer.origin.timeZone)}`;
 }
 
 export function aircraftLabel(offer: EmptyLegOffer): string {

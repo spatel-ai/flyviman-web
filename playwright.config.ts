@@ -62,6 +62,8 @@ export default defineConfig({
         RATE_LIMIT_SEARCH_PER_MINUTE: "100000",
         OTP_RESEND_COOLDOWN_SECONDS: "0",
         OTP_MAX_PER_HOUR: "100000",
+        // Publishing an empty leg waits for operations, so journeys cover review.
+        EMPTY_LEG_REVIEW_REQUIRED: "true",
         ...(SIGNED ? { WEB_PROXY_SECRET } : {}),
       },
     },

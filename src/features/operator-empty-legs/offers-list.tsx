@@ -11,7 +11,7 @@ import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Pagination } from "@/components/ui/table";
 import { routeLabel, windowLabel } from "@/features/empty-legs/format";
-import type { EmptyLegOffer } from "@/features/empty-legs/types";
+import type { OperatorEmptyLeg } from "@/features/empty-legs/types";
 import { apiFetch } from "@/lib/api/client";
 import { messageFor } from "@/lib/api/messages";
 import { queryKeys } from "@/lib/api/query-keys";
@@ -27,7 +27,7 @@ export function OfferList() {
   const offers = useQuery({
     queryKey: [...queryKeys.operatorEmptyLegs, "list", page] as const,
     queryFn: () =>
-      apiFetch<EmptyLegOffer[]>("operator/empty-legs", {
+      apiFetch<OperatorEmptyLeg[]>("operator/empty-legs", {
         query: { page, pageSize: PAGE_SIZE },
       }),
   });

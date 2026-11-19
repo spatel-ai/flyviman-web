@@ -14,7 +14,7 @@ import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/components/ui/toast";
 import { apiFetch } from "@/lib/api/client";
-import { isNotFoundError } from "@/lib/api/errors";
+import { ApiError, isNotFoundError } from "@/lib/api/errors";
 import { messageFor } from "@/lib/api/messages";
 import { queryKeys } from "@/lib/api/query-keys";
 import { useMe } from "@/lib/api/use-me";
@@ -26,7 +26,7 @@ import {
   validUntilLabel,
   windowLabel,
 } from "./format";
-import type { EmptyLegOffer } from "./types";
+import type { EmptyLegDetail as Detail } from "./types";
 
 /**
  * One empty-leg offer. Its conditions come before the request (business
@@ -37,12 +37,21 @@ export function EmptyLegDetail({ id }: { id: string }) {
   const now = useNow();
   const offer = useQuery({
     queryKey: queryKeys.emptyLeg(id),
-    queryFn: () =>
-      apiFetch<EmptyLegOffer>(`empty-legs/${encodeURIComponent(id)}`),
+    queryFn: () => apiFetch<Detail>(`empty-legs/${encodeURIComponent(id)}`),
   });
 
   if (offer.isPending) return <Skeleton className="h-96" />;
   if (offer.isError) {
+    if (isEnded(offer.error)) {
+      return (
+        <RecordNotFound
+          title="This offer has ended"
+          description="It was withdrawn or its validity has passed. Other empty legs may suit you."
+          backHref="/empty-legs"
+          backLabel="See all empty legs"
+        />
+      );
+    }
     return isNotFoundError(offer.error) ? (
       <RecordNotFound
         title="Offer not found"
@@ -165,13 +174,21 @@ export function EmptyLegDetail({ id }: { id: string }) {
   );
 }
 
+/** The API answers 410 for an offer that was withdrawn or has expired. */
+function isEnded(error: unknown): boolean {
+  return (
+    error instanceof ApiError &&
+    (error.code === "EMPTY_LEG_EXPIRED" || error.code === "EMPTY_LEG_WITHDRAWN")
+  );
+}
+
 /** "Notify me of changes", for a signed-in customer; others are shown the way in. */
-function InterestToggle({ offer }: { offer: EmptyLegOffer }) {
+function InterestToggle({ offer }: { offer: Detail }) {
   const me = useMe();
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const base = `empty-legs/${encodeURIComponent(offer.id)}/interest`;
-  const interested = offer.interested === true;
+  const interested = offer.interested;
 
   const toggle = useMutation({
     mutationFn: () =>

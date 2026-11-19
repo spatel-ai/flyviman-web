@@ -60,12 +60,7 @@ export type StaffStatus = "INVITED" | "ACTIVE" | "SUSPENDED";
 
 /** An empty-leg offer (M7). */
 export type EmptyLegStatus =
-  | "DRAFT"
-  | "PENDING_REVIEW"
-  | "PUBLISHED"
-  | "REJECTED"
-  | "WITHDRAWN"
-  | "EXPIRED";
+  "DRAFT" | "PENDING_REVIEW" | "PUBLISHED" | "BOOKED" | "WITHDRAWN" | "EXPIRED";
 
 interface Presentation {
   label: string;
@@ -139,7 +134,7 @@ const EMPTY_LEG: Record<EmptyLegStatus, Presentation> = {
   DRAFT: { label: "Draft", tone: "neutral" },
   PENDING_REVIEW: { label: "Under review", tone: "warning" },
   PUBLISHED: { label: "Published", tone: "success" },
-  REJECTED: { label: "Not approved", tone: "danger" },
+  BOOKED: { label: "Booked", tone: "info" },
   WITHDRAWN: { label: "Withdrawn", tone: "neutral" },
   EXPIRED: { label: "Expired", tone: "danger" },
 };

@@ -32,7 +32,7 @@ test.describe("customer home", () => {
     // Where each tile leads; the unbuilt ones say so (business rule 4).
     for (const [name, href] of [
       ["Helicopter", "/search?service=helicopter"],
-      ["Empty legs", "/search?service=empty-legs"],
+      ["Empty legs", "/empty-legs"],
       ["Scheduled flights", "/search?service=flights"],
       ["Air ambulance", "/search?service=air-ambulance"],
     ]) {
@@ -40,7 +40,7 @@ test.describe("customer home", () => {
         ways.getByRole("link", { name: new RegExp(name) }),
       ).toHaveAttribute("href", href);
     }
-    await expect(ways.getByText("Coming soon")).toHaveCount(2);
+    await expect(ways.getByText("Coming soon")).toHaveCount(1);
   });
 
   test("the booking card is visible when the film ends, clear of the tab bar", async ({

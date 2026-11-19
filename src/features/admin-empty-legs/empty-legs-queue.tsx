@@ -19,7 +19,7 @@ import {
   validUntilLabel,
   windowLabel,
 } from "@/features/empty-legs/format";
-import type { EmptyLegOffer } from "@/features/empty-legs/types";
+import type { AdminEmptyLeg } from "@/features/empty-legs/types";
 import { apiFetch } from "@/lib/api/client";
 import { messageFor } from "@/lib/api/messages";
 import { queryKeys } from "@/lib/api/query-keys";
@@ -27,7 +27,6 @@ import { queryKeys } from "@/lib/api/query-keys";
 const TABS = [
   { value: "PENDING_REVIEW", label: "Awaiting review" },
   { value: "PUBLISHED", label: "Published" },
-  { value: "REJECTED", label: "Not approved" },
   { value: "WITHDRAWN", label: "Withdrawn" },
 ];
 
@@ -44,13 +43,13 @@ export function EmptyLegsQueue() {
   const page = Math.max(1, Number(params.get("page")) || 1);
   const queryClient = useQueryClient();
   const { toast } = useToast();
-  const [rejecting, setRejecting] = useState<EmptyLegOffer | null>(null);
+  const [rejecting, setRejecting] = useState<AdminEmptyLeg | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const queue = useQuery({
     queryKey: [...queryKeys.adminEmptyLegs(status), page] as const,
     queryFn: () =>
-      apiFetch<EmptyLegOffer[]>("admin/empty-legs", {
+      apiFetch<AdminEmptyLeg[]>("admin/empty-legs", {
         query: { status, page, pageSize: PAGE_SIZE },
       }),
   });
@@ -128,7 +127,7 @@ export function EmptyLegsQueue() {
                       <p className="text-title">{routeLabel(item)}</p>
                       <p className="text-body-sm text-muted">
                         {item.reference} · {item.operatorName} ·{" "}
-                        {aircraftLabel(item)}
+                        {item.aircraft.registration} · {aircraftLabel(item)}
                       </p>
                       <p className="text-body-sm">{windowLabel(item)}</p>
                       <p className="text-body-sm text-muted">
