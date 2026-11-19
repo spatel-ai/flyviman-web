@@ -12,6 +12,7 @@ type OperatorStatus = Schemas["OperatorProfileResponseDto"]["status"];
 export const CAPABILITY_LABELS: Record<Capability, string> = {
   MANAGE_AIRCRAFT: "Manage aircraft",
   MANAGE_AVAILABILITY: "Manage availability",
+  MANAGE_EMPTY_LEGS: "Manage empty legs",
 };
 
 export function isOperatorAdmin(access: OperatorAccess | undefined): boolean {

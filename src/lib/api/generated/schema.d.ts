@@ -1467,6 +1467,232 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/empty-legs": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Listed empty-leg offers
+     * @description Published offers still valid, on an approved, available aircraft with current documents, of an approved operator. Soonest departure first. `from` and `to` are India dates matched against the departure window; `maxPrice` is in paise.
+     */
+    get: operations["EmptyLegsController_list"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/empty-legs/{id}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Empty-leg offer detail
+     * @description 410 `EMPTY_LEG_EXPIRED` or `EMPTY_LEG_WITHDRAWN` for an offer that was listed and has ended; 404 for any other offer that is not listed. `interested` tells a signed-in customer whether they follow it; the answer is then `Cache-Control: private, no-store`.
+     */
+    get: operations["EmptyLegsController_detail"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/empty-legs/{id}/interest": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Follow an offer for change alerts
+     * @description Listed offers only (404 or 410 otherwise). Repeating it changes nothing. Alerts go in the app and by email when the offer changes, is withdrawn or expires.
+     */
+    post: operations["EmptyLegsController_register"];
+    /**
+     * Stop alerts for an offer
+     * @description Succeeds whether or not the caller was following it.
+     */
+    delete: operations["EmptyLegsController_remove"];
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/operator/empty-legs": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** List own offers, newest first */
+    get: operations["OperatorEmptyLegsController_list"];
+    put?: never;
+    /**
+     * Create an offer
+     * @description Created as a draft. Approved operators only. The price is returned as a `QUOTE`. Audited.
+     */
+    post: operations["OperatorEmptyLegsController_create"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/operator/empty-legs/aircraft": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Aircraft an offer can be made on
+     * @description Approved aircraft within your reach, by registration. Read only; for staff with "manage empty legs" who have no fleet access.
+     */
+    get: operations["OperatorEmptyLegsController_aircraft"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/operator/empty-legs/{id}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Offer detail */
+    get: operations["OperatorEmptyLegsController_detail"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    /**
+     * Update an offer
+     * @description Drafts and published offers. On a published offer the aircraft, origin and destination are locked (409 `EMPTY_LEG_FIELD_LOCKED`); a change notifies customers following it, or, when review is required, returns it to review. Audited.
+     */
+    patch: operations["OperatorEmptyLegsController_update"];
+    trace?: never;
+  };
+  "/api/v1/operator/empty-legs/{id}/publish": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Publish, or submit for review if required
+     * @description From draft. Needs an approved operator and aircraft and validity still ahead. Goes to `PUBLISHED`, or `PENDING_REVIEW` when review is required. Audited.
+     */
+    post: operations["OperatorEmptyLegsController_publish"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/operator/empty-legs/{id}/withdraw": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Withdraw
+     * @description From draft, review or published; final. Customers following a published offer are told. Audited.
+     */
+    post: operations["OperatorEmptyLegsController_withdraw"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/admin/empty-legs": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Offers, including those awaiting review
+     * @description Every status; filter with `status=PENDING_REVIEW` for the review queue. Oldest submission first.
+     */
+    get: operations["AdminEmptyLegsController_list"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/admin/empty-legs/{id}/approve": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Approve for publication
+     * @description From `PENDING_REVIEW` to `PUBLISHED`. Needs an approved operator and aircraft and validity still ahead. Audited; the operator is told.
+     */
+    post: operations["AdminEmptyLegsController_approve"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/admin/empty-legs/{id}/reject": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Reject with reason
+     * @description From `PENDING_REVIEW` back to `DRAFT`, with the reason as `reviewNote`. Audited; the operator is told.
+     */
+    post: operations["AdminEmptyLegsController_reject"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/v1/search/scheduled": {
     parameters: {
       query?: never;
@@ -2274,7 +2500,8 @@ export interface components {
     OperatorStatus:
       "DRAFT" | "PENDING_REVIEW" | "APPROVED" | "REJECTED" | "SUSPENDED";
     /** @enum {string} */
-    StaffCapability: "MANAGE_AIRCRAFT" | "MANAGE_AVAILABILITY";
+    StaffCapability:
+      "MANAGE_AIRCRAFT" | "MANAGE_AVAILABILITY" | "MANAGE_EMPTY_LEGS";
     OperatorAccessDto: {
       /** @enum {string} */
       role: "OPERATOR_ADMIN" | "OPERATOR_STAFF";
@@ -3068,6 +3295,262 @@ export interface components {
       aircraftId: string | null;
       registration: string | null;
     };
+    /** @enum {string} */
+    EmptyLegStatus:
+      | "DRAFT"
+      | "PENDING_REVIEW"
+      | "PUBLISHED"
+      | "BOOKED"
+      | "WITHDRAWN"
+      | "EXPIRED";
+    EmptyLegAircraftDto: {
+      /**
+       * @description Manufacturer and model.
+       * @example Cessna Citation CJ3+
+       */
+      type: string;
+      category: components["schemas"]["AircraftCategory"];
+      /** @description The aircraft's passenger capacity. */
+      seats: number;
+    };
+    EmptyLegLocationDto: {
+      /** Format: uuid */
+      id: string;
+      name: string;
+      city: string | null;
+      iata: string | null;
+      icao: string | null;
+      /** @example Asia/Kolkata */
+      timeZone: string;
+    };
+    /**
+     * @description `QUOTE` for an operator's price. Never `CONFIRMED`.
+     * @enum {string}
+     */
+    PriceType: "ESTIMATE" | "LIVE_FARE" | "QUOTE" | "CONFIRMED";
+    EmptyLegPriceDto: {
+      /** @description Paise. */
+      amountMinor: number;
+      /** @example INR */
+      currency: string;
+      /** @description `QUOTE` for an operator's price. Never `CONFIRMED`. */
+      priceType: components["schemas"]["PriceType"];
+    };
+    EmptyLegResponseDto: {
+      /** Format: uuid */
+      id: string;
+      /** @example FLY-EL-7K2M9Q */
+      reference: string;
+      status: components["schemas"]["EmptyLegStatus"];
+      aircraft: components["schemas"]["EmptyLegAircraftDto"];
+      operatorName: string;
+      origin: components["schemas"]["EmptyLegLocationDto"];
+      destination: components["schemas"]["EmptyLegLocationDto"];
+      /** Format: date-time */
+      departureFrom: string;
+      /** Format: date-time */
+      departureTo: string;
+      seatsAvailable: number;
+      price: components["schemas"]["EmptyLegPriceDto"];
+      /**
+       * Format: date-time
+       * @description Not bookable from this time.
+       */
+      validUntil: string;
+      /** @description Booking conditions. */
+      conditions: string;
+    };
+    EmptyLegDetailResponseDto: {
+      /** Format: uuid */
+      id: string;
+      /** @example FLY-EL-7K2M9Q */
+      reference: string;
+      status: components["schemas"]["EmptyLegStatus"];
+      aircraft: components["schemas"]["EmptyLegAircraftDto"];
+      operatorName: string;
+      origin: components["schemas"]["EmptyLegLocationDto"];
+      destination: components["schemas"]["EmptyLegLocationDto"];
+      /** Format: date-time */
+      departureFrom: string;
+      /** Format: date-time */
+      departureTo: string;
+      seatsAvailable: number;
+      price: components["schemas"]["EmptyLegPriceDto"];
+      /**
+       * Format: date-time
+       * @description Not bookable from this time.
+       */
+      validUntil: string;
+      /** @description Booking conditions. */
+      conditions: string;
+      /** @description Whether the signed-in customer follows this offer for change alerts. False when not signed in as a customer. */
+      interested: boolean;
+    };
+    EmptyLegInterestResponseDto: {
+      /** Format: uuid */
+      emptyLegId: string;
+      /** @example true */
+      interested: boolean;
+    };
+    OperatorEmptyLegAircraftDto: {
+      /**
+       * @description Manufacturer and model.
+       * @example Cessna Citation CJ3+
+       */
+      type: string;
+      category: components["schemas"]["AircraftCategory"];
+      /** @description The aircraft's passenger capacity. */
+      seats: number;
+      /** Format: uuid */
+      id: string;
+      registration: string;
+    };
+    OperatorEmptyLegResponseDto: {
+      /** Format: uuid */
+      id: string;
+      /** @example FLY-EL-7K2M9Q */
+      reference: string;
+      status: components["schemas"]["EmptyLegStatus"];
+      aircraft: components["schemas"]["OperatorEmptyLegAircraftDto"];
+      operatorName: string;
+      origin: components["schemas"]["EmptyLegLocationDto"];
+      destination: components["schemas"]["EmptyLegLocationDto"];
+      /** Format: date-time */
+      departureFrom: string;
+      /** Format: date-time */
+      departureTo: string;
+      seatsAvailable: number;
+      price: components["schemas"]["EmptyLegPriceDto"];
+      /**
+       * Format: date-time
+       * @description Not bookable from this time.
+       */
+      validUntil: string;
+      /** @description Booking conditions. */
+      conditions: string;
+      /** @description Why operations last rejected it; cleared on publishing again. */
+      reviewNote: string | null;
+      /** Format: date-time */
+      submittedAt: string | null;
+      /** Format: date-time */
+      publishedAt: string | null;
+      /** @description Customers following it. */
+      interestCount: number;
+      /** @description Whether PATCH is allowed (draft or published). */
+      editable: boolean;
+      /** @description Whether publish is allowed (draft). */
+      publishable: boolean;
+      /** @description Whether withdraw is allowed (draft, under review or published). */
+      withdrawable: boolean;
+      /** Format: date-time */
+      createdAt: string;
+      /** Format: date-time */
+      updatedAt: string;
+    };
+    CreateEmptyLegDto: {
+      /**
+       * Format: uuid
+       * @description An aircraft of your operator, within your reach.
+       */
+      aircraftId: string;
+      /**
+       * Format: uuid
+       * @description An active location.
+       */
+      originId: string;
+      /**
+       * Format: uuid
+       * @description An active location, other than the origin.
+       */
+      destinationId: string;
+      /**
+       * Format: date-time
+       * @description Earliest departure. ISO 8601 with offset, within 365 days.
+       * @example 2026-12-05T08:00:00+05:30
+       */
+      departureFrom: string;
+      /**
+       * Format: date-time
+       * @description Latest departure. After `departureFrom`, in the future, at most 14 days after it.
+       * @example 2026-12-05T18:00:00+05:30
+       */
+      departureTo: string;
+      /** @description Seats offered; at most the aircraft's passenger capacity. */
+      seatsAvailable: number;
+      /** @description The whole offer, in paise (INR). What the customer pays; returned as a `QUOTE`. */
+      priceMinor: number;
+      /**
+       * Format: date-time
+       * @description When the offer stops being bookable: in the future and not after `departureTo`.
+       */
+      validUntil: string;
+      /** @description Booking conditions shown before the customer commits. */
+      conditions: string;
+    };
+    UpdateEmptyLegDto: {
+      /** Format: uuid */
+      aircraftId?: string;
+      /** Format: uuid */
+      originId?: string;
+      /** Format: uuid */
+      destinationId?: string;
+      /** Format: date-time */
+      departureFrom?: string;
+      /** Format: date-time */
+      departureTo?: string;
+      seatsAvailable?: number;
+      priceMinor?: number;
+      /** Format: date-time */
+      validUntil?: string;
+      conditions?: string;
+    };
+    AdminEmptyLegResponseDto: {
+      /** Format: uuid */
+      id: string;
+      /** @example FLY-EL-7K2M9Q */
+      reference: string;
+      status: components["schemas"]["EmptyLegStatus"];
+      aircraft: components["schemas"]["OperatorEmptyLegAircraftDto"];
+      operatorName: string;
+      origin: components["schemas"]["EmptyLegLocationDto"];
+      destination: components["schemas"]["EmptyLegLocationDto"];
+      /** Format: date-time */
+      departureFrom: string;
+      /** Format: date-time */
+      departureTo: string;
+      seatsAvailable: number;
+      price: components["schemas"]["EmptyLegPriceDto"];
+      /**
+       * Format: date-time
+       * @description Not bookable from this time.
+       */
+      validUntil: string;
+      /** @description Booking conditions. */
+      conditions: string;
+      /** @description Why operations last rejected it; cleared on publishing again. */
+      reviewNote: string | null;
+      /** Format: date-time */
+      submittedAt: string | null;
+      /** Format: date-time */
+      publishedAt: string | null;
+      /** @description Customers following it. */
+      interestCount: number;
+      /** @description Whether PATCH is allowed (draft or published). */
+      editable: boolean;
+      /** @description Whether publish is allowed (draft). */
+      publishable: boolean;
+      /** @description Whether withdraw is allowed (draft, under review or published). */
+      withdrawable: boolean;
+      /** Format: date-time */
+      createdAt: string;
+      /** Format: date-time */
+      updatedAt: string;
+      /** Format: uuid */
+      operatorId: string;
+    };
+    EmptyLegReasonDto: {
+      reason: string;
+    };
     ScheduledPassengersDto: {
       /** @example 1 */
       adults: number;
@@ -3285,8 +3768,6 @@ export interface components {
      * @enum {string}
      */
     RoundTripStrategy: "WAIT" | "RETURN_TO_BASE";
-    /** @enum {string} */
-    PriceType: "ESTIMATE" | "LIVE_FARE" | "QUOTE" | "CONFIRMED";
     SearchPriceDto: {
       priceType: components["schemas"]["PriceType"];
       /** @description Paise. */
@@ -6130,6 +6611,324 @@ export interface operations {
         };
         content: {
           "application/json": components["schemas"]["ExpiringDocumentDto"][];
+        };
+      };
+    };
+  };
+  EmptyLegsController_list: {
+    parameters: {
+      query?: {
+        page?: number;
+        pageSize?: number;
+        /** @description Origin location id. */
+        origin?: string;
+        /** @description Destination location id. */
+        destination?: string;
+        /** @description YYYY-MM-DD, India time. Offers whose departure window ends on or after the start of this day. */
+        from?: string;
+        /** @description YYYY-MM-DD, India time. Offers whose departure window starts on or before the end of this day. */
+        to?: string;
+        /** @description At least this many seats available. */
+        passengers?: number;
+        /** @description Highest price, in paise. */
+        maxPrice?: number;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["EmptyLegResponseDto"][];
+        };
+      };
+    };
+  };
+  EmptyLegsController_detail: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["EmptyLegDetailResponseDto"];
+        };
+      };
+    };
+  };
+  EmptyLegsController_register: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["EmptyLegInterestResponseDto"];
+        };
+      };
+    };
+  };
+  EmptyLegsController_remove: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  OperatorEmptyLegsController_list: {
+    parameters: {
+      query?: {
+        page?: number;
+        pageSize?: number;
+        status?: components["schemas"]["EmptyLegStatus"];
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["OperatorEmptyLegResponseDto"][];
+        };
+      };
+    };
+  };
+  OperatorEmptyLegsController_create: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["CreateEmptyLegDto"];
+      };
+    };
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["OperatorEmptyLegResponseDto"];
+        };
+      };
+    };
+  };
+  OperatorEmptyLegsController_aircraft: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["OperatorEmptyLegAircraftDto"][];
+        };
+      };
+    };
+  };
+  OperatorEmptyLegsController_detail: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["OperatorEmptyLegResponseDto"];
+        };
+      };
+    };
+  };
+  OperatorEmptyLegsController_update: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["UpdateEmptyLegDto"];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["OperatorEmptyLegResponseDto"];
+        };
+      };
+    };
+  };
+  OperatorEmptyLegsController_publish: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["OperatorEmptyLegResponseDto"];
+        };
+      };
+    };
+  };
+  OperatorEmptyLegsController_withdraw: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["OperatorEmptyLegResponseDto"];
+        };
+      };
+    };
+  };
+  AdminEmptyLegsController_list: {
+    parameters: {
+      query?: {
+        page?: number;
+        pageSize?: number;
+        status?: components["schemas"]["EmptyLegStatus"];
+        operatorId?: string;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["AdminEmptyLegResponseDto"][];
+        };
+      };
+    };
+  };
+  AdminEmptyLegsController_approve: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["AdminEmptyLegResponseDto"];
+        };
+      };
+    };
+  };
+  AdminEmptyLegsController_reject: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["EmptyLegReasonDto"];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["AdminEmptyLegResponseDto"];
         };
       };
     };
