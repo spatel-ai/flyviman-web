@@ -8,6 +8,8 @@ const API_ORIGIN = `http://localhost:${API_PORT}`;
  * API_PROXY=1 proxies /api/v1 as the hosted site does today, with no secret.
  * API_PROXY=signed also shares this secret between the web server and the
  * API, so the web server signs each visitor's address (lib/client-address.ts).
+ * It also sets TRUST_REAL_IP=1, standing in for Vercel: the tests set
+ * x-real-ip themselves to play different visitors.
  */
 const SIGNED = process.env.API_PROXY === "signed";
 export const WEB_PROXY_SECRET = "e2e-web-proxy-secret-of-32-characters-or-more";
@@ -74,7 +76,7 @@ export default defineConfig({
         ? {
             NEXT_PUBLIC_API_URL: `${ORIGIN}/api/v1`,
             API_PROXY_TARGET: API_ORIGIN,
-            ...(SIGNED ? { WEB_PROXY_SECRET } : {}),
+            ...(SIGNED ? { WEB_PROXY_SECRET, TRUST_REAL_IP: "1" } : {}),
           }
         : { NEXT_PUBLIC_API_URL: `${API_ORIGIN}/api/v1` },
     },

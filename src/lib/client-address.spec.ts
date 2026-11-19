@@ -52,6 +52,7 @@ describe("visitorAddressHeaders", () => {
 
   it("signs the address the host saw", async () => {
     vi.stubEnv("WEB_PROXY_SECRET", SECRET);
+    vi.stubEnv("TRUST_REAL_IP", "1");
     const signed = (await from({ "x-real-ip": "203.0.113.7" }))[
       CLIENT_ADDRESS_HEADER
     ];
@@ -62,6 +63,22 @@ describe("visitorAddressHeaders", () => {
     );
   });
 
+  it("signs on Vercel, which overwrites x-real-ip", async () => {
+    vi.stubEnv("WEB_PROXY_SECRET", SECRET);
+    vi.stubEnv("VERCEL", "1");
+    vi.stubEnv("TRUST_REAL_IP", "");
+    expect(
+      (await from({ "x-real-ip": "203.0.113.7" }))[CLIENT_ADDRESS_HEADER],
+    ).toMatch(/^203\.0\.113\.7 \d+ [\w-]{43}$/);
+  });
+
+  it("sends nothing on a host not trusted to overwrite x-real-ip", async () => {
+    vi.stubEnv("WEB_PROXY_SECRET", SECRET);
+    vi.stubEnv("VERCEL", "");
+    vi.stubEnv("TRUST_REAL_IP", "");
+    expect(await from({ "x-real-ip": "203.0.113.7" })).toEqual({});
+  });
+
   it("sends nothing without a secret, so local development is unchanged", async () => {
     vi.stubEnv("WEB_PROXY_SECRET", "");
     expect(await from({ "x-real-ip": "203.0.113.7" })).toEqual({});
@@ -69,6 +86,7 @@ describe("visitorAddressHeaders", () => {
 
   it("sends nothing without a usable address", async () => {
     vi.stubEnv("WEB_PROXY_SECRET", SECRET);
+    vi.stubEnv("TRUST_REAL_IP", "1");
     expect(await from({})).toEqual({});
     expect(await from({ "x-real-ip": "203.0.113.7 1 forged" })).toEqual({});
   });
@@ -78,6 +96,7 @@ describe("the /api/v1 proxy", () => {
   async function proxied(headers: Record<string, string>) {
     vi.stubEnv("API_PROXY_TARGET", "http://localhost:4999");
     vi.stubEnv("WEB_PROXY_SECRET", SECRET);
+    vi.stubEnv("TRUST_REAL_IP", "1");
     const { proxy } = await import("../proxy");
     const response = await proxy(
       new NextRequest("http://localhost:3000/api/v1/auth/login?x=1", {

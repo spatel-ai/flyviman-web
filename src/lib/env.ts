@@ -54,6 +54,17 @@ export const apiProxyTarget =
         process.env.NODE_ENV === "production",
       )
     : undefined;
+/**
+ * Whether this host overwrites `x-real-ip` with the visitor's own address,
+ * so it can be signed and passed to the API (`client-address.ts`, D-123).
+ * Automatic on Vercel (`VERCEL=1`); elsewhere only with the explicit
+ * opt-in `TRUST_REAL_IP=1`, set where the platform overwrites the header.
+ * Server only, read on each call.
+ */
+export function trustsRealIp(): boolean {
+  return process.env.VERCEL === "1" || process.env.TRUST_REAL_IP === "1";
+}
+
 export const serverApiUrl = apiProxyTarget
   ? `${apiProxyTarget}/api/v1`
   : env.NEXT_PUBLIC_API_URL;

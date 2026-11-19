@@ -1,3 +1,5 @@
+import { trustsRealIp } from "./env";
+
 /**
  * Passes the visitor's address on to the API (D-069 follow-up). Behind this
  * site's `/api/v1` proxy (API_PROXY_TARGET, D-065) every request reaches the
@@ -19,7 +21,8 @@ export const CLIENT_ADDRESS_HEADER = "x-flyviman-client-ip";
  * the visitor's own address and overwrites any value the visitor sent
  * (vercel.com/docs/headers/request-headers). Only a host that does the same
  * can be trusted with it: under a plain `next start` a visitor can set it,
- * which is harmless only because such a host has no secret.
+ * so nothing is signed there unless `trustsRealIp()` (Vercel, or the
+ * explicit opt-in TRUST_REAL_IP=1) says the host overwrites it (D-123).
  */
 const VISITOR_ADDRESS_HEADER = "x-real-ip";
 
@@ -89,7 +92,8 @@ export async function signClientAddress(
 /**
  * The signed header for a request to the API on behalf of the visitor whose
  * request headers are given, or none when there is no secret or no usable
- * address (the API then counts this host's own address, as before).
+ * address, or on a host not trusted to overwrite `x-real-ip` (the API then
+ * counts this host's own address, as before).
  */
 export async function visitorAddressHeaders(
   incoming: Headers,
@@ -97,6 +101,7 @@ export async function visitorAddressHeaders(
   const secret = process.env.WEB_PROXY_SECRET?.trim();
   const address = incoming.get(VISITOR_ADDRESS_HEADER)?.trim();
   if (
+    !trustsRealIp() ||
     !secret ||
     secret.length < MIN_SECRET_LENGTH ||
     !address ||
