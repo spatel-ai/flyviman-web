@@ -30,7 +30,9 @@ test("an expiring document is flagged to the operator and listed for operations"
   await expect(
     page.getByRole("heading", { level: 1, name: registration }),
   ).toBeVisible();
-  await expect(page.getByText("Expires in 3 days")).toBeVisible();
+  await expect(
+    page.getByRole("main").getByText("Expires in 3 days"),
+  ).toBeVisible();
   await expect(page.getByText("Not offered to customers")).toHaveCount(0);
 
   // Grounded, it is not offered to customers, and the page says why.
