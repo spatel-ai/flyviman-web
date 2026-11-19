@@ -46,11 +46,10 @@ const SERVICES: {
   id: Service;
   label: string;
   icon: LucideIcon;
-  soon?: boolean;
 }[] = [
   { id: "charter", label: "Private jet", icon: Plane },
   { id: "helicopter", label: "Helicopter", icon: Fan },
-  { id: "empty-legs", label: "Empty legs", icon: Timer, soon: true },
+  { id: "empty-legs", label: "Empty legs", icon: Timer },
   { id: "flights", label: "Scheduled flights", icon: TicketsPlane },
   { id: "air-ambulance", label: "Air ambulance", icon: Ambulance },
 ];
@@ -179,7 +178,7 @@ export function SearchWidget({
         aria-label="What would you like to fly?"
         className="-mx-1 flex gap-1 overflow-x-auto pb-1 max-lg:pe-8 max-lg:[mask-image:linear-gradient(to_right,black_calc(100%-1.5rem),transparent)]"
       >
-        {SERVICES.map(({ id, label, icon: Icon, soon }) => (
+        {SERVICES.map(({ id, label, icon: Icon }) => (
           <button
             key={id}
             type="button"
@@ -191,28 +190,11 @@ export function SearchWidget({
               "transition-colors duration-150 ease-standard outline-none focus-visible:ring-2 focus-visible:ring-accent",
               service === id
                 ? "bg-accent-fill text-accent-foreground"
-                : soon
-                  ? // Not offered yet: dimmed and outlined, so it does not
-                    // read as a live service. It still opens the enquiry panel.
-                    // (text stays at muted contrast: the tab still works).
-                    "border border-dashed border-border text-muted hover:text-foreground"
-                  : "text-muted hover:bg-surface hover:text-foreground",
+                : "text-muted hover:bg-surface hover:text-foreground",
             )}
           >
             <Icon aria-hidden="true" className="size-4" />
             {label}
-            {soon ? (
-              <span
-                className={cn(
-                  "rounded-pill px-2 text-micro",
-                  service === id
-                    ? "bg-accent-foreground/20 text-accent-foreground"
-                    : "bg-surface text-muted",
-                )}
-              >
-                Coming soon
-              </span>
-            ) : null}
           </button>
         ))}
       </div>
@@ -242,16 +224,16 @@ export function SearchWidget({
           <ScheduledSearchForm />
         ) : !searchable ? (
           <div className="flex flex-col items-start gap-3 rounded-md bg-surface p-5">
-            <p className="text-title">Empty legs are coming soon</p>
+            <p className="text-title">Empty legs</p>
             <p className="text-body text-muted">
-              Tell us your trip and our team will find you options in the
-              meantime.
+              Flights operators would otherwise fly empty, at reduced prices.
+              Browse the offers open now by route, date and seats.
             </p>
             <Link
-              href="/contact?topic=PRIVATE_CHARTER#enquiry"
+              href="/empty-legs"
               className={buttonClasses({ variant: "secondary" })}
             >
-              Send an enquiry
+              See empty legs
             </Link>
           </div>
         ) : (

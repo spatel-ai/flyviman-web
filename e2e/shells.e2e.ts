@@ -29,7 +29,7 @@ test.describe("customer home", () => {
         ways.getByRole("heading", { level: 3, name: category }),
       ).toBeVisible();
     }
-    // Where each tile leads; the unbuilt ones say so (business rule 4).
+    // Where each tile leads; every way to fly is live, so none says "Coming soon".
     for (const [name, href] of [
       ["Helicopter", "/search?service=helicopter"],
       ["Empty legs", "/empty-legs"],
@@ -40,7 +40,7 @@ test.describe("customer home", () => {
         ways.getByRole("link", { name: new RegExp(name) }),
       ).toHaveAttribute("href", href);
     }
-    await expect(ways.getByText("Coming soon")).toHaveCount(1);
+    await expect(ways.getByText("Coming soon")).toHaveCount(0);
   });
 
   test("the booking card is visible when the film ends, clear of the tab bar", async ({

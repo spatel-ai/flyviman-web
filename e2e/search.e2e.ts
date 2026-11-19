@@ -363,17 +363,15 @@ test("the airport picker works from the keyboard", async ({ page }) => {
   );
 });
 
-test("services not offered yet say so and lead to an enquiry", async ({
-  page,
-}) => {
+test("the Empty legs tab leads to the empty-leg offers", async ({ page }) => {
   await page.goto("/search");
-  const emptyLegs = page.getByRole("tab", { name: /Empty legs\s*Coming soon/ });
+  const emptyLegs = page.getByRole("tab", { name: "Empty legs", exact: true });
   await expect(emptyLegs).toBeVisible();
+  await expect(page.getByText("Coming soon")).toHaveCount(0);
   await emptyLegs.click();
-  await expect(page.getByText("Empty legs are coming soon")).toBeVisible();
   await expect(
-    page.getByRole("link", { name: "Send an enquiry" }),
-  ).toHaveAttribute("href", /\/contact\?topic=PRIVATE_CHARTER/);
+    page.getByRole("link", { name: "See empty legs" }),
+  ).toHaveAttribute("href", "/empty-legs");
 });
 
 test("air ambulance is a request, never a search, with the emergency notice", async ({
