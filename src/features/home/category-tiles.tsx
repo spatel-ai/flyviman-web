@@ -42,7 +42,6 @@ const TILES: Tile[] = [
     description: "Compare live fares across airlines.",
     icon: TicketsPlane,
     href: "/search?service=flights",
-    soon: true,
   },
   {
     name: "Air ambulance",
