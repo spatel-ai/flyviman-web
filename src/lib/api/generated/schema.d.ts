@@ -476,6 +476,30 @@ export interface paths {
     patch: operations["OperatorController_update"];
     trace?: never;
   };
+  "/api/v1/operator/restrictions": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Operator-wide restrictions
+     * @description Operating hours, excluded locations and minimum notice for every aircraft, in the shape of an aircraft's restrictions. Approved operator only (`OPERATOR_NOT_APPROVED`).
+     */
+    get: operations["OperatorController_restrictions"];
+    /**
+     * Replace the operator-wide restrictions (audited)
+     * @description Replaces the whole object; `{ "restrictions": null }` clears it. Matching applies these and each aircraft's own; the stricter wins. Approved operator only (`OPERATOR_NOT_APPROVED`).
+     */
+    put: operations["OperatorController_setRestrictions"];
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/v1/operator/profile/submit": {
     parameters: {
       query?: never;
@@ -1954,6 +1978,33 @@ export interface components {
        */
       operatingRegions?: string[];
     };
+    OperatingHoursDto: {
+      /**
+       * @description Local time, HH:MM (24 h).
+       * @example 06:00
+       */
+      start: string;
+      /**
+       * @description Local time, HH:MM (24 h). Before `start` spans midnight.
+       * @example 20:00
+       */
+      end: string;
+    };
+    AircraftRestrictionsDto: {
+      /** @description When the aircraft may depart and arrive, in the local time of each location. */
+      operatingHours?: components["schemas"]["OperatingHoursDto"];
+      /** @description Locations the aircraft does not fly to or from. */
+      excludedLocationIds?: string[];
+      /** @description Notice needed before departure, in minutes. */
+      minimumNoticeMinutes?: number;
+    };
+    OperatorRestrictionsResponseDto: {
+      restrictions: components["schemas"]["AircraftRestrictionsDto"] | null;
+    };
+    SetOperatorRestrictionsDto: {
+      /** @description Replaces the whole object; `null` clears it. Required: leaving it out is refused. */
+      restrictions: components["schemas"]["AircraftRestrictionsDto"] | null;
+    };
     /** @enum {string} */
     OperatorDocumentType: "AOC" | "INSURANCE" | "REGISTRATION" | "OTHER";
     /** @enum {string} */
@@ -2172,26 +2223,6 @@ export interface components {
     };
     /** @enum {string} */
     WingType: "FIXED_WING" | "HELICOPTER";
-    OperatingHoursDto: {
-      /**
-       * @description Local time, HH:MM (24 h).
-       * @example 06:00
-       */
-      start: string;
-      /**
-       * @description Local time, HH:MM (24 h). Before `start` spans midnight.
-       * @example 20:00
-       */
-      end: string;
-    };
-    AircraftRestrictionsDto: {
-      /** @description When the aircraft may depart and arrive, in the local time of each location. */
-      operatingHours?: components["schemas"]["OperatingHoursDto"];
-      /** @description Locations the aircraft does not fly to or from. */
-      excludedLocationIds?: string[];
-      /** @description Notice needed before departure, in minutes. */
-      minimumNoticeMinutes?: number;
-    };
     /** @enum {string} */
     AircraftPricingModel: "HOURLY" | "SECTOR" | "FIXED_ROUTE";
     AircraftSpecificationsDto: {
@@ -2923,7 +2954,8 @@ export interface components {
         | "TIME_ALLOWANCE"
         | "VALIDITY"
         | "MIN_BILLABLE_HOURS"
-        | "POSITIONING";
+        | "POSITIONING"
+        | "MATCHING_LIMITS";
       /** @enum {string} */
       scope: "PLATFORM" | "CATEGORY";
       /** @description The aircraft category of a CATEGORY rule; none for PLATFORM. */
@@ -3755,6 +3787,48 @@ export interface operations {
         };
         content: {
           "application/json": components["schemas"]["OperatorProfileResponseDto"];
+        };
+      };
+    };
+  };
+  OperatorController_restrictions: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["OperatorRestrictionsResponseDto"];
+        };
+      };
+    };
+  };
+  OperatorController_setRestrictions: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["SetOperatorRestrictionsDto"];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["OperatorRestrictionsResponseDto"];
         };
       };
     };
@@ -5114,7 +5188,8 @@ export interface operations {
           | "TIME_ALLOWANCE"
           | "VALIDITY"
           | "MIN_BILLABLE_HOURS"
-          | "POSITIONING";
+          | "POSITIONING"
+          | "MATCHING_LIMITS";
         /** @description true (the default): rules in force now. false: every version, newest first, ended ones included. */
         active?: boolean;
       };

@@ -172,9 +172,17 @@ export const RULE_META: Record<RuleType, RuleMeta> = {
       },
     ],
   },
+  MATCHING_LIMITS: {
+    label: "Matching limits",
+    description: "Which trips an aircraft is offered for. Not managed here.",
+    fields: [],
+  },
 };
 
-export const RULE_TYPES = Object.keys(RULE_META) as RuleType[];
+/** Rule types this screen has a form for; a type with no fields has none. */
+export const RULE_TYPES = (Object.keys(RULE_META) as RuleType[]).filter(
+  (type) => RULE_META[type].fields.length > 0,
+);
 
 export const RULE_TYPE_OPTIONS = RULE_TYPES.map((type) => ({
   value: type,
@@ -298,7 +306,10 @@ export function listIsStale(error: unknown): boolean {
 
 /** A rule type this screen has a form for. */
 export function isRuleType(type: string): type is RuleType {
-  return Object.hasOwn(RULE_META, type);
+  return (
+    Object.hasOwn(RULE_META, type) &&
+    RULE_META[type as RuleType].fields.length > 0
+  );
 }
 
 /**

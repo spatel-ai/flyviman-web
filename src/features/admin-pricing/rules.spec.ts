@@ -130,5 +130,6 @@ describe("canManage", () => {
     // A type the API may add later, such as a promotional markup.
     expect(canManage({ type: "MARKUP", editable: true })).toBe(false);
     expect(canManage({ type: "constructor", editable: true })).toBe(false);
+    expect(canManage({ type: "MATCHING_LIMITS", editable: true })).toBe(false);
   });
 });
