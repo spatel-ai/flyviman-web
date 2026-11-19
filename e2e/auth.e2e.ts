@@ -223,6 +223,35 @@ test.describe("an idle session", () => {
     expect(renewed.some((cookie) => cookie.name === "access_token")).toBe(true);
   });
 
+  // The page's links are prefetched together, and each refresh token works
+  // once. A prefetch could win the rotation and then be cancelled by the
+  // navigation, taking the new cookies with it, while the page the user
+  // opened lost and was sent to sign-in (D-111). The losers now receive the
+  // winner's pair.
+  test("is renewed when link prefetches race the page the user opens", async ({
+    page,
+    context,
+  }) => {
+    await page.evaluate(() => {
+      for (const path of ["/admin/operators", "/admin/pricing/rules"]) {
+        void fetch(`${path}?_rsc=prefetch`, {
+          headers: {
+            rsc: "1",
+            "next-router-prefetch": "1",
+            "next-router-segment-prefetch": "/_tree",
+          },
+        });
+      }
+    });
+    await page.goto("/admin/users");
+    await expect(page).toHaveURL("/admin/users");
+    await expect(
+      page.getByRole("heading", { level: 1, name: "Users" }),
+    ).toBeVisible();
+    const renewed = await context.cookies();
+    expect(renewed.some((cookie) => cookie.name === "access_token")).toBe(true);
+  });
+
   test("is renewed when the user follows a link in the portal", async ({
     page,
     context,
