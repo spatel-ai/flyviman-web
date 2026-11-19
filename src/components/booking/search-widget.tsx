@@ -26,6 +26,7 @@ import {
   type SearchOutput,
   type SearchValues,
 } from "@/features/search/schema";
+import type { TripType } from "@/features/search/round-trip";
 import { apiFetch } from "@/lib/api/client";
 import { applyApiError } from "@/lib/api/messages";
 import { queryKeys } from "@/lib/api/query-keys";
@@ -53,7 +54,12 @@ const SERVICES: {
   { id: "air-ambulance", label: "Air ambulance", icon: Ambulance },
 ];
 
-const FIELDS = ["originId", "destinationId", "passengerCount"] as const;
+const FIELDS = [
+  "originId",
+  "destinationId",
+  "passengerCount",
+  "returnDate",
+] as const;
 
 export interface WidgetInitial {
   service?: Service;
@@ -63,7 +69,15 @@ export interface WidgetInitial {
   time?: string;
   passengerCount?: number;
   category?: string;
+  tripType?: TripType;
+  returnDate?: string;
+  returnTime?: string;
 }
+
+const TRIP_TYPES: { value: TripType; label: string }[] = [
+  { value: "ONE_WAY", label: "One way" },
+  { value: "ROUND_TRIP", label: "Round trip" },
+];
 
 /**
  * The search card: service tabs, then From, To, Departure and Travellers as
@@ -100,12 +114,32 @@ export function SearchWidget({
       time: initial.time ?? "10:00",
       passengerCount: String(initial.passengerCount ?? 2),
       category: initial.category ?? "ANY",
+      tripType: initial.tripType ?? "ONE_WAY",
+      returnDate: initial.returnDate ?? "",
+      returnTime: initial.returnTime ?? "18:00",
     },
   });
-  const [originId, destinationId, passengerCount, category, kind] = useWatch({
+  const [
+    originId,
+    destinationId,
+    passengerCount,
+    category,
+    kind,
+    tripType,
+    departDate,
+  ] = useWatch({
     control,
-    name: ["originId", "destinationId", "passengerCount", "category", "kind"],
+    name: [
+      "originId",
+      "destinationId",
+      "passengerCount",
+      "category",
+      "kind",
+      "tripType",
+      "date",
+    ],
   });
+  const roundTrip = tripType === "ROUND_TRIP";
 
   function chooseService(next: Service) {
     setService(next);
@@ -228,7 +262,14 @@ export function SearchWidget({
             className="flex flex-col gap-4"
           >
             <FormAlert message={formError} />
-            <div className="grid grid-cols-2 gap-2 lg:grid-cols-[1fr_auto_1fr_1fr_1fr] lg:items-stretch [&>*]:min-w-0">
+            <div
+              className={cn(
+                "grid grid-cols-2 gap-2 lg:items-stretch [&>*]:min-w-0",
+                roundTrip
+                  ? "lg:grid-cols-[1fr_auto_1fr_1fr_1fr_1fr]"
+                  : "lg:grid-cols-[1fr_auto_1fr_1fr_1fr]",
+              )}
+            >
               {/* Phones: From and To share one box, the swap on its right
                   edge. 640 to 1023: their own row. 1024 up: part of the row. */}
               <div className="relative col-span-2 grid overflow-hidden rounded-md bg-surface max-sm:[&>*:last-child_[data-field-tile]]:border-t max-sm:[&>*:last-child_[data-field-tile]]:border-border sm:grid-cols-2 sm:items-stretch sm:gap-2 sm:overflow-visible sm:bg-transparent lg:contents max-sm:[&_[data-field-tile]]:rounded-none max-sm:[&_[data-field-tile]]:bg-transparent max-sm:[&_[data-field-tile]]:pr-16 [&>*]:min-w-0">
@@ -287,7 +328,12 @@ export function SearchWidget({
                       <FareCalendar
                         date={field.value}
                         time={timeField.value}
-                        onDateChange={field.onChange}
+                        onDateChange={(next) => {
+                          field.onChange(next);
+                          // A return before the new departure is dropped.
+                          const back = getValues("returnDate");
+                          if (back && back < next) setValue("returnDate", "");
+                        }}
                         onTimeChange={timeField.onChange}
                         error={errors.date?.message}
                         route={{
@@ -303,6 +349,29 @@ export function SearchWidget({
                   />
                 )}
               />
+              {roundTrip ? (
+                <Controller
+                  control={control}
+                  name="returnDate"
+                  render={({ field }) => (
+                    <Controller
+                      control={control}
+                      name="returnTime"
+                      render={({ field: timeField }) => (
+                        <FareCalendar
+                          label="Return"
+                          date={field.value ?? ""}
+                          time={timeField.value ?? "18:00"}
+                          onDateChange={field.onChange}
+                          onTimeChange={timeField.onChange}
+                          minDate={departDate || undefined}
+                          error={errors.returnDate?.message}
+                        />
+                      )}
+                    />
+                  )}
+                />
+              ) : null}
               <Controller
                 control={control}
                 name="passengerCount"
@@ -317,39 +386,64 @@ export function SearchWidget({
             </div>
 
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
-              {kind === "charter" ? (
-                <Controller
-                  control={control}
-                  name="category"
-                  render={({ field }) => (
-                    <div
-                      role="radiogroup"
-                      aria-label="Aircraft"
-                      className="-mx-4 flex gap-1.5 overflow-x-auto px-4 [scrollbar-width:none] sm:mx-0 sm:min-w-0 sm:px-0 lg:flex-wrap lg:overflow-visible max-lg:pe-8 max-lg:[mask-image:linear-gradient(to_right,black_calc(100%-1.5rem),transparent)] [&::-webkit-scrollbar]:hidden"
+              <div className="-mx-4 flex items-center gap-3 overflow-x-auto px-4 [scrollbar-width:none] sm:mx-0 sm:min-w-0 sm:px-0 lg:flex-wrap lg:overflow-visible max-lg:pe-8 max-lg:[mask-image:linear-gradient(to_right,black_calc(100%-1.5rem),transparent)] [&::-webkit-scrollbar]:hidden">
+                <div
+                  role="radiogroup"
+                  aria-label="Trip type"
+                  className="flex shrink-0 gap-0.5 rounded-pill bg-surface p-0.5"
+                >
+                  {TRIP_TYPES.map((option) => (
+                    <button
+                      key={option.value}
+                      type="button"
+                      role="radio"
+                      aria-checked={tripType === option.value}
+                      onClick={() => setValue("tripType", option.value)}
+                      className={cn(
+                        "h-10 sm:h-8 rounded-pill px-3 text-body-sm transition-colors duration-150 ease-standard outline-none focus-visible:ring-2 focus-visible:ring-accent",
+                        tripType === option.value
+                          ? "bg-accent-fill text-accent-foreground"
+                          : "text-muted hover:text-foreground",
+                      )}
                     >
-                      {CHARTER_CATEGORIES.map((option) => (
-                        <button
-                          key={option.value}
-                          type="button"
-                          role="radio"
-                          aria-checked={field.value === option.value}
-                          onClick={() => field.onChange(option.value)}
-                          className={cn(
-                            "h-11 shrink-0 rounded-pill border px-3 text-body-sm transition-colors sm:h-9 duration-150 ease-standard",
-                            field.value === option.value
-                              ? "border-accent bg-accent/10 text-accent"
-                              : "border-border text-muted hover:text-foreground",
-                          )}
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+                <div className="flex items-center gap-1.5 lg:flex-wrap">
+                  {kind === "charter" ? (
+                    <Controller
+                      control={control}
+                      name="category"
+                      render={({ field }) => (
+                        <div
+                          role="radiogroup"
+                          aria-label="Aircraft"
+                          className="contents"
                         >
-                          {option.label}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                />
-              ) : (
-                <span />
-              )}
+                          {CHARTER_CATEGORIES.map((option) => (
+                            <button
+                              key={option.value}
+                              type="button"
+                              role="radio"
+                              aria-checked={field.value === option.value}
+                              onClick={() => field.onChange(option.value)}
+                              className={cn(
+                                "h-11 shrink-0 rounded-pill border px-3 text-body-sm transition-colors sm:h-9 duration-150 ease-standard",
+                                field.value === option.value
+                                  ? "border-accent bg-accent/10 text-accent"
+                                  : "border-border text-muted hover:text-foreground",
+                              )}
+                            >
+                              {option.label}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    />
+                  ) : null}
+                </div>
+              </div>
               <Button
                 type="submit"
                 size="lg"

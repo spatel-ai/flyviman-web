@@ -38,4 +38,48 @@ describe("search form", () => {
     const result = searchSchema.safeParse({ ...valid, destinationId: "a" });
     expect(result.success).toBe(false);
   });
+
+  it("sends no trip type for one way", () => {
+    const body = toSearchBody(searchSchema.parse(valid));
+    expect(body).not.toHaveProperty("tripType");
+    expect(body).not.toHaveProperty("returnAt");
+  });
+
+  it("sends the return in India time for a round trip", () => {
+    const body = toSearchBody(
+      searchSchema.parse({
+        ...valid,
+        tripType: "ROUND_TRIP",
+        returnDate: "2026-12-07",
+        returnTime: "16:00",
+      }),
+    );
+    expect(body).toMatchObject({
+      tripType: "ROUND_TRIP",
+      returnAt: "2026-12-07T10:30:00.000Z",
+    });
+  });
+
+  it("needs a return, after the departure, for a round trip", () => {
+    const round = { ...valid, tripType: "ROUND_TRIP" as const };
+    expect(searchSchema.safeParse(round).success).toBe(false);
+    expect(
+      searchSchema.safeParse({
+        ...round,
+        returnDate: "2026-12-05",
+        returnTime: "10:00",
+      }).success,
+    ).toBe(false);
+    expect(
+      searchSchema.safeParse({
+        ...round,
+        returnDate: "2026-12-05",
+        returnTime: "18:00",
+      }).success,
+    ).toBe(true);
+    // A return is not asked of a one-way search.
+    expect(searchSchema.safeParse({ ...valid, returnDate: "" }).success).toBe(
+      true,
+    );
+  });
 });

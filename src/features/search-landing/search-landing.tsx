@@ -25,9 +25,20 @@ const SERVICES: Service[] = [
 
 function initialFrom(params: URLSearchParams): WidgetInitial {
   const service = params.get("service");
-  return SERVICES.includes(service as Service)
-    ? { service: service as Service }
-    : {};
+  const returnDate = params.get("returnDate") ?? "";
+  const returnTime = params.get("returnTime") ?? "";
+  return {
+    ...(SERVICES.includes(service as Service)
+      ? { service: service as Service }
+      : {}),
+    ...(params.get("tripType") === "ROUND_TRIP"
+      ? {
+          tripType: "ROUND_TRIP" as const,
+          ...(/^\d{4}-\d{2}-\d{2}$/.test(returnDate) ? { returnDate } : {}),
+          ...(/^\d{2}:\d{2}$/.test(returnTime) ? { returnTime } : {}),
+        }
+      : {}),
+  };
 }
 
 /**

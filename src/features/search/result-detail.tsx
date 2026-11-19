@@ -18,6 +18,7 @@ import type { Schemas } from "@/lib/api/types";
 import { formatDateTime } from "@/lib/format/date";
 import { formatMoney } from "@/lib/format/money";
 import { IMAGES } from "@/content/image-credits";
+import { isRoundTrip, strategyLabel, type RoundTripFields } from "./round-trip";
 import {
   categoryImage,
   categoryLabel,
@@ -25,7 +26,8 @@ import {
   requestHref,
 } from "./format";
 
-type Detail = Schemas["SearchResultDetailDto"];
+// TODO(W1-6): switch to Schemas[...]
+type Detail = Schemas["SearchResultDetailDto"] & RoundTripFields;
 
 /**
  * One aircraft for one trip: the estimate and how it is made up, what it
@@ -87,6 +89,17 @@ export function ResultDetail({
           {detail.aircraft.passengerCapacity} passengers · operated by{" "}
           {detail.operatorName}
         </p>
+        {isRoundTrip(detail) ? (
+          <p className="text-body">
+            <span className="font-medium">Round trip</span>
+            {detail.returnAt
+              ? `, returning ${formatDateTime(detail.returnAt)}`
+              : ""}
+            {strategyLabel(detail.roundTripStrategy)
+              ? ` · ${strategyLabel(detail.roundTripStrategy)}`
+              : ""}
+          </p>
+        ) : null}
         <p className="text-body text-muted">
           {leg.originName} to {leg.destinationName} ·{" "}
           {formatDateTime(leg.departureAt)} · {detail.distanceKm} km

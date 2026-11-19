@@ -20,6 +20,12 @@ import { useToday } from "@/components/booking/use-today";
 import { FormAlert } from "@/components/shared/form-alert";
 import { EmptyState } from "@/components/shared/empty-state";
 import { LoadError } from "@/components/shared/load-error";
+import {
+  isRoundTrip,
+  shiftReturn,
+  strategyLabel,
+  type RoundTripFields,
+} from "./round-trip";
 import { PriceLabel } from "@/components/shared/price-label";
 import { RecordNotFound } from "@/components/shared/record-not-found";
 import { Button } from "@/components/ui/button";
@@ -50,7 +56,9 @@ import {
 import { categoryImage, categoryLabel, formatDuration } from "./format";
 
 type SearchResponse = Schemas["SearchResponseDto"];
-type Result = Schemas["SearchResultDto"];
+// TODO(W1-6): switch to Schemas[...]
+type Result = Schemas["SearchResultDto"] & RoundTripFields;
+type Search = SearchResponse & RoundTripFields;
 
 const ZONE = "Asia/Kolkata";
 const SORTS: { value: Sort; label: string }[] = [
@@ -98,9 +106,11 @@ export function SearchResults({ searchId }: { searchId: string }) {
     );
   }
 
-  const data = search.data.data;
+  const data: Search = search.data.data;
   const leg = data.legs[0];
   const local = utcToLocal(leg.departureAt, ZONE);
+  const roundTrip = isRoundTrip(data) && Boolean(data.returnAt);
+  const returnLocal = roundTrip ? utcToLocal(data.returnAt!, ZONE) : null;
   const kind = data.category === "HELICOPTER" ? "helicopter" : "charter";
   const { filters, sort } = readFilters(new URLSearchParams(params.toString()));
   const shown = applyFilters(data.results, filters, sort);
@@ -121,6 +131,16 @@ export function SearchResults({ searchId }: { searchId: string }) {
           originId: leg.originId,
           destinationId: leg.destinationId,
           departureAt: localToUtc(date, local.time, ZONE),
+          ...(roundTrip
+            ? {
+                tripType: "ROUND_TRIP",
+                returnAt: shiftReturn(
+                  leg.departureAt,
+                  data.returnAt!,
+                  localToUtc(date, local.time, ZONE),
+                ),
+              }
+            : {}),
           passengerCount: data.passengerCount,
           ...(data.aircraftCategory ? { category: data.aircraftCategory } : {}),
         },
@@ -153,8 +173,12 @@ export function SearchResults({ searchId }: { searchId: string }) {
               {leg.originName} to {leg.destinationName}
             </h1>
             <p className="text-body-sm text-muted">
-              {formatDateTime(leg.departureAt)} · {data.passengerCount}{" "}
-              passenger{data.passengerCount === 1 ? "" : "s"} ·{" "}
+              {formatDateTime(leg.departureAt)}
+              {roundTrip
+                ? ` · returns ${formatDateTime(data.returnAt!)}`
+                : ""}{" "}
+              · {data.passengerCount} passenger
+              {data.passengerCount === 1 ? "" : "s"} ·{" "}
               {kind === "helicopter" ? "Helicopter" : "Private jet"}
             </p>
           </div>
@@ -181,6 +205,13 @@ export function SearchResults({ searchId }: { searchId: string }) {
             time: local.time,
             passengerCount: data.passengerCount,
             category: data.aircraftCategory ?? "ANY",
+            ...(returnLocal
+              ? {
+                  tripType: "ROUND_TRIP" as const,
+                  returnDate: returnLocal.date,
+                  returnTime: returnLocal.time,
+                }
+              : {}),
           }}
         />
       ) : null}
@@ -329,6 +360,14 @@ function ResultCard({
             {categoryLabel(result.aircraft.category)}
           </span>
           <h2 className="text-title">{name}</h2>
+          {isRoundTrip(result) ? (
+            <p className="text-body-sm">
+              <span className="font-medium">Round trip</span>
+              {strategyLabel(result.roundTripStrategy)
+                ? ` · ${strategyLabel(result.roundTripStrategy)}`
+                : ""}
+            </p>
+          ) : null}
           <ul className="flex flex-wrap gap-x-4 gap-y-1 text-body-sm text-muted">
             <li className="flex items-center gap-1.5">
               <Users aria-hidden="true" className="size-4" />

@@ -26,16 +26,43 @@ export const searchSchema = z
       .min(1, "At least one passenger.")
       .max(50, "At most 50 passengers."),
     category: z.string(),
+    tripType: z.enum(["ONE_WAY", "ROUND_TRIP"]).default("ONE_WAY"),
+    returnDate: z.string().default(""),
+    returnTime: z.string().default("18:00"),
   })
   .refine((values) => values.originId !== values.destinationId, {
     path: ["destinationId"],
     message: "Choose a destination different from the origin.",
+  })
+  .superRefine((values, context) => {
+    if (values.tripType !== "ROUND_TRIP") return;
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(values.returnDate)) {
+      context.addIssue({
+        code: "custom",
+        path: ["returnDate"],
+        message: "Choose a return date.",
+      });
+    } else if (
+      `${values.returnDate}T${values.returnTime}` <=
+      `${values.date}T${values.time}`
+    ) {
+      // Same zone and zero-padded, so the strings order like the instants.
+      context.addIssue({
+        code: "custom",
+        path: ["returnDate"],
+        message: "Return must be after departure.",
+      });
+    }
   });
 
 export type SearchValues = z.input<typeof searchSchema>;
 export type SearchOutput = z.output<typeof searchSchema>;
 
-type Body = Schemas["CharterSearchDto"];
+/** TODO(W1-6): switch to Schemas[...] once the round-trip contract is merged. */
+type Body = Schemas["CharterSearchDto"] & {
+  tripType?: "ONE_WAY" | "ROUND_TRIP";
+  returnAt?: string;
+};
 
 /** The API body: the departure as an instant, from India time. */
 export function toSearchBody(values: SearchOutput): Body {
@@ -44,6 +71,16 @@ export function toSearchBody(values: SearchOutput): Body {
     destinationId: values.destinationId,
     departureAt: localToUtc(values.date, values.time, SEARCH_ZONE),
     passengerCount: values.passengerCount,
+    ...(values.tripType === "ROUND_TRIP"
+      ? {
+          tripType: "ROUND_TRIP" as const,
+          returnAt: localToUtc(
+            values.returnDate,
+            values.returnTime,
+            SEARCH_ZONE,
+          ),
+        }
+      : {}),
     ...(values.kind === "charter" && values.category !== "ANY"
       ? { category: values.category as NonNullable<Body["category"]> }
       : {}),
