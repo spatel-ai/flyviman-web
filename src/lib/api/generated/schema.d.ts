@@ -1509,6 +1509,26 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/admin/category-config": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Service category configuration
+     * @description Platform booking mode and payment model per category and region, by region then category. Read only until M10.
+     */
+    get: operations["AdminCategoryConfigController_list"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/v1/enquiries": {
     parameters: {
       query?: never;
@@ -3027,6 +3047,28 @@ export interface components {
       requestId: string | null;
       /** Format: date-time */
       createdAt: string;
+    };
+    /**
+     * @description Platform setting. Operators may override it per category; air ambulance is always REQUEST.
+     * @enum {string}
+     */
+    BookingMode: "INSTANT" | "REQUEST";
+    /**
+     * @description Platform setting. Operators may override it per category.
+     * @enum {string}
+     */
+    PaymentModel: "A_INSTANT" | "B_OPERATOR_CONFIRMED" | "C_DEPOSIT";
+    CategoryConfigResponseDto: {
+      category: components["schemas"]["ServiceCategory"];
+      /** @example IN */
+      region: string;
+      isEnabled: boolean;
+      /** @description Platform setting. Operators may override it per category; air ambulance is always REQUEST. */
+      bookingMode: components["schemas"]["BookingMode"];
+      /** @description Platform setting. Operators may override it per category. */
+      paymentModel: components["schemas"]["PaymentModel"];
+      /** Format: date-time */
+      updatedAt: string;
     };
     /** @enum {string} */
     EnquiryTopic:
@@ -5242,6 +5284,25 @@ export interface operations {
         };
         content: {
           "application/json": components["schemas"]["AuditLogResponseDto"][];
+        };
+      };
+    };
+  };
+  AdminCategoryConfigController_list: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["CategoryConfigResponseDto"][];
         };
       };
     };
