@@ -44,6 +44,7 @@ const NAV: (NavItem & { roles: Role[] })[] = [
     roles: ["OPS", "SUPER_ADMIN"],
   },
   { href: "/admin/users", label: "Users", roles: ["OPS", "SUPER_ADMIN"] },
+  { href: "/admin/audit-logs", label: "Audit log", roles: INTERNAL },
 ];
 
 async function AdminShell({ children }: { children: React.ReactNode }) {

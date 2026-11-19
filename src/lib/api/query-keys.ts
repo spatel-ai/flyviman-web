@@ -13,6 +13,7 @@ export const queryKeys = {
   adminUsers: (filter: object) => ["admin", "users", filter] as const,
   adminEnquiries: (filter: object) => ["admin", "enquiries", filter] as const,
   adminEnquiry: (id: string) => ["admin", "enquiries", id] as const,
+  adminAuditLogs: (filter: object) => ["admin", "audit-logs", filter] as const,
   adminLocations: (filter: object) => ["admin", "locations", filter] as const,
   adminExpiringDocuments: (filter: object) =>
     ["admin", "documents", "expiring", filter] as const,
