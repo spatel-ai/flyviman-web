@@ -45,6 +45,17 @@ const KNOWN_SLUGS: Record<string, ReadonlySet<string>> = {
 const SLUG_PAGE = /^\/(aircraft-sales|legal)\/([^/]+)\/?$/;
 const API_PATH = /^\/api\/v1(?:\/|$)/;
 
+/**
+ * Where the browser reaches the API (NEXT_PUBLIC_API_URL) and where the
+ * API's signed storage links point (its own address, API_PROXY_TARGET).
+ */
+const API_ORIGINS = [
+  ...new Set([
+    new URL(env.NEXT_PUBLIC_API_URL).origin,
+    ...(apiProxyTarget ? [apiProxyTarget] : []),
+  ]),
+];
+
 /** Renders the site's not-found page with status 404 by rewriting to an
  *  address no route matches. */
 function notFound(request: NextRequest, headers: Headers): NextResponse {
@@ -127,11 +138,12 @@ async function proxyApi(request: NextRequest): Promise<NextResponse> {
  */
 export async function proxy(request: NextRequest): Promise<NextResponse> {
   if (API_PATH.test(request.nextUrl.pathname)) return proxyApi(request);
-  const apiOrigin = new URL(env.NEXT_PUBLIC_API_URL).origin;
   const policy = contentSecurityPolicy({
     nonce: createNonce(),
     scriptHashes: await inlineScriptHashes(),
-    apiOrigin: apiOrigin === request.nextUrl.origin ? undefined : apiOrigin,
+    apiOrigins: API_ORIGINS.filter(
+      (origin) => origin !== request.nextUrl.origin,
+    ),
     checkout: isCheckoutPage(request.nextUrl.pathname),
     development: process.env.NODE_ENV === "development",
   });
@@ -223,11 +235,14 @@ async function page(
 }
 
 /**
- * Every request but the build's static files and public files (any path
- * whose last segment has an extension), which need neither a policy nor a
+ * Every request but the build's static files, the image optimiser and the
+ * hero film's frames (`public/`), which need neither a policy nor a
  * session. Prefetches are matched too: a protected page's prefetch must
  * still have its session rotated.
  */
 export const config = {
-  matcher: ["/api/v1/:path*", "/((?!_next/static|_next/image|.*\\.\\w+$).*)"],
+  matcher: [
+    "/api/v1/:path*",
+    "/((?!_next/static/|_next/image|hero/|hero-v1/|icon\\.svg$).*)",
+  ],
 };

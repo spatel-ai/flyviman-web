@@ -120,3 +120,19 @@ test("the theme script sets a stored theme before any bundle runs", async ({
   await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
   expect(await violations(page, errors)).toEqual([]);
 });
+
+test("injected markup cannot run script, and is reported", async ({ page }) => {
+  await page.goto("/contact");
+  // The classic injection: markup with an inline event handler.
+  await page.evaluate(() => {
+    const box = document.createElement("div");
+    box.innerHTML = `<img src="data:," onerror="window.__injected = true">`;
+    document.body.append(box);
+  });
+  await expect
+    .poll(() => page.evaluate(() => window.__cspViolations.length))
+    .toBeGreaterThan(0);
+  expect(
+    await page.evaluate(() => (window as { __injected?: boolean }).__injected),
+  ).toBeUndefined();
+});

@@ -3,10 +3,10 @@ import { HERO_V1_SCRIPT } from "@/features/home-v1/hero-script";
 import { HERO_SCRIPT } from "@/features/home/hero-script";
 
 /**
- * Our own inline scripts. They are rendered into prerendered page shells,
- * where no per-request nonce exists, so the policy allows them by hash.
- * Everything else that runs (the framework's scripts and their inline
- * data) carries the request's nonce, set by `src/proxy.ts`.
+ * Our own inline scripts, allowed by hash: they are constants, so this
+ * needs no nonce plumbing into the components (the hero is a client
+ * component). Everything else that runs (the framework's scripts and
+ * their inline data) carries the request's nonce, set by `src/proxy.ts`.
  */
 export const INLINE_SCRIPTS = [THEME_SCRIPT, HERO_SCRIPT, HERO_V1_SCRIPT];
 
@@ -51,8 +51,13 @@ export interface CspOptions {
   nonce: string;
   /** From inlineScriptHashes(). */
   scriptHashes: readonly string[];
-  /** The API's origin when the browser calls it directly (no `/api/v1` proxy). */
-  apiOrigin?: string;
+  /**
+   * The API's origins other than the page's own: the one the browser calls
+   * when there is no `/api/v1` proxy, and the one signed storage links
+   * (uploads, aircraft photos) point at, which is the API's own address
+   * even behind the proxy.
+   */
+  apiOrigins: readonly string[];
   /** Adds the Razorpay Checkout allowances (isCheckoutPage). */
   checkout: boolean;
   /** React's development build needs `eval` for its debugging aids. */
@@ -67,7 +72,7 @@ export interface CspOptions {
  * `'unsafe-inline'`.
  */
 export function contentSecurityPolicy(options: CspOptions): string {
-  const { nonce, scriptHashes, apiOrigin, checkout, development } = options;
+  const { nonce, scriptHashes, apiOrigins, checkout, development } = options;
   const directives: [string, ...string[]][] = [
     ["default-src", "'self'"],
     [
@@ -80,12 +85,12 @@ export function contentSecurityPolicy(options: CspOptions): string {
       ...(development ? ["'unsafe-eval'"] : []),
     ],
     ["style-src", "'self'", "'unsafe-inline'"],
-    ["img-src", "'self'", "data:"],
+    ["img-src", "'self'", "data:", ...apiOrigins],
     ["font-src", "'self'"],
     [
       "connect-src",
       "'self'",
-      ...(apiOrigin ? [apiOrigin] : []),
+      ...apiOrigins,
       ...(checkout ? [RAZORPAY_API] : []),
     ],
     ["frame-src", ...(checkout ? [RAZORPAY_API] : ["'none'"])],

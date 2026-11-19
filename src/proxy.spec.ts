@@ -44,11 +44,13 @@ describe("not-found guard for dynamic pages", () => {
   for (const { pattern, signedIn, loadsRecord } of routes) {
     if (loadsRecord && !signedIn) continue; // e2e/not-found.e2e.ts covers it
     if (signedIn) {
-      it(`${pattern} sits behind sign-in`, () => {
-        expect(
-          matches(fill(pattern, "anything")),
-          `${pattern} is not protected by config.matcher in src/proxy.ts`,
-        ).toBe(true);
+      it(`${pattern} sits behind sign-in`, async () => {
+        const path = fill(pattern, "anything");
+        const fix = `${pattern} is not protected by src/proxy.ts`;
+        expect(matches(path), fix).toBe(true);
+        expect((await run(path)).headers.get("location"), fix).toContain(
+          "/login",
+        );
       });
     } else {
       it(`${pattern} answers 404 for an unknown address`, async () => {
@@ -85,9 +87,21 @@ describe("not-found guard for dynamic pages", () => {
     }
   });
 
-  it("keeps the signed-in prefixes in step with the matcher", () => {
+  it("keeps the signed-in prefixes behind sign-in", async () => {
     for (const prefix of SIGNED_IN_PREFIXES) {
-      expect(matches(`${prefix}/anything`), prefix).toBe(true);
+      for (const path of [prefix, `${prefix}/anything`, `${prefix}/a.b`]) {
+        expect(matches(path), path).toBe(true);
+        expect((await run(path)).headers.get("location"), path).toContain(
+          "/login",
+        );
+      }
+    }
+  });
+
+  it("answers 404 for an unknown slug with a dot in it", async () => {
+    for (const path of ["/legal/x.y", "/aircraft-sales/x.y"]) {
+      expect(matches(path), path).toBe(true);
+      expect(isNotFound(await run(path)), path).toBe(true);
     }
   });
 });
@@ -131,6 +145,7 @@ describe("Content-Security-Policy", () => {
     expect(policy(await run("/api/v1/health"))).toBe("");
     expect(matches("/_next/static/chunks/main.js")).toBe(false);
     expect(matches("/hero/desktop/0001.webp")).toBe(false);
+    expect(matches("/search/a.b")).toBe(true);
     expect(matches("/contact")).toBe(true);
   });
 });

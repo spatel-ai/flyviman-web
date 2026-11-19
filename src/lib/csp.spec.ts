@@ -16,6 +16,7 @@ import {
 const BASE: CspOptions = {
   nonce: "abc123",
   scriptHashes: ["'sha256-x'"],
+  apiOrigins: [],
   checkout: false,
   development: false,
 };
@@ -56,12 +57,20 @@ describe("contentSecurityPolicy", () => {
     expect(policy.get("connect-src")).toEqual(["'self'"]);
   });
 
-  it("adds the API's origin when the browser calls it directly", () => {
+  it("lets the page call the API and show its storage links", () => {
     const policy = parse(
-      contentSecurityPolicy({ ...BASE, apiOrigin: "https://api.example.com" }),
+      contentSecurityPolicy({
+        ...BASE,
+        apiOrigins: ["https://api.example.com"],
+      }),
     );
     expect(policy.get("connect-src")).toEqual([
       "'self'",
+      "https://api.example.com",
+    ]);
+    expect(policy.get("img-src")).toEqual([
+      "'self'",
+      "data:",
       "https://api.example.com",
     ]);
   });
