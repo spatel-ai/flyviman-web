@@ -1,7 +1,11 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { AIRCRAFT_SALES } from "@/content/aircraft-sales";
 import { POLICY_SLUGS } from "@/features/legal/policies";
-import { serverApiUrl } from "@/lib/env";
+import {
+  CLIENT_ADDRESS_HEADER,
+  visitorAddressHeaders,
+} from "@/lib/client-address";
+import { apiProxyTarget, serverApiUrl } from "@/lib/env";
 
 const ACCESS = "access_token";
 const REFRESH = "refresh_token";
@@ -29,6 +33,7 @@ const KNOWN_SLUGS: Record<string, ReadonlySet<string>> = {
   legal: new Set([...POLICY_SLUGS, "image-credits"]),
 };
 const SLUG_PAGE = /^\/(aircraft-sales|legal)\/([^/]+)\/?$/;
+const API_PATH = /^\/api\/v1(?:\/|$)/;
 
 /** Renders the site's not-found page with status 404 by rewriting to an
  *  address no route matches. */
@@ -80,6 +85,29 @@ function parseCookieHeader(header: string | null): Map<string, string> {
 }
 
 /**
+ * Proxies `/api/v1` to the API when API_PROXY_TARGET is set (D-065), so the
+ * browser sees one origin. Any `x-flyviman-client-ip` the visitor sent is
+ * dropped, and the visitor's own address is passed on, signed (D-069
+ * follow-up). Unset, the request continues and finds no page (404), as
+ * before: the browser then calls the API directly.
+ */
+async function proxyApi(request: NextRequest): Promise<NextResponse> {
+  if (!apiProxyTarget) return NextResponse.next();
+  const headers = new Headers(request.headers);
+  headers.delete(CLIENT_ADDRESS_HEADER);
+  for (const [name, value] of Object.entries(
+    await visitorAddressHeaders(request.headers),
+  )) {
+    headers.set(name, value);
+  }
+  const destination = new URL(
+    `${request.nextUrl.pathname}${request.nextUrl.search}`,
+    apiProxyTarget,
+  );
+  return NextResponse.rewrite(destination, { request: { headers } });
+}
+
+/**
  * First line of route protection for the portals and the signed-in customer
  * pages. It is an optimistic check only: it looks for a session cookie and
  * never verifies it. A visitor with none is sent to sign-in before anything
@@ -90,6 +118,7 @@ function parseCookieHeader(header: string | null): Map<string, string> {
  * components cannot set cookies.
  */
 export async function proxy(request: NextRequest): Promise<NextResponse> {
+  if (API_PATH.test(request.nextUrl.pathname)) return proxyApi(request);
   const slugPage = SLUG_PAGE.exec(request.nextUrl.pathname);
   if (slugPage) {
     // Slugs are plain ASCII, so the raw path segment is compared as it is.
@@ -113,6 +142,7 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
       headers: {
         Cookie: request.cookies.toString(),
         "X-CSRF-Token": request.cookies.get(CSRF)?.value ?? "",
+        ...(await visitorAddressHeaders(request.headers)),
       },
       cache: "no-store",
     });
@@ -154,6 +184,7 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
 
 export const config = {
   matcher: [
+    "/api/v1/:path*",
     "/admin/:path*",
     "/operator/:path*",
     "/account/:path*",
