@@ -301,6 +301,179 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/admin/content/banners": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * List banners
+     * @description Drafts and published, in display order.
+     */
+    get: operations["AdminBannersController_list"];
+    put?: never;
+    /**
+     * Create a banner
+     * @description A draft unless `published` is true. Audited.
+     */
+    post: operations["AdminBannersController_create"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/admin/content/banners/{id}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    /**
+     * Delete a banner
+     * @description Audited.
+     */
+    delete: operations["AdminBannersController_remove"];
+    options?: never;
+    head?: never;
+    /**
+     * Change, publish or unpublish a banner
+     * @description Audited with the values before and after.
+     */
+    patch: operations["AdminBannersController_update"];
+    trace?: never;
+  };
+  "/api/v1/admin/content/faqs": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * List questions and answers
+     * @description Drafts and published, in display order.
+     */
+    get: operations["AdminFaqsController_list"];
+    put?: never;
+    /**
+     * Create a question and answer
+     * @description `title` is the question, `body` the answer. Audited.
+     */
+    post: operations["AdminFaqsController_create"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/admin/content/faqs/{id}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    /**
+     * Delete an entry
+     * @description Audited.
+     */
+    delete: operations["AdminFaqsController_remove"];
+    options?: never;
+    head?: never;
+    /**
+     * Change, publish or unpublish an entry
+     * @description Audited with the values before and after.
+     */
+    patch: operations["AdminFaqsController_update"];
+    trace?: never;
+  };
+  "/api/v1/admin/content/policies": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** List policies and terms */
+    get: operations["AdminPoliciesController_policies"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/admin/content/policies/{slug}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    /**
+     * Publish a new version of a policy
+     * @description Always a new version: the text customers accepted is kept and never overwritten. The version is the UTC date, with `.2`, `.3` for further versions that day. Sending the current text again changes nothing. Audited.
+     */
+    put: operations["AdminPoliciesController_publishPolicy"];
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/admin/content/notification-templates": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * List notification templates
+     * @description Every built-in template with the wording now in use and the placeholders it needs.
+     */
+    get: operations["AdminPoliciesController_templates"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/admin/content/notification-templates/{key}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    /**
+     * Update a notification template
+     * @description The channel is in the body. The text must keep every placeholder the built-in wording uses and add none (400 `VALIDATION_ERROR` otherwise). Audited with the wording before and after.
+     */
+    put: operations["AdminPoliciesController_updateTemplate"];
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/v1/me/notifications": {
     parameters: {
       query?: never;
@@ -1790,6 +1963,78 @@ export interface components {
       version: string;
       /** Format: date-time */
       publishedAt: string;
+    };
+    ContentItemResponseDto: {
+      /** Format: uuid */
+      id: string;
+      /** @example summer-sale-1a2b3c */
+      slug: string;
+      title: string;
+      body: string;
+      /** @example IN */
+      region: string | null;
+      sortOrder: number;
+      /**
+       * Format: date-time
+       * @description Null while unpublished (a draft).
+       */
+      publishedAt: string | null;
+      /** Format: date-time */
+      updatedAt: string;
+    };
+    CreateContentItemDto: {
+      title: string;
+      body: string;
+      /** @example IN */
+      region?: string;
+      sortOrder?: number;
+      /** @description Publish now. Default false: saved as a draft. */
+      published?: boolean;
+    };
+    UpdateContentItemDto: {
+      title?: string;
+      body?: string;
+      region?: string | null;
+      sortOrder?: number;
+      /** @description true publishes (or keeps it published); false unpublishes. */
+      published?: boolean;
+    };
+    AdminPolicyResponseDto: {
+      /** @example terms */
+      slug: string;
+      title: string;
+      body: string;
+      /** @example 2026-11-19 */
+      version: string | null;
+      /** Format: date-time */
+      publishedAt: string | null;
+      /** @description Versions published so far, the current one included. */
+      versionCount: number;
+    };
+    PublishPolicyDto: {
+      title: string;
+      /** @description Plain text with blank lines between paragraphs. */
+      body: string;
+    };
+    /** @enum {string} */
+    NotificationChannel: "EMAIL" | "SMS" | "WHATSAPP" | "IN_APP";
+    NotificationTemplateResponseDto: {
+      /** @example customer.welcome */
+      key: string;
+      channel: components["schemas"]["NotificationChannel"];
+      subject: string | null;
+      body: string;
+      isActive: boolean;
+      /** @description Placeholders the built-in wording uses. A change must keep every one and may add none. */
+      placeholders: string[];
+      /** @description False while no row is stored and the built-in text applies. */
+      stored: boolean;
+    };
+    UpdateNotificationTemplateDto: {
+      channel: components["schemas"]["NotificationChannel"];
+      subject?: string | null;
+      body: string;
+      isActive: boolean;
     };
     NotificationResponseDto: {
       /** Format: uuid */
@@ -3618,6 +3863,266 @@ export interface operations {
         };
         content: {
           "application/json": components["schemas"]["PolicyResponseDto"];
+        };
+      };
+    };
+  };
+  AdminBannersController_list: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ContentItemResponseDto"][];
+        };
+      };
+    };
+  };
+  AdminBannersController_create: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["CreateContentItemDto"];
+      };
+    };
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ContentItemResponseDto"];
+        };
+      };
+    };
+  };
+  AdminBannersController_remove: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  AdminBannersController_update: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["UpdateContentItemDto"];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ContentItemResponseDto"];
+        };
+      };
+    };
+  };
+  AdminFaqsController_list: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ContentItemResponseDto"][];
+        };
+      };
+    };
+  };
+  AdminFaqsController_create: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["CreateContentItemDto"];
+      };
+    };
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ContentItemResponseDto"];
+        };
+      };
+    };
+  };
+  AdminFaqsController_remove: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  AdminFaqsController_update: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["UpdateContentItemDto"];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ContentItemResponseDto"];
+        };
+      };
+    };
+  };
+  AdminPoliciesController_policies: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["AdminPolicyResponseDto"][];
+        };
+      };
+    };
+  };
+  AdminPoliciesController_publishPolicy: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        slug: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["PublishPolicyDto"];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["AdminPolicyResponseDto"];
+        };
+      };
+    };
+  };
+  AdminPoliciesController_templates: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["NotificationTemplateResponseDto"][];
+        };
+      };
+    };
+  };
+  AdminPoliciesController_updateTemplate: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        key: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["UpdateNotificationTemplateDto"];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["NotificationTemplateResponseDto"];
         };
       };
     };
