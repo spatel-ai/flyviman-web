@@ -332,40 +332,43 @@ test("the home page offers sign-in to a visitor and an account menu to a custome
 });
 
 test.describe("sign-in lockout through this site's /api/v1 proxy", () => {
-  // Only the proxied run (API_PROXY=1) goes through this site's proxy, which
-  // signs each visitor's address as the hosted site does (x-real-ip stands
-  // in for the address Vercel sets).
-  test.skip(!process.env.API_PROXY, "needs API_PROXY=1");
+  // Only the proxied runs go through this site's /api/v1 proxy. x-real-ip
+  // stands in for the address Vercel sets.
+  test.skip(!process.env.API_PROXY, "needs API_PROXY=1 or API_PROXY=signed");
+  const signed = process.env.API_PROXY === "signed";
 
-  test("one visitor's failures lock the account for that visitor only", async ({
-    request,
-  }) => {
-    const email = uniqueEmail("lockout");
-    const attempt = (headers: Record<string, string>) =>
-      request.post("/api/v1/auth/login", {
-        headers,
-        data: { email, password: "not-the-password" },
-      });
+  test(
+    signed
+      ? "with the shared secret, one visitor's failures lock the account for that visitor only"
+      : "without the shared secret, every visitor is this host, as before",
+    async ({ request }) => {
+      const email = uniqueEmail("lockout");
+      const attempt = (headers: Record<string, string>) =>
+        request.post("/api/v1/auth/login", {
+          headers,
+          data: { email, password: "not-the-password" },
+        });
 
-    const guesser = { "x-real-ip": "198.51.100.10" };
-    for (let failure = 0; failure < 10; failure += 1) {
-      expect((await attempt(guesser)).status()).toBe(401);
-    }
-    expect((await attempt(guesser)).status()).toBe(429);
+      const guesser = { "x-real-ip": "198.51.100.10" };
+      for (let failure = 0; failure < 10; failure += 1) {
+        expect((await attempt(guesser)).status()).toBe(401);
+      }
+      expect((await attempt(guesser)).status()).toBe(429);
 
-    // Another visitor, reaching the API from the same host, can still try.
-    expect((await attempt({ "x-real-ip": "198.51.100.11" })).status()).toBe(
-      401,
-    );
-    // A visitor cannot claim to be someone else with the API's header: the
-    // proxy drops it, and the API would not believe it unsigned.
-    expect(
-      (
-        await attempt({
-          "x-real-ip": "198.51.100.12",
-          "x-flyviman-client-ip": "198.51.100.10 0 forged",
-        })
-      ).status(),
-    ).toBe(401);
-  });
+      // Another visitor reaching the API through the same host.
+      const other = await attempt({ "x-real-ip": "198.51.100.11" });
+      expect(other.status()).toBe(signed ? 401 : 429);
+      if (!signed) return;
+      // A visitor cannot claim to be someone else with the API's header: the
+      // proxy drops it, and the API would not believe it unsigned.
+      expect(
+        (
+          await attempt({
+            "x-real-ip": "198.51.100.12",
+            "x-flyviman-client-ip": "198.51.100.10 0 forged",
+          })
+        ).status(),
+      ).toBe(401);
+    },
+  );
 });

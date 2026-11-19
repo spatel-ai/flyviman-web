@@ -27,16 +27,17 @@ describe("signClientAddress", () => {
 });
 
 describe("proxySecret", () => {
-  it("is required in production when /api/v1 is proxied", () => {
-    expect(() => proxySecret(undefined, true, true)).toThrow(
-      /WEB_PROXY_SECRET/,
-    );
-    expect(() => proxySecret(" ", true, true)).toThrow(/WEB_PROXY_SECRET/);
-  });
-
-  it("is optional otherwise", () => {
+  it("is optional, with one warning on a production server that proxies", () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    expect(proxySecret(undefined, true, true)).toBeUndefined();
+    expect(proxySecret(" ", true, true)).toBeUndefined();
+    expect(warn).toHaveBeenCalledTimes(2);
+    expect(warn.mock.calls[0][0]).toMatch(/WEB_PROXY_SECRET/);
+    warn.mockClear();
     expect(proxySecret(undefined, false, true)).toBeUndefined();
     expect(proxySecret(undefined, true, false)).toBeUndefined();
+    expect(warn).not.toHaveBeenCalled();
+    warn.mockRestore();
   });
 
   it("refuses a short secret anywhere", () => {
@@ -109,6 +110,27 @@ describe("the /api/v1 proxy", () => {
 
     const withoutAddress = await proxied({ [CLIENT_ADDRESS_HEADER]: forged });
     expect(withoutAddress.sent).toBeNull();
+  });
+
+  it("without a secret, still proxies but sends no address", async () => {
+    vi.stubEnv("API_PROXY_TARGET", "http://localhost:4999");
+    vi.stubEnv("WEB_PROXY_SECRET", "");
+    const { proxy } = await import("../proxy");
+    const response = await proxy(
+      new NextRequest("http://localhost:3000/api/v1/auth/login?x=1", {
+        method: "POST",
+        headers: {
+          "x-real-ip": "203.0.113.7",
+          [CLIENT_ADDRESS_HEADER]: "198.51.100.1 1763510400 forged",
+        },
+      }),
+    );
+    expect(response.headers.get("x-middleware-rewrite")).toBe(
+      "http://localhost:4999/api/v1/auth/login?x=1",
+    );
+    expect(
+      response.headers.get(`x-middleware-request-${CLIENT_ADDRESS_HEADER}`),
+    ).toBeNull();
   });
 
   it("leaves /api/v1 alone when nothing is proxied", async () => {

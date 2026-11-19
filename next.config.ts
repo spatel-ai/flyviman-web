@@ -30,7 +30,8 @@ const SECURITY_HEADERS = [
 ];
 
 /**
- * Checked here so a misconfigured host fails at build and start-up. The
+ * Checked here so a short secret fails at build and start-up, and a missing
+ * one is reported once (it is optional). The
  * proxying itself (D-065) is done by `src/proxy.ts`, which also passes the
  * visitor's address on, signed with WEB_PROXY_SECRET (`lib/client-address.ts`).
  */

@@ -29,9 +29,9 @@ const MIN_SECRET_LENGTH = 32;
 const ADDRESS = /^[0-9A-Fa-f:.]{2,45}$/;
 
 /**
- * Validates WEB_PROXY_SECRET at start-up. Required for a production server
- * that proxies `/api/v1`, so a hosted site cannot quietly run without it;
- * optional otherwise, and ignored when unset (local development).
+ * Checks WEB_PROXY_SECRET at start-up. Optional: unset, `/api/v1` is proxied
+ * exactly as before, with no visitor address, and a production server that
+ * proxies says so once in its log. A value that is set must be long enough.
  */
 export function proxySecret(
   raw: string | undefined,
@@ -41,8 +41,8 @@ export function proxySecret(
   const value = raw?.trim();
   if (!value) {
     if (production && proxied) {
-      throw new Error(
-        "WEB_PROXY_SECRET must be set when API_PROXY_TARGET is (the same value as on the API).",
+      console.warn(
+        "WEB_PROXY_SECRET is not set: /api/v1 is proxied without the visitor's address, so the API counts every visitor as this host (deployment.md).",
       );
     }
     return undefined;
