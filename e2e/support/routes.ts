@@ -27,6 +27,7 @@ export type DynamicRoute = {
 export const RECORD_PAGES = [
   "/search/[searchId]",
   "/search/[searchId]/[resultId]",
+  "/empty-legs/[id]",
 ];
 
 /** Address prefixes that need a session (the `matcher` in `src/proxy.ts`). */

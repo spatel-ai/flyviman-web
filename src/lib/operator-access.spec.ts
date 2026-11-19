@@ -38,6 +38,7 @@ describe("operatorNav", () => {
       "/operator",
       "/operator/aircraft",
       "/operator/availability",
+      "/operator/empty-legs",
       "/operator/pricing",
       "/operator/team",
       "/operator/onboarding",
@@ -70,6 +71,7 @@ describe("operatorNav", () => {
     expect(hrefs(operatorNav("APPROVED", aircraftStaff))).toEqual([
       "/operator",
       "/operator/aircraft",
+      "/operator/empty-legs",
     ]);
     expect(hrefs(operatorNav("DRAFT", availabilityStaff))).toEqual([]);
   });

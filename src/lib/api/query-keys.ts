@@ -37,6 +37,11 @@ export const queryKeys = {
     ["admin", "price-calculations", id] as const,
   adminAircraft: (status: string) => ["admin", "aircraft", status] as const,
   adminAircraftDetail: (id: string) => ["admin", "aircraft", id] as const,
+  emptyLegs: (filter: string) => ["empty-legs", "list", filter] as const,
+  emptyLeg: (id: string) => ["empty-legs", "one", id] as const,
+  operatorEmptyLegs: ["operator", "empty-legs"] as const,
+  operatorEmptyLeg: (id: string) => ["operator", "empty-legs", id] as const,
+  adminEmptyLegs: (status: string) => ["admin", "empty-legs", status] as const,
   locationSearch: (q: string) => ["locations", "search", q] as const,
   search: (id: string) => ["search", id] as const,
   searchResult: (searchId: string, resultId: string) =>

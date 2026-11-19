@@ -8,7 +8,8 @@ export type StatusKind =
   | "user"
   | "aircraft"
   | "availability"
-  | "staff";
+  | "staff"
+  | "emptyLeg";
 
 export type BookingStatus =
   | "REQUESTED"
@@ -56,6 +57,15 @@ export type UserStatus = "PENDING_VERIFICATION" | "ACTIVE" | "SUSPENDED";
 
 /** An operator's staff member, as the team page shows them. */
 export type StaffStatus = "INVITED" | "ACTIVE" | "SUSPENDED";
+
+/** An empty-leg offer (M7). */
+export type EmptyLegStatus =
+  | "DRAFT"
+  | "PENDING_REVIEW"
+  | "PUBLISHED"
+  | "REJECTED"
+  | "WITHDRAWN"
+  | "EXPIRED";
 
 interface Presentation {
   label: string;
@@ -125,6 +135,15 @@ const STAFF: Record<StaffStatus, Presentation> = {
   SUSPENDED: { label: "Suspended", tone: "danger" },
 };
 
+const EMPTY_LEG: Record<EmptyLegStatus, Presentation> = {
+  DRAFT: { label: "Draft", tone: "neutral" },
+  PENDING_REVIEW: { label: "Under review", tone: "warning" },
+  PUBLISHED: { label: "Published", tone: "success" },
+  REJECTED: { label: "Not approved", tone: "danger" },
+  WITHDRAWN: { label: "Withdrawn", tone: "neutral" },
+  EXPIRED: { label: "Expired", tone: "danger" },
+};
+
 const PRESENTATION: Record<StatusKind, Record<string, Presentation>> = {
   booking: BOOKING,
   payment: PAYMENT,
@@ -134,6 +153,7 @@ const PRESENTATION: Record<StatusKind, Record<string, Presentation>> = {
   aircraft: AIRCRAFT,
   availability: AVAILABILITY,
   staff: STAFF,
+  emptyLeg: EMPTY_LEG,
 };
 
 export interface StatusBadgeProps {
