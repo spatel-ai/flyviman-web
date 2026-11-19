@@ -1852,6 +1852,26 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/admin/category-config": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Service category configuration
+     * @description Platform booking mode and payment model per category and region, by region then category. Read only until M10.
+     */
+    get: operations["AdminCategoryConfigController_list"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/v1/operator/pricing": {
     parameters: {
       query?: never;
@@ -2038,26 +2058,6 @@ export interface paths {
      * @description Passengers show only the last four characters of a document number.
      */
     get: operations["BookingsController_get"];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  "/api/v1/admin/category-config": {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    /**
-     * Service category configuration
-     * @description Platform booking mode and payment model per category and region, by region then category. Read only until M10.
-     */
-    get: operations["AdminCategoryConfigController_list"];
     put?: never;
     post?: never;
     delete?: never;
@@ -3670,6 +3670,8 @@ export interface components {
       /** @description True when a supplier timed out or failed: the results hold only the others. */
       partial: boolean;
       providers: components["schemas"]["ScheduledProviderStatusDto"][];
+      /** @description The party searched for: every fare is the total for all of them. */
+      passengers: components["schemas"]["ScheduledPassengersDto"];
       /** @description Outbound first, then return; each by departure, then fare. Only flights with seats for the whole party; an offer found sold out at revalidation is left out. */
       results: components["schemas"]["ScheduledOfferDto"][];
     };
@@ -3860,6 +3862,11 @@ export interface components {
       amountMinor: number;
       basis?: string;
     };
+    /**
+     * @description How a booking made from this result is handled: the category's configuration with the operator's override (C2). A booking from an estimate still waits for the operator.
+     * @enum {string}
+     */
+    BookingMode: "INSTANT" | "REQUEST";
     SearchResultDetailDto: {
       /** Format: uuid */
       resultId: string;
@@ -3890,14 +3897,28 @@ export interface components {
       assumptions: string[];
       /** @description What the estimate leaves out. */
       exclusions: string[];
-      /**
-       * @description Charter is confirmed only after the operator accepts.
-       * @enum {string}
-       */
-      bookingMode: "REQUEST";
+      /** @description How a booking made from this result is handled: the category's configuration with the operator's override (C2). A booking from an estimate still waits for the operator. */
+      bookingMode: components["schemas"]["BookingMode"];
       confirmationRequirements: string[];
       /** @description Shown before the customer commits (business rule 9). */
       cancellationNote: string;
+    };
+    /**
+     * @description Platform setting. Operators may override it per category.
+     * @enum {string}
+     */
+    PaymentModel: "A_INSTANT" | "B_OPERATOR_CONFIRMED" | "C_DEPOSIT";
+    CategoryConfigResponseDto: {
+      category: components["schemas"]["ServiceCategory"];
+      /** @example IN */
+      region: string;
+      isEnabled: boolean;
+      /** @description Platform setting. Operators may override it per category; air ambulance is always REQUEST. */
+      bookingMode: components["schemas"]["BookingMode"];
+      /** @description Platform setting. Operators may override it per category. */
+      paymentModel: components["schemas"]["PaymentModel"];
+      /** Format: date-time */
+      updatedAt: string;
     };
     OperatorPricingResponseDto: {
       /**
@@ -4458,28 +4479,6 @@ export interface components {
       passengers: components["schemas"]["BookingPassengerDto"][];
       /** Format: date-time */
       createdAt: string;
-      /** Format: date-time */
-      updatedAt: string;
-    };
-    /**
-     * @description Platform setting. Operators may override it per category; air ambulance is always REQUEST.
-     * @enum {string}
-     */
-    BookingMode: "INSTANT" | "REQUEST";
-    /**
-     * @description Platform setting. Operators may override it per category.
-     * @enum {string}
-     */
-    PaymentModel: "A_INSTANT" | "B_OPERATOR_CONFIRMED" | "C_DEPOSIT";
-    CategoryConfigResponseDto: {
-      category: components["schemas"]["ServiceCategory"];
-      /** @example IN */
-      region: string;
-      isEnabled: boolean;
-      /** @description Platform setting. Operators may override it per category; air ambulance is always REQUEST. */
-      bookingMode: components["schemas"]["BookingMode"];
-      /** @description Platform setting. Operators may override it per category. */
-      paymentModel: components["schemas"]["PaymentModel"];
       /** Format: date-time */
       updatedAt: string;
     };
@@ -7138,6 +7137,25 @@ export interface operations {
       };
     };
   };
+  AdminCategoryConfigController_list: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["CategoryConfigResponseDto"][];
+        };
+      };
+    };
+  };
   OperatorPricingController_getOperator: {
     parameters: {
       query?: never;
@@ -7461,25 +7479,6 @@ export interface operations {
         };
         content: {
           "application/json": components["schemas"]["BookingResponseDto"];
-        };
-      };
-    };
-  };
-  AdminCategoryConfigController_list: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["CategoryConfigResponseDto"][];
         };
       };
     };

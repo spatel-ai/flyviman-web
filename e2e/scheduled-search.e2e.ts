@@ -67,6 +67,7 @@ const future = (days: number, hourUtc: number) => {
 
 const RESULTS = {
   searchId: "s-1",
+  passengers: { adults: 2, children: 0, infants: 1 },
   partial: true,
   providers: [
     { name: "Mockair", status: "OK" },
@@ -171,7 +172,8 @@ test("results sort, filter, say when airlines were missing and keep outbound and
   page,
 }) => {
   await mockScheduled(page);
-  await page.goto("/search/scheduled/s-1");
+  // The party comes from the answer; an old `?pax=` is ignored.
+  await page.goto("/search/scheduled/s-1?pax=9");
 
   await expect(
     page.getByRole("status").filter({ hasText: "Slowjet" }),
@@ -182,7 +184,7 @@ test("results sort, filter, say when airlines were missing and keep outbound and
   await expect(rows.first()).toContainText("Air India");
   // Every price is labelled a live fare (rule 1).
   await expect(outbound.getByText("Live fare", { exact: true })).toHaveCount(2);
-  await expect(outbound.getByText("Total for all travellers")).toHaveCount(2);
+  await expect(outbound.getByText("Total for 3 travellers")).toHaveCount(2);
   await expect(
     page
       .getByRole("list", { name: "Return flights found" })
@@ -326,7 +328,7 @@ test("a scheduled search against the real API returns labelled live fares and re
   await page.getByRole("button", { name: "Search flights" }).click();
   expect((await found).status()).toBe(200);
 
-  await expect(page).toHaveURL(/\/search\/scheduled\/[0-9a-f-]{36}\?pax=1$/);
+  await expect(page).toHaveURL(/\/search\/scheduled\/[0-9a-f-]{36}$/);
   const list = page.getByRole("list", { name: "Flights found" });
   const items = list.getByRole("listitem");
   await expect(items.first()).toBeVisible();

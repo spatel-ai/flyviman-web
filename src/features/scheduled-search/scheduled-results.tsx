@@ -193,22 +193,14 @@ export function ScheduledResults({ searchId }: { searchId: string }) {
   const { filters, sort } = readFilters(new URLSearchParams(params.toString()));
   const outbound = data.results.filter((o) => o.direction === "OUTBOUND");
   const returning = data.results.filter((o) => o.direction === "RETURN");
-  // How many are travelling comes in the address from the search form: the
-  // API's fare is the party's total, and its answer does not repeat the party.
-  const travellers = Math.max(0, Math.floor(Number(params.get("pax")) || 0));
-  const keepTravellers = (query: string) => {
-    if (!travellers) return query;
-    const next = new URLSearchParams(query);
-    next.set("pax", String(travellers));
-    return `?${next.toString()}`;
-  };
+  // The API's fare is the party's total; its answer says who is travelling,
+  // infants included. An old `?pax=` in the address is ignored.
+  const travellers =
+    data.passengers.adults + data.passengers.children + data.passengers.infants;
   const update = (next: Filters, nextSort: Sort = sort) =>
-    router.replace(
-      `${pathname}${keepTravellers(writeFilters(next, nextSort))}`,
-      {
-        scroll: false,
-      },
-    );
+    router.replace(`${pathname}${writeFilters(next, nextSort)}`, {
+      scroll: false,
+    });
   const show = (offers: ScheduledOffer[]) =>
     sortOffers(applyFilters(offers, filters), sort);
   const allExpired =

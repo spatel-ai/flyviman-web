@@ -84,9 +84,7 @@ export function ScheduledSearchForm() {
       queryClient.setQueryData(queryKeys.scheduledSearch(data.searchId), {
         data,
       });
-      router.push(
-        `/search/scheduled/${data.searchId}?pax=${passengers.adults + passengers.children + passengers.infants}`,
-      );
+      router.push(`/search/scheduled/${data.searchId}`);
     } catch (error) {
       setFormError(messageFor(error));
       setBusy(false);
