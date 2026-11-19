@@ -1706,7 +1706,7 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  "/api/v1/webhooks/payments/{provider}": {
+  "/api/v1/bookings": {
     parameters: {
       query?: never;
       header?: never;
@@ -1716,10 +1716,30 @@ export interface paths {
     get?: never;
     put?: never;
     /**
-     * Gateway notification
-     * @description For the payment gateway only. The signature over the exact body is verified before anything else; `:provider` is the configured gateway (`mock` in this build). Records nothing yet. Limited per address (120 a minute by default, `RATE_LIMIT_WEBHOOK_PER_MINUTE`; 429 `RATE_LIMITED`).
+     * Request a booking from a charter or helicopter search result
+     * @description Checks the aircraft and the price again first (business rule 3): 409 `BOOKING_UNAVAILABLE` when the aircraft can no longer fly the trip; 409 `BOOKING_PRICE_CHANGED` when the estimate is not `expectedTotalMinor`, with the new estimate in `details` under the fields `totalMinor`, `currency`, `priceType` and `validUntil` (send it back as `expectedTotalMinor`, with a new key, to agree to it); 422 `BOOKING_PRICE_ON_REQUEST` for a result without a price; 422 `BOOKING_CATEGORY_DISABLED`; 404 for a search, result or passenger that is not found or not the caller’s. Holds the aircraft for 24 hours (or until the trip ends) while the operator answers. Never confirmed here: charter goes to the operator (`OPERATOR_PENDING`). The answer holds references and statuses only. A repeat with the same `Idempotency-Key` and body returns the first answer.
      */
-    post: operations["PaymentWebhooksController_receive"];
+    post: operations["BookingsController_create"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/bookings/{reference}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * One of the caller’s bookings: itinerary, price, statuses, terms
+     * @description Passengers show only the last four characters of a document number.
+     */
+    get: operations["BookingsController_get"];
+    put?: never;
+    post?: never;
     delete?: never;
     options?: never;
     head?: never;
@@ -1740,6 +1760,26 @@ export interface paths {
     get: operations["AdminCategoryConfigController_list"];
     put?: never;
     post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/webhooks/payments/{provider}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Gateway notification
+     * @description For the payment gateway only. The signature over the exact body is verified before anything else; `:provider` is the configured gateway (`mock` in this build). Records nothing yet. Limited per address (120 a minute by default, `RATE_LIMIT_WEBHOOK_PER_MINUTE`; 429 `RATE_LIMITED`).
+     */
+    post: operations["PaymentWebhooksController_receive"];
     delete?: never;
     options?: never;
     head?: never;
@@ -3430,9 +3470,159 @@ export interface components {
       /** Format: date-time */
       createdAt: string;
     };
-    WebhookAckResponseDto: {
-      /** @example true */
-      received: boolean;
+    CreateBookingDto: {
+      /**
+       * Format: uuid
+       * @description From `POST /search/charter` or `/search/helicopter`.
+       */
+      searchId: string;
+      /**
+       * Format: uuid
+       * @description The chosen result.
+       */
+      resultId: string;
+      /** @description Paise: the estimate the customer saw and agrees to. The price is worked out again; if it differs, 409 `BOOKING_PRICE_CHANGED` carries the new estimate, and the customer can agree to it by sending it here with a new `Idempotency-Key`. */
+      expectedTotalMinor: number;
+      /**
+       * @example INR
+       * @enum {string}
+       */
+      currency: "INR";
+      /** @description Saved passengers (`/me/passengers`) to copy onto the booking, at most the search’s passenger count. May be left out and set later. */
+      passengerIds?: string[];
+      specialRequests?: string;
+    };
+    /** @enum {string} */
+    BookingStatus:
+      | "REQUESTED"
+      | "OPERATOR_PENDING"
+      | "CLARIFICATION_REQUESTED"
+      | "PRICE_CONFIRMED"
+      | "AWAITING_PAYMENT"
+      | "CONFIRMED"
+      | "SCHEDULED"
+      | "COMPLETED"
+      | "OPERATOR_UNAVAILABLE"
+      | "QUOTE_DECLINED"
+      | "EXPIRED"
+      | "CANCELLED";
+    /** @enum {string} */
+    BookingPaymentStatus:
+      "UNPAID" | "PARTIALLY_PAID" | "PAID" | "REFUND_PENDING" | "REFUNDED";
+    BookingPriceDto: {
+      priceType: components["schemas"]["PriceType"];
+      /** @description Paise. */
+      amountMinor: number;
+      /** @example INR */
+      currency: string;
+      /**
+       * Format: date-time
+       * @description Until when an `ESTIMATE` holds. The operator’s quote replaces it.
+       */
+      validUntil: string | null;
+    };
+    BookingCreatedDto: {
+      /** @example FLY-BK-7K2M9Q */
+      reference: string;
+      status: components["schemas"]["BookingStatus"];
+      paymentStatus: components["schemas"]["BookingPaymentStatus"];
+      price: components["schemas"]["BookingPriceDto"];
+      /** Format: date-time */
+      createdAt: string;
+    };
+    ItineraryLegDto: {
+      /** Format: uuid */
+      originId: string;
+      originName: string;
+      /** Format: uuid */
+      destinationId: string;
+      destinationName: string;
+      /** Format: date-time */
+      departureAt: string;
+    };
+    ItineraryAircraftDto: {
+      /** Format: uuid */
+      id: string;
+      manufacturer: string;
+      model: string;
+      category: components["schemas"]["AircraftCategory"];
+      passengerCapacity: number;
+    };
+    ItineraryDto: {
+      /** @enum {number} */
+      version: 1;
+      /** @enum {string} */
+      source: "SEARCH";
+      /** Format: uuid */
+      searchId: string;
+      /** Format: uuid */
+      resultId: string;
+      tripType: components["schemas"]["SearchTripType"];
+      passengerCount: number;
+      /** @description One leg, or the outbound and the return. */
+      legs: components["schemas"]["ItineraryLegDto"][];
+      roundTripStrategy: components["schemas"]["RoundTripStrategy"] | null;
+      aircraft: components["schemas"]["ItineraryAircraftDto"];
+      operatorName: string;
+      distanceKm: number;
+      flightMinutes: number | null;
+    };
+    CancellationChargeDto: {
+      minHoursBeforeDeparture: number;
+      chargePercent: number;
+    };
+    CancellationTermsDto: {
+      /** @enum {number} */
+      version: 1;
+      /** @enum {string} */
+      source: "PLATFORM" | "OPERATOR_QUOTE";
+      /** @description The text shown before the customer committed. */
+      summary: string;
+      /** @description Longest notice first. Empty: nothing can be charged yet. */
+      charges: components["schemas"]["CancellationChargeDto"][];
+      /** Format: date-time */
+      acceptedAt: string;
+    };
+    BookingPassengerDto: {
+      firstName: string;
+      lastName: string;
+      /** Format: date */
+      dateOfBirth: string | null;
+      gender: components["schemas"]["Gender"];
+      nationality: string | null;
+      documentType: components["schemas"]["IdentityDocumentType"] | null;
+      /** @description The document number’s last four characters only. */
+      documentNumberLast4: string | null;
+      /** Format: date */
+      documentExpiry: string | null;
+      specialAssistance: string | null;
+    };
+    BookingResponseDto: {
+      /** @example FLY-BK-7K2M9Q */
+      reference: string;
+      category: components["schemas"]["ServiceCategory"];
+      status: components["schemas"]["BookingStatus"];
+      /** @description Separate from `status`: payment never confirms a booking by itself. */
+      paymentStatus: components["schemas"]["BookingPaymentStatus"];
+      /**
+       * @description As resolved when the booking was made.
+       * @enum {string}
+       */
+      bookingMode: "INSTANT" | "REQUEST";
+      /**
+       * @description As resolved when the booking was made.
+       * @enum {string}
+       */
+      paymentModel: "A_INSTANT" | "B_OPERATOR_CONFIRMED" | "C_DEPOSIT";
+      price: components["schemas"]["BookingPriceDto"];
+      itinerary: components["schemas"]["ItineraryDto"];
+      cancellationTerms: components["schemas"]["CancellationTermsDto"];
+      specialRequests: string | null;
+      passengers: components["schemas"]["BookingPassengerDto"][];
+      /** Format: date-time */
+      createdAt: string;
+      /** Format: date-time */
+      updatedAt: string;
     };
     /**
      * @description Platform setting. Operators may override it per category; air ambulance is always REQUEST.
@@ -3455,6 +3645,10 @@ export interface components {
       paymentModel: components["schemas"]["PaymentModel"];
       /** Format: date-time */
       updatedAt: string;
+    };
+    WebhookAckResponseDto: {
+      /** @example true */
+      received: boolean;
     };
     /** @enum {string} */
     EnquiryTopic:
@@ -5977,6 +6171,72 @@ export interface operations {
       };
     };
   };
+  BookingsController_create: {
+    parameters: {
+      query?: never;
+      header: {
+        /** @description A UUID, new for each booking request and reused on retry. */
+        "Idempotency-Key": string;
+      };
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["CreateBookingDto"];
+      };
+    };
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["BookingCreatedDto"];
+        };
+      };
+    };
+  };
+  BookingsController_get: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        reference: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["BookingResponseDto"];
+        };
+      };
+    };
+  };
+  AdminCategoryConfigController_list: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["CategoryConfigResponseDto"][];
+        };
+      };
+    };
+  };
   PaymentWebhooksController_receive: {
     parameters: {
       query?: never;
@@ -6012,25 +6272,6 @@ export interface operations {
           [name: string]: unknown;
         };
         content?: never;
-      };
-    };
-  };
-  AdminCategoryConfigController_list: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["CategoryConfigResponseDto"][];
-        };
       };
     };
   };
