@@ -328,25 +328,40 @@ test("a scheduled search against the real API returns labelled live fares and re
 
   await expect(page).toHaveURL(/\/search\/scheduled\/[0-9a-f-]{36}\?pax=1$/);
   const list = page.getByRole("list", { name: "Flights found" });
-  const first = list.getByRole("listitem").first();
-  await expect(first).toBeVisible();
+  const items = list.getByRole("listitem");
+  await expect(items.first()).toBeVisible();
   // The fare is a labelled live fare, and says it is for the whole party.
-  await expect(first.getByText("Live fare", { exact: true })).toBeVisible();
-  await expect(first.getByText("Total for 1 traveller")).toBeVisible();
+  await expect(
+    items.first().getByText("Live fare", { exact: true }),
+  ).toBeVisible();
+  await expect(items.first().getByText("Total for 1 traveller")).toBeVisible();
 
-  const open = () => first.getByRole("button", { name: /^Details:/ }).click();
+  // The mock turns about one offer in eleven sold out on a check, keyed by
+  // the offer (so by the date searched): take the first that is not.
   const dialog = page.getByRole("dialog");
-  await open();
-  // Fare rules and the cancellation conditions are shown before any check.
-  await expect(
-    dialog.getByRole("heading", { name: "Fare rules" }),
-  ).toBeVisible();
-  await expect(dialog.getByText("Cancellation", { exact: true })).toBeVisible();
-  await dialog.getByRole("button", { name: "Check price and seats" }).click();
   const confirmed = dialog.getByText("Price and seats confirmed");
-  await expect(
-    confirmed.or(dialog.getByText("The price has changed")),
-  ).toBeVisible();
+  const changed = dialog.getByText("The price has changed");
+  const soldOut = dialog.getByText("No seats left on this fare");
+  let open = async () => {};
+  const count = Math.min(await items.count(), 5);
+  for (let index = 0; index < count; index++) {
+    const item = items.nth(index);
+    open = () => item.getByRole("button", { name: /^Details:/ }).click();
+    await open();
+    // Fare rules and the cancellation conditions are shown before any check.
+    await expect(
+      dialog.getByRole("heading", { name: "Fare rules" }),
+    ).toBeVisible();
+    await expect(
+      dialog.getByText("Cancellation", { exact: true }),
+    ).toBeVisible();
+    await dialog.getByRole("button", { name: "Check price and seats" }).click();
+    await expect(confirmed.or(changed).or(soldOut)).toBeVisible();
+    if (!(await soldOut.isVisible())) break;
+    await page.keyboard.press("Escape");
+    await expect(dialog).toBeHidden();
+  }
+  await expect(confirmed.or(changed)).toBeVisible();
   if (!(await confirmed.isVisible())) {
     // A changed fare is stored: the second check finds it available.
     await page.keyboard.press("Escape");
