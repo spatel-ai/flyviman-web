@@ -59,7 +59,7 @@ src/
                            availability (fleet timeline, [aircraftId] calendar), pricing, team
     (admin)/admin/         admin portal: dashboard, operators, operators/[id], users, aircraft,
                            aircraft/[id], locations, documents, pricing/rules,
-                           pricing/calculations, pricing/calculations/[id]
+                           pricing/calculations, pricing/calculations/[id], enquiries, enquiries/[id]
     layout.tsx             root: font, theme script, providers
     globals.css            design tokens
   components/
@@ -86,7 +86,7 @@ src/
                            search (results, filters, detail), search-landing,
                            operator-onboarding, operator-aircraft, operator-availability, operator-staff, operator-pricing,
                            admin-operators, admin-users, admin-aircraft, admin-locations, admin-documents,
-                           admin-pricing)
+                           admin-pricing, admin-enquiries)
   lib/
     api/                   apiFetch, ApiError, messages by error code, query keys, generated types
     auth/                  session and server-side API reads (server only), roles
