@@ -20,9 +20,8 @@ import {
   type FrameStore,
   type SourceRect,
 } from "./hero-frames";
+import { HERO_V1_SCRIPT, REDUCED_MOTION } from "./hero-script";
 import { segment, useScrollProgress } from "./use-scroll-progress";
-
-const REDUCED_MOTION = "(prefers-reduced-motion: reduce)";
 
 /**
  * Reduced motion, a data-saver connection, or a page whose scripts came so
@@ -43,15 +42,6 @@ function onMotionPreference(changed: () => void) {
   query.addEventListener("change", changed);
   return () => query.removeEventListener("change", changed);
 }
-
-// Runs before the hero paints on a full page load, so the film's first
-// frame and its tall track are there from the start (home-v1.css,
-// `data-hero-v1-film`). Without JavaScript it is not set and the page shows
-// the still hero. If the page's scripts never
-// arrive, the film is given up after a while rather than left stuck, and
-// stays given up for this view of the page: starting it later would push
-// everything below down by two or three screens.
-const SCRIPT = `(function(){try{var r=document.documentElement,c=navigator.connection;if(matchMedia(${JSON.stringify(REDUCED_MOTION)}).matches||(c&&c.saveData))return;r.setAttribute("data-hero-v1-film","");setTimeout(function(){if(!r.hasAttribute("data-hero-v1-live")){r.removeAttribute("data-hero-v1-film");r.setAttribute("data-hero-v1-gave-up","")}},8000)}catch(e){}})()`;
 
 const easeOut = (t: number) => 1 - (1 - t) ** 3;
 
@@ -260,7 +250,7 @@ export function Hero() {
         // a client navigation never runs, and React warns about it.
         type={typeof window === "undefined" ? "text/javascript" : "text/plain"}
         suppressHydrationWarning
-        dangerouslySetInnerHTML={{ __html: SCRIPT }}
+        dangerouslySetInnerHTML={{ __html: HERO_V1_SCRIPT }}
       />
       <div ref={stage} className="hero-v1-stage">
         <div aria-hidden="true" className="hero-v1-media">
