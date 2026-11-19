@@ -48,6 +48,3 @@ export function searchBlockerLabel(code: string): string {
       return code;
   }
 }
-
-/** Re-exported so the aircraft editor keeps its import; move it there when that file is free. */
-export { formatDay } from "./date";

@@ -21,10 +21,10 @@ import type { Schemas } from "@/lib/api/types";
 import {
   AIRCRAFT_DOCUMENT_LABELS,
   aircraftDocumentLabel,
-  formatDay,
   missingLabel,
   searchBlockerLabel,
 } from "@/lib/format/aircraft";
+import { formatDay } from "@/lib/format/date";
 import { indiaToday } from "@/lib/format/expiry";
 import { useOperatorAccess, useOperatorApproved } from "@/lib/operator";
 import { can, isOperatorAdmin } from "@/lib/operator-access";

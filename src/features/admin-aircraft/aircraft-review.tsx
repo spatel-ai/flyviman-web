@@ -16,7 +16,8 @@ import { isNotFoundError } from "@/lib/api/errors";
 import { messageFor } from "@/lib/api/messages";
 import { queryKeys } from "@/lib/api/query-keys";
 import type { Schemas } from "@/lib/api/types";
-import { aircraftDocumentLabel, formatDay } from "@/lib/format/aircraft";
+import { aircraftDocumentLabel } from "@/lib/format/aircraft";
+import { formatDay } from "@/lib/format/date";
 
 type Detail = Schemas["AdminAircraftDetailDto"];
 type Action =
