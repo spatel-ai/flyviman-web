@@ -42,6 +42,7 @@ Run from this directory.
 | Browser tests | `npm run test:e2e` (starts the API and the app itself; needs `npm run db:up` in `flyviman-api`; first run needs `npx playwright install chromium`) |
 | Regenerate API types | `npm run api:types` (after `npm run openapi:export` in `flyviman-api`) |
 | Build | `npm run build` |
+| Hero film frames | `node scripts/extract-hero-frames.mjs` (after replacing `media-src/hero/hero-desktop.mp4`; Node 22.18+, ffmpeg, ffprobe and cwebp) |
 | Format | `npm run format` |
 
 ## Layout
@@ -49,11 +50,13 @@ Run from this directory.
 ```
 src/
   app/
-    (customer)/            customer site: home, about, services, charter, contact, account/ (profile,
-                           passengers, notifications), legal/[slug], legal/image-credits
+    (customer)/            customer site: home, search (landing, [searchId], [searchId]/[resultId]), about, services,
+                           charter, charter/fleet, aviation-solutions, aircraft-sales (and [slug]), pilots, contact,
+                           account/ (profile, passengers, notifications), legal/[slug], legal/image-credits,
+                           compare/home-v1 (the frozen pre-M12 home, noindex and unlinked, until the owner chooses; D-110)
     (auth)/                login, register, verify, forgot-password, reset-password, operator/register
     (operator)/operator/   operator portal: dashboard, onboarding, aircraft (list, new, [id]),
-                           availability (fleet timeline, [aircraftId] calendar), team
+                           availability (fleet timeline, [aircraftId] calendar), pricing, team
     (admin)/admin/         admin portal: dashboard, operators, operators/[id], users, aircraft,
                            aircraft/[id], locations, documents, pricing/rules,
                            pricing/calculations, pricing/calculations/[id]
@@ -62,19 +65,24 @@ src/
   components/
     ui/                    design-system primitives (Button; buttonClasses in button-classes.ts, Input, Select, Checkbox, Card, Badge,
                            Dialog and ConfirmDialog, Sheet, Tabs, Toast, Skeleton, Table and Pagination, Textarea)
-    shared/                cross-feature pieces (PriceLabel, StatusBadge, EmptyState, FormAlert, LoadError,
-                           ClientRedirect, RecordNotFound)
-    layout/                SiteHeader (with SiteNavLinks and SITE_NAV), SiteFooter, AppShell, NavLinks, MobileNav, UserMenu
-    motion/                Reveal (level 4, with the slit variant),
-                           ScrollScrub and ScrollFilm (level 5; gsap is imported only in load-gsap.ts), TiltCard and Magnetic
+    shared/                cross-feature pieces (PriceLabel, StatusBadge, ExpiryBadge, EmptyState, FormAlert, LoadError,
+                           ClientRedirect, RecordNotFound, LocationField)
+    layout/                customer: SiteHeader (SiteNavLinks, SITE_NAV, MoreMenu on desktop, MoreSheet on phones),
+                           SiteTabBar and MobileTabBar (phone tab bar), StickyActionBar (phone detail pages), SiteFooter;
+                           portals: AppShell, NavLinks, MobileNav, UserMenu
+    motion/                Reveal (level 4, with the slit variant), ScrollScrub (level 5, the footer wordmark and page
+                           heroes; gsap is imported only in load-gsap.ts), TiltCard and Magnetic
                            (pointer feedback, on spring.ts), PageTransition (level 3)
-    marketing/             SectionHeading, PageHero, EnquiryLink (customer marketing pages)
+    marketing/             SectionHeading, PageHero, EnquiryLink, IconBadge with concept-icons.ts (Lucide only), ReadMore
+                           (customer marketing pages)
     booking/               the customer search card and its pickers (SearchWidget, AirportPicker, FareCalendar,
                            TravellerPicker, FieldTile, ResponsivePicker: popover on desktop, sheet on phones; useToday)
-    theme/                 ThemeScript, ThemeSwitch
-  content/                 marketing copy (home, about, services, charter, contact, search), site photographs
-                           (images/) and image-credits.ts
-  features/<feature>/      feature UI, hooks, schemas (auth, account, home, about, services, charter, contact, legal,
+    booking-v1/            frozen copy of the pre-M12 search card, used only by compare/home-v1
+    theme/                 ThemeScript, ThemeSwitch (Light or Dark; light by default, D-108)
+  content/                 marketing copy (home, about, services, charter, fleet, contact, aviation-solutions,
+                           aircraft-sales, pilots, search), site photographs (images/) and image-credits.ts
+  features/<feature>/      feature UI, hooks, schemas (auth, account, home, home-v1 (frozen), about, services, charter,
+                           contact, legal, aviation-solutions, aircraft-sales, pilots,
                            search (results, filters, detail), search-landing,
                            operator-onboarding, operator-aircraft, operator-availability, operator-staff, operator-pricing,
                            admin-operators, admin-users, admin-aircraft, admin-locations, admin-documents,
@@ -93,6 +101,7 @@ public/hero/               the home page hero film: WebP frame sets desktop/, ph
                            along the focal path in src/features/home/focal-path.ts) and the first and last frames as posters,
                            made by scripts/extract-hero-frames.mjs (Node 22.18+) from the source clip in the uncommitted
                            media-src/; the script writes each set's count and size to src/features/home/hero-frames.json
+public/hero-v1/            frames of the pre-M12 film, used only by compare/home-v1
 ```
 
 Full structure and the page map: `../docs/frontend/frontend-design.md`.
@@ -113,7 +122,7 @@ Full structure and the page map: `../docs/frontend/frontend-design.md`.
 - **Portal navigation:** add an item to a portal's `NAV` in the same change as its page, never before.
 - **Environment:** `NEXT_PUBLIC_` values plus the server-only `API_PROXY_TARGET` (hosting, D-065), declared in `src/lib/env.ts` and `.env.example`. No secrets: they live in the API.
 - **Motion** follows the five-level scale in `../docs/frontend/motion-design.md`; use the `motion-effect` skill to add or change one. Wrap each new customer page's content in `PageTransition`; use `Reveal` only for content that starts below the first screen (`variant="slit"` for a section heading); never animate safety notices, prices, forms or status badges. Anything that plays on load is CSS. `gsap` is imported only inside `components/motion/load-gsap.ts`, dynamically; scrolling stays native, and the only pinned element is the home page hero film (`features/home/hero.tsx`, held with CSS `position: sticky`; the charter showpiece stays retired). The film plays on every screen with motion allowed and no data saver (CR-2d): upright phones (under 744 px wide or under 600 px tall) play the `phone` set and upright tablets the `tablet-portrait` set, both portrait slices cropped along the focal path (`focal-path.ts`, keyframes of time and horizontal centre, shared with the script), and everything else the `desktop` set (`HERO.film.screens`); the set switches live on rotation. Turned phones (`HERO.film.turnedPhone`), reduced motion, data saver, no JavaScript and sustained slow frames (`HERO.giveUp`) give the still hero (on phones the first frame as a band, card below). Setting `HERO.film.phones` to false switches the portrait sets off. `TiltCard` and `Magnetic` are for customer marketing sections only.
-- **Marketing copy** lives in typed modules in `src/content/` (`home.ts`, `about.ts`, `services.ts`, `charter.ts`, `contact.ts`), imported from flyviman.com with the `site-content-import` skill. Components do not hold copy inline. Claims the business has not confirmed stay out (`../docs/open-decisions.md`).
+- **Marketing copy** lives in typed modules in `src/content/` (`home.ts`, `about.ts`, `services.ts`, `charter.ts`, `fleet.ts`, `contact.ts`, `aviation-solutions.ts`, `aircraft-sales.ts`, `pilots.ts`), imported from flyviman.com with the `site-content-import` skill. Components do not hold copy inline. The client approved migrating all of flyviman.com (D-092); the business rules still apply (`../docs/open-decisions.md`, Marketing content).
 - **Pages with a dynamic segment** (`[slug]`, `[id]`): a public one gets its slugs added to `KNOWN_SLUGS` in `proxy.ts` so an unknown address answers 404; a signed-in detail page shows `RecordNotFound` when `isNotFoundError(error)`. The not-found guard (`src/proxy.spec.ts`, `e2e/not-found.e2e.ts`) finds new pages by itself and fails until they are handled (D-094).
 - **Redirecting into a page with a form** from a page that streams: use `ClientRedirect`, not `redirect()` (which also reloads the destination a moment later).
 - **Photographs** come only from `src/content/image-credits.ts`, where each has alt text, photographer, source and licence. Rules for choosing one: `../docs/frontend/motion-design.md`. They apply to Flyviman's own pictures too.
@@ -129,6 +138,14 @@ Strategy and conventions: `../docs/testing-strategy.md`.
 - Pages and journeys: Playwright, written with the `/playwright-test` skill, on both the desktop and mobile projects.
 - A change is done when `npm run lint`, `npm run typecheck`, the unit specs it touches (`npm test -- <name>`) and its Playwright file (`npx playwright test <name>`) pass. Full suites only when asked: CI (`.github/workflows/ci.yml`) runs everything on every pull request and push to `main` (`../docs/testing-strategy.md`).
 
+## Working in a worktree
+
+Concurrent tasks run in worktree slots (`../docs/development-workflow.md`), created by `../scripts/worktree.sh`:
+- **Location:** `.worktrees/<task>/flyviman-web` at the workspace root, always beside its paired `.worktrees/<task>/flyviman-api`. The browser suite starts the API from `../flyviman-api`, and `npm run api:types` reads `../flyviman-api/openapi.json`, so both resolve to the task's own API.
+- **Ports:** Playwright runs with `PORT=30n0 API_PORT=40n0`. Never 3000 or 4000–4002, which belong to the main checkout; `reuseExistingServer` would quietly test someone else's server.
+- **Documents:** from a worktree, `../docs/` and `../CLAUDE.md` resolve inside `.worktrees/<task>/`, where they do not exist. Read them at the workspace root, and never edit them from a task; list document changes in the report.
+- **Generated types:** `src/lib/api/generated/schema.d.ts` is regenerated (`npm run api:types`), never merged as text.
+
 ## Skills and agents
 
-`/ui-page`, `/playwright-test`; agents `code-reviewer`, `security-reviewer`, `test-runner`. They live in `../.claude/`, so start Claude Code from the workspace root to have them available.
+`/ui-page`, `/playwright-test`, `/motion-effect`, `/site-content-import`; agents `scout`, `builder`, `merger`, `code-reviewer`, `security-reviewer`, `test-runner`. They live in `../.claude/`, so start Claude Code from the workspace root to have them available.
