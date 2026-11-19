@@ -2152,8 +2152,54 @@ export interface components {
     };
     /** @enum {string} */
     WingType: "FIXED_WING" | "HELICOPTER";
+    OperatingHoursDto: {
+      /**
+       * @description Local time, HH:MM (24 h).
+       * @example 06:00
+       */
+      start: string;
+      /**
+       * @description Local time, HH:MM (24 h). Before `start` spans midnight.
+       * @example 20:00
+       */
+      end: string;
+    };
+    AircraftRestrictionsDto: {
+      /** @description When the aircraft may depart and arrive, in the local time of each location. */
+      operatingHours?: components["schemas"]["OperatingHoursDto"];
+      /** @description Locations the aircraft does not fly to or from. */
+      excludedLocationIds?: string[];
+      /** @description Notice needed before departure, in minutes. */
+      minimumNoticeMinutes?: number;
+    };
     /** @enum {string} */
     AircraftPricingModel: "HOURLY" | "SECTOR" | "FIXED_ROUTE";
+    AircraftSpecificationsDto: {
+      /** @description A description of the cabin, shown to customers. */
+      cabin?: string;
+      /** @description Up to next year. */
+      yearOfManufacture?: number;
+      /**
+       * @example [
+       *       "Wi-Fi",
+       *       "Enclosed lavatory"
+       *     ]
+       */
+      amenities?: string[];
+    };
+    OxygenDto: {
+      litres: number;
+    };
+    AircraftMedicalEquipmentDto: {
+      stretcher?: boolean;
+      oxygen?: components["schemas"]["OxygenDto"];
+      ventilator?: boolean;
+      defibrillator?: boolean;
+      patientMonitor?: boolean;
+      incubator?: boolean;
+      infusionPumps?: number;
+      notes?: string;
+    };
     CreateAircraftDto: {
       /** @example VT-ABC */
       registration: string;
@@ -2173,10 +2219,12 @@ export interface components {
       /** Format: uuid */
       currentLocationId?: string | null;
       operatingRegions?: string[];
-      restrictions?: Record<string, never> | null;
+      restrictions?: components["schemas"]["AircraftRestrictionsDto"] | null;
       pricingModel?: components["schemas"]["AircraftPricingModel"];
-      specifications?: Record<string, never> | null;
-      medicalEquipment?: Record<string, never> | null;
+      specifications?:
+        components["schemas"]["AircraftSpecificationsDto"] | null;
+      medicalEquipment?:
+        components["schemas"]["AircraftMedicalEquipmentDto"] | null;
     };
     /** @enum {string} */
     AircraftMediaKind: "PHOTO" | "FLOOR_PLAN";
@@ -2223,12 +2271,14 @@ export interface components {
       /** Format: uuid */
       currentLocationId?: string | null;
       operatingRegions: string[];
-      restrictions?: Record<string, never> | null;
+      restrictions?: components["schemas"]["AircraftRestrictionsDto"] | null;
       availabilityStatus: components["schemas"]["AircraftAvailabilityStatus"];
       listingStatus: components["schemas"]["AircraftListingStatus"];
       pricingModel: components["schemas"]["AircraftPricingModel"];
-      specifications?: Record<string, never> | null;
-      medicalEquipment?: Record<string, never> | null;
+      specifications?:
+        components["schemas"]["AircraftSpecificationsDto"] | null;
+      medicalEquipment?:
+        components["schemas"]["AircraftMedicalEquipmentDto"] | null;
       submittedAt?: string | null;
       reviewNote?: string | null;
       /** @description Missing fields for submit. */
@@ -2255,10 +2305,12 @@ export interface components {
       /** Format: uuid */
       currentLocationId?: string | null;
       operatingRegions?: string[];
-      restrictions?: Record<string, never> | null;
+      restrictions?: components["schemas"]["AircraftRestrictionsDto"] | null;
       pricingModel?: components["schemas"]["AircraftPricingModel"];
-      specifications?: Record<string, never> | null;
-      medicalEquipment?: Record<string, never> | null;
+      specifications?:
+        components["schemas"]["AircraftSpecificationsDto"] | null;
+      medicalEquipment?:
+        components["schemas"]["AircraftMedicalEquipmentDto"] | null;
     };
     SetAvailabilityStatusDto: {
       status: components["schemas"]["AircraftAvailabilityStatus"];
@@ -2316,12 +2368,14 @@ export interface components {
       /** Format: uuid */
       currentLocationId?: string | null;
       operatingRegions: string[];
-      restrictions?: Record<string, never> | null;
+      restrictions?: components["schemas"]["AircraftRestrictionsDto"] | null;
       availabilityStatus: components["schemas"]["AircraftAvailabilityStatus"];
       listingStatus: components["schemas"]["AircraftListingStatus"];
       pricingModel: components["schemas"]["AircraftPricingModel"];
-      specifications?: Record<string, never> | null;
-      medicalEquipment?: Record<string, never> | null;
+      specifications?:
+        components["schemas"]["AircraftSpecificationsDto"] | null;
+      medicalEquipment?:
+        components["schemas"]["AircraftMedicalEquipmentDto"] | null;
       submittedAt?: string | null;
       reviewNote?: string | null;
       /** @description Missing fields for submit. */
