@@ -58,11 +58,9 @@ export const searchSchema = z
 export type SearchValues = z.input<typeof searchSchema>;
 export type SearchOutput = z.output<typeof searchSchema>;
 
-/** TODO(W1-6): switch to Schemas[...] once the round-trip contract is merged. */
-type Body = Schemas["CharterSearchDto"] & {
-  tripType?: "ONE_WAY" | "ROUND_TRIP";
-  returnAt?: string;
-};
+/** `tripType` is left out for one way: the API defaults it to ONE_WAY. */
+type Body = Omit<Schemas["CharterSearchDto"], "tripType"> &
+  Partial<Pick<Schemas["CharterSearchDto"], "tripType">>;
 
 /** The API body: the departure as an instant, from India time. */
 export function toSearchBody(values: SearchOutput): Body {

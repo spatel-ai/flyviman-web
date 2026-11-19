@@ -2689,6 +2689,8 @@ export interface components {
       aircraftId: string | null;
       registration: string | null;
     };
+    /** @enum {string} */
+    SearchTripType: "ONE_WAY" | "ROUND_TRIP";
     /**
      * @description Limit to one fixed-wing category. All of them when left out.
      * @enum {string}
@@ -2707,6 +2709,13 @@ export interface components {
        * @example 2026-12-05T10:00:00+05:30
        */
       departureAt: string;
+      /** @default ONE_WAY */
+      tripType: components["schemas"]["SearchTripType"];
+      /**
+       * @description Round trips only, and required for them (null or absent for one way): when the return flight leaves the destination. ISO 8601 with offset, at least an hour after `departureAt` and within 30 days of it.
+       * @example 2026-12-07T16:00:00+05:30
+       */
+      returnAt?: string | null;
       /** @example 4 */
       passengerCount: number;
       /** @description Limit to one fixed-wing category. All of them when left out. */
@@ -2730,6 +2739,11 @@ export interface components {
       category: components["schemas"]["AircraftCategory"];
       passengerCapacity: number;
     };
+    /**
+     * @description How the round trip was priced: the aircraft waits at the destination, or returns to base between the flights. Null for a one-way trip or a price on request.
+     * @enum {string}
+     */
+    RoundTripStrategy: "WAIT" | "RETURN_TO_BASE";
     /** @enum {string} */
     PriceType: "ESTIMATE" | "LIVE_FARE" | "QUOTE" | "CONFIRMED";
     SearchPriceDto: {
@@ -2744,8 +2758,18 @@ export interface components {
       resultId: string;
       aircraft: components["schemas"]["SearchAircraftDto"];
       operatorName: string;
+      /** @description The flying the customer books: out and back for a round trip. */
       distanceKm: number;
+      /** @description Out and back for a round trip. Null when unknown. */
       flightMinutes: number | null;
+      tripType: components["schemas"]["SearchTripType"];
+      /**
+       * Format: date-time
+       * @description The return departure; null for a one-way trip.
+       */
+      returnAt: string | null;
+      /** @description How the round trip was priced: the aircraft waits at the destination, or returns to base between the flights. Null for a one-way trip or a price on request. */
+      roundTripStrategy: components["schemas"]["RoundTripStrategy"] | null;
       /** @description Always an `ESTIMATE`. Null when the price is on request. */
       price: components["schemas"]["SearchPriceDto"] | null;
       /** Format: date-time */
@@ -2758,6 +2782,7 @@ export interface components {
       category: components["schemas"]["ServiceCategory"];
       /** @description The fixed-wing class asked for; null for any. */
       aircraftCategory: components["schemas"]["CharterCategory"] | null;
+      /** @description One leg, or the outbound and the return for a round trip. */
       legs: components["schemas"]["SearchLegDto"][];
       passengerCount: number;
       /** Format: date-time */
@@ -2778,6 +2803,13 @@ export interface components {
        * @example 2026-12-05T10:00:00+05:30
        */
       departureAt: string;
+      /** @default ONE_WAY */
+      tripType: components["schemas"]["SearchTripType"];
+      /**
+       * @description Round trips only, and required for them (null or absent for one way): when the return flight leaves the destination. ISO 8601 with offset, at least an hour after `departureAt` and within 30 days of it.
+       * @example 2026-12-07T16:00:00+05:30
+       */
+      returnAt?: string | null;
       /** @example 4 */
       passengerCount: number;
     };
@@ -2808,8 +2840,18 @@ export interface components {
       resultId: string;
       aircraft: components["schemas"]["SearchAircraftDto"];
       operatorName: string;
+      /** @description The flying the customer books: out and back for a round trip. */
       distanceKm: number;
+      /** @description Out and back for a round trip. Null when unknown. */
       flightMinutes: number | null;
+      tripType: components["schemas"]["SearchTripType"];
+      /**
+       * Format: date-time
+       * @description The return departure; null for a one-way trip.
+       */
+      returnAt: string | null;
+      /** @description How the round trip was priced: the aircraft waits at the destination, or returns to base between the flights. Null for a one-way trip or a price on request. */
+      roundTripStrategy: components["schemas"]["RoundTripStrategy"] | null;
       /** @description Always an `ESTIMATE`. Null when the price is on request. */
       price: components["schemas"]["SearchPriceDto"] | null;
       /** Format: date-time */
@@ -2858,6 +2900,26 @@ export interface components {
        * @example 500000
        */
       handlingFallbackMinor: number | null;
+      /**
+       * @description Round trips: per hour on the ground between a same-day outbound and return, in paise, beyond `waitingFreeHours`. Left out: unchanged; `null` clears.
+       * @example 2000000
+       */
+      waitingHourlyMinor: number | null;
+      /**
+       * @description Null when no waiting charge is set.
+       * @example 1
+       */
+      waitingFreeHours: number | null;
+      /**
+       * @description Round trips: per night the aircraft spends away from base, in paise. Left out: unchanged; `null` clears.
+       * @example 5000000
+       */
+      overnightMinor: number | null;
+      /**
+       * @description Round trips: crew allowance and accommodation per night away from base, in paise (0 when included in the overnight charge). Left out: unchanged; `null` clears.
+       * @example 3000000
+       */
+      crewNightMinor: number | null;
       /** @example INR */
       currency: string;
     };
@@ -2887,6 +2949,26 @@ export interface components {
        * @example 500000
        */
       handlingFallbackMinor: number | null;
+      /**
+       * @description Round trips: per hour on the ground between a same-day outbound and return, in paise, beyond `waitingFreeHours`. Left out: unchanged; `null` clears.
+       * @example 2000000
+       */
+      waitingHourlyMinor?: number | null;
+      /**
+       * @description Hours of waiting not charged. Saved with `waitingHourlyMinor` (0 when left out or null); ignored without it.
+       * @example 1
+       */
+      waitingFreeHours?: number | null;
+      /**
+       * @description Round trips: per night the aircraft spends away from base, in paise. Left out: unchanged; `null` clears.
+       * @example 5000000
+       */
+      overnightMinor?: number | null;
+      /**
+       * @description Round trips: crew allowance and accommodation per night away from base, in paise (0 when included in the overnight charge). Left out: unchanged; `null` clears.
+       * @example 3000000
+       */
+      crewNightMinor?: number | null;
     };
     AircraftPricingResponseDto: {
       /**

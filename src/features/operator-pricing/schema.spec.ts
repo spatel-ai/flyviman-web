@@ -70,7 +70,16 @@ describe("operator pricing form", () => {
 
   it("round-trips what the API returns", () => {
     const body = toOperatorPricingBody(operatorPricingSchema.parse(values));
-    expect(fromOperatorPricing({ ...body, currency: "INR" })).toEqual({
+    expect(
+      fromOperatorPricing({
+        waitingHourlyMinor: null,
+        waitingFreeHours: null,
+        overnightMinor: null,
+        crewNightMinor: null,
+        ...body,
+        currency: "INR",
+      }),
+    ).toEqual({
       ...values,
       landingFallback: "15000",
     });

@@ -191,9 +191,103 @@ test("a round trip asks for a return and keeps it from the address", async ({
   await expect(page.getByText("Choose a return date.")).toBeVisible();
 });
 
-// Needs the round-trip API (W1-6): results show "Round trip" and the strategy,
-// the detail shows the outbound, return, waiting, overnight and crew lines.
-test.fixme("round-trip results and detail show the strategy and the extra lines", async () => {});
+test("round-trip results and detail show the strategy and the extra lines", async ({
+  page,
+  browser,
+}) => {
+  test.slow();
+  // A priced light jet in Mumbai, offered from day 3 to day 6, whose
+  // overnight stay costs less than flying home and back.
+  const operator = await browser.newPage();
+  const { id } = await approvedAircraft(operator, browser);
+  const headers = await csrf(operator);
+  const slot = await operator.request.post(
+    `${API_URL}operator/aircraft/${id}/availability/slots`,
+    {
+      headers,
+      data: {
+        startsAt: inDays(3).toISOString(),
+        endsAt: inDays(6).toISOString(),
+        kind: "OPEN",
+      },
+    },
+  );
+  expect(slot.status()).toBe(201);
+  const rate = await operator.request.put(
+    `${API_URL}operator/aircraft/${id}/pricing`,
+    {
+      headers,
+      data: {
+        hourlyRateMinor: 18_000_000,
+        taxInclusive: false,
+        commissionInclusive: false,
+        minBillableHours: null,
+      },
+    },
+  );
+  expect(rate.status()).toBe(200);
+  const defaults = await operator.request.put(`${API_URL}operator/pricing`, {
+    headers,
+    data: {
+      minBillableHours: null,
+      positioningRateFactor: 0.8,
+      freeWithinKm: 0,
+      landingFallbackMinor: null,
+      handlingFallbackMinor: null,
+      overnightMinor: 1_000_000,
+      crewNightMinor: 1_000_000,
+    },
+  });
+  expect(defaults.status()).toBe(200);
+  const locationId = async (q: string) =>
+    (
+      await (
+        await operator.request.get(`${API_URL}locations`, {
+          params: { q, pageSize: 1 },
+        })
+      ).json()
+    ).data[0].id as string;
+  const response = await operator.request.post(`${API_URL}search/charter`, {
+    headers,
+    data: {
+      originId: await locationId("BOM"),
+      destinationId: await locationId("GOI"),
+      departureAt: inDays(4, 6).toISOString(),
+      passengerCount: 2,
+      tripType: "ROUND_TRIP",
+      returnAt: inDays(5, 6).toISOString(),
+    },
+  });
+  expect(response.status()).toBe(200);
+  const search = (await response.json()).data;
+  const result = search.results.find(
+    (entry: { aircraft: { id: string } }) => entry.aircraft.id === id,
+  );
+  expect(result.roundTripStrategy).toBe("WAIT");
+  await operator.close();
+
+  await page.goto(`/search/${search.searchId}`);
+  await expect(page.getByText(/ · returns /)).toBeVisible();
+  await expect(
+    page
+      .getByRole("list", { name: "Aircraft found" })
+      .getByText("Round trip · Aircraft waits at destination")
+      .first(),
+  ).toBeVisible();
+
+  await page.goto(`/search/${search.searchId}/${result.resultId}`);
+  const main = page.getByRole("main");
+  await expect(main.getByText(/^Round trip, returning /)).toBeVisible();
+  await expect(main.getByText(/Aircraft waits at destination/)).toBeVisible();
+  for (const line of [
+    "Outbound flight operating cost",
+    "Return flight operating cost",
+    /^Overnight at /,
+    /^Crew allowance, /,
+  ]) {
+    await expect(main.getByText(line).first()).toBeVisible();
+  }
+});
 
 test("the open travellers picker leaves the Search button usable", async ({
   page,

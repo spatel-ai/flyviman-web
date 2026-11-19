@@ -1,16 +1,12 @@
-/**
- * Round-trip fields of a search result. Hand-written until the API's contract
- * for round trips is merged.
- * TODO(W1-6): switch to Schemas[...]
- */
-export type TripType = "ONE_WAY" | "ROUND_TRIP";
-export type RoundTripStrategy = "WAIT" | "RETURN_TO_BASE";
+import type { Schemas } from "@/lib/api/types";
 
-export interface RoundTripFields {
-  tripType?: TripType;
-  returnAt?: string | null;
-  roundTripStrategy?: RoundTripStrategy | null;
-}
+/** Round-trip fields of a search result. */
+export type TripType = Schemas["SearchTripType"];
+export type RoundTripStrategy = Schemas["RoundTripStrategy"];
+
+export type RoundTripFields = Partial<
+  Pick<Schemas["SearchResultDto"], "tripType">
+>;
 
 const STRATEGY_WORDS: Record<RoundTripStrategy, string> = {
   WAIT: "Aircraft waits at destination",

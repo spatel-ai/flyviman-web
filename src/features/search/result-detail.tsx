@@ -18,7 +18,7 @@ import type { Schemas } from "@/lib/api/types";
 import { formatDateTime } from "@/lib/format/date";
 import { formatMoney } from "@/lib/format/money";
 import { IMAGES } from "@/content/image-credits";
-import { isRoundTrip, strategyLabel, type RoundTripFields } from "./round-trip";
+import { isRoundTrip, strategyLabel } from "./round-trip";
 import {
   categoryImage,
   categoryLabel,
@@ -26,8 +26,7 @@ import {
   requestHref,
 } from "./format";
 
-// TODO(W1-6): switch to Schemas[...]
-type Detail = Schemas["SearchResultDetailDto"] & RoundTripFields;
+type Detail = Schemas["SearchResultDetailDto"];
 
 /**
  * One aircraft for one trip: the estimate and how it is made up, what it

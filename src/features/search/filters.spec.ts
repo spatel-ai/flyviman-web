@@ -30,6 +30,9 @@ const result = (
     operatorName: operator,
     distanceKm: 500,
     flightMinutes: minutes,
+    tripType: "ONE_WAY",
+    returnAt: null,
+    roundTripStrategy: null,
     price:
       price == null
         ? null

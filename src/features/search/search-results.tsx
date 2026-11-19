@@ -20,12 +20,7 @@ import { useToday } from "@/components/booking/use-today";
 import { FormAlert } from "@/components/shared/form-alert";
 import { EmptyState } from "@/components/shared/empty-state";
 import { LoadError } from "@/components/shared/load-error";
-import {
-  isRoundTrip,
-  shiftReturn,
-  strategyLabel,
-  type RoundTripFields,
-} from "./round-trip";
+import { isRoundTrip, shiftReturn, strategyLabel } from "./round-trip";
 import { PriceLabel } from "@/components/shared/price-label";
 import { RecordNotFound } from "@/components/shared/record-not-found";
 import { Button } from "@/components/ui/button";
@@ -56,9 +51,7 @@ import {
 import { categoryImage, categoryLabel, formatDuration } from "./format";
 
 type SearchResponse = Schemas["SearchResponseDto"];
-// TODO(W1-6): switch to Schemas[...]
-type Result = Schemas["SearchResultDto"] & RoundTripFields;
-type Search = SearchResponse & RoundTripFields;
+type Result = Schemas["SearchResultDto"];
 
 const ZONE = "Asia/Kolkata";
 const SORTS: { value: Sort; label: string }[] = [
@@ -106,11 +99,13 @@ export function SearchResults({ searchId }: { searchId: string }) {
     );
   }
 
-  const data: Search = search.data.data;
+  const data = search.data.data;
   const leg = data.legs[0];
   const local = utcToLocal(leg.departureAt, ZONE);
-  const roundTrip = isRoundTrip(data) && Boolean(data.returnAt);
-  const returnLocal = roundTrip ? utcToLocal(data.returnAt!, ZONE) : null;
+  // A round trip's return is its second leg.
+  const returnAt = data.legs[1]?.departureAt ?? null;
+  const roundTrip = returnAt !== null;
+  const returnLocal = roundTrip ? utcToLocal(returnAt, ZONE) : null;
   const kind = data.category === "HELICOPTER" ? "helicopter" : "charter";
   const { filters, sort } = readFilters(new URLSearchParams(params.toString()));
   const shown = applyFilters(data.results, filters, sort);
@@ -136,7 +131,7 @@ export function SearchResults({ searchId }: { searchId: string }) {
                 tripType: "ROUND_TRIP",
                 returnAt: shiftReturn(
                   leg.departureAt,
-                  data.returnAt!,
+                  returnAt,
                   localToUtc(date, local.time, ZONE),
                 ),
               }
@@ -174,10 +169,8 @@ export function SearchResults({ searchId }: { searchId: string }) {
             </h1>
             <p className="text-body-sm text-muted">
               {formatDateTime(leg.departureAt)}
-              {roundTrip
-                ? ` · returns ${formatDateTime(data.returnAt!)}`
-                : ""}{" "}
-              · {data.passengerCount} passenger
+              {roundTrip ? ` · returns ${formatDateTime(returnAt)}` : ""} ·{" "}
+              {data.passengerCount} passenger
               {data.passengerCount === 1 ? "" : "s"} ·{" "}
               {kind === "helicopter" ? "Helicopter" : "Private jet"}
             </p>
