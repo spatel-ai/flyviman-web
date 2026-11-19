@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { proxySecret } from "./src/lib/client-address";
 import { proxyTarget } from "./src/lib/proxy-target";
 
 /**
@@ -29,15 +30,15 @@ const SECURITY_HEADERS = [
 ];
 
 /**
- * Where the API really lives, when the browser should reach it through this
- * site (D-065). With the web app and the API on unrelated domains (for
- * example vercel.app and onrender.com) the browser would not send the API's
- * session cookies back. Proxying `/api/v1` keeps everything on one origin.
- * Unset, nothing is proxied and the browser calls NEXT_PUBLIC_API_URL itself.
+ * Checked here so a misconfigured host fails at build and start-up. The
+ * proxying itself (D-065) is done by `src/proxy.ts`, which also passes the
+ * visitor's address on, signed with WEB_PROXY_SECRET (`lib/client-address.ts`).
  */
-const API_PROXY_TARGET = proxyTarget(
-  process.env.API_PROXY_TARGET,
-  process.env.NODE_ENV === "production",
+const production = process.env.NODE_ENV === "production";
+proxySecret(
+  process.env.WEB_PROXY_SECRET,
+  production,
+  Boolean(proxyTarget(process.env.API_PROXY_TARGET, production)),
 );
 
 /** Pages whose address carries a single-use token or attempt ID. */
@@ -48,16 +49,6 @@ const nextConfig: NextConfig = {
   partialPrefetching: true,
   reactCompiler: true,
   poweredByHeader: false,
-  async rewrites() {
-    return API_PROXY_TARGET
-      ? [
-          {
-            source: "/api/v1/:path*",
-            destination: `${API_PROXY_TARGET}/api/v1/:path*`,
-          },
-        ]
-      : [];
-  },
   async headers() {
     return [
       { source: "/:path*", headers: SECURITY_HEADERS },

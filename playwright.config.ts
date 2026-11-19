@@ -4,6 +4,11 @@ const PORT = Number(process.env.PORT ?? 3000);
 const ORIGIN = `http://localhost:${PORT}`;
 const API_PORT = Number(process.env.API_PORT ?? 4000);
 const API_ORIGIN = `http://localhost:${API_PORT}`;
+/**
+ * Shared by the web server and the API under API_PROXY=1, as on the hosted
+ * site: the web server signs each visitor's address (lib/client-address.ts).
+ */
+export const WEB_PROXY_SECRET = "e2e-web-proxy-secret-of-32-characters-or-more";
 
 /**
  * Browser tests for the customer site and the two portals.
@@ -53,6 +58,7 @@ export default defineConfig({
         RATE_LIMIT_SEARCH_PER_MINUTE: "100000",
         OTP_RESEND_COOLDOWN_SECONDS: "0",
         OTP_MAX_PER_HOUR: "100000",
+        ...(process.env.API_PROXY ? { WEB_PROXY_SECRET } : {}),
       },
     },
     {
@@ -66,6 +72,7 @@ export default defineConfig({
         ? {
             NEXT_PUBLIC_API_URL: `${ORIGIN}/api/v1`,
             API_PROXY_TARGET: API_ORIGIN,
+            WEB_PROXY_SECRET,
           }
         : { NEXT_PUBLIC_API_URL: `${API_ORIGIN}/api/v1` },
     },
