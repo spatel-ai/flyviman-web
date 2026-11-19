@@ -37,8 +37,16 @@ export async function seedOfferedAircraft(browser: Browser) {
 
 /** Mumbai to Goa, four days out at 11:00, four passengers; then Search. */
 export async function fillAndSubmitSearch(page: Page) {
-  await page.getByRole("button", { name: /^From:/ }).click();
-  await page.getByRole("option", { name: /BOM/ }).click();
+  // A click before the page has hydrated does nothing: click again until
+  // the airport list has opened.
+  const bom = page.getByRole("option", { name: /BOM/ });
+  await expect(async () => {
+    if (!(await bom.isVisible())) {
+      await page.getByRole("button", { name: /^From:/ }).click();
+    }
+    await expect(bom).toBeVisible({ timeout: 1000 });
+  }).toPass();
+  await bom.click();
   await expect(
     page.getByRole("button", { name: /^From: Mumbai/ }),
   ).toBeVisible();

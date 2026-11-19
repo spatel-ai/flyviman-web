@@ -18,7 +18,9 @@ async function addAircraftDocument(page: Page, type: string, file: string) {
     buffer: PDF,
   });
   await page.getByRole("button", { name: "Add document" }).click();
-  await expect(page.getByText(`${type} · ${file}`)).toBeVisible();
+  await expect(
+    page.getByRole("main").getByText(`${type} · ${file}`),
+  ).toBeVisible();
   // The upload succeeded, so no error is shown and the form is cleared.
   await expect(page.getByRole("main").getByRole("alert")).toHaveCount(0);
   await expect(page.getByLabel("Expiry date")).toHaveValue("");
