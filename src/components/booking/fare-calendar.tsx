@@ -39,8 +39,9 @@ export interface CalendarRoute {
   aircraftCategory?: string;
 }
 
-function readyRoute(route: CalendarRoute): boolean {
+function readyRoute(route: CalendarRoute | undefined): route is CalendarRoute {
   return (
+    route !== undefined &&
     Boolean(route.originId && route.destinationId) &&
     route.originId !== route.destinationId &&
     route.passengerCount >= 1 &&
@@ -61,13 +62,20 @@ export function FareCalendar({
   onTimeChange,
   route,
   error,
+  label = "Departure",
+  minDate,
 }: {
   date: string;
   time: string;
   onDateChange: (date: string) => void;
   onTimeChange: (time: string) => void;
-  route: CalendarRoute;
+  /** Without a route the days carry no estimates (the return picker). */
+  route?: CalendarRoute;
   error?: string;
+  /** The tile's label; the return picker says "Return". */
+  label?: string;
+  /** Days before this one cannot be picked (the return is not before the departure). */
+  minDate?: string;
 }) {
   const [open, setOpen] = useState(false);
   const desktop = useIsDesktop();
@@ -75,7 +83,7 @@ export function FareCalendar({
   // The month the visitor moved to; reset on close, so the picker opens on
   // the chosen date's month (or today's) every time.
   const [moved, setMoved] = useState<string | null>(null);
-  const start = date || today;
+  const start = date || (minDate && minDate > today ? minDate : today);
   const first = moved ?? (start ? monthStart(start) : null);
   const months = first
     ? desktop
@@ -83,17 +91,18 @@ export function FareCalendar({
       : [first]
     : [];
   const ready = readyRoute(route);
+  const returning = label === "Return";
 
   const calendars = useQueries({
     queries: months.map((month) => {
       const params = {
         category:
-          route.kind === "helicopter" ? "HELICOPTER" : "PRIVATE_CHARTER",
-        originId: route.originId,
-        destinationId: route.destinationId,
+          route?.kind === "helicopter" ? "HELICOPTER" : "PRIVATE_CHARTER",
+        originId: route?.originId ?? "",
+        destinationId: route?.destinationId ?? "",
         month: month.slice(0, 7),
-        passengerCount: route.passengerCount,
-        ...(route.kind === "charter" && route.aircraftCategory
+        passengerCount: route?.passengerCount ?? 0,
+        ...(route?.kind === "charter" && route.aircraftCategory
           ? { aircraftCategory: route.aircraftCategory }
           : {}),
       };
@@ -115,13 +124,13 @@ export function FareCalendar({
         setOpen(next);
         if (!next) setMoved(null);
       }}
-      title="Departure date and time"
+      title={`${label} date and time`}
       width="lg"
       room={500}
       align="center"
       trigger={
         <FieldTile
-          label="Departure"
+          label={label}
           icon={CalendarDays}
           value={date ? formatCalendarDay(date) : undefined}
           placeholder="Choose date"
@@ -143,9 +152,11 @@ export function FareCalendar({
             <ChevronLeft aria-hidden="true" className="size-4" />
           </Button>
           <p className="text-caption text-muted">
-            {ready
-              ? SEARCH_LANDING.calendarLegend
-              : "Choose From and To to see estimates for each day."}
+            {returning
+              ? "Choose when you fly back."
+              : ready
+                ? SEARCH_LANDING.calendarLegend
+                : "Choose From and To to see estimates for each day."}
           </p>
           <Button
             variant="ghost"
@@ -209,6 +220,8 @@ export function FareCalendar({
                       cheapestMinor: cheapest,
                     });
                     const selected = day === date;
+                    const before =
+                      state === "past" || Boolean(minDate && day < minDate);
                     const price = fare?.lowest
                       ? shortRupees(fare.lowest.amountMinor)
                       : null;
@@ -222,7 +235,7 @@ export function FareCalendar({
                       <button
                         key={day}
                         type="button"
-                        disabled={state === "past"}
+                        disabled={before}
                         aria-pressed={selected}
                         aria-label={[formatCalendarDay(day), spoken]
                           .filter(Boolean)
@@ -231,7 +244,7 @@ export function FareCalendar({
                         className={cn(
                           "flex h-11 w-full flex-col items-center justify-center rounded-sm text-body-sm tabular-nums",
                           "transition-colors duration-150 ease-standard outline-none focus-visible:ring-2 focus-visible:ring-accent",
-                          state === "past" && "cursor-not-allowed text-subtle",
+                          before && "cursor-not-allowed text-subtle",
                           state === "none" && "text-subtle hover:bg-surface",
                           (state === "available" || state === "unknown") &&
                             "hover:bg-surface",
@@ -270,7 +283,7 @@ export function FareCalendar({
         <fieldset className="flex flex-col gap-2">
           <div className="flex items-center justify-between gap-4">
             <legend className="text-caption font-medium tracking-wide text-muted uppercase">
-              Departure time (India)
+              {label} time (India)
             </legend>
             <Button size="sm" disabled={!date} onClick={() => setOpen(false)}>
               Done

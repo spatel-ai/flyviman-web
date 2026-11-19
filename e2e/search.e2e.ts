@@ -178,6 +178,23 @@ test("the search form explains what is missing", async ({ page }) => {
   await expect(page.getByText("Choose where you fly to.")).toBeVisible();
 });
 
+test("a round trip asks for a return and keeps it from the address", async ({
+  page,
+}) => {
+  await page.goto("/search?tripType=ROUND_TRIP");
+  await expect(page.getByRole("radio", { name: "Round trip" })).toBeChecked();
+  await expect(page.getByRole("button", { name: /^Return:/ })).toBeVisible();
+  await page.getByRole("radio", { name: "One way" }).click();
+  await expect(page.getByRole("button", { name: /^Return:/ })).toHaveCount(0);
+  await page.getByRole("radio", { name: "Round trip" }).click();
+  await page.getByRole("button", { name: "Search", exact: true }).click();
+  await expect(page.getByText("Choose a return date.")).toBeVisible();
+});
+
+// Needs the round-trip API (W1-6): results show "Round trip" and the strategy,
+// the detail shows the outbound, return, waiting, overnight and crew lines.
+test.fixme("round-trip results and detail show the strategy and the extra lines", async () => {});
+
 test("the open travellers picker leaves the Search button usable", async ({
   page,
 }) => {
