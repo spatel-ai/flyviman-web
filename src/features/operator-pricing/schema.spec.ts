@@ -11,6 +11,10 @@ const values = {
   freeWithinKm: "50",
   landingFallback: "15,000",
   handlingFallback: "5000",
+  waitingHourly: "20,000",
+  waitingFreeHours: "1",
+  overnight: "50000",
+  crewNight: "0",
 };
 
 describe("operator pricing form", () => {
@@ -21,6 +25,10 @@ describe("operator pricing form", () => {
       freeWithinKm: 50,
       landingFallbackMinor: 1_500_000,
       handlingFallbackMinor: 500_000,
+      waitingHourlyMinor: 2_000_000,
+      waitingFreeHours: 1,
+      overnightMinor: 5_000_000,
+      crewNightMinor: 0,
     });
   });
 
@@ -31,6 +39,10 @@ describe("operator pricing form", () => {
       freeWithinKm: "",
       landingFallback: "",
       handlingFallback: "",
+      waitingHourly: "",
+      waitingFreeHours: "",
+      overnight: "",
+      crewNight: "",
     };
     expect(toOperatorPricingBody(operatorPricingSchema.parse(empty))).toEqual({
       minBillableHours: null,
@@ -38,7 +50,18 @@ describe("operator pricing form", () => {
       freeWithinKm: null,
       landingFallbackMinor: null,
       handlingFallbackMinor: null,
+      waitingHourlyMinor: null,
+      waitingFreeHours: null,
+      overnightMinor: null,
+      crewNightMinor: null,
     });
+  });
+
+  it("refuses free waiting hours above a day", () => {
+    expect(
+      operatorPricingSchema.safeParse({ ...values, waitingFreeHours: "25" })
+        .success,
+    ).toBe(false);
   });
 
   it("refuses out-of-range and malformed values", () => {
@@ -82,6 +105,9 @@ describe("operator pricing form", () => {
     ).toEqual({
       ...values,
       landingFallback: "15000",
+      waitingHourly: "20000",
+      overnight: "50000",
+      crewNight: "0",
     });
   });
 });

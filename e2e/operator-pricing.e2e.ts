@@ -35,6 +35,16 @@ test("an operator administrator sets pricing defaults and an aircraft's rate", a
   await page
     .getByRole("textbox", { name: "Landing charge (₹)" })
     .fill("15,000");
+  await page
+    .getByRole("textbox", { name: "Waiting at destination, per hour (₹)" })
+    .fill("20,000");
+  await page.getByRole("textbox", { name: "Free waiting hours" }).fill("1");
+  await page
+    .getByRole("textbox", { name: "Overnight charge, per night (₹)" })
+    .fill("50,000");
+  await page
+    .getByRole("textbox", { name: "Crew charge, per night (₹)" })
+    .fill("30,000");
   await page.getByRole("button", { name: "Save pricing" }).click();
   // The toast and its screen-reader copy both say it: take the first.
   await expect(page.getByText("Pricing saved").first()).toBeVisible();
@@ -42,6 +52,15 @@ test("an operator administrator sets pricing defaults and an aircraft's rate", a
   await expect(
     page.getByRole("textbox", { name: "Landing charge (₹)" }),
   ).toHaveValue("15000");
+  await expect(
+    page.getByRole("textbox", { name: "Waiting at destination, per hour (₹)" }),
+  ).toHaveValue("20000");
+  await expect(
+    page.getByRole("textbox", { name: "Free waiting hours" }),
+  ).toHaveValue("1");
+  await expect(
+    page.getByRole("textbox", { name: "Crew charge, per night (₹)" }),
+  ).toHaveValue("30000");
 
   // The aircraft's rate, on its page.
   await page.goto(`/operator/aircraft/${id}`);
@@ -77,6 +96,8 @@ test("pricing explains what it needs before it can be saved", async ({
   await page
     .getByRole("textbox", { name: "Minimum billable hours" })
     .fill("30");
+  await page.getByRole("textbox", { name: "Free waiting hours" }).fill("30");
   await page.getByRole("button", { name: "Save pricing" }).click();
   await expect(page.getByText("Between 0.5 and 12 hours.")).toBeVisible();
+  await expect(page.getByText("Between 0 and 24 hours.")).toBeVisible();
 });

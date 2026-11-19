@@ -65,6 +65,10 @@ export const operatorPricingSchema = z
     ),
     landingFallback: rupees,
     handlingFallback: rupees,
+    waitingHourly: rupees,
+    waitingFreeHours: optionalNumber(0, 24, "Between 0 and 24 hours."),
+    overnight: rupees,
+    crewNight: rupees,
   })
   .refine(
     (values) => values.freeWithinKm === "" || values.positioningPercent !== "",
@@ -87,6 +91,11 @@ export function toOperatorPricingBody(values: OperatorPricingValues): Body {
       percent == null ? null : (numberOrNull(values.freeWithinKm) ?? 0),
     landingFallbackMinor: rupeesToPaise(values.landingFallback),
     handlingFallbackMinor: rupeesToPaise(values.handlingFallback),
+    // Empty clears the charge; empty free hours means none (0).
+    waitingHourlyMinor: rupeesToPaise(values.waitingHourly),
+    waitingFreeHours: numberOrNull(values.waitingFreeHours),
+    overnightMinor: rupeesToPaise(values.overnight),
+    crewNightMinor: rupeesToPaise(values.crewNight),
   };
 }
 
@@ -101,6 +110,10 @@ export function fromOperatorPricing(pricing: Pricing): OperatorPricingValues {
     freeWithinKm: text(pricing.freeWithinKm),
     landingFallback: paiseToRupees(pricing.landingFallbackMinor),
     handlingFallback: paiseToRupees(pricing.handlingFallbackMinor),
+    waitingHourly: paiseToRupees(pricing.waitingHourlyMinor),
+    waitingFreeHours: text(pricing.waitingFreeHours),
+    overnight: paiseToRupees(pricing.overnightMinor),
+    crewNight: paiseToRupees(pricing.crewNightMinor),
   };
 }
 
@@ -109,4 +122,7 @@ export const OPERATOR_PRICING_ALIASES = {
   positioningRateFactor: "positioningPercent",
   landingFallbackMinor: "landingFallback",
   handlingFallbackMinor: "handlingFallback",
+  waitingHourlyMinor: "waitingHourly",
+  overnightMinor: "overnight",
+  crewNightMinor: "crewNight",
 } as const;

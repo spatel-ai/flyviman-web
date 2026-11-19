@@ -26,7 +26,11 @@ import {
 type Pricing = Schemas["OperatorPricingResponseDto"];
 
 /** Fields the API may name in a validation error, mapped to form fields. */
-const FIELDS = ["minBillableHours", "freeWithinKm"] as const;
+const FIELDS = [
+  "minBillableHours",
+  "freeWithinKm",
+  "waitingFreeHours",
+] as const;
 
 /**
  * Defaults that apply to every aircraft of the organisation unless an
@@ -140,6 +144,41 @@ function Editor({ initial }: { initial: OperatorPricingValues }) {
           inputMode="decimal"
           error={errors.handlingFallback?.message}
           {...register("handlingFallback")}
+        />
+      </Card>
+      <Card variant="raised" className="flex flex-col gap-5">
+        <h2 className="text-title">Round trips</h2>
+        <p className="text-body-sm text-muted">
+          Charged when a customer flies out and back with time away from base.
+          Leave a charge empty if you do not make it.
+        </p>
+        <Input
+          label="Waiting at destination, per hour (₹)"
+          hint="Per hour on the ground between a same-day outbound and return."
+          inputMode="decimal"
+          error={errors.waitingHourly?.message}
+          {...register("waitingHourly")}
+        />
+        <Input
+          label="Free waiting hours"
+          hint="Hours of waiting not charged. Empty means none."
+          inputMode="decimal"
+          error={errors.waitingFreeHours?.message}
+          {...register("waitingFreeHours")}
+        />
+        <Input
+          label="Overnight charge, per night (₹)"
+          hint="Per night the aircraft spends away from base."
+          inputMode="decimal"
+          error={errors.overnight?.message}
+          {...register("overnight")}
+        />
+        <Input
+          label="Crew charge, per night (₹)"
+          hint="Crew allowance and accommodation. Enter 0 if it is in the overnight charge."
+          inputMode="decimal"
+          error={errors.crewNight?.message}
+          {...register("crewNight")}
         />
       </Card>
       <div>
