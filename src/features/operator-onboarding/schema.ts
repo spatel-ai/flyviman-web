@@ -326,15 +326,3 @@ export function fileProblem(file: {
   }
   return null;
 }
-
-/** A calendar date ("2030-12-31" or a timestamp) as "31 Dec 2030". */
-export function formatDay(value: string): string {
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return value;
-  return new Intl.DateTimeFormat("en-IN", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-    timeZone: "UTC",
-  }).format(date);
-}

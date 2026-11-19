@@ -26,7 +26,7 @@ import {
   isStale,
   type OperatorAction,
 } from "./actions";
-import { InlineError } from "./inline-error";
+import { InlineError } from "@/components/shared/inline-error";
 import {
   documentTypeLabel,
   formatAddress,
@@ -34,7 +34,7 @@ import {
   missingLabel,
   serviceLabel,
 } from "./labels";
-import { useMe } from "./use-me";
+import { useMe } from "@/lib/api/use-me";
 
 type OperatorDetailData = Schemas["AdminOperatorDetailDto"];
 type OperatorDocument = Schemas["OperatorDocumentResponseDto"];

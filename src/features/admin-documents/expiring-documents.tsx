@@ -22,7 +22,8 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { apiFetch } from "@/lib/api/client";
 import { queryKeys } from "@/lib/api/query-keys";
 import type { Schemas } from "@/lib/api/types";
-import { aircraftDocumentLabel, formatDay } from "@/lib/format/aircraft";
+import { aircraftDocumentLabel } from "@/lib/format/aircraft";
+import { formatDay } from "@/lib/format/date";
 import { operatorDocumentLabel } from "@/lib/format/documents";
 import {
   type ExpiringFilter,

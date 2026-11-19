@@ -17,7 +17,8 @@ import type { Schemas } from "@/lib/api/types";
 import { AddDocumentForm } from "./add-document-form";
 import { FormAlert } from "@/components/shared/form-alert";
 import { hasCode, onboardingMessage } from "./messages";
-import { documentTypeLabel, formatDay, type OperatorDocument } from "./schema";
+import { formatDay } from "@/lib/format/date";
+import { documentTypeLabel, type OperatorDocument } from "./schema";
 
 /** Opens the short-lived download link in a new tab. */
 async function openDownload(fileId: string): Promise<void> {
