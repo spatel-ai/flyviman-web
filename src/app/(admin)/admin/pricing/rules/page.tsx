@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { CancellationTerms } from "@/features/admin-cancellation-terms/cancellation-terms-form";
 import {
   ManagedByFinance,
   RulesList,
@@ -30,7 +31,10 @@ async function RulesForRole() {
   const session = await getSession();
   return session?.role === "FINANCE_ADMIN" ||
     session?.role === "SUPER_ADMIN" ? (
-    <RulesList />
+    <>
+      <RulesList />
+      <CancellationTerms />
+    </>
   ) : (
     <ManagedByFinance />
   );

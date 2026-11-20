@@ -195,7 +195,7 @@ export const SEARCH_LANDING = {
       {
         question: "Can I cancel?",
         answer:
-          "Cancellation conditions are set by the operator and shown with its quote, before you commit to anything.",
+          "Yes. Flyviman's cancellation terms are the same for every operator and are shown with every search result, before you send a request. A charge is a share of the confirmed price and depends on how long before departure you cancel.",
       },
     ],
   },

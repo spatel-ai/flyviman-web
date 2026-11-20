@@ -47,6 +47,7 @@ export const queryKeys = {
   /** Prefix of every pricing rule key (rules and matching limits share it). */
   adminPricingRulesAll: ["admin", "pricing-rules"] as const,
   adminMatchingLimits: ["admin", "pricing-rules", "matching-limits"] as const,
+  adminCancellationTerms: ["admin", "cancellation-terms"] as const,
   /** Every pricing rule key starts with ["admin", "pricing-rules"]. */
   adminPricingRules: (filter: object) =>
     ["admin", "pricing-rules", filter] as const,

@@ -62,7 +62,7 @@ test("the landing page's charter card leads to a labelled result and an enquiry"
   ).toBeVisible();
   await expect(
     scope
-      .getByText(/Cancellation conditions/)
+      .getByText(/cancellation terms/i)
       .filter({ visible: true })
       .first(),
   ).toBeVisible();

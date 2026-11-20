@@ -41,6 +41,8 @@ const MESSAGES: Record<string, string> = {
     "A rule of this kind is already in force for these aircraft. Change that rule instead.",
   PRICING_RULE_NOT_CURRENT:
     "Someone changed or ended this rule since you opened it. The list now shows the latest version: close this and choose Change again.",
+  BOOKING_TERMS_CHANGED:
+    "Flyviman's cancellation terms changed since you opened this aircraft. Read the new terms, then send your request again.",
   PRICING_RULE_REQUIRED:
     "A rule for all aircraft cannot be ended, because every price relies on it. Change its value instead.",
   CONTENT_VERSION_CONFLICT:
