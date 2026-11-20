@@ -35,6 +35,26 @@ const MESSAGES: Record<string, string> = {
   CONTENT_VERSION_CONFLICT:
     "This policy changed since you opened it. It has been reloaded: open it again to see the latest text.",
   CONTENT_UNCHANGED: "Nothing has changed. Edit the title or the text first.",
+  AIR_AMBULANCE_CLOSED:
+    "This request is closed, so it cannot change any more. The page now shows its latest state.",
+  AIR_AMBULANCE_DOCUMENT_LIMIT_REACHED:
+    "A request can hold up to 10 documents. Send further reports to operations when they contact you.",
+  AIR_AMBULANCE_QUOTE_CHANGED:
+    "The quote has changed since you opened it. Review the new amount before accepting.",
+  AIR_AMBULANCE_QUOTE_UNAVAILABLE:
+    "This quote can no longer be accepted. Operations will contact you.",
+  AIR_AMBULANCE_INVALID_TRANSITION:
+    "This request has moved on since you opened it. The page now shows its latest state.",
+  AIR_AMBULANCE_NOT_OWNER:
+    "Only the operations owner of this request, or a super administrator, can do this.",
+  AIR_AMBULANCE_ASSIGNEE_INVALID:
+    "The owner must be an active operations user or super administrator.",
+  AIR_AMBULANCE_FEASIBILITY_INCOMPLETE:
+    "Record every feasibility check before confirming.",
+  AIR_AMBULANCE_OPERATOR_NOT_ELIGIBLE:
+    "This operator has no approved air ambulance aircraft, so it cannot fly this mission. Choose another operator.",
+  UPLOAD_NOT_FOUND:
+    "The upload was not found. Choose the file again and retry.",
   INTERNAL_ERROR: "Something went wrong on our side. Please try again.",
 };
 

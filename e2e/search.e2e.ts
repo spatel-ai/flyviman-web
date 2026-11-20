@@ -387,7 +387,7 @@ test("air ambulance is a request, never a search, with the emergency notice", as
   ).toHaveCount(0);
   await expect(
     page.getByRole("link", { name: "Request an air ambulance" }),
-  ).toHaveAttribute("href", /topic=MEDICAL_CHARTER/);
+  ).toHaveAttribute("href", "/air-ambulance");
 });
 
 test("a charter search shows empty legs on the route, each with a labelled price and a link to its page", async ({

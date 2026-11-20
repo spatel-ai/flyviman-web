@@ -39,10 +39,30 @@ describe("operatorNav", () => {
       "/operator/aircraft",
       "/operator/availability",
       "/operator/empty-legs",
+      "/operator/air-ambulance",
       "/operator/pricing",
       "/operator/team",
       "/operator/onboarding",
     ]);
+  });
+
+  it("keeps air ambulance missions for an approved operator's administrators", () => {
+    expect(hrefs(operatorNav("SUSPENDED", admin))).not.toContain(
+      "/operator/air-ambulance",
+    );
+    const everything: OperatorAccess = {
+      ...availabilityStaff,
+      allAircraft: true,
+      capabilities: [
+        "MANAGE_AIRCRAFT",
+        "MANAGE_AVAILABILITY",
+        "MANAGE_EMPTY_LEGS",
+        "MANAGE_BOOKINGS",
+      ],
+    };
+    expect(hrefs(operatorNav("APPROVED", everything))).not.toContain(
+      "/operator/air-ambulance",
+    );
   });
 
   it("offers only the application before approval", () => {

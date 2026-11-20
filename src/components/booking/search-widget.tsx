@@ -214,7 +214,7 @@ export function SearchWidget({
               the operator verify every mission before it is confirmed.
             </p>
             <Link
-              href="/contact?topic=MEDICAL_CHARTER#enquiry"
+              href="/air-ambulance"
               className={buttonClasses({ variant: "secondary" })}
             >
               Request an air ambulance
