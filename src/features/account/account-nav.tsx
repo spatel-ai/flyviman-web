@@ -9,6 +9,7 @@ const ITEMS = [
   { href: "/account/trips", label: "Trips" },
   { href: "/account/passengers", label: "Saved passengers" },
   { href: "/account/notifications", label: "Notifications" },
+  { href: "/account/air-ambulance", label: "Air ambulance" },
 ];
 
 export function AccountNav() {

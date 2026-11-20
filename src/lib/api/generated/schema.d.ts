@@ -3002,7 +3002,7 @@ export interface paths {
     head?: never;
     /**
      * Move the request through the workflow
-     * @description ASSIGNED to SOURCING to FEASIBILITY_CHECK; ACCEPTED to CONFIRMED; CONFIRMED to COMPLETED; DECLINED or CANCELLED from any open status. CONFIRMED needs every feasibility item checked (422 `AIR_AMBULANCE_FEASIBILITY_INCOMPLETE`, the missing items in `details`) and the selected operator still approved (409 `OPERATOR_NOT_APPROVED`); it is never reached any other way (rule 7). 409 `AIR_AMBULANCE_INVALID_TRANSITION` for any other move. Writes a timeline entry and an audit record.
+     * @description ASSIGNED to SOURCING to FEASIBILITY_CHECK; ACCEPTED to CONFIRMED; CONFIRMED to COMPLETED; DECLINED or CANCELLED from any open status. CONFIRMED needs every feasibility item checked (422 `AIR_AMBULANCE_FEASIBILITY_INCOMPLETE`, the missing items in `details`) and the selected operator still approved (409 `OPERATOR_NOT_APPROVED`) with an approved air ambulance aircraft (409 `AIR_AMBULANCE_OPERATOR_NOT_ELIGIBLE`); it is never reached any other way (rule 7). 409 `AIR_AMBULANCE_INVALID_TRANSITION` for any other move. Writes a timeline entry and an audit record.
      */
     patch: operations["AdminAirAmbulanceController_move"];
     trace?: never;
@@ -3038,9 +3038,69 @@ export interface paths {
     put?: never;
     /**
      * Send the customer a quotation
-     * @description From an approved operator (409 `OPERATOR_NOT_APPROVED`; 404 for an unknown operator), labelled `QUOTE`. FEASIBILITY_CHECK to QUOTED; while QUOTED it replaces the last quotation. 409 `AIR_AMBULANCE_INVALID_TRANSITION` in any other status. Audited with the amount and operator.
+     * @description From an approved operator (409 `OPERATOR_NOT_APPROVED`; 404 for an unknown operator) with an approved air ambulance aircraft (409 `AIR_AMBULANCE_OPERATOR_NOT_ELIGIBLE`; `GET /admin/air-ambulance/operators` lists them), labelled `QUOTE`. FEASIBILITY_CHECK to QUOTED; while QUOTED it replaces the last quotation. 409 `AIR_AMBULANCE_INVALID_TRANSITION` in any other status. Audited with the amount and operator.
      */
     post: operations["AdminAirAmbulanceController_quote"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/admin/air-ambulance/operators": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Operators that may be quoted for a mission
+     * @description Approved operators with at least one approved air ambulance aircraft (category `AIR_AMBULANCE_FIXED` or `AIR_AMBULANCE_ROTARY`), by name (a short list: only operators with an approved air ambulance aircraft). Quoting any other operator answers 409 `AIR_AMBULANCE_OPERATOR_NOT_ELIGIBLE`.
+     */
+    get: operations["AdminAirAmbulanceOperatorsController_list"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/operator/air-ambulance/requests": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Missions the operator was selected for, newest first
+     * @description Requests where this operator is selected and the status is ACCEPTED, CONFIRMED or COMPLETED. Approved operator only (409 `OPERATOR_NOT_APPROVED`). Summary rows: no medical, contact or price data.
+     */
+    get: operations["OperatorAirAmbulanceController_list"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/operator/air-ambulance/requests/{reference}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * One mission, with the places and medical details
+     * @description Every read of the medical details is audited (`air_ambulance_request.medical_read`, no medical data). 404 for a request this operator was not selected for, one not yet accepted, or when the operator is not approved. No customer contact details or quotation amount.
+     */
+    get: operations["OperatorAirAmbulanceController_get"];
+    put?: never;
+    post?: never;
     delete?: never;
     options?: never;
     head?: never;
@@ -6498,6 +6558,50 @@ export interface components {
       currency: "INR";
       /** @description Service and cancellation conditions shown to the customer before accepting (rule 9). No medical details. */
       conditions: string;
+    };
+    AirAmbulanceOperatorDto: {
+      /** Format: uuid */
+      id: string;
+      /** @example Skyline Medevac */
+      name: string;
+    };
+    OperatorAirAmbulanceSummaryDto: {
+      /** @example FLY-AA-7K2M9Q */
+      reference: string;
+      status: components["schemas"]["AirAmbulanceStatus"];
+      originName: string | null;
+      destinationName: string | null;
+      /** Format: date-time */
+      preferredAt: string;
+      patientCount: number;
+      /** Format: date-time */
+      createdAt: string;
+    };
+    OperatorAirAmbulanceRequestDto: {
+      /** @example FLY-AA-7K2M9Q */
+      reference: string;
+      status: components["schemas"]["AirAmbulanceStatus"];
+      originName: string | null;
+      destinationName: string | null;
+      /** Format: date-time */
+      preferredAt: string;
+      patientCount: number;
+      /** Format: date-time */
+      createdAt: string;
+      /** @description Decrypted. */
+      pickupAddress: string | null;
+      /** @description Decrypted. */
+      destinationFacility: string | null;
+      accompanyingPersons: number;
+      /** Format: date-time */
+      confirmedAt: string | null;
+      /** Format: date-time */
+      completedAt: string | null;
+      /** @description Every read is audited (`air_ambulance_request.medical_read`). Null only if the details are missing. */
+      medical: components["schemas"]["MedicalDetailsDto"] | null;
+      timeline: components["schemas"]["AirAmbulanceTimelineEntryDto"][];
+      /** @example For an immediate medical emergency, call 112 or your local emergency services now. An air ambulance request is not an emergency response. */
+      emergencyNotice: string;
     };
     /** @enum {string} */
     EnquiryTopic:
@@ -10802,6 +10906,68 @@ export interface operations {
         };
         content: {
           "application/json": components["schemas"]["AdminAirAmbulanceSummaryDto"];
+        };
+      };
+    };
+  };
+  AdminAirAmbulanceOperatorsController_list: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["AirAmbulanceOperatorDto"][];
+        };
+      };
+    };
+  };
+  OperatorAirAmbulanceController_list: {
+    parameters: {
+      query?: {
+        page?: number;
+        pageSize?: number;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["OperatorAirAmbulanceSummaryDto"][];
+        };
+      };
+    };
+  };
+  OperatorAirAmbulanceController_get: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        reference: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["OperatorAirAmbulanceRequestDto"];
         };
       };
     };

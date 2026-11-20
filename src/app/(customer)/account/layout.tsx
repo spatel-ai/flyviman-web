@@ -16,7 +16,8 @@ export default function AccountLayout({ children }: LayoutProps<"/account">) {
     <div className="mx-auto w-full max-w-content px-4 py-8 md:px-6 md:py-12">
       <p className="text-h2">Your account</p>
       <div className="mt-6 mb-8">
-        {/* usePathname() reads the address, which a dynamic page only knows at request time. */}
+        {/* It reads the address, which a page with a dynamic segment
+            (/account/air-ambulance/[reference]) knows only at request time. */}
         <Suspense fallback={<Skeleton className="h-11" />}>
           <AccountNav />
         </Suspense>

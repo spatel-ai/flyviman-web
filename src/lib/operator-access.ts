@@ -44,6 +44,10 @@ const REQUESTS = { href: "/operator/requests", label: "Requests" };
 const FLEET = { href: "/operator/aircraft", label: "Fleet" };
 const AVAILABILITY = { href: "/operator/availability", label: "Availability" };
 const EMPTY_LEGS = { href: "/operator/empty-legs", label: "Empty legs" };
+const AIR_AMBULANCE = {
+  href: "/operator/air-ambulance",
+  label: "Air ambulance",
+};
 const TEAM = { href: "/operator/team", label: "Team" };
 const NOTIFICATIONS = {
   href: "/operator/notifications",
@@ -59,7 +63,8 @@ const APPLICATION = {
  * The portal's navigation. Until the organisation is approved, only its
  * application is offered. A suspended operator keeps the fleet so it can
  * still ground an aircraft (D-058). Staff see only what their permissions
- * cover, and never the company, documents or team.
+ * cover, and never the company, documents, team or air ambulance missions
+ * (medical details: approved operators' administrators only, W4-6).
  */
 export function operatorNav(
   status: OperatorStatus,
@@ -75,6 +80,7 @@ export function operatorNav(
           FLEET,
           AVAILABILITY,
           EMPTY_LEGS,
+          AIR_AMBULANCE,
           PRICING,
           TEAM,
           NOTIFICATIONS,

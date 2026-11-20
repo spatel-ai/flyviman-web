@@ -85,4 +85,18 @@ export const queryKeys = {
   aircraftAvailability: (id: string, from: string, to: string) =>
     ["operator", "availability", "aircraft", id, from, to] as const,
   availabilityConflicts: ["operator", "availability", "conflicts"] as const,
+  /** Air ambulance (W4-6). Medical reads are never kept (gcTime 0). */
+  airAmbulanceRequests: (page: number) =>
+    ["air-ambulance", "list", page] as const,
+  airAmbulanceRequest: (reference: string) =>
+    ["air-ambulance", "one", reference] as const,
+  adminAirAmbulanceRequests: (filter: object) =>
+    ["admin", "air-ambulance", "list", filter] as const,
+  adminAirAmbulanceRequest: (reference: string) =>
+    ["admin", "air-ambulance", "one", reference] as const,
+  adminAirAmbulanceOperators: ["admin", "air-ambulance", "operators"] as const,
+  operatorAirAmbulanceRequests: (page: number) =>
+    ["operator", "air-ambulance", "list", page] as const,
+  operatorAirAmbulanceRequest: (reference: string) =>
+    ["operator", "air-ambulance", "one", reference] as const,
 };
