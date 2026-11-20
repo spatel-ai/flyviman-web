@@ -1,7 +1,9 @@
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
+import { useForm } from "react-hook-form";
 import { FormAlert } from "@/components/shared/form-alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -9,10 +11,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/toast";
 import { apiFetch } from "@/lib/api/client";
 import { ApiError } from "@/lib/api/errors";
-import { messageFor } from "@/lib/api/messages";
+import { applyApiError } from "@/lib/api/messages";
 import { queryKeys } from "@/lib/api/query-keys";
 import type { Schemas } from "@/lib/api/types";
 import { formatDateTime } from "@/lib/format/date";
+import { changeRequestSchema, type ChangeRequestValues } from "./schema";
 import { isInProgress } from "./status";
 
 type Booking = Schemas["BookingResponseDto"];
@@ -32,8 +35,17 @@ const STATE: Record<string, string> = {
 export function ChangeRequests({ booking }: { booking: Booking }) {
   const queryClient = useQueryClient();
   const { toast } = useToast();
-  const [details, setDetails] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const {
+    register,
+    handleSubmit,
+    reset,
+    setError: setFieldError,
+    formState: { errors },
+  } = useForm<ChangeRequestValues>({
+    resolver: zodResolver(changeRequestSchema),
+    defaultValues: { details: "" },
+  });
 
   const open = booking.changeRequests.some((r) => r.status === "REQUESTED");
   const canRequest = isInProgress(booking.status) && !open;
@@ -48,14 +60,14 @@ export function ChangeRequests({ booking }: { booking: Booking }) {
         },
       ),
     onSuccess: async () => {
-      setDetails("");
+      reset();
       toast({ title: "Change request sent", tone: "success" });
       await queryClient.invalidateQueries({
         queryKey: queryKeys.booking(booking.reference),
       });
     },
     onError: async (failure) => {
-      setError(messageFor(failure));
+      setError(applyApiError(failure, setFieldError, ["details"]));
       if (failure instanceof ApiError && failure.status === 409) {
         await queryClient.invalidateQueries({
           queryKey: queryKeys.booking(booking.reference),
@@ -98,13 +110,10 @@ export function ChangeRequests({ booking }: { booking: Booking }) {
           noValidate
           className="flex flex-col gap-3"
           onSubmit={(event) => {
-            event.preventDefault();
-            if (!details.trim()) {
-              setError("Say what you would like changed.");
-              return;
-            }
             setError(null);
-            request.mutate(details.trim());
+            void handleSubmit((values) => request.mutate(values.details))(
+              event,
+            );
           }}
         >
           <FormAlert message={error} />
@@ -113,8 +122,8 @@ export function ChangeRequests({ booking }: { booking: Booking }) {
             hint="For example another date or time. A change of price comes as a new quote."
             rows={3}
             maxLength={1000}
-            value={details}
-            onChange={(event) => setDetails(event.target.value)}
+            error={errors.details?.message}
+            {...register("details")}
           />
           <Button
             type="submit"

@@ -3,7 +3,9 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
+import { Controller, useForm } from "react-hook-form";
 import { useNow } from "@/components/booking/use-now";
 import { CancellationTerms } from "@/components/shared/cancellation-terms";
 import { EmptyState } from "@/components/shared/empty-state";
@@ -19,11 +21,16 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { apiFetch } from "@/lib/api/client";
 import { ApiError, isNotFoundError } from "@/lib/api/errors";
-import { messageFor } from "@/lib/api/messages";
+import { applyApiError } from "@/lib/api/messages";
 import { queryKeys } from "@/lib/api/query-keys";
 import type { Schemas } from "@/lib/api/types";
 import { formatDateTime } from "@/lib/format/date";
 import { useAttemptKey } from "@/lib/idempotency";
+import {
+  requestSchema,
+  type RequestOutput,
+  type RequestValues,
+} from "./schema";
 
 type Detail = Schemas["SearchResultDetailDto"];
 type Passenger = Schemas["PassengerResponseDto"];
@@ -66,15 +73,6 @@ export function RequestFlow({
   searchId: string;
   resultId: string;
 }) {
-  const router = useRouter();
-  const queryClient = useQueryClient();
-  const now = useNow();
-  const attempt = useAttemptKey();
-  const [selected, setSelected] = useState<string[]>([]);
-  const [specialRequests, setSpecialRequests] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const [changed, setChanged] = useState<NewEstimate | null>(null);
-
   // Same key and shape as the result page (the whole response), so they share the cache.
   const result = useQuery({
     queryKey: queryKeys.searchResult(searchId, resultId),
@@ -86,44 +84,6 @@ export function RequestFlow({
   const passengers = useQuery({
     queryKey: queryKeys.passengers,
     queryFn: async () => (await apiFetch<Passenger[]>("me/passengers")).data,
-  });
-
-  const send = useMutation({
-    mutationFn: (expectedTotalMinor: number | undefined) => {
-      const body = {
-        searchId,
-        resultId,
-        currency: "INR",
-        ...(expectedTotalMinor === undefined ? {} : { expectedTotalMinor }),
-        passengerIds: selected,
-        ...(specialRequests.trim()
-          ? { specialRequests: specialRequests.trim() }
-          : {}),
-      };
-      return apiFetch<Created>("bookings", {
-        method: "POST",
-        headers: { "Idempotency-Key": attempt.keyFor(body) },
-        body,
-      });
-    },
-    onSuccess: async ({ data }) => {
-      await queryClient.invalidateQueries({ queryKey: ["trips"] });
-      router.push(`/account/trips/${data.reference}`);
-    },
-    onError: async (failure) => {
-      if (!(failure instanceof ApiError && failure.status === 0)) {
-        attempt.rotate();
-      }
-      const estimate = newEstimateFrom(failure);
-      setChanged(estimate);
-      setError(messageFor(failure));
-      // Availability or price moved on: show the result as it is now.
-      if (failure instanceof ApiError && failure.status === 409) {
-        await queryClient.invalidateQueries({
-          queryKey: queryKeys.searchResult(searchId, resultId),
-        });
-      }
-    },
   });
 
   if (result.isPending || passengers.isPending) {
@@ -155,44 +115,110 @@ export function RequestFlow({
     );
   }
 
-  const detail = result.data.data;
+  return (
+    <RequestForm
+      searchId={searchId}
+      resultId={resultId}
+      detail={result.data.data}
+      people={passengers.data}
+    />
+  );
+}
+
+function RequestForm({
+  searchId,
+  resultId,
+  detail,
+  people,
+}: {
+  searchId: string;
+  resultId: string;
+  detail: Detail;
+  people: Passenger[];
+}) {
+  const router = useRouter();
+  const queryClient = useQueryClient();
+  const now = useNow();
+  const attempt = useAttemptKey();
+  const [error, setError] = useState<string | null>(null);
+  const [changed, setChanged] = useState<NewEstimate | null>(null);
+  const limit = detail.passengerCount;
+  const {
+    register,
+    control,
+    handleSubmit,
+    setError: setFieldError,
+    formState: { errors },
+  } = useForm<RequestValues, unknown, RequestOutput>({
+    resolver: zodResolver(requestSchema(limit)),
+    defaultValues: { passengerIds: [], specialRequests: "" },
+  });
+
+  const send = useMutation({
+    mutationFn: ({
+      values,
+      expectedTotalMinor,
+    }: {
+      values: RequestOutput;
+      expectedTotalMinor: number | undefined;
+    }) => {
+      const body = {
+        searchId,
+        resultId,
+        currency: "INR",
+        ...(expectedTotalMinor === undefined ? {} : { expectedTotalMinor }),
+        passengerIds: values.passengerIds,
+        ...(values.specialRequests
+          ? { specialRequests: values.specialRequests }
+          : {}),
+      };
+      return apiFetch<Created>("bookings", {
+        method: "POST",
+        headers: { "Idempotency-Key": attempt.keyFor(body) },
+        body,
+      });
+    },
+    onSuccess: async ({ data }) => {
+      await queryClient.invalidateQueries({ queryKey: ["trips"] });
+      router.push(`/account/trips/${data.reference}`);
+    },
+    onError: async (failure) => {
+      if (!(failure instanceof ApiError && failure.status === 0)) {
+        attempt.rotate();
+      }
+      setChanged(newEstimateFrom(failure));
+      setError(
+        applyApiError(failure, setFieldError, [
+          "passengerIds",
+          "specialRequests",
+        ]),
+      );
+      // Availability or price moved on: show the result as it is now.
+      if (failure instanceof ApiError && failure.status === 409) {
+        await queryClient.invalidateQueries({
+          queryKey: queryKeys.searchResult(searchId, resultId),
+        });
+      }
+    },
+  });
+
   const leg = detail.legs[0];
   const expired = now > 0 && new Date(detail.validUntil).getTime() < now;
-  const limit = detail.passengerCount;
-  const people = passengers.data;
   const price = detail.price;
 
-  function toggle(id: string, checked: boolean) {
-    setError(null);
-    setSelected((current) =>
-      checked ? [...current, id] : current.filter((x) => x !== id),
-    );
-  }
-
   function submit(expected: number | undefined) {
-    if (selected.length === 0) {
-      setError("Choose at least the lead passenger.");
-      return;
-    }
-    if (selected.length > limit) {
-      setError(
-        `This search is for ${limit} passenger${limit === 1 ? "" : "s"}. Choose no more than that.`,
-      );
-      return;
-    }
-    setError(null);
-    setChanged(null);
-    send.mutate(expected);
+    return handleSubmit((values) => {
+      setError(null);
+      setChanged(null);
+      send.mutate({ values, expectedTotalMinor: expected });
+    });
   }
 
   return (
     <form
       noValidate
       className="mx-auto flex max-w-reading flex-col gap-8"
-      onSubmit={(event) => {
-        event.preventDefault();
-        submit(price?.amountMinor);
-      }}
+      onSubmit={(event) => void submit(price?.amountMinor)(event)}
     >
       <div className="flex flex-col gap-2">
         <Link
@@ -248,14 +274,33 @@ export function RequestFlow({
             <p className="text-body-sm text-muted">
               Choose the lead passenger and up to {limit - 1} more.
             </p>
-            {people.map((person) => (
-              <Checkbox
-                key={person.id}
-                label={`${person.firstName} ${person.lastName}`}
-                checked={selected.includes(person.id)}
-                onCheckedChange={(value) => toggle(person.id, value === true)}
-              />
-            ))}
+            <Controller
+              control={control}
+              name="passengerIds"
+              render={({ field }) => (
+                <>
+                  {people.map((person) => (
+                    <Checkbox
+                      key={person.id}
+                      label={`${person.firstName} ${person.lastName}`}
+                      checked={field.value.includes(person.id)}
+                      onCheckedChange={(value) =>
+                        field.onChange(
+                          value === true
+                            ? [...field.value, person.id]
+                            : field.value.filter((id) => id !== person.id),
+                        )
+                      }
+                    />
+                  ))}
+                </>
+              )}
+            />
+            {errors.passengerIds ? (
+              <p role="alert" className="text-caption text-danger">
+                {errors.passengerIds.message}
+              </p>
+            ) : null}
           </>
         )}
       </fieldset>
@@ -265,8 +310,8 @@ export function RequestFlow({
         hint="For example luggage or accessibility needs. Do not include medical details."
         rows={3}
         maxLength={1000}
-        value={specialRequests}
-        onChange={(event) => setSpecialRequests(event.target.value)}
+        error={errors.specialRequests?.message}
+        {...register("specialRequests")}
       />
 
       <CancellationTerms summary={detail.cancellationNote} charges={[]} />
@@ -284,7 +329,7 @@ export function RequestFlow({
             <Button
               type="button"
               loading={send.isPending}
-              onClick={() => submit(changed.totalMinor)}
+              onClick={(event) => void submit(changed.totalMinor)(event)}
               className="self-start"
             >
               Agree and send request

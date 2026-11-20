@@ -1,7 +1,9 @@
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
+import { useForm } from "react-hook-form";
 import { FormAlert } from "@/components/shared/form-alert";
 import { LoadError } from "@/components/shared/load-error";
 import { Button } from "@/components/ui/button";
@@ -9,12 +11,13 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { apiFetch } from "@/lib/api/client";
 import { ApiError } from "@/lib/api/errors";
-import { messageFor } from "@/lib/api/messages";
+import { applyApiError } from "@/lib/api/messages";
 import { queryKeys } from "@/lib/api/query-keys";
 import type { Schemas } from "@/lib/api/types";
 import { formatDateTime } from "@/lib/format/date";
 import { useAttemptKey } from "@/lib/idempotency";
 import { useMessages } from "./hooks";
+import { answerSchema, type AnswerValues } from "./schema";
 
 type Message = Schemas["BookingMessageDto"];
 
@@ -29,8 +32,17 @@ export function Messages({
   const queryClient = useQueryClient();
   const messages = useMessages(reference);
   const attempt = useAttemptKey();
-  const [text, setText] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const {
+    register,
+    handleSubmit,
+    reset,
+    setError: setFieldError,
+    formState: { errors },
+  } = useForm<AnswerValues>({
+    resolver: zodResolver(answerSchema),
+    defaultValues: { message: "" },
+  });
 
   const send = useMutation({
     mutationFn: (message: string) =>
@@ -43,7 +55,7 @@ export function Messages({
         },
       ),
     onSuccess: async ({ data }) => {
-      setText("");
+      reset();
       queryClient.setQueryData(queryKeys.bookingMessages(reference), data);
       await Promise.all([
         queryClient.invalidateQueries({
@@ -56,7 +68,7 @@ export function Messages({
       if (!(failure instanceof ApiError && failure.status === 0)) {
         attempt.rotate();
       }
-      setError(messageFor(failure));
+      setError(applyApiError(failure, setFieldError, ["message"]));
       if (failure instanceof ApiError && failure.status === 409) {
         await queryClient.invalidateQueries({
           queryKey: queryKeys.booking(reference),
@@ -101,13 +113,8 @@ export function Messages({
           noValidate
           className="flex flex-col gap-3"
           onSubmit={(event) => {
-            event.preventDefault();
-            if (!text.trim()) {
-              setError("Write your answer first.");
-              return;
-            }
             setError(null);
-            send.mutate(text.trim());
+            void handleSubmit((values) => send.mutate(values.message))(event);
           }}
         >
           <FormAlert message={error} />
@@ -116,8 +123,8 @@ export function Messages({
             hint="The operator is waiting for this before they can answer your request."
             rows={3}
             maxLength={1000}
-            value={text}
-            onChange={(event) => setText(event.target.value)}
+            error={errors.message?.message}
+            {...register("message")}
           />
           <Button type="submit" loading={send.isPending} className="self-start">
             Send answer

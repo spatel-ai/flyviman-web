@@ -1,7 +1,9 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
+import { useForm } from "react-hook-form";
 import { CancellationTerms } from "@/components/shared/cancellation-terms";
 import { FormAlert } from "@/components/shared/form-alert";
 import { LoadError } from "@/components/shared/load-error";
@@ -14,14 +16,16 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/toast";
 import { apiFetch } from "@/lib/api/client";
 import { ApiError } from "@/lib/api/errors";
-import { messageFor } from "@/lib/api/messages";
+import { applyApiError, messageFor } from "@/lib/api/messages";
 import { queryKeys } from "@/lib/api/query-keys";
 import type { Schemas } from "@/lib/api/types";
 import { formatMoney } from "@/lib/format/money";
 import { useAttemptKey } from "@/lib/idempotency";
+import { cancelSchema, type CancelValues } from "./schema";
 
 type CancellationQuote = Schemas["CancellationQuoteDto"];
 
@@ -63,8 +67,16 @@ function CancelBody({
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const attempt = useAttemptKey();
-  const [reason, setReason] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const {
+    register,
+    handleSubmit,
+    setError: setFieldError,
+    formState: { errors },
+  } = useForm<CancelValues>({
+    resolver: zodResolver(cancelSchema),
+    defaultValues: { reason: "" },
+  });
 
   const quote = useQuery({
     queryKey: queryKeys.cancellationQuote(reference),
@@ -79,11 +91,17 @@ function CancelBody({
   });
 
   const cancel = useMutation({
-    mutationFn: (figures: CancellationQuote) => {
+    mutationFn: ({
+      figures,
+      reason,
+    }: {
+      figures: CancellationQuote;
+      reason: string;
+    }) => {
       const body = {
         expectedChargeMinor: figures.chargeMinor,
         currency: "INR",
-        ...(reason.trim() ? { reason: reason.trim() } : {}),
+        ...(reason ? { reason } : {}),
       };
       return apiFetch(`bookings/${encodeURIComponent(reference)}/cancel`, {
         method: "POST",
@@ -105,7 +123,7 @@ function CancelBody({
       if (!(failure instanceof ApiError && failure.status === 0)) {
         attempt.rotate();
       }
-      setError(messageFor(failure));
+      setError(applyApiError(failure, setFieldError, ["reason"]));
       if (failure instanceof ApiError && failure.status === 409) {
         // Show the figures as they are now, and refresh the trip behind.
         await Promise.all([
@@ -153,10 +171,12 @@ function CancelBody({
   return (
     <form
       className="flex flex-col gap-4"
+      noValidate
       onSubmit={(event) => {
-        event.preventDefault();
         setError(null);
-        cancel.mutate(figures);
+        void handleSubmit((values) =>
+          cancel.mutate({ figures, reason: values.reason }),
+        )(event);
       }}
     >
       <FormAlert message={error} />
@@ -199,16 +219,13 @@ function CancelBody({
         )}
       </dl>
       <p className="text-body-sm text-muted">{figures.explanation}</p>
-      <label className="flex flex-col gap-1.5 text-body-sm font-medium">
-        Reason (optional)
-        <textarea
-          rows={2}
-          maxLength={500}
-          value={reason}
-          onChange={(event) => setReason(event.target.value)}
-          className="rounded-sm border border-border bg-surface px-3.5 py-2.5 text-body-sm font-normal"
-        />
-      </label>
+      <Textarea
+        label="Reason (optional)"
+        rows={2}
+        maxLength={500}
+        error={errors.reason?.message}
+        {...register("reason")}
+      />
       <DialogFooter>
         <DialogClose asChild>
           <Button variant="secondary">Keep trip</Button>
