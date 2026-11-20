@@ -13,6 +13,7 @@ export const CAPABILITY_LABELS: Record<Capability, string> = {
   MANAGE_AIRCRAFT: "Manage aircraft",
   MANAGE_AVAILABILITY: "Manage availability",
   MANAGE_EMPTY_LEGS: "Manage empty legs",
+  MANAGE_BOOKINGS: "Manage bookings",
 };
 
 export function isOperatorAdmin(access: OperatorAccess | undefined): boolean {

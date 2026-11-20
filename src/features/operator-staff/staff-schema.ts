@@ -9,6 +9,8 @@ export const CAPABILITY_HINTS: Record<Capability, string> = {
   MANAGE_AVAILABILITY: "Add and change availability and holds on the calendar.",
   MANAGE_EMPTY_LEGS:
     "Create, publish and withdraw empty-leg offers on their aircraft.",
+  MANAGE_BOOKINGS:
+    "Answer booking requests on their aircraft: accept, decline, ask a question or send a quote.",
 };
 
 /** Permissions as the form holds them; also the body of an edit. */
