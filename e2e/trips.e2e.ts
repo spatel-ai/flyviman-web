@@ -141,7 +141,7 @@ test("a customer accepts the operator's quote after reading its conditions", asy
   await dialog.getByRole("button", { name: "Accept quote" }).click();
 
   await expect(
-    main.getByText("Price confirmed", { exact: true }).first(),
+    main.getByText("Awaiting payment", { exact: true }).first(),
   ).toBeVisible();
   await expect(main.getByText("Confirmed price").first()).toBeVisible();
   await expect(main.getByText("You accepted this quote.")).toBeVisible();
