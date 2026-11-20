@@ -57,7 +57,9 @@ export function OwnerControl({
         title: assigneeId ? "Owner set" : "Owner removed",
         tone: "success",
       });
-      await queryClient.invalidateQueries({ queryKey: ["admin", "bookings"] });
+      await queryClient.invalidateQueries({
+        queryKey: queryKeys.adminBookingsAll,
+      });
     },
     onError: (failure) => setError(messageFor(failure)),
   });

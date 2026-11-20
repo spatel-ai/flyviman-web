@@ -1,6 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { queryKeys } from "@/lib/api/query-keys";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -48,7 +49,9 @@ export function Notes({
     onSuccess: async () => {
       reset();
       toast({ title: "Note added", tone: "success" });
-      await queryClient.invalidateQueries({ queryKey: ["admin", "bookings"] });
+      await queryClient.invalidateQueries({
+        queryKey: queryKeys.adminBookingsAll,
+      });
     },
     onError: (failure) =>
       setError(applyApiError(failure, setFieldError, ["note"])),

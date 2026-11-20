@@ -76,7 +76,7 @@ export function EmptyLegsQueue() {
         tone: "success",
       });
       await queryClient.invalidateQueries({
-        queryKey: ["admin", "empty-legs"],
+        queryKey: queryKeys.adminEmptyLegsAll,
       });
     },
     onError: (failure) => {

@@ -33,7 +33,7 @@ export function Notifications() {
     mutationFn: (id: string) =>
       apiFetch(`me/notifications/${id}/read`, { method: "PATCH" }),
     onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: ["me", "notifications"] }),
+      queryClient.invalidateQueries({ queryKey: queryKeys.notificationsAll }),
   });
 
   if (notifications.isPending) {

@@ -1,6 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { queryKeys } from "@/lib/api/query-keys";
 import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -96,13 +97,17 @@ function RefundForm({ due, onDone }: { due: RefundDue; onDone: () => void }) {
         description: `${formatMoney(values.amount, due.currency)} for ${due.bookingReference}.`,
         tone: "success",
       });
-      void queryClient.invalidateQueries({ queryKey: ["admin", "refunds"] });
+      void queryClient.invalidateQueries({
+        queryKey: queryKeys.adminRefundsAll,
+      });
       onDone();
     } catch (error) {
       // Only a lost answer keeps the key, so a retry cannot refund twice.
       if (!(error instanceof ApiError && error.status === 0)) attempt.rotate();
       if (error instanceof ApiError && STALE.has(error.code)) {
-        void queryClient.invalidateQueries({ queryKey: ["admin", "refunds"] });
+        void queryClient.invalidateQueries({
+          queryKey: queryKeys.adminRefundsAll,
+        });
       }
       setFormError(
         applyApiError(error, setError, REFUND_FIELDS, REFUND_ALIASES),

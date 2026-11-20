@@ -100,7 +100,7 @@ function QuoteCard({ quote, reference }: { quote: Quote; reference: string }) {
   function invalidate() {
     return Promise.all([
       queryClient.invalidateQueries({ queryKey: queryKeys.booking(reference) }),
-      queryClient.invalidateQueries({ queryKey: ["trips"] }),
+      queryClient.invalidateQueries({ queryKey: queryKeys.tripsAll }),
     ]);
   }
 

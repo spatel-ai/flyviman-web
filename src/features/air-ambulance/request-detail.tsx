@@ -101,7 +101,7 @@ export function RequestDetail({
       ) {
         void queryClient.invalidateQueries({ queryKey: key });
         void queryClient.invalidateQueries({
-          queryKey: ["air-ambulance", "list"],
+          queryKey: queryKeys.airAmbulanceListAll,
         });
       }
     },

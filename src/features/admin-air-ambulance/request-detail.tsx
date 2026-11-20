@@ -148,7 +148,7 @@ export function AdminRequestDetail({
     ) {
       void queryClient.invalidateQueries({ queryKey: key });
       void queryClient.invalidateQueries({
-        queryKey: ["admin", "air-ambulance", "list"],
+        queryKey: queryKeys.adminAirAmbulanceListAll,
       });
     }
   }

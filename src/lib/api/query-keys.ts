@@ -2,6 +2,7 @@
 export const queryKeys = {
   me: ["me"] as const,
   /** Every trip list key starts with ["trips"]. */
+  tripsAll: ["trips"] as const,
   trips: (view: string, page: number) => ["trips", view, page] as const,
   /** Every key for one booking starts with ["bookings", reference]. */
   booking: (reference: string) => ["bookings", reference] as const,
@@ -16,6 +17,7 @@ export const queryKeys = {
   cancellationQuote: (reference: string) =>
     ["bookings", reference, "cancellation-quote"] as const,
   passengers: ["me", "passengers"] as const,
+  notificationsAll: ["me", "notifications"] as const,
   notifications: (page: number) => ["me", "notifications", page] as const,
   policy: (slug: string) => ["policy", slug] as const,
   operatorProfile: ["operator", "profile"] as const,
@@ -26,18 +28,23 @@ export const queryKeys = {
   adminOperator: (id: string) => ["admin", "operators", id] as const,
   adminUsers: (filter: object) => ["admin", "users", filter] as const,
   adminRoles: ["admin", "roles"] as const,
+  /** Prefix of every admin booking key (lists and details). */
+  adminBookingsAll: ["admin", "bookings"] as const,
   adminBookings: (filter: object) => ["admin", "bookings", filter] as const,
   adminBooking: (reference: string) =>
     ["admin", "bookings", reference] as const,
+  adminChangeRequestsAll: ["admin", "change-requests"] as const,
   adminChangeRequests: (filter: object) =>
     ["admin", "change-requests", filter] as const,
   adminStaffOwners: ["admin", "users", "booking-owners"] as const,
+  adminEnquiriesAll: ["admin", "enquiries"] as const,
   adminEnquiries: (filter: object) => ["admin", "enquiries", filter] as const,
   adminEnquiry: (id: string) => ["admin", "enquiries", id] as const,
   /** Every content key starts with ["admin", "content"]. */
   adminContent: (part: string) => ["admin", "content", part] as const,
   adminPayments: (filter: object) => ["admin", "payments", filter] as const,
   /** Every refund key starts with ["admin", "refunds"]. */
+  adminRefundsAll: ["admin", "refunds"] as const,
   adminRefunds: (page: number) =>
     ["admin", "refunds", "history", page] as const,
   adminRefundsDue: (page: number) => ["admin", "refunds", "due", page] as const,
@@ -76,12 +83,14 @@ export const queryKeys = {
     ["admin", "price-calculations", "list", filter] as const,
   adminPriceCalculation: (id: string) =>
     ["admin", "price-calculations", id] as const,
+  adminAircraftAll: ["admin", "aircraft"] as const,
   adminAircraft: (status: string) => ["admin", "aircraft", status] as const,
   adminAircraftDetail: (id: string) => ["admin", "aircraft", id] as const,
   emptyLegs: (filter: string) => ["empty-legs", "list", filter] as const,
   emptyLeg: (id: string) => ["empty-legs", "one", id] as const,
   operatorEmptyLegs: ["operator", "empty-legs"] as const,
   operatorEmptyLeg: (id: string) => ["operator", "empty-legs", id] as const,
+  adminEmptyLegsAll: ["admin", "empty-legs"] as const,
   adminEmptyLegs: (status: string) => ["admin", "empty-legs", status] as const,
   locationSearch: (q: string) => ["locations", "search", q] as const,
   search: (id: string) => ["search", id] as const,
@@ -102,10 +111,12 @@ export const queryKeys = {
     ["operator", "availability", "aircraft", id, from, to] as const,
   availabilityConflicts: ["operator", "availability", "conflicts"] as const,
   /** Air ambulance (W4-6). Medical reads are never kept (gcTime 0). */
+  airAmbulanceListAll: ["air-ambulance", "list"] as const,
   airAmbulanceRequests: (page: number) =>
     ["air-ambulance", "list", page] as const,
   airAmbulanceRequest: (reference: string) =>
     ["air-ambulance", "one", reference] as const,
+  adminAirAmbulanceListAll: ["admin", "air-ambulance", "list"] as const,
   adminAirAmbulanceRequests: (filter: object) =>
     ["admin", "air-ambulance", "list", filter] as const,
   adminAirAmbulanceRequest: (reference: string) =>
