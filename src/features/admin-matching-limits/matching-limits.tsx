@@ -33,6 +33,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/toast";
 import { apiFetch } from "@/lib/api/client";
 import { applyApiError, messageFor } from "@/lib/api/messages";
+import { queryKeys } from "@/lib/api/query-keys";
 import type { AircraftCategory } from "@/lib/api/types";
 import { formatDateTime } from "@/lib/format/date";
 import {
@@ -50,7 +51,7 @@ import {
   type MatchingLimitsValues,
 } from "./schema";
 
-const KEY = ["admin", "pricing-rules", "matching-limits"] as const;
+const KEY = queryKeys.adminMatchingLimits;
 type View = "current" | "history";
 
 const FIELDS = [

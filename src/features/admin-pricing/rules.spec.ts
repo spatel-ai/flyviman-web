@@ -1,10 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  canManage,
-  configToDraft,
-  describeConfig,
-  RULE_TYPES,
-} from "./rules";
+import { canManage, configToDraft, describeConfig, RULE_TYPES } from "./rules";
 import { ruleSchema } from "./schema";
 
 describe("describeConfig", () => {

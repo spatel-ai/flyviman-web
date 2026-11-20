@@ -68,7 +68,7 @@ export function RulesList() {
       });
       setEnding(null);
       void queryClient.invalidateQueries({
-        queryKey: ["admin", "pricing-rules"],
+        queryKey: queryKeys.adminPricingRulesAll,
       });
     },
     onError: (failure) => {
@@ -76,7 +76,7 @@ export function RulesList() {
       if (listIsStale(failure)) {
         setEnding(null);
         void queryClient.invalidateQueries({
-          queryKey: ["admin", "pricing-rules"],
+          queryKey: queryKeys.adminPricingRulesAll,
         });
       }
     },

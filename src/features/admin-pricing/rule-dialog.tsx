@@ -19,6 +19,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/toast";
 import { apiFetch } from "@/lib/api/client";
 import { applyApiError } from "@/lib/api/messages";
+import { queryKeys } from "@/lib/api/query-keys";
 import type { AircraftCategory } from "@/lib/api/types";
 import {
   configToDraft,
@@ -48,7 +49,7 @@ const SCOPE_OPTIONS = [
   { value: "CATEGORY", label: "One aircraft category" },
 ];
 
-const RULES_KEY = ["admin", "pricing-rules"] as const;
+const RULES_KEY = queryKeys.adminPricingRulesAll;
 
 export function AddRuleDialog() {
   const [open, setOpen] = useState(false);
