@@ -2281,7 +2281,7 @@ export interface paths {
     put?: never;
     /**
      * Override the price of a booking request with a new quote
-     * @description Issues a new quote (`QUOTE`) at `totalMinor`, superseding the open one, which is never edited; the customer accepts or declines it as any quote. Only while the request waits for a quote (`OPERATOR_PENDING`) and nothing is paid: otherwise 409 `BOOKING_INVALID_TRANSITION`. Conditions carry over from the latest quote unless given (400 when there is none). The booking’s calculation is copied with the override, its reason and who set it (`overrideReason`); Flyviman absorbs the difference. 409 `BOOKING_UNAVAILABLE` when the aircraft can no longer fly the trip. Audited (`booking.price_override`) with before, after and the reason.
+     * @description Issues a new quote (`QUOTE`) at `totalMinor`, superseding the open one, which is never edited; the customer accepts or declines it as any quote. Only while the request is `OPERATOR_PENDING`, after the operator has sent a quote, and before anything is paid: otherwise 409 `BOOKING_INVALID_TRANSITION`. Conditions carry over from the latest quote unless given. The booking’s calculation is copied with the override, its reason and who set it (`overrideReason`); Flyviman absorbs the difference. 409 `BOOKING_UNAVAILABLE` when the aircraft can no longer fly the trip. Audited (`booking.price_override`) with before, after and the reason.
      */
     post: operations["AdminPriceOverrideController_override"];
     delete?: never;
@@ -5300,7 +5300,7 @@ export interface components {
        * @description Until when the customer may accept. Left out: 48 hours from now (`BOOKING_HOLD_HOURS`). Never after the first departure; at least an hour ahead.
        */
       validUntil?: string;
-      /** @description The conditions shown with the price (rule 9). Left out: those of the booking’s latest quote; required when it has none. */
+      /** @description The conditions shown with the price (rule 9). Left out: those of the booking’s latest quote. */
       conditions?: components["schemas"]["QuoteConditionsInputDto"];
     };
     /** @enum {string} */
