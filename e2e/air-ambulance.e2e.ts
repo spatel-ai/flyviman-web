@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { signIn } from "./support/api";
+import { expectNoSidewaysScroll, signIn } from "./support/api";
 import { approvedAircraft, asStaff, PDF } from "./support/operators";
 
 /**
@@ -21,11 +21,10 @@ async function chooseLocation(
 ) {
   await page.getByRole("textbox", { name: searchLabel }).fill(code);
   await page.getByRole("combobox", { name: label, exact: true }).click();
-  // By keyboard: on phones the tab bar can cover an option low on the screen.
   await page
     .getByRole("option", { name: new RegExp(`\\b${code}\\)`) })
     .first()
-    .press("Enter");
+    .click();
 }
 
 test("the request page shows the emergency notice first, never animated, and asks visitors to sign in", async ({
@@ -112,7 +111,7 @@ test("a request goes from the customer through operations to the operator, confi
   await form.getByRole("combobox", { name: "Mobility" }).click();
   await page
     .getByRole("option", { name: "Cannot walk (bed or stretcher)" })
-    .press("Enter");
+    .click();
   await form.getByRole("checkbox", { name: "Stretcher needed" }).click();
   await form.getByLabel("Add documents").setInputFiles({
     name: "discharge-summary.pdf",
@@ -122,6 +121,8 @@ test("a request goes from the customer through operations to the operator, confi
   await expect(
     form.getByRole("list", { name: "Chosen documents" }),
   ).toContainText("discharge-summary.pdf");
+  // Long airport names never widen the page on a phone.
+  await expectNoSidewaysScroll(page);
   await form.getByRole("button", { name: "Send request" }).click();
 
   await expect(page).toHaveURL(
@@ -170,7 +171,7 @@ test("a request goes from the customer through operations to the operator, confi
 
   const quote = opsMain.getByRole("form", { name: "Quote" });
   await quote.getByRole("combobox", { name: "Operator" }).click();
-  await ops.page.getByRole("option", { name: legalName }).press("Enter");
+  await ops.page.getByRole("option", { name: legalName }).click();
   await quote.getByRole("textbox", { name: "Amount (₹)" }).fill("450000");
   await quote
     .getByRole("textbox", { name: "Conditions" })

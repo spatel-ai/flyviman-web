@@ -72,6 +72,19 @@ const ASKS_FIRST: Target[] = [
   "CANCELLED",
 ];
 
+/** A refused move, in operations' words (the shared wording is the operator's). */
+function moveMessage(failure: unknown): string {
+  if (failure instanceof ApiError) {
+    if (failure.code === "OPERATOR_NOT_APPROVED") {
+      return "The selected operator is no longer approved, so the mission cannot be confirmed. Decline or cancel the request.";
+    }
+    if (failure.code === "AIR_AMBULANCE_OPERATOR_NOT_ELIGIBLE") {
+      return "The selected operator no longer has an approved air ambulance aircraft, so the mission cannot be confirmed. Decline or cancel the request.";
+    }
+  }
+  return messageFor(failure);
+}
+
 function eventLabel(event: Request["events"][number]): string {
   const kind =
     event.payload && typeof event.payload.kind === "string"
@@ -129,7 +142,9 @@ export function AdminRequestDetail({
     if (
       !failure ||
       (failure instanceof ApiError &&
-        (failure.status === 409 || failure.status === 403))
+        (failure.status === 409 ||
+          failure.status === 403 ||
+          failure.status === 422))
     ) {
       void queryClient.invalidateQueries({ queryKey: key });
       void queryClient.invalidateQueries({
@@ -161,7 +176,7 @@ export function AdminRequestDetail({
     },
     onError: (failure) => {
       setAsking(null);
-      setError(messageFor(failure));
+      setError(moveMessage(failure));
     },
     onSettled: (_result, failure) => settled(failure ?? undefined),
   });

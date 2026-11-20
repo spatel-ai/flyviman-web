@@ -170,7 +170,9 @@ export function RequestForm() {
 
       <fieldset className="flex flex-col gap-4">
         <legend className="mb-4 text-title">Journey</legend>
-        <div className="grid gap-6 md:grid-cols-2">
+        {/* min-w-0: a long airport name in a picker must not widen the
+            page on phones (it did, and the list opened off screen). */}
+        <div className="grid gap-6 md:grid-cols-2 [&>*]:min-w-0">
           <Controller
             control={control}
             name="originLocationId"
