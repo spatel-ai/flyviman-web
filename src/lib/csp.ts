@@ -1,14 +1,30 @@
-/** Razorpay Checkout: its loader script, and the API its frame and calls use. */
+/**
+ * Razorpay Checkout: its loader script (which also serves the checkout's own
+ * frame), the API its frame and calls use, its logging endpoint and its
+ * images (bank and card logos). Razorpay publishes no CSP list: these are
+ * the origins Checkout is known to use, and must be checked in the browser
+ * console against Razorpay's test mode before real payments are switched on
+ * (W4-3 report).
+ */
 export const RAZORPAY_SCRIPT = "https://checkout.razorpay.com";
 export const RAZORPAY_API = "https://api.razorpay.com";
+export const RAZORPAY_LOGGING = "https://lumberjack.razorpay.com";
+export const RAZORPAY_IMAGES = "https://cdn.razorpay.com";
+
+/**
+ * The Permissions-Policy `payment` allowance for the payment page: the page
+ * and Razorpay's frames may use the browser's Payment Request API. Every
+ * other page denies it (`payment=()`).
+ */
+export const CHECKOUT_PAYMENT_PERMISSION = `payment=(self "${RAZORPAY_SCRIPT}" "${RAZORPAY_API}")`;
 
 /**
  * The payment page (M9), the only page allowed to load Razorpay Checkout,
  * as a `next.config.ts` header source. A document keeps the policy it was
- * loaded with, so the payment page must be entered with a full page load,
- * not a client-side navigation.
+ * loaded with, so the payment page must be entered with a full page load
+ * (a plain `<a>`), not a client-side navigation.
  */
-export const CHECKOUT_PAGE = "/book/:reference/payment";
+export const CHECKOUT_PAGE = "/account/trips/:reference/pay";
 
 // The nonce branch is unused until W5 renders the portals per request (D-152).
 export interface CspOptions {
@@ -66,15 +82,21 @@ export function contentSecurityPolicy(options: CspOptions): string {
       ...(development ? ["'unsafe-eval'"] : []),
     ],
     ["style-src", "'self'", "'unsafe-inline'"],
-    ["img-src", "'self'", "data:", ...apiOrigins],
+    [
+      "img-src",
+      "'self'",
+      "data:",
+      ...apiOrigins,
+      ...(checkout ? [RAZORPAY_IMAGES] : []),
+    ],
     ["font-src", "'self'"],
     [
       "connect-src",
       "'self'",
       ...apiOrigins,
-      ...(checkout ? [RAZORPAY_API] : []),
+      ...(checkout ? [RAZORPAY_API, RAZORPAY_LOGGING] : []),
     ],
-    ["frame-src", ...(checkout ? [RAZORPAY_API] : ["'none'"])],
+    ["frame-src", ...(checkout ? [RAZORPAY_SCRIPT, RAZORPAY_API] : ["'none'"])],
     ["object-src", "'none'"],
     ["base-uri", "'self'"],
     ["form-action", "'self'"],

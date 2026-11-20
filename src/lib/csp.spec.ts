@@ -78,8 +78,22 @@ describe("contentSecurityPolicy", () => {
   it("adds Razorpay Checkout only when asked", () => {
     const policy = parse(contentSecurityPolicy({ ...BASE, checkout: true }));
     expect(policy.get("script-src")).toContain("https://checkout.razorpay.com");
-    expect(policy.get("frame-src")).toEqual(["https://api.razorpay.com"]);
-    expect(policy.get("connect-src")).toContain("https://api.razorpay.com");
+    expect(policy.get("frame-src")).toEqual([
+      "https://checkout.razorpay.com",
+      "https://api.razorpay.com",
+    ]);
+    expect(policy.get("connect-src")).toEqual([
+      "'self'",
+      "https://api.razorpay.com",
+      "https://lumberjack.razorpay.com",
+    ]);
+    expect(policy.get("img-src")).toContain("https://cdn.razorpay.com");
+    // Scripts stay limited: Razorpay's loader, never eval or another origin.
+    expect(policy.get("script-src")).toEqual([
+      "'self'",
+      "'unsafe-inline'",
+      "https://checkout.razorpay.com",
+    ]);
     expect(contentSecurityPolicy(BASE)).not.toContain("razorpay");
   });
 

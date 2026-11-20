@@ -62,6 +62,16 @@ const MESSAGES: Record<string, string> = {
     "You already have a change request waiting for an answer.",
   CHANGE_REQUEST_NOT_ALLOWED:
     "A change can no longer be requested for this trip.",
+  PAYMENT_NOT_DUE:
+    "Nothing is due on this trip right now. The page has been refreshed.",
+  PAYMENT_ALREADY_PAID:
+    "This trip has already been paid for. The page has been refreshed.",
+  PAYMENT_AMOUNT_MISMATCH:
+    "The amount due has changed. The new amount is shown: check it before you pay.",
+  PAYMENT_PROVIDER_ERROR:
+    "The payment provider did not answer. Nothing was charged. Try again in a moment.",
+  PAYMENT_SIGNATURE_INVALID:
+    "We could not confirm this payment with the provider. If money left your account it is safe: your trip will show it once the provider confirms.",
   INTERNAL_ERROR: "Something went wrong on our side. Please try again.",
 };
 

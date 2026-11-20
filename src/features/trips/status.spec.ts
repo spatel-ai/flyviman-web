@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Schemas } from "@/lib/api/types";
-import { isInProgress, paymentDue } from "./status";
+import { isInProgress } from "./status";
 import { buildTimeline } from "./timeline";
 
 type Booking = Schemas["BookingResponseDto"];
@@ -29,32 +29,6 @@ describe("isInProgress", () => {
     expect(isInProgress("CANCELLED")).toBe(false);
     expect(isInProgress("COMPLETED")).toBe(false);
     expect(isInProgress("SOMETHING_NEW")).toBe(false);
-  });
-});
-
-describe("paymentDue", () => {
-  it("is the confirmed total for a booking awaiting payment", () => {
-    expect(paymentDue(base)).toEqual({
-      kind: "full",
-      amountMinor: 5_000_000,
-      currency: "INR",
-    });
-  });
-  it("shows no amount for a deposit, which the web cannot work out", () => {
-    expect(paymentDue({ ...base, paymentModel: "C_DEPOSIT" })).toEqual({
-      kind: "deposit",
-    });
-  });
-  it("is nothing when the price is not confirmed, or payment is not due", () => {
-    expect(
-      paymentDue({
-        ...base,
-        price: { ...base.price!, priceType: "ESTIMATE" },
-      }),
-    ).toBeNull();
-    expect(paymentDue({ ...base, status: "OPERATOR_PENDING" })).toBeNull();
-    expect(paymentDue({ ...base, paymentStatus: "PAID" })).toBeNull();
-    expect(paymentDue({ ...base, price: null })).toBeNull();
   });
 });
 

@@ -12,6 +12,13 @@ const schema = z.object({
    * Raw strings here; unset means "not shown", and a malformed value is
    * ignored with a warning there, so none of these can fail the build.
    */
+  /**
+   * "1" shows the mock gateway's test checkout ("Pay (test)", "Fail (test)")
+   * in a production build, for the browser tests. Development shows it
+   * anyway; a deployment never sets it. It only works against an API running
+   * the mock gateway with ENABLE_DEV_TOOLS (`lib/payments/providers.ts`).
+   */
+  NEXT_PUBLIC_MOCK_CHECKOUT: z.string().optional(),
   NEXT_PUBLIC_WHATSAPP_NUMBER: z.string().optional(),
   NEXT_PUBLIC_SOCIAL_INSTAGRAM: z.string().optional(),
   NEXT_PUBLIC_SOCIAL_FACEBOOK: z.string().optional(),
@@ -29,6 +36,7 @@ const schema = z.object({
  */
 export const env = schema.parse({
   NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
+  NEXT_PUBLIC_MOCK_CHECKOUT: process.env.NEXT_PUBLIC_MOCK_CHECKOUT,
   NEXT_PUBLIC_WHATSAPP_NUMBER: process.env.NEXT_PUBLIC_WHATSAPP_NUMBER,
   NEXT_PUBLIC_SOCIAL_INSTAGRAM: process.env.NEXT_PUBLIC_SOCIAL_INSTAGRAM,
   NEXT_PUBLIC_SOCIAL_FACEBOOK: process.env.NEXT_PUBLIC_SOCIAL_FACEBOOK,
