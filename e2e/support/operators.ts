@@ -179,8 +179,10 @@ export async function approvedAircraft(
   browser: Browser,
   /** A further document, attached before review (an approved listing returns to review when one is added). */
   extra?: { type: string; expiresAt: string },
+  /** For example AIR_AMBULANCE_FIXED, for an operator eligible for air ambulance missions. */
+  category = "LIGHT_JET",
 ) {
-  await approvedOperator(page, browser);
+  const { legalName } = await approvedOperator(page, browser);
   const headers = await csrf(page);
   const locations = await page.request.get(`${API_URL}locations`, {
     params: { q: "BOM", pageSize: 1 },
@@ -193,7 +195,7 @@ export async function approvedAircraft(
       registration,
       manufacturer: "Cessna",
       model: "Citation CJ3+",
-      category: "LIGHT_JET",
+      category,
       wingType: "FIXED_WING",
       passengerCapacity: 8,
       rangeKm: 3200,
@@ -245,7 +247,7 @@ export async function approvedAircraft(
     ).status(),
   ).toBe(200);
   await staff.context.close();
-  return { id, registration };
+  return { id, registration, legalName };
 }
 
 /** A draft aircraft for the operator signed in on `page`. */

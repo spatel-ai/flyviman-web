@@ -16,7 +16,11 @@ export default function AccountLayout({ children }: LayoutProps<"/account">) {
     <div className="mx-auto w-full max-w-content px-4 py-8 md:px-6 md:py-12">
       <p className="text-h2">Your account</p>
       <div className="mt-6 mb-8">
-        <AccountNav />
+        {/* It reads the address, which a page with a dynamic segment
+            (/account/air-ambulance/[reference]) knows only at request time. */}
+        <Suspense fallback={<div className="h-11" />}>
+          <AccountNav />
+        </Suspense>
       </div>
       {/* Shown once the session and role are confirmed. The pages get
           their data from the API, which checks the role on every request. */}
