@@ -414,8 +414,9 @@ test("a charter search shows empty legs on the route, each with a labelled price
       aircraftId,
       originId: goa,
       destinationId: mumbai,
-      departureFrom: at(6, 4),
-      departureTo: at(6, 12),
+      // A window of its own, so offers left by earlier runs never crowd it out.
+      departureFrom: at(6, 12),
+      departureTo: at(6, 14),
       seatsAvailable: 6,
       priceMinor: 18_500_000,
       validUntil: at(5, 12),
@@ -442,7 +443,7 @@ test("a charter search shows empty legs on the route, each with a labelled price
     data: {
       originId: goa,
       destinationId: mumbai,
-      departureAt: at(6, 6),
+      departureAt: at(6, 13),
       passengerCount: 3,
     },
   });
