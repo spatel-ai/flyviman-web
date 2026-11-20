@@ -59,6 +59,16 @@ const NAV: (NavItem & { roles: Role[] })[] = [
     roles: ["OPS", "SUPER_ADMIN"],
   },
   {
+    href: "/admin/payments",
+    label: "Payments",
+    roles: ["FINANCE_ADMIN", "SUPER_ADMIN"],
+  },
+  {
+    href: "/admin/refunds",
+    label: "Refunds",
+    roles: ["FINANCE_ADMIN", "SUPER_ADMIN"],
+  },
+  {
     href: "/admin/enquiries",
     label: "Enquiries",
     roles: ["OPS", "SUPER_ADMIN"],

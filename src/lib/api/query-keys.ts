@@ -9,6 +9,11 @@ export const queryKeys = {
     ["bookings", reference, "quotes"] as const,
   bookingMessages: (reference: string) =>
     ["bookings", reference, "messages"] as const,
+  /** The amount due now (a model C deposit); never kept once unused. */
+  paymentAmountDue: (reference: string) =>
+    ["bookings", reference, "amount-due"] as const,
+  bookingPayments: (reference: string) =>
+    ["bookings", reference, "payments"] as const,
   cancellationQuote: (reference: string) =>
     ["bookings", reference, "cancellation-quote"] as const,
   passengers: ["me", "passengers"] as const,
@@ -26,6 +31,9 @@ export const queryKeys = {
   adminEnquiry: (id: string) => ["admin", "enquiries", id] as const,
   /** Every content key starts with ["admin", "content"]. */
   adminContent: (part: string) => ["admin", "content", part] as const,
+  adminPayments: (filter: object) => ["admin", "payments", filter] as const,
+  /** Every refund key starts with ["admin", "refunds"]. */
+  adminRefunds: (page: number) => ["admin", "refunds", page] as const,
   adminAuditLogs: (filter: object) => ["admin", "audit-logs", filter] as const,
   adminLocations: (filter: object) => ["admin", "locations", filter] as const,
   adminExpiringDocuments: (filter: object) =>

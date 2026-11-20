@@ -94,6 +94,16 @@ const MESSAGES: Record<string, string> = {
     "This operator has no approved air ambulance aircraft, so it cannot fly this mission. Choose another operator.",
   UPLOAD_NOT_FOUND:
     "The upload was not found. Choose the file again and retry.",
+  PAYMENT_NOT_DUE:
+    "Nothing is due on this trip right now. The page has been refreshed.",
+  PAYMENT_ALREADY_PAID:
+    "This trip has already been paid for. The page has been refreshed.",
+  PAYMENT_AMOUNT_MISMATCH:
+    "The amount due has changed. The new amount is shown: check it before you pay.",
+  PAYMENT_PROVIDER_ERROR:
+    "The payment provider did not answer. Nothing was charged. Try again in a moment.",
+  PAYMENT_SIGNATURE_INVALID:
+    "We could not confirm this payment with the provider. If money left your account it is safe: your trip will show it once the provider confirms.",
   INTERNAL_ERROR: "Something went wrong on our side. Please try again.",
 };
 

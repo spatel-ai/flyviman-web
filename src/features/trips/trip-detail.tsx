@@ -8,18 +8,22 @@ import { PriceLabel } from "@/components/shared/price-label";
 import { RecordNotFound } from "@/components/shared/record-not-found";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { Button } from "@/components/ui/button";
+import { buttonClasses } from "@/components/ui/button-classes";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { isNotFoundError } from "@/lib/api/errors";
+import { FINANCE_ROUTES_READY } from "@/lib/api/payments";
 import type { Schemas } from "@/lib/api/types";
 import { categoryLabel, formatDuration } from "@/lib/format/aircraft";
 import { formatDateTime } from "@/lib/format/date";
+import { paymentDue } from "@/lib/payments/amount-due";
 import { CancelDialog } from "./cancel-dialog";
 import { ChangeRequests } from "./change-request";
 import { useBooking, useMessages, useQuotes } from "./hooks";
 import { Messages } from "./messages";
+import { PaymentHistory } from "./payments";
 import { Quotes } from "./quotes";
-import { isInProgress, paymentDue } from "./status";
+import { isInProgress } from "./status";
 import { buildTimeline } from "./timeline";
 
 type Booking = Schemas["BookingResponseDto"];
@@ -96,7 +100,9 @@ function Loaded({ booking }: { booking: Booking }) {
 
       {due ? (
         <Card className="flex flex-col gap-3" aria-label="Payment due">
-          <h2 className="text-title">Payment due</h2>
+          <h2 className="text-title">
+            {due.kind === "deposit" ? "Deposit due" : "Payment due"}
+          </h2>
           {due.kind === "full" ? (
             <PriceLabel
               amountMinor={due.amountMinor}
@@ -105,13 +111,18 @@ function Loaded({ booking }: { booking: Booking }) {
             />
           ) : (
             <p className="text-body-sm text-muted">
-              A deposit is due. The amount is shown at checkout.
+              This trip takes a deposit now and the balance later. The deposit
+              is shown on the next page, before you pay.
             </p>
           )}
-          {/* Checkout is W4-3: until then the button is shown, disabled. */}
-          <Button disabled className="self-start">
-            Pay (coming soon)
-          </Button>
+          {/* A full page load: only the payment page's policy allows the
+              payment provider (lib/csp.ts). */}
+          <a
+            href={`/account/trips/${encodeURIComponent(booking.reference)}/pay`}
+            className={buttonClasses({ className: "self-start" })}
+          >
+            {due.kind === "deposit" ? "Pay deposit" : "Pay"}
+          </a>
         </Card>
       ) : null}
 
@@ -164,6 +175,10 @@ function Loaded({ booking }: { booking: Booking }) {
           </p>
         )}
       </section>
+
+      {FINANCE_ROUTES_READY ? (
+        <PaymentHistory reference={booking.reference} />
+      ) : null}
 
       <Quotes reference={booking.reference} />
       <Messages

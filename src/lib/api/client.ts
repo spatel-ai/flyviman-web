@@ -25,6 +25,11 @@ interface ErrorEnvelope {
 export interface ApiRequestInit extends Omit<RequestInit, "body"> {
   /** Sent as JSON. */
   body?: unknown;
+  /**
+   * JSON text sent exactly as given, instead of `body`: for a signed body
+   * whose bytes must not change (the mock gateway's notice, development only).
+   */
+  rawBody?: string;
   /** Query string values; `undefined` and empty strings are left out. */
   query?: Record<string, string | number | undefined>;
 }
@@ -59,7 +64,7 @@ function csrfToken(): string | undefined {
 
 async function send(
   path: string,
-  { body, headers, query, ...init }: ApiRequestInit,
+  { body, rawBody, headers, query, ...init }: ApiRequestInit,
 ): Promise<Response> {
   const method = (init.method ?? "GET").toUpperCase();
   const csrf = SAFE_METHODS.has(method) ? undefined : csrfToken();
@@ -70,11 +75,13 @@ async function send(
       credentials: "include",
       headers: {
         Accept: "application/json",
-        ...(body === undefined ? {} : { "Content-Type": "application/json" }),
+        ...(body === undefined && rawBody === undefined
+          ? {}
+          : { "Content-Type": "application/json" }),
         ...(csrf ? { [CSRF_HEADER]: csrf } : {}),
         ...headers,
       },
-      body: body === undefined ? undefined : JSON.stringify(body),
+      body: rawBody ?? (body === undefined ? undefined : JSON.stringify(body)),
     });
   } catch {
     throw new ApiError(

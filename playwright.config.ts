@@ -74,13 +74,19 @@ export default defineConfig({
       timeout: 180_000,
       // API_PROXY=1 runs the journeys as a hosted proof of concept does:
       // the browser reaches the API through this site's /api/v1 (D-065).
+      // NEXT_PUBLIC_MOCK_CHECKOUT shows the mock gateway's test checkout in
+      // this production build, for the payment journeys; never deployed.
       env: process.env.API_PROXY
         ? {
             NEXT_PUBLIC_API_URL: `${ORIGIN}/api/v1`,
+            NEXT_PUBLIC_MOCK_CHECKOUT: "1",
             API_PROXY_TARGET: API_ORIGIN,
             ...(SIGNED ? { WEB_PROXY_SECRET, TRUST_REAL_IP: "1" } : {}),
           }
-        : { NEXT_PUBLIC_API_URL: `${API_ORIGIN}/api/v1` },
+        : {
+            NEXT_PUBLIC_API_URL: `${API_ORIGIN}/api/v1`,
+            NEXT_PUBLIC_MOCK_CHECKOUT: "1",
+          },
     },
   ],
 });

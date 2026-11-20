@@ -2,6 +2,7 @@ import type { NextConfig } from "next";
 import { proxySecret } from "./src/lib/client-address";
 import {
   CHECKOUT_PAGE,
+  CHECKOUT_PAYMENT_PERMISSION,
   contentSecurityPolicy,
   cspHeaderName,
 } from "./src/lib/csp";
@@ -40,6 +41,8 @@ function csp(checkout: boolean) {
  * The Content-Security-Policy limits what the pages may load and run
  * (lib/csp.ts).
  */
+const PERMISSIONS = "camera=(), microphone=(), geolocation=()";
+
 const SECURITY_HEADERS = [
   csp(false),
   { key: "X-Frame-Options", value: "DENY" },
@@ -47,7 +50,7 @@ const SECURITY_HEADERS = [
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
   {
     key: "Permissions-Policy",
-    value: "camera=(), microphone=(), geolocation=(), payment=()",
+    value: `${PERMISSIONS}, payment=()`,
   },
   ...(process.env.NODE_ENV === "production"
     ? [
@@ -82,8 +85,17 @@ const nextConfig: NextConfig = {
   async headers() {
     return [
       { source: "/:path*", headers: SECURITY_HEADERS },
-      // Listed after the general entry, so its policy is the one sent.
-      { source: CHECKOUT_PAGE, headers: [csp(true)] },
+      // Listed after the general entry, so its headers are the ones sent.
+      {
+        source: CHECKOUT_PAGE,
+        headers: [
+          csp(true),
+          {
+            key: "Permissions-Policy",
+            value: `${PERMISSIONS}, ${CHECKOUT_PAYMENT_PERMISSION}`,
+          },
+        ],
+      },
       { source: "/reset-password", headers: NO_REFERRER },
       { source: "/verify", headers: NO_REFERRER },
     ];
