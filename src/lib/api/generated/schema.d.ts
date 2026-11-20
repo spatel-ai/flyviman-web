@@ -2518,6 +2518,250 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/air-ambulance/requests": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * The caller’s air ambulance requests, newest first
+     * @description Summary rows only; no medical or contact details.
+     */
+    get: operations["AirAmbulanceController_list"];
+    put?: never;
+    /**
+     * Submit an air ambulance request
+     * @description Records the request as `SUBMITTED` with the medical details encrypted; operations take it from there. Both locations must be active (404 `NOT_FOUND`, field in `details`) and different (400 `VALIDATION_ERROR`). The answer holds the reference, status and `emergencyNotice` only. Medical details are never logged or audited. A repeat with the same `Idempotency-Key` and body returns the first answer.
+     */
+    post: operations["AirAmbulanceController_create"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/air-ambulance/requests/{reference}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * One of the caller’s requests: status, quotation, contacts, medical details
+     * @description Every read of the medical details is audited (`air_ambulance_request.medical_read`, no medical data). Another customer’s request is 404.
+     */
+    get: operations["AirAmbulanceController_get"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/air-ambulance/requests/{reference}/documents": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Attach an uploaded medical document
+     * @description Reserve the upload with `POST /uploads/presign` (purpose `AIR_AMBULANCE_DOCUMENT`: PDF, JPEG or PNG, 10 MB at most), send the file, then attach it here. 422 `UPLOAD_NOT_FOUND` for a file not uploaded or not the caller’s; 409 `AIR_AMBULANCE_CLOSED` once the request is closed; 409 `AIR_AMBULANCE_DOCUMENT_LIMIT_REACHED` at 10 documents. Downloads (`GET /documents/:id/download`) are open only to those who may read the medical details, and audited.
+     */
+    post: operations["AirAmbulanceController_attach"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/air-ambulance/requests/{reference}/quote/accept": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Accept the quotation
+     * @description QUOTED to ACCEPTED. Send the amount shown as `expectedAmountMinor`: 409 `AIR_AMBULANCE_QUOTE_CHANGED` (current amount in `details`) if it differs; 409 `AIR_AMBULANCE_QUOTE_UNAVAILABLE` if the operator can no longer fly it; 409 `AIR_AMBULANCE_INVALID_TRANSITION` when there is no open quotation. Still a request: only operations confirm, after verifying the mission.
+     */
+    post: operations["AirAmbulanceController_accept"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/air-ambulance/requests/{reference}/quote/decline": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Decline the quotation
+     * @description QUOTED to DECLINED. 409 `AIR_AMBULANCE_INVALID_TRANSITION` when there is no open quotation.
+     */
+    post: operations["AirAmbulanceController_decline"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/air-ambulance/requests/{reference}/cancel": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Withdraw the request
+     * @description To CANCELLED from any status before COMPLETED. 409 `AIR_AMBULANCE_INVALID_TRANSITION` once closed.
+     */
+    post: operations["AirAmbulanceController_cancel"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/admin/air-ambulance/requests": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * The request queue, newest first
+     * @description Filter by `status` and `assignee` (`me`, `none` for unassigned, or a user id). No medical or contact details.
+     */
+    get: operations["AdminAirAmbulanceController_list"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/admin/air-ambulance/requests/{reference}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * One request, with its timeline and feasibility checklist
+     * @description `medical` is null unless the caller is the assigned owner or a super administrator; returning it is audited (`air_ambulance_request.medical_read`).
+     */
+    get: operations["AdminAirAmbulanceController_get"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/admin/air-ambulance/requests/{reference}/assign": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Assign an operations owner
+     * @description The caller when `assigneeId` is left out. The first assignment moves SUBMITTED to ASSIGNED. Operations may take an unassigned request or hand on their own (403 `AIR_AMBULANCE_NOT_OWNER` otherwise); a super administrator may reassign any. 422 `AIR_AMBULANCE_ASSIGNEE_INVALID` unless the owner is an active OPS or SUPER_ADMIN user; 409 `AIR_AMBULANCE_CLOSED` once closed. Audited.
+     */
+    post: operations["AdminAirAmbulanceController_assign"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/admin/air-ambulance/requests/{reference}/status": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    /**
+     * Move the request through the workflow
+     * @description ASSIGNED to SOURCING to FEASIBILITY_CHECK; ACCEPTED to CONFIRMED; CONFIRMED to COMPLETED; DECLINED or CANCELLED from any open status. CONFIRMED needs every feasibility item checked (422 `AIR_AMBULANCE_FEASIBILITY_INCOMPLETE`, the missing items in `details`) and the selected operator still approved (409 `OPERATOR_NOT_APPROVED`); it is never reached any other way (rule 7). 409 `AIR_AMBULANCE_INVALID_TRANSITION` for any other move. Writes a timeline entry and an audit record.
+     */
+    patch: operations["AdminAirAmbulanceController_move"];
+    trace?: never;
+  };
+  "/api/v1/admin/air-ambulance/requests/{reference}/feasibility": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    /**
+     * Record the feasibility checklist
+     * @description The whole checklist, as it stands, while FEASIBILITY_CHECK, QUOTED or ACCEPTED (409 `AIR_AMBULANCE_INVALID_TRANSITION` otherwise). Each recording is a timeline entry and an audit record.
+     */
+    put: operations["AdminAirAmbulanceController_feasibility"];
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/admin/air-ambulance/requests/{reference}/quote": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Send the customer a quotation
+     * @description From an approved operator (409 `OPERATOR_NOT_APPROVED`; 404 for an unknown operator), labelled `QUOTE`. FEASIBILITY_CHECK to QUOTED; while QUOTED it replaces the last quotation. 409 `AIR_AMBULANCE_INVALID_TRANSITION` in any other status. Audited with the amount and operator.
+     */
+    post: operations["AdminAirAmbulanceController_quote"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/v1/enquiries": {
     parameters: {
       query?: never;
@@ -3199,7 +3443,8 @@ export interface components {
       | "OPERATOR_DOCUMENT"
       | "AIRCRAFT_PHOTO"
       | "AIRCRAFT_FLOOR_PLAN"
-      | "AIRCRAFT_DOCUMENT";
+      | "AIRCRAFT_DOCUMENT"
+      | "AIR_AMBULANCE_DOCUMENT";
     PresignUploadDto: {
       purpose: components["schemas"]["FilePurpose"];
       /** @example air-operator-certificate.pdf */
@@ -5274,6 +5519,318 @@ export interface components {
     WebhookAckResponseDto: {
       /** @example true */
       received: boolean;
+    };
+    /** @enum {string} */
+    PatientMobility: "AMBULATORY" | "ASSISTED" | "NON_AMBULATORY";
+    MedicalDetailsInputDto: {
+      /** @description Diagnosis and current condition. Stored encrypted. */
+      patientCondition: string;
+      mobility: components["schemas"]["PatientMobility"];
+      stretcherRequired: boolean;
+      oxygenRequired: boolean;
+      /** @description Stored encrypted. */
+      medicalStaffRequired?: string;
+      /** @description Stored encrypted. */
+      equipmentRequired?: string;
+      /** @description Stored encrypted. */
+      specialisedCare?: string;
+      /** @description Stored encrypted. */
+      notes?: string;
+    };
+    CreateAirAmbulanceRequestDto: {
+      /** @example Asha Rao */
+      contactName: string;
+      /**
+       * @description E.164.
+       * @example +919876543210
+       */
+      contactPhone: string;
+      contactEmail?: string;
+      emergencyContactName?: string;
+      /** @description E.164. */
+      emergencyContactPhone?: string;
+      /**
+       * Format: uuid
+       * @description The nearest airport or helipad to the patient.
+       */
+      originLocationId: string;
+      /**
+       * Format: uuid
+       * @description The nearest airport or helipad to the receiving facility.
+       */
+      destinationLocationId: string;
+      /** @description Where the patient is collected, for example a hospital. Stored encrypted. */
+      pickupAddress?: string;
+      /** @description The receiving hospital or facility. Stored encrypted. */
+      destinationFacility?: string;
+      /**
+       * Format: date-time
+       * @description UTC.
+       */
+      preferredAt: string;
+      /** @default 1 */
+      patientCount: number;
+      /** @default 0 */
+      accompanyingPersons: number;
+      medical: components["schemas"]["MedicalDetailsInputDto"];
+    };
+    /** @enum {string} */
+    AirAmbulanceStatus:
+      | "SUBMITTED"
+      | "ASSIGNED"
+      | "SOURCING"
+      | "FEASIBILITY_CHECK"
+      | "QUOTED"
+      | "ACCEPTED"
+      | "CONFIRMED"
+      | "COMPLETED"
+      | "DECLINED"
+      | "CANCELLED";
+    AirAmbulanceCreatedDto: {
+      /** @example FLY-AA-7K2M9Q */
+      reference: string;
+      status: components["schemas"]["AirAmbulanceStatus"];
+      /** @example For an immediate medical emergency, call 112 or your local emergency services now. An air ambulance request is not an emergency response. */
+      emergencyNotice: string;
+      /** Format: date-time */
+      createdAt: string;
+    };
+    AirAmbulanceQuotePriceDto: {
+      /** @description Always `QUOTE`: an operator’s price sent by operations. */
+      priceType: components["schemas"]["PriceType"];
+      /** @description Paise. */
+      amountMinor: number;
+      /** @example INR */
+      currency: string;
+    };
+    AirAmbulanceSummaryDto: {
+      /** @example FLY-AA-7K2M9Q */
+      reference: string;
+      status: components["schemas"]["AirAmbulanceStatus"];
+      originName: string | null;
+      destinationName: string | null;
+      /** Format: date-time */
+      preferredAt: string;
+      price: components["schemas"]["AirAmbulanceQuotePriceDto"] | null;
+      /** Format: date-time */
+      createdAt: string;
+      /** @example For an immediate medical emergency, call 112 or your local emergency services now. An air ambulance request is not an emergency response. */
+      emergencyNotice: string;
+    };
+    AirAmbulanceQuoteDto: {
+      price: components["schemas"]["AirAmbulanceQuotePriceDto"];
+      operatorName: string | null;
+      /** @description Service and cancellation conditions, shown before the customer accepts (rule 9). */
+      conditions: string | null;
+      /** Format: date-time */
+      quotedAt: string;
+    };
+    AirAmbulanceDocumentDto: {
+      /**
+       * Format: uuid
+       * @description Download with `GET /documents/:id/download`.
+       */
+      fileId: string;
+      fileName: string;
+      sizeBytes: number;
+    };
+    MedicalDetailsDto: {
+      patientCondition: string;
+      mobility: components["schemas"]["PatientMobility"];
+      stretcherRequired: boolean;
+      oxygenRequired: boolean;
+      medicalStaffRequired: string | null;
+      equipmentRequired: string | null;
+      specialisedCare: string | null;
+      notes: string | null;
+      documents: components["schemas"]["AirAmbulanceDocumentDto"][];
+    };
+    AirAmbulanceTimelineEntryDto: {
+      status: components["schemas"]["AirAmbulanceStatus"];
+      /** Format: date-time */
+      at: string;
+    };
+    AirAmbulanceRequestDto: {
+      /** @example FLY-AA-7K2M9Q */
+      reference: string;
+      /** @description Everything before CONFIRMED is a request, never a confirmed booking (rule 7). */
+      status: components["schemas"]["AirAmbulanceStatus"];
+      contactName: string;
+      contactPhone: string;
+      contactEmail: string | null;
+      emergencyContactName: string | null;
+      emergencyContactPhone: string | null;
+      /** Format: uuid */
+      originLocationId: string;
+      originName: string | null;
+      /** Format: uuid */
+      destinationLocationId: string;
+      destinationName: string | null;
+      /** @description Stored encrypted; null unless the caller may read the medical details. */
+      pickupAddress: string | null;
+      /** @description Stored encrypted; null unless the caller may read the medical details. */
+      destinationFacility: string | null;
+      /** Format: date-time */
+      preferredAt: string;
+      patientCount: number;
+      accompanyingPersons: number;
+      quote: components["schemas"]["AirAmbulanceQuoteDto"] | null;
+      /** Format: date-time */
+      confirmedAt: string | null;
+      /** Format: date-time */
+      completedAt: string | null;
+      /** Format: date-time */
+      closedAt: string | null;
+      /** @description Only for those who may read medical details; every read is audited. */
+      medical: components["schemas"]["MedicalDetailsDto"] | null;
+      timeline: components["schemas"]["AirAmbulanceTimelineEntryDto"][];
+      /** Format: date-time */
+      createdAt: string;
+      /** Format: date-time */
+      updatedAt: string;
+      /** @example For an immediate medical emergency, call 112 or your local emergency services now. An air ambulance request is not an emergency response. */
+      emergencyNotice: string;
+    };
+    AttachAirAmbulanceDocumentDto: {
+      /**
+       * Format: uuid
+       * @description From `POST /uploads/presign` with purpose `AIR_AMBULANCE_DOCUMENT`, after the upload.
+       */
+      fileId: string;
+    };
+    AcceptAirAmbulanceQuoteDto: {
+      /** @description Paise: the quotation the customer saw. */
+      expectedAmountMinor: number;
+    };
+    AdminAirAmbulanceSummaryDto: {
+      /** @example FLY-AA-7K2M9Q */
+      reference: string;
+      status: components["schemas"]["AirAmbulanceStatus"];
+      originName: string | null;
+      destinationName: string | null;
+      /** Format: date-time */
+      preferredAt: string;
+      patientCount: number;
+      /** Format: uuid */
+      assignedToId: string | null;
+      price: components["schemas"]["AirAmbulanceQuotePriceDto"] | null;
+      /** Format: date-time */
+      createdAt: string;
+    };
+    FeasibilityStateDto: {
+      operatorAcceptance: boolean;
+      aircraft: boolean;
+      crew: boolean;
+      medicalTeam: boolean;
+      medicalSuitability: boolean;
+      equipment: boolean;
+      landingPermissions: boolean;
+      clearances: boolean;
+      weather: boolean;
+      /** @description Every item checked: CONFIRMED is allowed. */
+      complete: boolean;
+    };
+    AdminTimelineEntryDto: {
+      fromStatus: components["schemas"]["AirAmbulanceStatus"] | null;
+      toStatus: components["schemas"]["AirAmbulanceStatus"];
+      /** Format: uuid */
+      actorId: string | null;
+      actorRole: components["schemas"]["Role"] | null;
+      /** @description What the step recorded (`kind`: ASSIGNMENT, FEASIBILITY or QUOTE). Never medical or contact data. */
+      payload: Record<string, never> | null;
+      /** Format: date-time */
+      at: string;
+    };
+    AdminAirAmbulanceRequestDto: {
+      /** @example FLY-AA-7K2M9Q */
+      reference: string;
+      /** @description Everything before CONFIRMED is a request, never a confirmed booking (rule 7). */
+      status: components["schemas"]["AirAmbulanceStatus"];
+      contactName: string;
+      contactPhone: string;
+      contactEmail: string | null;
+      emergencyContactName: string | null;
+      emergencyContactPhone: string | null;
+      /** Format: uuid */
+      originLocationId: string;
+      originName: string | null;
+      /** Format: uuid */
+      destinationLocationId: string;
+      destinationName: string | null;
+      /** @description Stored encrypted; null unless the caller may read the medical details. */
+      pickupAddress: string | null;
+      /** @description Stored encrypted; null unless the caller may read the medical details. */
+      destinationFacility: string | null;
+      /** Format: date-time */
+      preferredAt: string;
+      patientCount: number;
+      accompanyingPersons: number;
+      quote: components["schemas"]["AirAmbulanceQuoteDto"] | null;
+      /** Format: date-time */
+      confirmedAt: string | null;
+      /** Format: date-time */
+      completedAt: string | null;
+      /** Format: date-time */
+      closedAt: string | null;
+      /** @description Only for those who may read medical details; every read is audited. */
+      medical: components["schemas"]["MedicalDetailsDto"] | null;
+      timeline: components["schemas"]["AirAmbulanceTimelineEntryDto"][];
+      /** Format: date-time */
+      createdAt: string;
+      /** Format: date-time */
+      updatedAt: string;
+      /** @example For an immediate medical emergency, call 112 or your local emergency services now. An air ambulance request is not an emergency response. */
+      emergencyNotice: string;
+      /** Format: uuid */
+      assignedToId: string | null;
+      /** Format: uuid */
+      selectedOperatorId: string | null;
+      feasibility: components["schemas"]["FeasibilityStateDto"] | null;
+      events: components["schemas"]["AdminTimelineEntryDto"][];
+    };
+    AssignAirAmbulanceDto: {
+      /**
+       * Format: uuid
+       * @description An active OPS or SUPER_ADMIN user. Left out: the caller takes the request.
+       */
+      assigneeId?: string;
+    };
+    MoveAirAmbulanceDto: {
+      /** @enum {string} */
+      status:
+        | "SOURCING"
+        | "FEASIBILITY_CHECK"
+        | "CONFIRMED"
+        | "COMPLETED"
+        | "DECLINED"
+        | "CANCELLED";
+    };
+    FeasibilityChecklistDto: {
+      operatorAcceptance: boolean;
+      aircraft: boolean;
+      crew: boolean;
+      medicalTeam: boolean;
+      medicalSuitability: boolean;
+      equipment: boolean;
+      landingPermissions: boolean;
+      clearances: boolean;
+      weather: boolean;
+    };
+    QuoteAirAmbulanceDto: {
+      /**
+       * Format: uuid
+       * @description An approved operator.
+       */
+      operatorId: string;
+      /** @description Paise. */
+      amountMinor: number;
+      /**
+       * @example INR
+       * @enum {string}
+       */
+      currency: "INR";
+      /** @description Service and cancellation conditions shown to the customer before accepting (rule 9). No medical details. */
+      conditions: string;
     };
     /** @enum {string} */
     EnquiryTopic:
@@ -8890,6 +9447,313 @@ export interface operations {
           [name: string]: unknown;
         };
         content?: never;
+      };
+    };
+  };
+  AirAmbulanceController_list: {
+    parameters: {
+      query?: {
+        page?: number;
+        pageSize?: number;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["AirAmbulanceSummaryDto"][];
+        };
+      };
+    };
+  };
+  AirAmbulanceController_create: {
+    parameters: {
+      query?: never;
+      header: {
+        /** @description A UUID, new for each request and reused on retry. */
+        "Idempotency-Key": string;
+      };
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["CreateAirAmbulanceRequestDto"];
+      };
+    };
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["AirAmbulanceCreatedDto"];
+        };
+      };
+    };
+  };
+  AirAmbulanceController_get: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        reference: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["AirAmbulanceRequestDto"];
+        };
+      };
+    };
+  };
+  AirAmbulanceController_attach: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        reference: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["AttachAirAmbulanceDocumentDto"];
+      };
+    };
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["AirAmbulanceDocumentDto"];
+        };
+      };
+    };
+  };
+  AirAmbulanceController_accept: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        reference: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["AcceptAirAmbulanceQuoteDto"];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["AirAmbulanceSummaryDto"];
+        };
+      };
+    };
+  };
+  AirAmbulanceController_decline: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        reference: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["AirAmbulanceSummaryDto"];
+        };
+      };
+    };
+  };
+  AirAmbulanceController_cancel: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        reference: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["AirAmbulanceSummaryDto"];
+        };
+      };
+    };
+  };
+  AdminAirAmbulanceController_list: {
+    parameters: {
+      query?: {
+        page?: number;
+        pageSize?: number;
+        status?: components["schemas"]["AirAmbulanceStatus"];
+        /** @description `me` for the caller’s requests, `none` for unassigned ones, or an owner’s user id. */
+        assignee?: string;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["AdminAirAmbulanceSummaryDto"][];
+        };
+      };
+    };
+  };
+  AdminAirAmbulanceController_get: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        reference: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["AdminAirAmbulanceRequestDto"];
+        };
+      };
+    };
+  };
+  AdminAirAmbulanceController_assign: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        reference: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["AssignAirAmbulanceDto"];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["AdminAirAmbulanceSummaryDto"];
+        };
+      };
+    };
+  };
+  AdminAirAmbulanceController_move: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        reference: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["MoveAirAmbulanceDto"];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["AdminAirAmbulanceSummaryDto"];
+        };
+      };
+    };
+  };
+  AdminAirAmbulanceController_feasibility: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        reference: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["FeasibilityChecklistDto"];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["AdminAirAmbulanceSummaryDto"];
+        };
+      };
+    };
+  };
+  AdminAirAmbulanceController_quote: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        reference: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["QuoteAirAmbulanceDto"];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["AdminAirAmbulanceSummaryDto"];
+        };
       };
     };
   };
