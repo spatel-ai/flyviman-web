@@ -9,7 +9,7 @@ export default async function OperatorRequestPage({
 }: PageProps<"/operator/requests/[reference]">) {
   const { reference } = await params;
   return (
-    <RequestsAccess title="Request">
+    <RequestsAccess title="Request" approvedOnly={false}>
       <RequestDetail reference={reference} />
     </RequestsAccess>
   );

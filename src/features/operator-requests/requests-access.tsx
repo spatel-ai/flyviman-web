@@ -11,16 +11,20 @@ import { can, isOperatorAdmin } from "@/lib/operator-access";
  */
 export async function RequestsAccess({
   title,
+  approvedOnly = true,
   children,
 }: {
   title: string;
+  /** The list waits for approval; a request's own page leaves that to the API (404 for none). */
+  approvedOnly?: boolean;
   children: ReactNode;
 }) {
   const { data: operator } =
     await serverGet<Schemas["OperatorMeResponseDto"]>("operator/me");
   const allowed =
     isOperatorAdmin(operator.access) || can(operator.access, "MANAGE_BOOKINGS");
-  if (allowed && operator.status === "APPROVED") return <>{children}</>;
+  if (allowed && (!approvedOnly || operator.status === "APPROVED"))
+    return <>{children}</>;
   return (
     <>
       <h1 className="text-h2">{title}</h1>
