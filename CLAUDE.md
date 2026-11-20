@@ -52,7 +52,7 @@ src/
   app/
     (customer)/            customer site: home, search (landing, [searchId], [searchId]/[resultId]), about, services,
                            charter, charter/fleet, aviation-solutions, aircraft-sales (and [slug]), pilots, contact,
-                           account/ (profile, passengers, notifications), legal/[slug], legal/image-credits,
+                           account/ (profile, passengers, notifications, trips, trips/[reference]), book/[searchId]/[resultId] (request a flight), legal/[slug], legal/image-credits,
                            compare/home-v1 (the frozen pre-M12 home, noindex and unlinked, until the owner chooses; D-110)
     (auth)/                login, register, verify, forgot-password, reset-password, operator/register
     (operator)/operator/   operator portal: dashboard, onboarding, aircraft (list, new, [id]),
@@ -66,7 +66,7 @@ src/
     ui/                    design-system primitives (Button; buttonClasses in button-classes.ts, Input, Select, Checkbox, Card, Badge,
                            Dialog and ConfirmDialog, Sheet, Tabs, Toast, Skeleton, Table and Pagination, Textarea)
     shared/                cross-feature pieces (PriceLabel, StatusBadge, ExpiryBadge, EmptyState, FormAlert, LoadError,
-                           ClientRedirect, RecordNotFound, LocationField; restrictions/: RestrictionsEditor and its schema)
+                           ClientRedirect, RecordNotFound, LocationField, CancellationTerms; restrictions/: RestrictionsEditor and its schema)
     layout/                customer: SiteHeader (SiteNavLinks, SITE_NAV, MoreMenu on desktop, MoreSheet on phones),
                            SiteTabBar and MobileTabBar (phone tab bar), StickyActionBar (phone detail pages), SiteFooter;
                            portals: AppShell, NavLinks, MobileNav, UserMenu
@@ -81,7 +81,7 @@ src/
     theme/                 ThemeScript, ThemeSwitch (Light or Dark; light by default, D-108)
   content/                 marketing copy (home, about, services, charter, fleet, contact, aviation-solutions,
                            aircraft-sales, pilots, search), site photographs (images/) and image-credits.ts
-  features/<feature>/      feature UI, hooks, schemas (auth, account, home, home-v1 (frozen), about, services, charter,
+  features/<feature>/      feature UI, hooks, schemas (auth, account, booking-request, trips, home, home-v1 (frozen), about, services, charter,
                            contact, legal, aviation-solutions, aircraft-sales, pilots,
                            search (results, filters, detail), search-landing,
                            operator-onboarding, operator-aircraft, operator-availability, operator-staff, operator-pricing, operator-requests,
