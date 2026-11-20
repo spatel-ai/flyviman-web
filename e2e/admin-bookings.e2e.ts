@@ -27,12 +27,19 @@ test("operations search a booking, open it, take it, add a note and override its
   await main.getByRole("textbox", { name: "Search" }).fill(trip.reference);
   await main.getByRole("button", { name: "Search" }).click();
   await expect(page).toHaveURL(new RegExp(`q=${trip.reference}`));
+  // The table shows on desktop and cards on phones: look at the visible one.
   // Booking and payment status are two badges; the price says what it is.
   const row = main.getByRole("link", { name: trip.reference });
   await expect(row).toBeVisible();
-  await expect(main.getByText("Awaiting operator").first()).toBeVisible();
-  await expect(main.getByText("Unpaid").first()).toBeVisible();
-  await expect(main.getByText("Estimate").first()).toBeVisible();
+  await expect(
+    main.getByText("Awaiting operator").locator("visible=true").first(),
+  ).toBeVisible();
+  await expect(
+    main.getByText("Unpaid").locator("visible=true").first(),
+  ).toBeVisible();
+  await expect(
+    main.getByText("Estimate").locator("visible=true").first(),
+  ).toBeVisible();
   await expectNoSidewaysScroll(page);
 
   await row.click();
