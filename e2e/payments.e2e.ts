@@ -6,6 +6,7 @@ import {
   requestThroughApi,
   searchFor,
 } from "./support/bookings";
+import { asStaff } from "./support/operators";
 
 /**
  * Paying for a trip on the mock gateway (M9, W4-3). The test checkout
@@ -183,4 +184,69 @@ test("only the payment page allows Razorpay, and the browser's payment API", asy
   const trip = await headers("/account/trips/FLY-BK-1");
   expect(trip["content-security-policy"]).not.toContain("razorpay");
   expect(trip["permissions-policy"]).toContain("payment=()");
+});
+
+test("finance refunds a paid trip the customer cancelled, from Due to History", async ({
+  browser,
+}) => {
+  test.slow();
+  const { page, reference } = await tripAwaitingPayment(browser);
+  const main = await openPayment(page, reference);
+  await main.getByRole("button", { name: /^Pay (now|deposit)$/ }).click();
+  await page
+    .getByRole("dialog", { name: "Test checkout" })
+    .getByRole("button", { name: "Pay (test)" })
+    .click();
+  await expect(
+    main.getByRole("heading", { name: "Payment received" }),
+  ).toBeVisible();
+
+  // The trip lists the payment with its receipt, which is not a tax invoice.
+  await main.getByRole("link", { name: "Back to your trip" }).click();
+  const receiptLink = main.getByRole("link", { name: /^Receipt for / });
+  await expect(receiptLink).toBeVisible();
+  await receiptLink.click();
+  await expect(
+    main.getByRole("heading", { level: 1, name: "Payment receipt" }),
+  ).toBeVisible();
+  await expect(main.getByText(/not a GST tax invoice/)).toBeVisible();
+  await main.getByRole("link", { name: `Back to trip ${reference}` }).click();
+
+  // The customer cancels after seeing the conditions.
+  await page.getByRole("button", { name: "Cancel this trip" }).click();
+  const cancel = page.getByRole("dialog");
+  await expect(
+    cancel.getByRole("heading", { name: "Cancellation conditions" }),
+  ).toBeVisible();
+  await cancel.getByRole("button", { name: "Cancel this trip" }).click();
+  await expect(badges(page).booking).toHaveText("Cancelled");
+  await page.close();
+
+  // Finance sees it under Due and refunds it with a reason.
+  const finance = await asStaff(browser, "finance");
+  const admin = finance.page.getByRole("main");
+  await finance.page.goto("/admin/refunds");
+  await admin.getByRole("button", { name: `Refund ${reference}` }).click();
+  const dialog = finance.page.getByRole("dialog", {
+    name: `Refund ${reference}`,
+  });
+  await expect(dialog.getByLabel(/Amount to refund/)).not.toHaveValue("");
+  await dialog.getByRole("button", { name: "Refund" }).click();
+  await expect(dialog.getByText(/Give a reason/)).toBeVisible();
+  await dialog
+    .getByRole("textbox", { name: "Reason" })
+    .fill("Customer cancelled within the conditions");
+  await dialog.getByRole("button", { name: "Refund" }).click();
+  await expect(dialog).toBeHidden();
+  await expect(
+    admin.getByRole("button", { name: `Refund ${reference}` }),
+  ).toHaveCount(0);
+
+  await admin.getByRole("tab", { name: "History" }).click();
+  const row = admin.getByRole("row", { name: new RegExp(reference) });
+  await expect(row).toBeVisible();
+  await expect(
+    row.getByText("Customer cancelled within the conditions"),
+  ).toBeVisible();
+  await finance.context.close();
 });
