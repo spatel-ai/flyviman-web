@@ -140,7 +140,7 @@ test("finance creates a promotion code and ends it", async ({ page }) => {
 test("operations do not see promotions", async ({ page }) => {
   await signIn(page, "ops", "/admin/promotions");
   await expect(
-    page.getByText("Promotions are managed by finance."),
+    page.getByRole("main").getByText("Promotions are managed by finance."),
   ).toBeVisible();
   await expect(page.getByRole("button", { name: "New promotion" })).toHaveCount(
     0,
