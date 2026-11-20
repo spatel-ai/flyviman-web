@@ -140,11 +140,15 @@ test("a customer accepts the operator's quote after reading its conditions", asy
   ).toBeVisible();
   await dialog.getByRole("button", { name: "Accept quote" }).click();
 
+  // Accepting confirms the price and asks for payment at once (W3-3).
   await expect(
-    main.getByText("Price confirmed", { exact: true }).first(),
+    main.getByText("Awaiting payment", { exact: true }).first(),
   ).toBeVisible();
   await expect(main.getByText("Confirmed price").first()).toBeVisible();
   await expect(main.getByText("You accepted this quote.")).toBeVisible();
+  await expect(
+    main.getByLabel("Payment due").getByRole("link", { name: /^Pay/ }),
+  ).toBeVisible();
   await operator.close();
 });
 
