@@ -171,3 +171,17 @@ export async function askQuestion(
   );
   expect(response.status()).toBe(200);
 }
+
+/**
+ * The operator accepts the request at its price: the booking moves on to
+ * `AWAITING_PAYMENT` (W3-3).
+ */
+export async function acceptRequest(operator: Page, reference: string) {
+  const response = await operator.request.post(
+    `${API_URL}operator/booking-requests/${reference}/accept`,
+    {
+      headers: { ...(await csrf(operator)), "Idempotency-Key": randomUUID() },
+    },
+  );
+  expect(response.status()).toBe(200);
+}

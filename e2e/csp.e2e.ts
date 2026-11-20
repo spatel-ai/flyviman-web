@@ -57,7 +57,7 @@ test("every page carries the enforced policy; Razorpay only on payment", async (
     expect(value, path).not.toContain("razorpay");
   }
   // Signed out, the payment page redirects to sign-in, with the policy.
-  expect(await policy("/book/FV-1/payment")).toContain(
+  expect(await policy("/account/trips/FLY-BK-1/pay")).toContain(
     "https://checkout.razorpay.com",
   );
 });
