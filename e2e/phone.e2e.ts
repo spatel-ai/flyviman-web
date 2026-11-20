@@ -50,7 +50,7 @@ test("the landing page's charter card leads to a labelled result and an enquiry"
   // desktop it is in the page. Either way the label and the note are shown
   // beside it (rules 1, 9).
   const scope = isMobile
-    ? page.getByRole("region", { name: "Request this aircraft" })
+    ? page.getByRole("region", { name: "Request this flight" })
     : page.locator("main");
   if (isMobile) await expectBarAboveTabBar(page, scope);
   await expect(
@@ -68,14 +68,12 @@ test("the landing page's charter card leads to a labelled result and an enquiry"
   ).toBeVisible();
 
   await scope
-    .getByRole("link", { name: "Request this aircraft" })
+    .getByRole("link", { name: "Request this flight" })
     .filter({ visible: true })
     .first()
     .click();
-  await expect(page).toHaveURL(/\/contact\?topic=PRIVATE_CHARTER/);
-  await expect(page.getByRole("textbox", { name: "Message" })).toHaveValue(
-    /I would like to request the .+ Search reference/,
-  );
+  // A visitor with no session is sent to sign in and brought back.
+  await expect(page).toHaveURL(/\/login\?next=%2Fbook%2F/);
 });
 
 /**

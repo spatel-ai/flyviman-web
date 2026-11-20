@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 
 const ITEMS = [
   { href: "/account", label: "Profile" },
+  { href: "/account/trips", label: "Trips" },
   { href: "/account/passengers", label: "Saved passengers" },
   { href: "/account/notifications", label: "Notifications" },
 ];
@@ -19,7 +20,9 @@ export function AccountNav() {
     >
       <ul className="flex gap-6">
         {ITEMS.map((item) => {
-          const current = pathname === item.href;
+          const current =
+            pathname === item.href ||
+            (item.href !== "/account" && pathname.startsWith(`${item.href}/`));
           return (
             <li key={item.href}>
               <Link

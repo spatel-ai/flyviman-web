@@ -1,6 +1,16 @@
 /** Every TanStack Query key in one place, so invalidation cannot drift. */
 export const queryKeys = {
   me: ["me"] as const,
+  /** Every trip list key starts with ["trips"]. */
+  trips: (view: string, page: number) => ["trips", view, page] as const,
+  /** Every key for one booking starts with ["bookings", reference]. */
+  booking: (reference: string) => ["bookings", reference] as const,
+  bookingQuotes: (reference: string) =>
+    ["bookings", reference, "quotes"] as const,
+  bookingMessages: (reference: string) =>
+    ["bookings", reference, "messages"] as const,
+  cancellationQuote: (reference: string) =>
+    ["bookings", reference, "cancellation-quote"] as const,
   passengers: ["me", "passengers"] as const,
   notifications: (page: number) => ["me", "notifications", page] as const,
   policy: (slug: string) => ["policy", slug] as const,
