@@ -15,6 +15,12 @@ const values = {
   waitingFreeHours: "1",
   overnight: "50000",
   crewNight: "0",
+  minBillableHoursPer: "LEG",
+  fuelSurcharge: "",
+  permit: "",
+  navigation: "",
+  otherCharge: "",
+  otherChargeLabel: "",
 };
 
 describe("operator pricing form", () => {
@@ -29,7 +35,61 @@ describe("operator pricing form", () => {
       waitingFreeHours: 1,
       overnightMinor: 5_000_000,
       crewNightMinor: 0,
+      minBillableHoursPer: "LEG",
+      fuelSurchargePerFlightMinor: null,
+      permitPerFlightMinor: null,
+      navigationPerFlightMinor: null,
+      otherChargeMinor: null,
     });
+  });
+
+  it("sends the 4c charges in paise, the label with its charge, the per-day minimum", () => {
+    const body = toOperatorPricingBody(
+      operatorPricingSchema.parse({
+        ...values,
+        minBillableHoursPer: "DAY",
+        fuelSurcharge: "5,000",
+        permit: "2000.50",
+        navigation: "1000",
+        otherCharge: "3000",
+        otherChargeLabel: "  Catering ",
+      }),
+    );
+    expect(body).toMatchObject({
+      minBillableHoursPer: "DAY",
+      fuelSurchargePerFlightMinor: 500_000,
+      permitPerFlightMinor: 200_050,
+      navigationPerFlightMinor: 100_000,
+      otherChargeMinor: 300_000,
+      otherChargeLabel: "Catering",
+    });
+  });
+
+  it("clears the other charge without sending a label, and omits the per-day choice with no minimum", () => {
+    const body = toOperatorPricingBody(
+      operatorPricingSchema.parse({
+        ...values,
+        minBillableHours: "",
+        minBillableHoursPer: "DAY",
+        otherChargeLabel: "Left over",
+      }),
+    );
+    expect(body.otherChargeMinor).toBeNull();
+    expect(body).not.toHaveProperty("otherChargeLabel");
+    expect(body).not.toHaveProperty("minBillableHoursPer");
+  });
+
+  it("needs a name for an other charge, and refuses bad charges", () => {
+    const refused = (patch: Record<string, string>) =>
+      operatorPricingSchema.safeParse({ ...values, ...patch }).success;
+    expect(refused({ otherCharge: "3000" })).toBe(false);
+    expect(refused({ otherCharge: "3000", otherChargeLabel: "A" })).toBe(false);
+    expect(refused({ otherCharge: "3000", otherChargeLabel: "Catering" })).toBe(
+      true,
+    );
+    expect(refused({ fuelSurcharge: "lots" })).toBe(false);
+    expect(refused({ permit: "10,00,00,001" })).toBe(false);
+    expect(refused({ minBillableHoursPer: "WEEK" })).toBe(false);
   });
 
   it("sends empty fields as not set", () => {
@@ -43,6 +103,12 @@ describe("operator pricing form", () => {
       waitingFreeHours: "",
       overnight: "",
       crewNight: "",
+      minBillableHoursPer: "LEG",
+      fuelSurcharge: "",
+      permit: "",
+      navigation: "",
+      otherCharge: "",
+      otherChargeLabel: "",
     };
     expect(toOperatorPricingBody(operatorPricingSchema.parse(empty))).toEqual({
       minBillableHours: null,
@@ -54,6 +120,10 @@ describe("operator pricing form", () => {
       waitingFreeHours: null,
       overnightMinor: null,
       crewNightMinor: null,
+      fuelSurchargePerFlightMinor: null,
+      permitPerFlightMinor: null,
+      navigationPerFlightMinor: null,
+      otherChargeMinor: null,
     });
   });
 
@@ -99,7 +169,6 @@ describe("operator pricing form", () => {
         waitingFreeHours: null,
         overnightMinor: null,
         crewNightMinor: null,
-        // 4c charges have no fields on this form yet (W3).
         minBillableHoursPer: null,
         fuelSurchargePerFlightMinor: null,
         permitPerFlightMinor: null,

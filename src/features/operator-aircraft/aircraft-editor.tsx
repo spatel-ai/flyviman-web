@@ -323,7 +323,12 @@ export function AircraftEditor({ id }: { id: string }) {
           </form>
         )}
       </section>
-      {isOperatorAdmin(access) ? <AircraftPricing aircraftId={id} /> : null}
+      {isOperatorAdmin(access) ? (
+        <AircraftPricing
+          aircraftId={id}
+          model={aircraft.data.data.pricingModel}
+        />
+      ) : null}
       {canAdd ? (
         <AircraftRestrictions
           base={base}

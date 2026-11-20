@@ -69,7 +69,22 @@ export const operatorPricingSchema = z
     waitingFreeHours: optionalNumber(0, 24, "Between 0 and 24 hours."),
     overnight: rupees,
     crewNight: rupees,
+    // Per flight of the customer; empty clears the charge (4c).
+    minBillableHoursPer: z.enum(["LEG", "DAY"]),
+    fuelSurcharge: rupees,
+    permit: rupees,
+    navigation: rupees,
+    otherCharge: rupees,
+    otherChargeLabel: z.string().trim().max(40, "At most 40 characters."),
   })
+  .refine(
+    (values) =>
+      values.otherCharge.trim() === "" || values.otherChargeLabel.length >= 2,
+    {
+      path: ["otherChargeLabel"],
+      message: "Name the charge (2 to 40 characters): customers see it.",
+    },
+  )
   .refine(
     (values) => values.freeWithinKm === "" || values.positioningPercent !== "",
     {
@@ -96,6 +111,18 @@ export function toOperatorPricingBody(values: OperatorPricingValues): Body {
     waitingFreeHours: numberOrNull(values.waitingFreeHours),
     overnightMinor: rupeesToPaise(values.overnight),
     crewNightMinor: rupeesToPaise(values.crewNight),
+    // The per-day minimum only means something with a minimum.
+    ...(values.minBillableHours === ""
+      ? {}
+      : { minBillableHoursPer: values.minBillableHoursPer }),
+    fuelSurchargePerFlightMinor: rupeesToPaise(values.fuelSurcharge),
+    permitPerFlightMinor: rupeesToPaise(values.permit),
+    navigationPerFlightMinor: rupeesToPaise(values.navigation),
+    otherChargeMinor: rupeesToPaise(values.otherCharge),
+    // The label goes with a charge; clearing the charge clears it.
+    ...(rupeesToPaise(values.otherCharge) === null
+      ? {}
+      : { otherChargeLabel: values.otherChargeLabel }),
   };
 }
 
@@ -114,6 +141,12 @@ export function fromOperatorPricing(pricing: Pricing): OperatorPricingValues {
     waitingFreeHours: text(pricing.waitingFreeHours),
     overnight: paiseToRupees(pricing.overnightMinor),
     crewNight: paiseToRupees(pricing.crewNightMinor),
+    minBillableHoursPer: pricing.minBillableHoursPer ?? "LEG",
+    fuelSurcharge: paiseToRupees(pricing.fuelSurchargePerFlightMinor),
+    permit: paiseToRupees(pricing.permitPerFlightMinor),
+    navigation: paiseToRupees(pricing.navigationPerFlightMinor),
+    otherCharge: paiseToRupees(pricing.otherChargeMinor),
+    otherChargeLabel: pricing.otherChargeLabel ?? "",
   };
 }
 
@@ -125,4 +158,8 @@ export const OPERATOR_PRICING_ALIASES = {
   waitingHourlyMinor: "waitingHourly",
   overnightMinor: "overnight",
   crewNightMinor: "crewNight",
+  fuelSurchargePerFlightMinor: "fuelSurcharge",
+  permitPerFlightMinor: "permit",
+  navigationPerFlightMinor: "navigation",
+  otherChargeMinor: "otherCharge",
 } as const;

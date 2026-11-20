@@ -22,6 +22,7 @@ import { applyApiError } from "@/lib/api/messages";
 import { queryKeys } from "@/lib/api/query-keys";
 import type { AircraftCategory } from "@/lib/api/types";
 import {
+  configForApi,
   configToDraft,
   describeConfig,
   isRuleType,
@@ -177,8 +178,9 @@ function RuleForm({
     defaultValues: { config: configToDraft(type, rule?.config), reason: "" },
   });
 
-  async function onSubmit(values: RuleFormValues) {
+  async function onSubmit(input: RuleFormValues) {
     setFormError(null);
+    const values = { ...input, config: configForApi(type, input.config) };
     try {
       if (rule) {
         const saved = await apiFetch<PricingRule>(
