@@ -3977,6 +3977,8 @@ export interface components {
       createdAt: string;
       /** @description Priced first, cheapest first. */
       results: components["schemas"]["SearchResultDto"][];
+      /** @description Charter only (empty otherwise): listed empty legs on the same or a nearby route, leaving within two days of the first departure, with enough seats. Each carries its own price and `priceType`. Soonest and closest first, at most five. */
+      emptyLegAlternatives: components["schemas"]["EmptyLegResponseDto"][];
     };
     HelicopterSearchDto: {
       /**

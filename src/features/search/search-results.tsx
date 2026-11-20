@@ -38,6 +38,7 @@ import { formatDateTime } from "@/lib/format/date";
 import { localToUtc, utcToLocal } from "@/lib/format/zoned";
 import { cn } from "@/lib/utils";
 import { DateStrip } from "./date-strip";
+import { EmptyLegAlternatives } from "./empty-leg-alternatives";
 import {
   applyFilters,
   facetCounts,
@@ -316,6 +317,8 @@ export function SearchResults({ searchId }: { searchId: string }) {
           )}
         </div>
       </div>
+
+      <EmptyLegAlternatives offers={data.emptyLegAlternatives ?? []} />
     </div>
   );
 }

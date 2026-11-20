@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 import { API_URL, expectNoSidewaysScroll } from "./support/api";
 import { expectBarAboveTabBar, expectPageEndClear } from "./support/phone";
-import { approvedAircraft, csrf } from "./support/operators";
+import { approvedAircraft, asStaff, csrf } from "./support/operators";
 
 /** Charter search (M5, slice 1): search, results, detail, enquiry. */
 
@@ -388,4 +388,76 @@ test("air ambulance is a request, never a search, with the emergency notice", as
   await expect(
     page.getByRole("link", { name: "Request an air ambulance" }),
   ).toHaveAttribute("href", /topic=MEDICAL_CHARTER/);
+});
+
+test("a charter search shows empty legs on the route, each with a labelled price and a link to its page", async ({
+  page,
+  browser,
+}) => {
+  test.slow();
+  // An approved jet with a published, approved offer Goa to Mumbai.
+  const operator = await browser.newPage();
+  const { id: aircraftId } = await approvedAircraft(operator, browser);
+  const location = async (code: string) =>
+    (
+      await (
+        await operator.request.get(`${API_URL}locations`, {
+          params: { q: code, pageSize: 1 },
+        })
+      ).json()
+    ).data[0].id as string;
+  const [goa, mumbai] = [await location("GOI"), await location("BOM")];
+  const at = (days: number, hour: number) => inDays(days, hour).toISOString();
+  const created = await operator.request.post(`${API_URL}operator/empty-legs`, {
+    headers: await csrf(operator),
+    data: {
+      aircraftId,
+      originId: goa,
+      destinationId: mumbai,
+      // A window of its own, so offers left by earlier runs never crowd it out.
+      departureFrom: at(6, 12),
+      departureTo: at(6, 14),
+      seatsAvailable: 6,
+      priceMinor: 18_500_000,
+      validUntil: at(5, 12),
+      conditions: "Subject to the aircraft repositioning as planned.",
+    },
+  });
+  expect(created.status()).toBe(201);
+  const offer = (await created.json()).data as { id: string };
+  const published = await operator.request.post(
+    `${API_URL}operator/empty-legs/${offer.id}/publish`,
+    { headers: await csrf(operator) },
+  );
+  expect(published.status()).toBe(200);
+  const staff = await asStaff(browser);
+  const approved = await staff.page.request.post(
+    `${API_URL}admin/empty-legs/${offer.id}/approve`,
+    { headers: await csrf(staff.page) },
+  );
+  expect(approved.status()).toBe(200);
+  await staff.context.close();
+  await operator.close();
+
+  const searched = await page.request.post(`${API_URL}search/charter`, {
+    data: {
+      originId: goa,
+      destinationId: mumbai,
+      departureAt: at(6, 13),
+      passengerCount: 3,
+    },
+  });
+  expect(searched.status()).toBe(200);
+  const { searchId } = (await searched.json()).data as { searchId: string };
+
+  await page.goto(`/search/${searchId}`);
+  const strip = page.getByRole("region", { name: "Empty legs on this route" });
+  await expect(strip).toBeVisible();
+  await expectNoSidewaysScroll(page);
+  // The offer's own price, labelled (rule 1), never a bare amount.
+  await expect(
+    strip.getByText(/Quote|Estimate|Confirmed|Live fare/i).first(),
+  ).toBeVisible();
+  await strip.locator(`a[href="/empty-legs/${offer.id}"]`).click();
+  await expect(page).toHaveURL(new RegExp(`/empty-legs/${offer.id}$`));
 });
