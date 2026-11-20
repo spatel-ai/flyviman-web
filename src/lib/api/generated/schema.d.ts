@@ -2355,8 +2355,8 @@ export interface components {
       title: string;
       /** @description Plain text with blank lines between paragraphs. */
       body: string;
-      /** @description The `versionCount` the editor loaded (0 for a policy with no version). When sent and another version has been published since, 409 `CONTENT_VERSION_CONFLICT` and nothing is written. Leave it out to publish regardless. */
-      baseVersion?: number;
+      /** @description The `versionCount` the editor loaded (0 for a policy with no version). Required. When another version has been published since, 409 `CONTENT_VERSION_CONFLICT` and nothing is written. */
+      baseVersion: number;
     };
     /** @enum {string} */
     NotificationChannel: "EMAIL" | "SMS" | "WHATSAPP" | "IN_APP";
