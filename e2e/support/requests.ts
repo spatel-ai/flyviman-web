@@ -109,13 +109,11 @@ export async function requestedTrip(
     (entry: { aircraft: { id: string } }) => entry.aircraft.id === aircraft.id,
   );
   expect(result, "the new aircraft is in the results").toBeTruthy();
-<<<<<<< HEAD
   // The Flyviman terms the result detail shows, agreed to with the request.
   const detail = await customer.get(
     `${API_URL}search/${found.searchId}/results/${result.resultId}`,
   );
   expect(detail.status()).toBe(200);
-=======
   let passengerIds: string[] | undefined;
   if (withPassenger) {
     const saved = await customer.post(`${API_URL}me/passengers`, {
@@ -131,7 +129,6 @@ export async function requestedTrip(
     expect(saved.status()).toBe(201);
     passengerIds = [(await saved.json()).data.id as string];
   }
->>>>>>> c9c7c43 (Admin bookings: list, detail with assign, notes, status override and change requests, change-request list, navigation (W3-8))
   const booking = await customer.post(`${API_URL}bookings`, {
     headers: { ...customerHeaders, "Idempotency-Key": randomUUID() },
     data: {
