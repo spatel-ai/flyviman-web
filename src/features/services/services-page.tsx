@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import Link from "next/link";
 import { EnquiryLink } from "@/components/marketing/enquiry-link";
 import { CONCEPT_ICONS } from "@/components/marketing/concept-icons";
@@ -10,6 +11,7 @@ import { TiltCard } from "@/components/motion/tilt-card";
 import { HOME, type FaqItem } from "@/content/home";
 import { SERVICES_PAGE, type Service } from "@/content/services";
 import { buttonClasses } from "@/components/ui/button-classes";
+import { getPublicContent } from "@/lib/public-content";
 import { cn } from "@/lib/utils";
 
 /** In-page index, so a visitor can jump to one service. */
@@ -139,6 +141,40 @@ function ServiceSection({
   );
 }
 
+/** One question, a native disclosure; one is open at a time (the shared `name`). */
+function FaqRow({
+  question,
+  children,
+}: {
+  question: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <details name="services-faq" className="faq group">
+      <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-6 py-5 [&::-webkit-details-marker]:hidden">
+        <h3 className="text-title">{question}</h3>
+        <span
+          aria-hidden="true"
+          className="faq__mark relative size-4 shrink-0 text-muted"
+        />
+      </summary>
+      <div className="faq__answer max-w-reading pb-6 text-body text-muted">
+        {children}
+      </div>
+    </details>
+  );
+}
+
+/** Questions the content team published, after the ones written here. */
+async function ManagedFaqRows() {
+  const items = await getPublicContent("faqs");
+  return items.map((item) => (
+    <FaqRow key={item.id} question={item.title}>
+      <p className="whitespace-pre-line">{item.body}</p>
+    </FaqRow>
+  ));
+}
+
 /**
  * Questions and answers, moved here from the home page. Native disclosure
  * elements, so the answers are in the page for search engines and open
@@ -158,31 +194,21 @@ function Faq() {
         <Reveal className="lg:col-span-8">
           <div className="divide-y divide-border/60 border-y border-border/60">
             {items.map((item) => (
-              <details
-                key={item.question}
-                name="services-faq"
-                className="faq group"
-              >
-                <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-6 py-5 [&::-webkit-details-marker]:hidden">
-                  <h3 className="text-title">{item.question}</h3>
-                  <span
-                    aria-hidden="true"
-                    className="faq__mark relative size-4 shrink-0 text-muted"
-                  />
-                </summary>
-                <div className="faq__answer max-w-reading pb-6 text-body text-muted">
-                  <p>{item.answer}</p>
-                  {item.points ? (
-                    <ul className="mt-3 list-disc space-y-1 pl-5">
-                      {item.points.map((point) => (
-                        <li key={point}>{point}</li>
-                      ))}
-                    </ul>
-                  ) : null}
-                  {item.closing ? <p className="mt-3">{item.closing}</p> : null}
-                </div>
-              </details>
+              <FaqRow key={item.question} question={item.question}>
+                <p>{item.answer}</p>
+                {item.points ? (
+                  <ul className="mt-3 list-disc space-y-1 pl-5">
+                    {item.points.map((point) => (
+                      <li key={point}>{point}</li>
+                    ))}
+                  </ul>
+                ) : null}
+                {item.closing ? <p className="mt-3">{item.closing}</p> : null}
+              </FaqRow>
             ))}
+            <Suspense fallback={null}>
+              <ManagedFaqRows />
+            </Suspense>
           </div>
         </Reveal>
       </div>

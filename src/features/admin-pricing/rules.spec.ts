@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { canManage, configToDraft, describeConfig, RULE_TYPES } from "./rules";
+import {
+  canEnd,
+  canManage,
+  configForApi,
+  configToDraft,
+  describeConfig,
+  RULE_TYPES,
+} from "./rules";
 import { ruleSchema } from "./schema";
 
 describe("describeConfig", () => {
@@ -89,9 +96,82 @@ describe("canManage", () => {
   it("offers Change only for editable rules this screen has a form for", () => {
     expect(canManage({ type: "COMMISSION", editable: true })).toBe(true);
     expect(canManage({ type: "COMMISSION", editable: false })).toBe(false);
-    // A type the API may add later, such as a promotional markup.
-    expect(canManage({ type: "MARKUP", editable: true })).toBe(false);
+    expect(canManage({ type: "MARKUP", editable: true })).toBe(true);
+    expect(canManage({ type: "DISCOUNT", editable: false })).toBe(false);
     expect(canManage({ type: "constructor", editable: true })).toBe(false);
     expect(canManage({ type: "MATCHING_LIMITS", editable: true })).toBe(false);
+  });
+});
+
+describe("the 4c platform rules", () => {
+  it("describes markup, service fee, discount and the per-day minimum", () => {
+    expect(describeConfig("MARKUP", { percent: 5 })).toBe(
+      "5% of the operator's price",
+    );
+    expect(describeConfig("SERVICE_FEE", { amountMinor: 250_000 })).toBe(
+      "₹2,500 per trip",
+    );
+    expect(describeConfig("DISCOUNT", { name: "Winter", percent: 10 })).toBe(
+      "Winter 10% off",
+    );
+    expect(describeConfig("MIN_BILLABLE_HOURS", { hours: 2, per: "DAY" })).toBe(
+      "2 h per day",
+    );
+    expect(describeConfig("MIN_BILLABLE_HOURS", { hours: 2 })).toBe("2 h");
+  });
+
+  it("turns typed values into the settings the API takes", () => {
+    const fee = ruleSchema("SERVICE_FEE").safeParse({
+      config: { amountMinor: "2,500" },
+      reason: "Launch fee",
+    });
+    expect(fee.success && fee.data.config).toEqual({ amountMinor: 250_000 });
+    const discount = ruleSchema("DISCOUNT").safeParse({
+      config: { name: " Winter offer ", percent: "7.5" },
+      reason: "Season",
+    });
+    expect(discount.success && discount.data.config).toEqual({
+      name: "Winter offer",
+      percent: 7.5,
+    });
+  });
+
+  it("keeps them inside the API's bounds", () => {
+    const refused = (
+      type: "MARKUP" | "SERVICE_FEE" | "DISCOUNT",
+      config: object,
+    ) => !ruleSchema(type).safeParse({ config, reason: "Testing" }).success;
+    expect(refused("MARKUP", { percent: "51" })).toBe(true);
+    expect(refused("MARKUP", { percent: "5.555" })).toBe(true);
+    expect(refused("SERVICE_FEE", { amountMinor: "10,00,00,001" })).toBe(true);
+    expect(refused("DISCOUNT", { name: "A", percent: "10" })).toBe(true);
+    expect(refused("DISCOUNT", { name: "Winter", percent: "50" })).toBe(false);
+  });
+
+  it("leaves per flight out of the minimum's settings", () => {
+    expect(
+      configForApi("MIN_BILLABLE_HOURS", { hours: 2, per: "LEG" }),
+    ).toEqual({ hours: 2 });
+    expect(
+      configForApi("MIN_BILLABLE_HOURS", { hours: 2, per: "DAY" }),
+    ).toEqual({ hours: 2, per: "DAY" });
+    expect(configToDraft("MIN_BILLABLE_HOURS", { hours: 2 }).per).toBe("LEG");
+  });
+
+  it("offers End for category rules and the optional platform rules only", () => {
+    const rule = (type: string, scope: string) => ({
+      type,
+      scope,
+      editable: true,
+    });
+    expect(canEnd(rule("COMMISSION", "CATEGORY") as never)).toBe(true);
+    expect(canEnd(rule("COMMISSION", "PLATFORM") as never)).toBe(false);
+    expect(canEnd(rule("MARKUP", "PLATFORM") as never)).toBe(true);
+    expect(canEnd(rule("SERVICE_FEE", "PLATFORM") as never)).toBe(true);
+    expect(canEnd(rule("DISCOUNT", "PLATFORM") as never)).toBe(true);
+    expect(canEnd(rule("TAX", "PLATFORM") as never)).toBe(false);
+    expect(
+      canEnd({ type: "MARKUP", scope: "PLATFORM", editable: false } as never),
+    ).toBe(false);
   });
 });

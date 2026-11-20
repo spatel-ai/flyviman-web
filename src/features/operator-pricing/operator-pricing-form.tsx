@@ -3,12 +3,13 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { FormAlert } from "@/components/shared/form-alert";
 import { LoadError } from "@/components/shared/load-error";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/components/ui/toast";
 import { apiFetch } from "@/lib/api/client";
@@ -30,7 +31,14 @@ const FIELDS = [
   "minBillableHours",
   "freeWithinKm",
   "waitingFreeHours",
+  "minBillableHoursPer",
+  "otherChargeLabel",
 ] as const;
+
+const MINIMUM_PER = [
+  { value: "LEG", label: "Per flight" },
+  { value: "DAY", label: "Per day" },
+];
 
 /**
  * Defaults that apply to every aircraft of the organisation unless an
@@ -61,6 +69,7 @@ function Editor({ initial }: { initial: OperatorPricingValues }) {
   const [formError, setFormError] = useState<string | null>(null);
   const {
     register,
+    control,
     handleSubmit,
     setError,
     reset,
@@ -106,6 +115,21 @@ function Editor({ initial }: { initial: OperatorPricingValues }) {
           inputMode="decimal"
           error={errors.minBillableHours?.message}
           {...register("minBillableHours")}
+        />
+        <Controller
+          control={control}
+          name="minBillableHoursPer"
+          render={({ field }) => (
+            <Select
+              label="The minimum applies"
+              hint="Per flight: each flight bills at least the minimum. Per day: the flights of a day together do."
+              options={MINIMUM_PER}
+              name={field.name}
+              value={field.value}
+              onValueChange={field.onChange}
+              error={errors.minBillableHoursPer?.message}
+            />
+          )}
         />
       </Card>
       <Card variant="raised" className="flex flex-col gap-5">
@@ -179,6 +203,44 @@ function Editor({ initial }: { initial: OperatorPricingValues }) {
           inputMode="decimal"
           error={errors.crewNight?.message}
           {...register("crewNight")}
+        />
+      </Card>
+      <Card variant="raised" className="flex flex-col gap-5">
+        <h2 className="text-title">Trip charges</h2>
+        <p className="text-body-sm text-muted">
+          Added to every estimate, per flight of the customer. Leave a charge
+          empty if you do not make it.
+        </p>
+        <Input
+          label="Fuel surcharge, per flight (₹)"
+          inputMode="decimal"
+          error={errors.fuelSurcharge?.message}
+          {...register("fuelSurcharge")}
+        />
+        <Input
+          label="Permits, per flight (₹)"
+          inputMode="decimal"
+          error={errors.permit?.message}
+          {...register("permit")}
+        />
+        <Input
+          label="Navigation charges, per flight (₹)"
+          inputMode="decimal"
+          error={errors.navigation?.message}
+          {...register("navigation")}
+        />
+        <Input
+          label="Other charge, per trip (₹)"
+          hint="One more charge, once per trip, shown to customers under the name below."
+          inputMode="decimal"
+          error={errors.otherCharge?.message}
+          {...register("otherCharge")}
+        />
+        <Input
+          label="Name of the other charge"
+          hint="For example Catering. Needed when there is an other charge."
+          error={errors.otherChargeLabel?.message}
+          {...register("otherChargeLabel")}
         />
       </Card>
       <div>

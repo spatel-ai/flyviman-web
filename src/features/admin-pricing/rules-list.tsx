@@ -25,7 +25,7 @@ import { messageFor } from "@/lib/api/messages";
 import { queryKeys } from "@/lib/api/query-keys";
 import { formatDateTime } from "@/lib/format/date";
 import { AddRuleDialog, ChangeRuleDialog } from "./rule-dialog";
-import { canManage, describeConfig, ruleLabel } from "./rules";
+import { canEnd, canManage, describeConfig, ruleLabel } from "./rules";
 import { appliesTo, listIsStale, type PricingRule } from "@/lib/pricing-rules";
 
 const PAGE_SIZE = 50;
@@ -63,7 +63,10 @@ export function RulesList() {
     onSuccess: (_, { rule }) => {
       toast({
         title: `${ruleLabel(rule.type)} for ${appliesTo(rule).toLowerCase()} ended`,
-        description: "The rule for all aircraft applies again.",
+        description:
+          rule.scope === "CATEGORY"
+            ? "The rule for all aircraft applies again."
+            : "New estimates are priced without it.",
         tone: "success",
       });
       setEnding(null);
@@ -189,7 +192,7 @@ export function RulesList() {
                               >
                                 Change
                               </Button>
-                              {rule.scope === "CATEGORY" ? (
+                              {canEnd(rule) ? (
                                 <Button
                                   variant="ghost"
                                   className="h-10"
@@ -240,7 +243,11 @@ export function RulesList() {
             ? `End ${ruleLabel(ending.type).toLowerCase()} for ${appliesTo(ending).toLowerCase()}?`
             : "End rule?"
         }
-        description="New estimates for this category will use the rule for all aircraft. Estimates already given are not changed."
+        description={
+          ending?.scope === "CATEGORY"
+            ? "New estimates for this category will use the rule for all aircraft. Estimates already given are not changed."
+            : "New estimates will be priced without this rule. Estimates already given are not changed."
+        }
         confirmLabel="End rule"
         destructive
         requireReason

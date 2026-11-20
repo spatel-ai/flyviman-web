@@ -301,6 +301,46 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/content/banners": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Published banners
+     * @description In display order; drafts and unpublished banners never appear. Plain text. Cacheable for a minute.
+     */
+    get: operations["ContentController_banners"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/content/faqs": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Published questions and answers
+     * @description In display order; drafts never appear. `title` is the question, `body` the answer, plain text. Cacheable for a minute.
+     */
+    get: operations["ContentController_faqs"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/v1/admin/content/banners": {
     parameters: {
       query?: never;
@@ -2695,6 +2735,14 @@ export interface components {
       version: string;
       /** Format: date-time */
       publishedAt: string;
+    };
+    PublicContentItemResponseDto: {
+      /** Format: uuid */
+      id: string;
+      /** @description A banner headline, or the question of a FAQ. */
+      title: string;
+      /** @description Plain text, never HTML. A banner message, or the answer. */
+      body: string;
     };
     ContentItemResponseDto: {
       /** Format: uuid */
@@ -5675,6 +5723,44 @@ export interface operations {
         };
         content: {
           "application/json": components["schemas"]["PolicyResponseDto"];
+        };
+      };
+    };
+  };
+  ContentController_banners: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["PublicContentItemResponseDto"][];
+        };
+      };
+    };
+  };
+  ContentController_faqs: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["PublicContentItemResponseDto"][];
         };
       };
     };

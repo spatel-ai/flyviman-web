@@ -160,6 +160,127 @@ test("finance adds, changes and ends a category commission", async ({
   await expect(row).toHaveCount(0);
 });
 
+/** Ends rules of these types an interrupted run left on this category. */
+async function clearCategoryTypes(page: Page, category: string) {
+  for (const type of [
+    "MARKUP",
+    "SERVICE_FEE",
+    "DISCOUNT",
+    "MIN_BILLABLE_HOURS",
+  ]) {
+    const list = await page.request.get(`${API_URL}admin/pricing-rules`, {
+      params: { scope: "CATEGORY", type, pageSize: 100 },
+    });
+    for (const rule of (await list.json()).data as {
+      id: string;
+      scopeRef: string;
+    }[]) {
+      if (rule.scopeRef !== category) continue;
+      await page.request.post(
+        `${API_URL}admin/pricing-rules/${rule.id}/deactivate`,
+        {
+          headers: await csrf(page),
+          data: { reason: "Left by an earlier test run" },
+        },
+      );
+    }
+  }
+}
+
+test("finance adds, changes and ends a markup, a service fee, a discount and a per-day minimum", async ({
+  page,
+}) => {
+  test.slow();
+  // Platform rules of these types would change every other test's prices,
+  // so this journey uses the category no other test prices.
+  const category = CATEGORY[test.info().project.name] ?? CATEGORY.desktop;
+  const name = category.label.toLowerCase();
+  await signIn(page, "finance", "/admin/pricing/rules");
+  await expect(
+    page.getByRole("heading", { level: 1, name: "Pricing rules" }),
+  ).toBeVisible();
+  await clearCategoryTypes(page, category.value);
+  await page.reload();
+
+  async function add(
+    rule: string,
+    fields: Record<string, string>,
+    reason: string,
+  ) {
+    await page.getByRole("button", { name: "Add rule" }).click();
+    const dialog = page.getByRole("dialog", { name: "Add pricing rule" });
+    await dialog.getByRole("combobox", { name: "Rule" }).click();
+    await page.getByRole("option", { name: rule, exact: true }).click();
+    await dialog.getByRole("combobox", { name: "Aircraft category" }).click();
+    await page
+      .getByRole("option", { name: category.label, exact: true })
+      .click();
+    for (const [label, value] of Object.entries(fields)) {
+      await dialog.getByRole("textbox", { name: label }).fill(value);
+    }
+    await dialog.getByRole("textbox", { name: "Reason" }).fill(reason);
+    await dialog.getByRole("button", { name: "Add rule" }).click();
+    await expect(page.getByText(`${rule} added`).first()).toBeVisible();
+  }
+  const row = (rule: string) =>
+    page
+      .getByRole("row")
+      .filter({ hasText: rule })
+      .filter({ hasText: category.label });
+
+  try {
+    await add("Markup", { "Markup (%)": "5" }, "Launch markup");
+    await expect(row("Markup")).toContainText("5% of the operator's price");
+    await add("Service fee", { "Fee per trip (₹)": "2,500" }, "Launch fee");
+    await expect(row("Service fee")).toContainText("₹2,500 per trip");
+    await add(
+      "Discount",
+      { "Name shown to customers": "Winter offer", "Discount (%)": "7.5" },
+      "Season",
+    );
+    await expect(row("Discount")).toContainText("Winter offer 7.5% off");
+
+    // The minimum per day.
+    await page.getByRole("button", { name: "Add rule" }).click();
+    const minimum = page.getByRole("dialog", { name: "Add pricing rule" });
+    await minimum.getByRole("combobox", { name: "Rule" }).click();
+    await page
+      .getByRole("option", { name: "Minimum billable hours", exact: true })
+      .click();
+    await minimum.getByRole("combobox", { name: "Aircraft category" }).click();
+    await page
+      .getByRole("option", { name: category.label, exact: true })
+      .click();
+    await minimum.getByRole("textbox", { name: "Hours per flight" }).fill("2");
+    await minimum
+      .getByRole("combobox", { name: "The minimum applies" })
+      .click();
+    await page.getByRole("option", { name: "Per day" }).click();
+    await minimum.getByRole("textbox", { name: "Reason" }).fill("Day minimum");
+    await minimum.getByRole("button", { name: "Add rule" }).click();
+    await expect(row("Minimum billable hours")).toContainText("2 h per day");
+
+    // Change: a reason is required; the same settings write nothing new.
+    await page
+      .getByRole("button", { name: `Change markup for ${name}` })
+      .click();
+    const change = page.getByRole("dialog", { name: "Change markup" });
+    await change.getByRole("textbox", { name: "Markup (%)" }).fill("60");
+    await change.getByRole("button", { name: "Save new version" }).click();
+    await expect(change.getByText(/Enter a value from 0 to 50/)).toBeVisible();
+    await change.getByRole("textbox", { name: "Markup (%)" }).fill("6");
+    await change.getByRole("textbox", { name: "Reason" }).fill("Review");
+    await change.getByRole("button", { name: "Save new version" }).click();
+    await expect(row("Markup")).toContainText("6% of the operator's price");
+    await expectNoSidewaysScroll(page);
+  } finally {
+    await clearCategoryTypes(page, category.value);
+  }
+  await page.reload();
+  await expect(row("Markup")).toHaveCount(0);
+  await expect(row("Discount")).toHaveCount(0);
+});
+
 test("finance traces an estimate in the calculation viewer; operations see it without the restricted figures", async ({
   page,
   browser,

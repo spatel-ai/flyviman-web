@@ -41,6 +41,18 @@ export const COMMISSION_MODES = [
   { value: "DEDUCTED", label: "Deducted from the operator's price" },
 ];
 
+export const MINIMUM_PER = [
+  { value: "LEG", label: "Per flight" },
+  { value: "DAY", label: "Per day" },
+];
+
+/** Platform rules finance can end; the API refuses the others (PRICING_RULE_REQUIRED). */
+const OPTIONAL_PLATFORM_TYPES: ReadonlySet<string> = new Set([
+  "MARKUP",
+  "SERVICE_FEE",
+  "DISCOUNT",
+]);
+
 export const RULE_META: Record<RuleType, RuleMeta> = {
   COMMISSION: {
     label: "Commission",
@@ -145,6 +157,13 @@ export const RULE_META: Record<RuleType, RuleMeta> = {
         max: 12,
         decimals: 2,
       },
+      {
+        key: "per",
+        label: "The minimum applies",
+        kind: "choice",
+        options: MINIMUM_PER,
+        hint: "Per day: the flights of a day together bill at least the minimum.",
+      },
     ],
   },
   POSITIONING: {
@@ -170,22 +189,49 @@ export const RULE_META: Record<RuleType, RuleMeta> = {
       },
     ],
   },
-  // Platform-only 4c rules: listed by name, no form here until W3.
   MARKUP: {
     label: "Markup",
     description:
-      "Flyviman's markup on the operator's price. Not managed here yet.",
-    fields: [],
+      "Flyviman's markup, a percentage of the operator's price. Customers see it inside the flying charge, never as its own line.",
+    fields: [
+      {
+        key: "percent",
+        label: "Markup (%)",
+        kind: "number",
+        min: 0,
+        max: 50,
+        decimals: 2,
+        hint: "0 to 50.",
+      },
+    ],
   },
   SERVICE_FEE: {
     label: "Service fee",
-    description: "Flyviman's fee per trip. Not managed here yet.",
-    fields: [],
+    description:
+      "A fee per trip, shown to customers on its own line. It is not part of the operator's payable.",
+    fields: [{ key: "amountMinor", label: "Fee per trip (₹)", kind: "rupees" }],
   },
   DISCOUNT: {
     label: "Discount",
-    description: "A promotion funded by Flyviman. Not managed here yet.",
-    fields: [],
+    description:
+      "A promotion funded by Flyviman: a percentage of the price before tax, never more than Flyviman earns on the trip, so the operator's payable does not change.",
+    fields: [
+      {
+        key: "name",
+        label: "Name shown to customers",
+        kind: "text",
+        hint: "For example Winter offer.",
+      },
+      {
+        key: "percent",
+        label: "Discount (%)",
+        kind: "number",
+        min: 0,
+        max: 50,
+        decimals: 2,
+        hint: "0 to 50.",
+      },
+    ],
   },
   MATCHING_LIMITS: {
     label: "Matching limits",
@@ -245,7 +291,13 @@ export function describeConfig(
     case "VALIDITY":
       return `${num(config, "minutes") ?? "?"} min`;
     case "MIN_BILLABLE_HOURS":
-      return `${num(config, "hours") ?? "?"} h`;
+      return `${num(config, "hours") ?? "?"} h${config.per === "DAY" ? " per day" : ""}`;
+    case "MARKUP":
+      return `${num(config, "percent") ?? "?"}% of the operator's price`;
+    case "SERVICE_FEE":
+      return `${formatMoney(num(config, "amountMinor") ?? 0, "INR")} per trip`;
+    case "DISCOUNT":
+      return `${String(config.name ?? "Discount")} ${num(config, "percent") ?? "?"}% off`;
     case "POSITIONING":
       return `${num(config, "rateFactor") ?? "?"} × hourly rate, free within ${
         num(config, "freeWithinKm") ?? 0
@@ -298,4 +350,35 @@ export function canManage(
   rule: Pick<PricingRule, "type" | "editable">,
 ): boolean {
   return rule.editable && isRuleType(rule.type);
+}
+
+/**
+ * Whether End is offered: a category rule (the platform rule then applies),
+ * or a platform markup, service fee or discount, which prices can do
+ * without. Other platform rules are changed, never ended.
+ */
+export function canEnd(
+  rule: Pick<PricingRule, "type" | "scope" | "editable">,
+): boolean {
+  return (
+    canManage(rule) &&
+    (rule.scope === "CATEGORY" || OPTIONAL_PLATFORM_TYPES.has(rule.type))
+  );
+}
+
+/**
+ * The settings as the API takes them. Per flight is the default of
+ * `per`, so it is left out: an unchanged rule then stays equal to its
+ * stored version and a save writes nothing.
+ */
+export function configForApi(
+  type: RuleType,
+  config: Record<string, unknown>,
+): Record<string, unknown> {
+  if (type === "MIN_BILLABLE_HOURS" && config.per === "LEG") {
+    return Object.fromEntries(
+      Object.entries(config).filter(([key]) => key !== "per"),
+    );
+  }
+  return config;
 }

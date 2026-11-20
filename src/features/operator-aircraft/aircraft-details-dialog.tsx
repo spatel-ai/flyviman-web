@@ -20,6 +20,7 @@ import { apiFetch } from "@/lib/api/client";
 import { applyApiError } from "@/lib/api/messages";
 import type { Schemas } from "@/lib/api/types";
 import { CATEGORIES, wingFor } from "./categories";
+import { PRICING_MODELS } from "./pricing-schema";
 
 type Aircraft = Schemas["AircraftResponseDto"];
 
@@ -47,6 +48,7 @@ const detailsSchema = z.object({
     .max(20_000),
   cruiseSpeedKmh: optionalWhole(2000),
   homeBaseId: z.string(),
+  pricingModel: z.enum(["HOURLY", "SECTOR", "FIXED_ROUTE"]),
 });
 
 type DetailsInput = z.input<typeof detailsSchema>;
@@ -62,6 +64,7 @@ const FIELDS = [
   "rangeKm",
   "cruiseSpeedKmh",
   "homeBaseId",
+  "pricingModel",
 ] as const;
 
 function defaults(aircraft: Aircraft): DetailsInput {
@@ -75,6 +78,7 @@ function defaults(aircraft: Aircraft): DetailsInput {
     rangeKm: aircraft.rangeKm ?? "",
     cruiseSpeedKmh: aircraft.cruiseSpeedKmh ?? "",
     homeBaseId: aircraft.homeBaseId ?? "",
+    pricingModel: aircraft.pricingModel,
   };
 }
 
@@ -92,6 +96,7 @@ function changes(values: DetailsValues, aircraft: Aircraft) {
     rangeKm: values.rangeKm,
     cruiseSpeedKmh: values.cruiseSpeedKmh === "" ? null : values.cruiseSpeedKmh,
     homeBaseId: values.homeBaseId || null,
+    pricingModel: values.pricingModel,
   };
   const current = aircraft as unknown as Record<string, unknown>;
   return Object.fromEntries(
@@ -261,6 +266,21 @@ function DetailsForm({
             {...register("cruiseSpeedKmh")}
           />
         </div>
+        <Controller
+          control={control}
+          name="pricingModel"
+          render={({ field }) => (
+            <Select
+              label="How you price this aircraft"
+              hint="Then set the figures under Pricing on this page."
+              options={PRICING_MODELS}
+              name={field.name}
+              value={field.value}
+              onValueChange={field.onChange}
+              error={errors.pricingModel?.message}
+            />
+          )}
+        />
         <Controller
           control={control}
           name="homeBaseId"

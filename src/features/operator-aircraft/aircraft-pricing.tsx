@@ -3,85 +3,45 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { Controller, useForm } from "react-hook-form";
-import { z } from "zod";
+import { Controller, useFieldArray, useForm } from "react-hook-form";
 import { FormAlert } from "@/components/shared/form-alert";
 import { LoadError } from "@/components/shared/load-error";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
+import { LocationField } from "@/components/shared/location-field";
+import { Select } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/components/ui/toast";
 import { apiFetch } from "@/lib/api/client";
 import { applyApiError } from "@/lib/api/messages";
 import { queryKeys } from "@/lib/api/query-keys";
 import type { Schemas } from "@/lib/api/types";
-import { paiseToRupees, rupeesToPaise } from "@/lib/format/money";
+import {
+  AIRCRAFT_PRICING_ALIASES,
+  aircraftPricingSchema,
+  fromAircraftPricing,
+  MAX_FIXED_ROUTES,
+  toAircraftPricingBody,
+  type AircraftPricingValues,
+  type PricingModel,
+} from "./pricing-schema";
 
 type Pricing = Schemas["AircraftPricingResponseDto"];
-
-const parses = (value: string) => {
-  try {
-    rupeesToPaise(value);
-    return true;
-  } catch {
-    return false;
-  }
-};
-
-const schema = z.object({
-  // The API takes ₹1 to ₹10 crore an hour; empty means "price on request".
-  hourlyRate: z
-    .string()
-    .trim()
-    .refine(parses, {
-      message: "Enter the rate in rupees up to ₹10 crore, for example 180000.",
-    })
-    .refine(
-      (value) => {
-        try {
-          const paise = rupeesToPaise(value);
-          return paise === null || paise >= 100;
-        } catch {
-          return true;
-        }
-      },
-      { message: "At least ₹1 an hour, or leave empty." },
-    ),
-  taxInclusive: z.boolean(),
-  commissionInclusive: z.boolean(),
-  minBillableHours: z
-    .string()
-    .trim()
-    .refine(
-      (value) =>
-        value === "" ||
-        (/^\d+(\.\d{1,2})?$/.test(value) &&
-          Number(value) >= 0.5 &&
-          Number(value) <= 12),
-      { message: "Between 0.5 and 12 hours, or leave empty." },
-    ),
-});
-type Values = z.infer<typeof schema>;
-
-const FIELDS = ["minBillableHours"] as const;
-
-function fromPricing(pricing: Pricing): Values {
-  return {
-    hourlyRate: paiseToRupees(pricing.hourlyRateMinor),
-    taxInclusive: pricing.taxInclusive,
-    commissionInclusive: pricing.commissionInclusive,
-    minBillableHours:
-      pricing.minBillableHours == null ? "" : String(pricing.minBillableHours),
-  };
-}
 
 /**
  * The aircraft's hourly rate, for the organisation's administrator. Without
  * one, customers see the aircraft as "price on request". Each save is a new
  * version, kept for audit (business rule 6).
  */
-export function AircraftPricing({ aircraftId }: { aircraftId: string }) {
+export function AircraftPricing({
+  aircraftId,
+  model,
+}: {
+  aircraftId: string;
+  /** How the aircraft is priced (set in its details). */
+  model: PricingModel;
+}) {
   const pricing = useQuery({
     queryKey: queryKeys.aircraftPricing(aircraftId),
     queryFn: () =>
@@ -103,17 +63,30 @@ export function AircraftPricing({ aircraftId }: { aircraftId: string }) {
           onRetry={() => void pricing.refetch()}
         />
       ) : (
-        <Editor aircraftId={aircraftId} initial={pricing.data.data} />
+        <Editor
+          aircraftId={aircraftId}
+          model={model}
+          initial={pricing.data.data}
+        />
       )}
     </section>
   );
 }
 
+const FIELDS = ["minBillableHours", "minBillableHoursPer"] as const;
+
+const MINIMUM_PER = [
+  { value: "LEG", label: "Per flight" },
+  { value: "DAY", label: "Per day" },
+];
+
 function Editor({
   aircraftId,
+  model,
   initial,
 }: {
   aircraftId: string;
+  model: PricingModel;
   initial: Pricing;
 }) {
   const queryClient = useQueryClient();
@@ -126,37 +99,34 @@ function Editor({
     setError,
     reset,
     formState: { errors, isDirty },
-  } = useForm<Values>({
-    resolver: zodResolver(schema),
-    defaultValues: fromPricing(initial),
+  } = useForm<AircraftPricingValues>({
+    resolver: zodResolver(aircraftPricingSchema),
+    defaultValues: fromAircraftPricing(initial),
   });
+  const routes = useFieldArray({ control, name: "routes" });
+  const missingPrice =
+    model === "HOURLY"
+      ? initial.hourlyRateMinor == null
+      : model === "SECTOR"
+        ? initial.sectorRateMinor == null
+        : (initial.fixedRoutes ?? []).length === 0;
   const save = useMutation({
-    mutationFn: (values: Values) =>
+    mutationFn: (values: AircraftPricingValues) =>
       apiFetch<Pricing>(
         `operator/aircraft/${encodeURIComponent(aircraftId)}/pricing`,
         {
           method: "PUT",
-          body: {
-            hourlyRateMinor: rupeesToPaise(values.hourlyRate),
-            taxInclusive: values.taxInclusive,
-            commissionInclusive: values.commissionInclusive,
-            minBillableHours:
-              values.minBillableHours === ""
-                ? null
-                : Number(values.minBillableHours),
-          },
+          body: toAircraftPricingBody(values, model),
         },
       ),
     onSuccess: ({ data }) => {
       queryClient.setQueryData(queryKeys.aircraftPricing(aircraftId), { data });
-      reset(fromPricing(data));
+      reset(fromAircraftPricing(data));
       toast({ title: "Aircraft pricing saved", tone: "success" });
     },
     onError: (error) =>
       setFormError(
-        applyApiError(error, setError, FIELDS, {
-          hourlyRateMinor: "hourlyRate",
-        }),
+        applyApiError(error, setError, FIELDS, AIRCRAFT_PRICING_ALIASES),
       ),
   });
 
@@ -171,26 +141,121 @@ function Editor({
       }
       className="flex max-w-reading flex-col gap-4"
     >
-      {initial.hourlyRateMinor == null ? (
+      {missingPrice ? (
         <p className="text-body-sm text-muted">
-          No rate yet: customers see this aircraft as &ldquo;price on
-          request&rdquo;.
+          {model === "HOURLY"
+            ? "No rate yet"
+            : model === "SECTOR"
+              ? "No price yet"
+              : "No routes yet"}
+          : customers see this aircraft as &ldquo;price on request&rdquo;.
         </p>
       ) : null}
       <FormAlert message={formError} />
-      <Input
-        label="Hourly rate (₹)"
-        hint="Leave empty to price this aircraft on request."
-        inputMode="decimal"
-        error={errors.hourlyRate?.message}
-        {...register("hourlyRate")}
-      />
+      {model === "HOURLY" ? (
+        <Input
+          label="Hourly rate (₹)"
+          hint="Leave empty to price this aircraft on request."
+          inputMode="decimal"
+          error={errors.hourlyRate?.message}
+          {...register("hourlyRate")}
+        />
+      ) : null}
+      {model === "SECTOR" ? (
+        <Input
+          label="Price per flight (₹)"
+          hint="One price for each flight of the customer. Leave empty to price this aircraft on request."
+          inputMode="decimal"
+          error={errors.sectorRate?.message}
+          {...register("sectorRate")}
+        />
+      ) : null}
+      {model === "FIXED_ROUTE" ? (
+        <fieldset className="flex min-w-0 flex-col gap-4">
+          <legend className="text-body font-medium">Fixed routes</legend>
+          <p className="text-body-sm text-muted">
+            A price per flight on each route, the same in either direction.
+            Trips on other routes are priced on request.
+          </p>
+          {routes.fields.map((field, index) => (
+            <div
+              key={field.id}
+              role="group"
+              aria-label={`Route ${index + 1}`}
+              className="flex min-w-0 flex-col gap-3 rounded-md bg-surface p-4 [&>*]:min-w-0"
+            >
+              <Controller
+                control={control}
+                name={`routes.${index}.originId`}
+                render={({ field: input }) => (
+                  <LocationField
+                    label={`Route ${index + 1} from`}
+                    searchLabel={`Find route ${index + 1} start`}
+                    value={input.value}
+                    onChange={input.onChange}
+                    error={errors.routes?.[index]?.originId?.message}
+                  />
+                )}
+              />
+              <Controller
+                control={control}
+                name={`routes.${index}.destinationId`}
+                render={({ field: input }) => (
+                  <LocationField
+                    label={`Route ${index + 1} to`}
+                    searchLabel={`Find route ${index + 1} end`}
+                    value={input.value}
+                    onChange={input.onChange}
+                    error={errors.routes?.[index]?.destinationId?.message}
+                  />
+                )}
+              />
+              <Input
+                label={`Route ${index + 1} price per flight (₹)`}
+                inputMode="decimal"
+                error={errors.routes?.[index]?.amount?.message}
+                {...register(`routes.${index}.amount`)}
+              />
+              <div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={() => routes.remove(index)}
+                >
+                  Remove route {index + 1}
+                </Button>
+              </div>
+            </div>
+          ))}
+          {errors.routes?.message ? (
+            <p role="alert" className="text-body-sm text-danger">
+              {errors.routes.message}
+            </p>
+          ) : null}
+          <div>
+            <Button
+              type="button"
+              variant="secondary"
+              disabled={routes.fields.length >= MAX_FIXED_ROUTES}
+              onClick={() =>
+                routes.append({ originId: "", destinationId: "", amount: "" })
+              }
+            >
+              Add route
+            </Button>
+          </div>
+        </fieldset>
+      ) : null}
       <Controller
         control={control}
         name="taxInclusive"
         render={({ field }) => (
           <Checkbox
-            label="The rate includes GST"
+            label={
+              model === "HOURLY"
+                ? "The rate includes GST"
+                : "The prices include GST"
+            }
             checked={field.value}
             onCheckedChange={(checked) => field.onChange(checked === true)}
           />
@@ -201,19 +266,42 @@ function Editor({
         name="commissionInclusive"
         render={({ field }) => (
           <Checkbox
-            label="The rate includes Flyviman's commission"
+            label={
+              model === "HOURLY"
+                ? "The rate includes Flyviman's commission"
+                : "The prices include Flyviman's commission"
+            }
             checked={field.value}
             onCheckedChange={(checked) => field.onChange(checked === true)}
           />
         )}
       />
-      <Input
-        label="Minimum billable hours for this aircraft"
-        hint="Overrides your organisation's default. Leave empty to use it."
-        inputMode="decimal"
-        error={errors.minBillableHours?.message}
-        {...register("minBillableHours")}
-      />
+      {model === "HOURLY" ? (
+        <>
+          <Input
+            label="Minimum billable hours for this aircraft"
+            hint="Overrides your organisation's default. Leave empty to use it."
+            inputMode="decimal"
+            error={errors.minBillableHours?.message}
+            {...register("minBillableHours")}
+          />
+          <Controller
+            control={control}
+            name="minBillableHoursPer"
+            render={({ field }) => (
+              <Select
+                label="The minimum applies"
+                hint="Per day: the flights of a day together bill at least the minimum."
+                options={MINIMUM_PER}
+                name={field.name}
+                value={field.value}
+                onValueChange={field.onChange}
+                error={errors.minBillableHoursPer?.message}
+              />
+            )}
+          />
+        </>
+      ) : null}
       <div>
         <Button
           type="submit"
