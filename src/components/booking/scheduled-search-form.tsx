@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { FormAlert } from "@/components/shared/form-alert";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import type {
   Cabin,
   ScheduledSearchBody,
@@ -17,6 +16,7 @@ import { messageFor } from "@/lib/api/messages";
 import { queryKeys } from "@/lib/api/query-keys";
 import { cn } from "@/lib/utils";
 import { AirportPicker } from "./airport-picker";
+import { FareCalendar } from "./fare-calendar";
 import {
   ScheduledTravellerPicker,
   type Passengers,
@@ -136,26 +136,27 @@ export function ScheduledSearchForm() {
             error={errors.destination}
           />
         </div>
-        <Input
-          type="date"
-          label="Departure"
-          min={today || undefined}
-          value={departureDate}
+        <FareCalendar
+          dateOnly
+          date={departureDate}
+          time=""
+          onTimeChange={() => {}}
           error={errors.departure}
-          onChange={(event) => {
-            const next = event.target.value;
+          onDateChange={(next) => {
             setDepartureDate(next);
             if (returnDate && returnDate < next) setReturnDate("");
           }}
         />
         {roundTrip ? (
-          <Input
-            type="date"
+          <FareCalendar
+            dateOnly
             label="Return"
-            min={departureDate || today || undefined}
-            value={returnDate}
+            date={returnDate}
+            time=""
+            onTimeChange={() => {}}
+            minDate={departureDate || undefined}
             error={errors.return}
-            onChange={(event) => setReturnDate(event.target.value)}
+            onDateChange={setReturnDate}
           />
         ) : null}
         <ScheduledTravellerPicker

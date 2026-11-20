@@ -147,7 +147,11 @@ test("Scheduled flights is a search of its own, not a coming-soon enquiry", asyn
     0,
   );
   await expect(page.getByRole("button", { name: /^From:/ })).toBeVisible();
-  await expect(page.getByLabel("Departure")).toBeVisible();
+  // Role queries skip the hidden server-rendered copy of the form.
+  await expect(page.getByRole("button", { name: /^Departure:/ })).toBeVisible();
+  await expect(page.getByRole("button", { name: /^Departure:/ })).toContainText(
+    "Choose date",
+  );
   const travellers = page.getByRole("button", { name: /^Travellers: 1 adult/ });
   await expect(travellers).toContainText("Economy");
   await expect(
@@ -286,6 +290,34 @@ function inDays(days: number): string {
   );
 }
 
+/** Picks a day (YYYY-MM-DD) in the date picker of the tile with this label. */
+async function chooseDay(
+  page: Page,
+  label: "Departure" | "Return",
+  day: string,
+) {
+  const format = (options: Intl.DateTimeFormatOptions) =>
+    new Intl.DateTimeFormat("en-IN", { ...options, timeZone: "UTC" }).format(
+      new Date(`${day}T00:00:00Z`),
+    );
+  const monthName = format({ month: "long", year: "numeric" });
+  const dayLabel = format({ weekday: "short", day: "numeric", month: "short" });
+  const tile = page.getByRole("button", { name: new RegExp(`^${label}:`) });
+  const grid = page.getByRole("grid", { name: monthName });
+  // A click before the page has hydrated does nothing: click until it opens.
+  await expect(async () => {
+    if (!(await grid.isVisible())) await tile.click();
+    await expect(page.getByRole("button", { name: "Next month" })).toBeVisible({
+      timeout: 1000,
+    });
+  }).toPass();
+  if (!(await grid.isVisible())) {
+    await page.getByRole("button", { name: "Next month" }).click();
+  }
+  await grid.getByRole("button", { name: new RegExp(`^${dayLabel}`) }).click();
+  await page.getByRole("button", { name: "Done" }).click();
+}
+
 async function chooseAirport(page: Page, label: "From" | "To", iata: string) {
   const box = page.getByRole("combobox", {
     name: `Search ${label.toLowerCase()} airports`,
@@ -320,7 +352,7 @@ test("a scheduled search against the real API returns labelled live fares and re
   await page.goto("/search?service=flights");
   await chooseAirport(page, "From", from);
   await chooseAirport(page, "To", to);
-  await page.getByLabel("Departure").fill(inDays(20));
+  await chooseDay(page, "Departure", inDays(20));
   const found = page.waitForResponse(
     (r) =>
       /\/search\/scheduled$/.test(r.url()) && r.request().method() === "POST",
@@ -393,7 +425,7 @@ test("airlines that do not answer give a partial notice", async ({
     await page.goto("/search?service=flights");
     await chooseAirport(page, "From", origin);
     await chooseAirport(page, "To", destination);
-    await page.getByLabel("Departure").fill(inDays(21));
+    await chooseDay(page, "Departure", inDays(21));
     await page.getByRole("button", { name: "Search flights" }).click();
     await expect(page).toHaveURL(/\/search\/scheduled\/[0-9a-f-]{36}/);
     await expect(

@@ -65,6 +65,7 @@ export function FareCalendar({
   label = "Departure",
   minDate,
   roundTrip = false,
+  dateOnly = false,
 }: {
   date: string;
   time: string;
@@ -79,6 +80,11 @@ export function FareCalendar({
   minDate?: string;
   /** A round-trip search: the day figures are one-way, and say so. */
   roundTrip?: boolean;
+  /**
+   * A day, not a time (scheduled flights, where the airline sets the hour):
+   * no time grid, and no day figures unless a `route` is given.
+   */
+  dateOnly?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const desktop = useIsDesktop();
@@ -127,7 +133,7 @@ export function FareCalendar({
         setOpen(next);
         if (!next) setMoved(null);
       }}
-      title={`${label} date and time`}
+      title={dateOnly ? `${label} date` : `${label} date and time`}
       width="lg"
       room={500}
       align="center"
@@ -138,7 +144,15 @@ export function FareCalendar({
           value={date ? formatCalendarDay(date) : undefined}
           placeholder="Choose date"
           // Before a date is chosen, a time here read as already decided.
-          hint={date ? `${time} · India time` : "Pick a date, then a time"}
+          hint={
+            dateOnly
+              ? date
+                ? undefined
+                : "Pick a day"
+              : date
+                ? `${time} · India time`
+                : "Pick a date, then a time"
+          }
           error={error}
         />
       }
@@ -157,11 +171,13 @@ export function FareCalendar({
           <p className="text-caption text-muted">
             {returning
               ? "Choose when you fly back."
-              : ready
-                ? roundTrip
-                  ? SEARCH_LANDING.calendarLegendRoundTrip
-                  : SEARCH_LANDING.calendarLegend
-                : "Choose From and To to see estimates for each day."}
+              : dateOnly
+                ? "Choose your travel day."
+                : ready
+                  ? roundTrip
+                    ? SEARCH_LANDING.calendarLegendRoundTrip
+                    : SEARCH_LANDING.calendarLegend
+                  : "Choose From and To to see estimates for each day."}
           </p>
           <Button
             variant="ghost"
@@ -285,34 +301,42 @@ export function FareCalendar({
           })}
         </div>
 
-        <fieldset className="flex flex-col gap-2">
-          <div className="flex items-center justify-between gap-4">
-            <legend className="text-caption font-medium tracking-wide text-muted uppercase">
-              {label} time (India)
-            </legend>
+        {dateOnly ? (
+          <div className="flex justify-end">
             <Button size="sm" disabled={!date} onClick={() => setOpen(false)}>
               Done
             </Button>
           </div>
-          <div className="grid grid-cols-4 gap-1.5 sm:grid-cols-8">
-            {DEPARTURE_TIMES.map((slot) => (
-              <button
-                key={slot}
-                type="button"
-                aria-pressed={slot === time}
-                onClick={() => onTimeChange(slot)}
-                className={cn(
-                  "h-9 rounded-pill text-body-sm tabular-nums transition-colors duration-150 ease-standard",
-                  slot === time
-                    ? "bg-accent-fill text-accent-foreground"
-                    : "bg-surface hover:bg-border/60",
-                )}
-              >
-                {slot}
-              </button>
-            ))}
-          </div>
-        </fieldset>
+        ) : (
+          <fieldset className="flex flex-col gap-2">
+            <div className="flex items-center justify-between gap-4">
+              <legend className="text-caption font-medium tracking-wide text-muted uppercase">
+                {label} time (India)
+              </legend>
+              <Button size="sm" disabled={!date} onClick={() => setOpen(false)}>
+                Done
+              </Button>
+            </div>
+            <div className="grid grid-cols-4 gap-1.5 sm:grid-cols-8">
+              {DEPARTURE_TIMES.map((slot) => (
+                <button
+                  key={slot}
+                  type="button"
+                  aria-pressed={slot === time}
+                  onClick={() => onTimeChange(slot)}
+                  className={cn(
+                    "h-9 rounded-pill text-body-sm tabular-nums transition-colors duration-150 ease-standard",
+                    slot === time
+                      ? "bg-accent-fill text-accent-foreground"
+                      : "bg-surface hover:bg-border/60",
+                  )}
+                >
+                  {slot}
+                </button>
+              ))}
+            </div>
+          </fieldset>
+        )}
       </div>
     </ResponsivePicker>
   );
