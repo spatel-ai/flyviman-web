@@ -104,6 +104,8 @@ const MESSAGES: Record<string, string> = {
     "The payment provider did not answer. Nothing was charged. Try again in a moment.",
   PAYMENT_SIGNATURE_INVALID:
     "We could not confirm this payment with the provider. If money left your account it is safe: your trip will show it once the provider confirms.",
+  BOOKING_PAYMENT_IN_PROGRESS:
+    "A payment for this booking is waiting for the payment gateway's answer. Wait for it, then try again.",
   INTERNAL_ERROR: "Something went wrong on our side. Please try again.",
 };
 
