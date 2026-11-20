@@ -50,17 +50,17 @@ Run from this directory.
 ```
 src/
   app/
-    (customer)/            customer site: home, search (landing, [searchId], [searchId]/[resultId]), about, services,
+    (customer)/            customer site: home, search (landing, [searchId], [searchId]/[resultId], scheduled/[searchId]), empty-legs (list, [id]), about, services,
                            charter, charter/fleet, aviation-solutions, aircraft-sales (and [slug]), pilots, contact,
                            account/ (profile, passengers, notifications, trips, trips/[reference], trips/[reference]/pay, trips/[reference]/receipts/[payment], air-ambulance, air-ambulance/[reference]), air-ambulance (landing and request form), book/[searchId]/[resultId] (request a flight), legal/[slug], legal/image-credits,
                            compare/home-v1 (the frozen pre-M12 home, noindex and unlinked, until the owner chooses; D-110)
     (auth)/                login, register, verify, forgot-password, reset-password, operator/register
     (operator)/operator/   operator portal: dashboard, onboarding, aircraft (list, new, [id]),
-                           availability (fleet timeline, [aircraftId] calendar), pricing, team, requests (list, [reference]), air-ambulance (list, [reference]), notifications
+                           availability (fleet timeline, [aircraftId] calendar), pricing, team, requests (list, [reference]), air-ambulance (list, [reference]), empty-legs (list, new, [id]), notifications
     (admin)/admin/         admin portal: dashboard, operators, operators/[id], users, aircraft,
                            aircraft/[id], locations, documents, pricing/rules,
                            pricing/calculations, pricing/calculations/[id], enquiries, enquiries/[id],
-                           air-ambulance (queue, [reference]), promotions, notifications, bookings, bookings/[reference],
+                           air-ambulance (queue, [reference]), promotions, notifications, empty-legs, audit-logs, content, matching-limits, roles, bookings, bookings/[reference],
                            change-requests, payments, refunds (Due and History)
     layout.tsx             root: font, theme script, providers
     globals.css            design tokens
@@ -78,7 +78,8 @@ src/
     marketing/             SectionHeading, PageHero, EnquiryLink, IconBadge with concept-icons.ts (Lucide only), ReadMore
                            (customer marketing pages)
     booking/               the customer search card and its pickers (SearchWidget, AirportPicker, FareCalendar,
-                           TravellerPicker, FieldTile, ResponsivePicker: popover on desktop, sheet on phones; useToday)
+                           TravellerPicker, FieldTile, ResponsivePicker: popover on desktop, sheet on phones; useToday;
+                           scheduled-search-form and scheduled-traveller-picker for the airline search)
     booking-v1/            frozen copy of the pre-M12 search card, used only by compare/home-v1
     theme/                 ThemeScript, ThemeSwitch (Light or Dark; light by default, D-108)
   content/                 marketing copy (home, about, services, charter, fleet, contact, aviation-solutions,
@@ -89,7 +90,9 @@ src/
                            operator-onboarding, operator-aircraft, operator-availability, operator-staff, operator-pricing, operator-requests, operator-air-ambulance, air-ambulance,
                            admin-operators, admin-users, admin-aircraft, admin-locations, admin-documents,
                            admin-pricing, admin-enquiries, admin-air-ambulance, admin-promotions, admin-cancellation-terms,
-                           admin-bookings, admin-finance (payments and refunds), payment (the pay page and receipt))
+                           admin-bookings, admin-finance (payments and refunds), admin-audit, admin-content, admin-empty-legs,
+                           admin-matching-limits, admin-roles, empty-legs, operator-empty-legs, scheduled-search,
+                           restrictions, payment (the pay page and receipt))
   lib/
     api/                   apiFetch, ApiError, messages by error code, query keys, generated types
     auth/                  session and server-side API reads (server only), roles
