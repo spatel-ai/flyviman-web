@@ -16,6 +16,12 @@ const INTERNAL: Role[] = ["OPS", "FINANCE_ADMIN", "SUPER_ADMIN"];
 // only hides links a role cannot use; the API decides what it may do.
 const NAV: (NavItem & { roles: Role[] })[] = [
   { href: "/admin", label: "Dashboard", roles: INTERNAL },
+  { href: "/admin/bookings", label: "Bookings", roles: INTERNAL },
+  {
+    href: "/admin/change-requests",
+    label: "Change requests",
+    roles: ["OPS", "SUPER_ADMIN"],
+  },
   { href: "/admin/operators", label: "Operators", roles: INTERNAL },
   { href: "/admin/aircraft", label: "Aircraft", roles: ["OPS", "SUPER_ADMIN"] },
   {

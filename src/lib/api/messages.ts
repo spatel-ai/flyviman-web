@@ -64,6 +64,8 @@ const MESSAGES: Record<string, string> = {
     "You already have a change request waiting for an answer.",
   CHANGE_REQUEST_NOT_ALLOWED:
     "A change can no longer be requested for this trip.",
+  BOOKING_PAYMENT_IN_PROGRESS:
+    "A payment for this booking is waiting for the payment gateway's answer. Wait for it, then try again.",
   INTERNAL_ERROR: "Something went wrong on our side. Please try again.",
 };
 

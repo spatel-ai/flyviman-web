@@ -19,7 +19,19 @@ function inDays(days: number, hourUtc = 6): Date {
 export async function requestedTrip(
   page: Page,
   browser: Browser,
-  { priced, specialRequests }: { priced: boolean; specialRequests?: string },
+  {
+    priced,
+    specialRequests,
+    withPassenger = false,
+    changeRequest,
+  }: {
+    priced: boolean;
+    specialRequests?: string;
+    /** Saves "Kavya Ramaswamy" and puts her on the booking. */
+    withPassenger?: boolean;
+    /** The customer then asks for this change. */
+    changeRequest?: string;
+  },
 ) {
   const aircraft = await approvedAircraft(page, browser);
   const headers = await csrf(page);
@@ -97,11 +109,29 @@ export async function requestedTrip(
     (entry: { aircraft: { id: string } }) => entry.aircraft.id === aircraft.id,
   );
   expect(result, "the new aircraft is in the results").toBeTruthy();
+<<<<<<< HEAD
   // The Flyviman terms the result detail shows, agreed to with the request.
   const detail = await customer.get(
     `${API_URL}search/${found.searchId}/results/${result.resultId}`,
   );
   expect(detail.status()).toBe(200);
+=======
+  let passengerIds: string[] | undefined;
+  if (withPassenger) {
+    const saved = await customer.post(`${API_URL}me/passengers`, {
+      headers: customerHeaders,
+      data: {
+        firstName: "Kavya",
+        lastName: "Ramaswamy",
+        dateOfBirth: "1990-04-12",
+        gender: "FEMALE",
+        nationality: "IN",
+      },
+    });
+    expect(saved.status()).toBe(201);
+    passengerIds = [(await saved.json()).data.id as string];
+  }
+>>>>>>> c9c7c43 (Admin bookings: list, detail with assign, notes, status override and change requests, change-request list, navigation (W3-8))
   const booking = await customer.post(`${API_URL}bookings`, {
     headers: { ...customerHeaders, "Idempotency-Key": randomUUID() },
     data: {
@@ -112,10 +142,18 @@ export async function requestedTrip(
       currency: "INR",
       ...(priced ? { expectedTotalMinor: result.price.amountMinor } : {}),
       ...(specialRequests ? { specialRequests } : {}),
+      ...(passengerIds ? { passengerIds } : {}),
     },
   });
   expect(booking.status()).toBe(201);
   const reference = (await booking.json()).data.reference as string;
+  if (changeRequest) {
+    const change = await customer.post(
+      `${API_URL}bookings/${reference}/change-requests`,
+      { headers: customerHeaders, data: { details: changeRequest } },
+    );
+    expect(change.status()).toBe(201);
+  }
   await context.close();
   return { ...aircraft, reference };
 }
