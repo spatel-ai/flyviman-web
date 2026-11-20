@@ -424,7 +424,7 @@ export interface paths {
     get?: never;
     /**
      * Publish a new version of a policy
-     * @description Always a new version: the text customers accepted is kept and never overwritten. The version is the UTC date, with `.2`, `.3` for further versions that day. Sending the current text again changes nothing. Audited.
+     * @description Always a new version: the text customers accepted is kept and never overwritten. The version is the UTC date, with `.2`, `.3` for further versions that day. Send `baseVersion` (the `versionCount` loaded) to be refused with 409 `CONTENT_VERSION_CONFLICT` if another version was published meanwhile; nothing is written. Sending the current text again is refused with 422 `CONTENT_UNCHANGED`. Audited.
      */
     put: operations["AdminPoliciesController_publishPolicy"];
     post?: never;
@@ -2015,7 +2015,7 @@ export interface paths {
     };
     /**
      * List audit records
-     * @description Newest first. Filter by entity, actor, action and time range. Pricing rule records show before, after and reason to finance and super admins only, and of matching limits (MATCHING_LIMITS) to operations; other roles get null for those fields.
+     * @description Newest first. Filter by entity, actor, action and time range. Pricing rule records show before, after and reason to finance and super admins only, and of matching limits (MATCHING_LIMITS) to operations; other roles get null for those fields. Passenger and medical fields inside before and after are null for roles that may not read them (medical: super admin only; identity document numbers: no one; passenger details: operations and super admin). `restricted` is true on every row where something was withheld or redacted.
      */
     get: operations["AdminAuditController_list"];
     put?: never;
@@ -2355,6 +2355,8 @@ export interface components {
       title: string;
       /** @description Plain text with blank lines between paragraphs. */
       body: string;
+      /** @description The `versionCount` the editor loaded (0 for a policy with no version). When sent and another version has been published since, 409 `CONTENT_VERSION_CONFLICT` and nothing is written. Leave it out to publish regardless. */
+      baseVersion?: number;
     };
     /** @enum {string} */
     NotificationChannel: "EMAIL" | "SMS" | "WHATSAPP" | "IN_APP";
@@ -4327,6 +4329,8 @@ export interface components {
       before: Record<string, never> | null;
       after: Record<string, never> | null;
       reason: string | null;
+      /** @description True when this role was shown less than the record holds: before, after or reason withheld, or passenger or medical fields in them set to null. */
+      restricted: boolean;
       ipAddress: string | null;
       requestId: string | null;
       /** Format: date-time */
@@ -4565,6 +4569,47 @@ export interface components {
       handledAt: string | null;
       /** Format: date-time */
       createdAt: string;
+    };
+    ResponseMetaDto: {
+      requestId: string | null;
+      /**
+       * @description List routes only.
+       * @example 1
+       */
+      page?: number;
+      /**
+       * @description List routes only.
+       * @example 20
+       */
+      pageSize?: number;
+      /**
+       * @description List routes only.
+       * @example 134
+       */
+      total?: number;
+    };
+    EnvelopeDto: {
+      /** @description The route's documented response: an object, or an array on list routes. `null` when the route returns nothing. */
+      data: (Record<string, never> | unknown[]) | null;
+      meta: components["schemas"]["ResponseMetaDto"];
+    };
+    ErrorDetailDto: {
+      /** @example totalMinor */
+      field?: string;
+      issue: string;
+    };
+    ErrorBodyDto: {
+      /**
+       * @description Stable upper snake case code; clients switch on it, never on `message`.
+       * @example VALIDATION_ERROR
+       */
+      code: string;
+      message: string;
+      details: components["schemas"]["ErrorDetailDto"][];
+      requestId: string | null;
+    };
+    ErrorEnvelopeDto: {
+      error: components["schemas"]["ErrorBodyDto"];
     };
   };
   responses: never;

@@ -34,6 +34,7 @@ const MESSAGES: Record<string, string> = {
     "A rule for all aircraft cannot be ended, because every price relies on it. Change its value instead.",
   CONTENT_VERSION_CONFLICT:
     "This policy changed since you opened it. It has been reloaded: open it again to see the latest text.",
+  CONTENT_UNCHANGED: "Nothing has changed. Edit the title or the text first.",
   INTERNAL_ERROR: "Something went wrong on our side. Please try again.",
 };
 

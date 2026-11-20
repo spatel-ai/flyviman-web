@@ -54,6 +54,9 @@ export function AuditDetailSheet({
   onOpenChange: (open: boolean) => void;
 }) {
   const restricted = log ? isRestricted(log) : false;
+  // The API nulls passenger and medical fields this role may not read and
+  // flags the row (S2-g); say so rather than leave the values looking blank.
+  const partlyHidden = log ? log.restricted && !restricted : false;
   const changes = log ? diffJson(log.before, log.after) : [];
 
   return (
@@ -95,6 +98,11 @@ export function AuditDetailSheet({
             <h3 id="audit-changes" className="text-body-sm font-medium">
               Change
             </h3>
+            {partlyHidden ? (
+              <p className="text-caption text-muted">
+                Some details are hidden for your role.
+              </p>
+            ) : null}
             {restricted ? (
               <Restricted />
             ) : changes.length === 0 ? (

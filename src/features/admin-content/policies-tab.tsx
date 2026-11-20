@@ -139,12 +139,6 @@ export function PoliciesTab({ canEdit }: { canEdit: boolean }) {
   );
 }
 
-/**
- * `baseVersion` (the number of versions the editor loaded) is the API's
- * concurrency check (S2-g); the generated types do not carry it yet.
- */
-type PublishBody = Schemas["PublishPolicyDto"] & { baseVersion: number };
-
 function PolicyForm({
   policy,
   onDone,
@@ -178,7 +172,7 @@ function PolicyForm({
             title: values.title,
             body: values.body,
             baseVersion: policy.versionCount ?? 0,
-          } satisfies PublishBody,
+          } satisfies Schemas["PublishPolicyDto"],
         },
       ),
     onSuccess: (result) => {
