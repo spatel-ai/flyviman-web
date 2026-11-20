@@ -1,12 +1,15 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState, type FormEvent } from "react";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useState } from "react";
+import { useForm, useWatch } from "react-hook-form";
 import { EmptyState } from "@/components/shared/empty-state";
 import { FormAlert } from "@/components/shared/form-alert";
 import { LoadError } from "@/components/shared/load-error";
 import { Button } from "@/components/ui/button";
 import {
+  ConfirmDialog,
   Dialog,
   DialogClose,
   DialogContent,
@@ -25,10 +28,12 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/toast";
 import { apiFetch } from "@/lib/api/client";
-import { messageFor } from "@/lib/api/messages";
+import { ApiError } from "@/lib/api/errors";
+import { applyApiError, messageFor } from "@/lib/api/messages";
 import { queryKeys } from "@/lib/api/query-keys";
 import type { Schemas } from "@/lib/api/types";
 import { formatDateTime } from "@/lib/format/date";
+import { policySchema, type PolicyValues } from "./schema";
 
 type Policy = Schemas["AdminPolicyResponseDto"];
 
@@ -134,6 +139,12 @@ export function PoliciesTab({ canEdit }: { canEdit: boolean }) {
   );
 }
 
+/**
+ * `baseVersion` (the number of versions the editor loaded) is the API's
+ * concurrency check (S2-g); the generated types do not carry it yet.
+ */
+type PublishBody = Schemas["PublishPolicyDto"] & { baseVersion: number };
+
 function PolicyForm({
   policy,
   onDone,
@@ -142,18 +153,32 @@ function PolicyForm({
   onDone: () => void;
 }) {
   const { toast } = useToast();
-  const [title, setTitle] = useState(policy.title);
-  const [body, setBody] = useState(policy.body);
   const [preview, setPreview] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [pending, setPending] = useState<PolicyValues | null>(null);
+  const {
+    register,
+    handleSubmit,
+    setError: setFieldError,
+    control,
+    formState: { errors },
+  } = useForm<PolicyValues>({
+    resolver: zodResolver(policySchema),
+    defaultValues: { title: policy.title, body: policy.body },
+  });
+  const [title, body] = useWatch({ control, name: ["title", "body"] });
 
   const publish = useMutation({
-    mutationFn: () =>
+    mutationFn: (values: PolicyValues) =>
       apiFetch<Policy>(
         `admin/content/policies/${encodeURIComponent(policy.slug)}`,
         {
           method: "PUT",
-          body: { title: title.trim(), body: body.trim() },
+          body: {
+            title: values.title,
+            body: values.body,
+            baseVersion: policy.versionCount ?? 0,
+          } satisfies PublishBody,
         },
       ),
     onSuccess: (result) => {
@@ -163,35 +188,53 @@ function PolicyForm({
       });
       onDone();
     },
-    onError: (failure) => setError(messageFor(failure)),
+    onError: (failure) => {
+      setPending(null);
+      if (
+        failure instanceof ApiError &&
+        failure.code === "CONTENT_VERSION_CONFLICT"
+      ) {
+        // Another admin published first: reload the list and close this editor.
+        toast({ title: messageFor(failure), tone: "danger" });
+        onDone();
+        return;
+      }
+      setError(applyApiError(failure, setFieldError, ["title", "body"]));
+    },
   });
 
-  function submit(event: FormEvent) {
-    event.preventDefault();
-    if (!title.trim() || !body.trim()) {
-      setError("Enter the title and the text.");
+  function review(values: PolicyValues) {
+    if (
+      values.title === policy.title.trim() &&
+      values.body === policy.body.trim()
+    ) {
+      setError("Nothing has changed. Edit the title or the text first.");
       return;
     }
     setError(null);
-    publish.mutate();
+    setPending(values);
   }
 
   return (
-    <form className="flex flex-col gap-4" onSubmit={submit} noValidate>
+    <form
+      className="flex flex-col gap-4"
+      onSubmit={(event) => void handleSubmit(review)(event)}
+      noValidate
+    >
       <FormAlert message={error} />
       <Input
         label="Title"
-        value={title}
         maxLength={200}
-        onChange={(e) => setTitle(e.target.value)}
+        error={errors.title?.message}
+        {...register("title")}
       />
       <Textarea
         label="Text"
         hint="Plain text with blank lines between paragraphs."
         rows={12}
-        value={body}
         maxLength={50000}
-        onChange={(e) => setBody(e.target.value)}
+        error={errors.body?.message}
+        {...register("body")}
       />
       <Button
         type="button"
@@ -220,10 +263,19 @@ function PolicyForm({
             Cancel
           </Button>
         </DialogClose>
-        <Button type="submit" className="h-10" loading={publish.isPending}>
+        <Button type="submit" className="h-10">
           Publish new version
         </Button>
       </DialogFooter>
+      <ConfirmDialog
+        open={pending !== null}
+        onOpenChange={(open) => !open && !publish.isPending && setPending(null)}
+        title="Publish this version?"
+        description={`${policy.title} goes live for every customer at once. The earlier text is kept, but the new version applies from now.`}
+        confirmLabel="Publish"
+        loading={publish.isPending}
+        onConfirm={() => pending && publish.mutate(pending)}
+      />
     </form>
   );
 }

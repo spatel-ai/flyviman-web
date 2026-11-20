@@ -48,7 +48,8 @@ import {
   type Filters,
   type Sort,
 } from "./filters";
-import { categoryImage, categoryLabel, formatDuration } from "./format";
+import { categoryLabel, formatDuration } from "@/lib/format/aircraft";
+import { categoryImage } from "./format";
 
 type SearchResponse = Schemas["SearchResponseDto"];
 type Result = Schemas["SearchResultDto"];

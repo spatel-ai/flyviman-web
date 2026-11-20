@@ -25,14 +25,8 @@ import { messageFor } from "@/lib/api/messages";
 import { queryKeys } from "@/lib/api/query-keys";
 import { formatDateTime } from "@/lib/format/date";
 import { AddRuleDialog, ChangeRuleDialog } from "./rule-dialog";
-import {
-  appliesTo,
-  canManage,
-  describeConfig,
-  listIsStale,
-  ruleLabel,
-  type PricingRule,
-} from "./rules";
+import { canManage, describeConfig, ruleLabel } from "./rules";
+import { appliesTo, listIsStale, type PricingRule } from "@/lib/pricing-rules";
 
 const PAGE_SIZE = 50;
 type View = "current" | "history";
@@ -74,7 +68,7 @@ export function RulesList() {
       });
       setEnding(null);
       void queryClient.invalidateQueries({
-        queryKey: ["admin", "pricing-rules"],
+        queryKey: queryKeys.adminPricingRulesAll,
       });
     },
     onError: (failure) => {
@@ -82,7 +76,7 @@ export function RulesList() {
       if (listIsStale(failure)) {
         setEnding(null);
         void queryClient.invalidateQueries({
-          queryKey: ["admin", "pricing-rules"],
+          queryKey: queryKeys.adminPricingRulesAll,
         });
       }
     },

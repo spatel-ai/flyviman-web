@@ -10,6 +10,7 @@ export const RAZORPAY_API = "https://api.razorpay.com";
  */
 export const CHECKOUT_PAGE = "/book/:reference/payment";
 
+// The nonce branch is unused until W5 renders the portals per request (D-152).
 export interface CspOptions {
   /**
    * Only for a page rendered per request, where Next.js puts this nonce on

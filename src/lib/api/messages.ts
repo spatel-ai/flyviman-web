@@ -32,6 +32,8 @@ const MESSAGES: Record<string, string> = {
     "Someone changed or ended this rule since you opened it. The list now shows the latest version: close this and choose Change again.",
   PRICING_RULE_REQUIRED:
     "A rule for all aircraft cannot be ended, because every price relies on it. Change its value instead.",
+  CONTENT_VERSION_CONFLICT:
+    "This policy changed since you opened it. It has been reloaded: open it again to see the latest text.",
   INTERNAL_ERROR: "Something went wrong on our side. Please try again.",
 };
 

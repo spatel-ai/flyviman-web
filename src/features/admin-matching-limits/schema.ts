@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { REASON_MAX, REASON_MIN } from "@/features/admin-pricing/schema";
+import { REASON_MAX, REASON_MIN } from "@/lib/pricing-rules";
 
 /** Whole-number setting, left empty for "no limit". Bounds mirror the API's. */
 const whole = (max: number, unit: string) =>

@@ -20,7 +20,7 @@ import { queryKeys } from "@/lib/api/query-keys";
 import { formatDay } from "@/lib/format/date";
 import { utcToLocal } from "@/lib/format/zoned";
 import { cn } from "@/lib/utils";
-import { formatDuration } from "@/features/search/format";
+import { formatDuration } from "@/lib/format/aircraft";
 import {
   applyFilters,
   carriersOf,
@@ -133,7 +133,7 @@ function OfferCard({
         <PriceLabel
           amountMinor={offer.fare.amountMinor}
           currency={offer.fare.currency}
-          priceType="LIVE_FARE"
+          priceType={offer.fare.priceType}
           variant="compact"
           expired={expired}
         />

@@ -7,8 +7,8 @@ import {
   routeLabel,
   validUntilLabel,
   windowLabel,
-} from "./format";
-import type { EmptyLegOffer } from "./types";
+} from "@/lib/empty-legs/format";
+import type { EmptyLegOffer } from "@/lib/empty-legs/types";
 
 export function OfferCard({ offer }: { offer: EmptyLegOffer }) {
   return (

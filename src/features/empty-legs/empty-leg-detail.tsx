@@ -25,8 +25,8 @@ import {
   routeLabel,
   validUntilLabel,
   windowLabel,
-} from "./format";
-import type { EmptyLegDetail as Detail } from "./types";
+} from "@/lib/empty-legs/format";
+import type { EmptyLegDetail as Detail } from "@/lib/empty-legs/types";
 
 /**
  * One empty-leg offer. Its conditions come before the request (business

@@ -1,5 +1,5 @@
 import { formatDateTime } from "@/lib/format/date";
-import { categoryLabel } from "@/features/search/format";
+import { categoryLabel } from "@/lib/format/aircraft";
 // The operator and admin shapes carry more, so they pass as an EmptyLegOffer too.
 import type { EmptyLegLocation, EmptyLegOffer } from "./types";
 

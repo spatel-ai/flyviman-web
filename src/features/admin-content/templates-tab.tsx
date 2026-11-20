@@ -1,13 +1,16 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState, type FormEvent } from "react";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useState } from "react";
+import { Controller, useForm } from "react-hook-form";
 import { FormAlert } from "@/components/shared/form-alert";
 import { LoadError } from "@/components/shared/load-error";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
+  ConfirmDialog,
   Dialog,
   DialogClose,
   DialogContent,
@@ -26,10 +29,11 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/toast";
 import { apiFetch } from "@/lib/api/client";
-import { messageFor } from "@/lib/api/messages";
+import { applyApiError } from "@/lib/api/messages";
 import { queryKeys } from "@/lib/api/query-keys";
 import type { Schemas } from "@/lib/api/types";
 import { placeholderProblem } from "./placeholders";
+import { templateSchema, type TemplateValues } from "./schema";
 
 type Template = Schemas["NotificationTemplateResponseDto"];
 
@@ -136,22 +140,34 @@ function TemplateForm({
 }) {
   const { toast } = useToast();
   const hasSubject = template.subject !== null;
-  const [subject, setSubject] = useState(template.subject ?? "");
-  const [body, setBody] = useState(template.body);
-  const [isActive, setIsActive] = useState(template.isActive);
   const [error, setError] = useState<string | null>(null);
+  const [pending, setPending] = useState<TemplateValues | null>(null);
+  const {
+    register,
+    control,
+    handleSubmit,
+    setError: setFieldError,
+    formState: { errors },
+  } = useForm<TemplateValues>({
+    resolver: zodResolver(templateSchema),
+    defaultValues: {
+      subject: template.subject ?? "",
+      body: template.body,
+      isActive: template.isActive,
+    },
+  });
 
   const save = useMutation({
-    mutationFn: () =>
+    mutationFn: (values: TemplateValues) =>
       apiFetch<Template>(
         `admin/content/notification-templates/${encodeURIComponent(template.key)}`,
         {
           method: "PUT",
           body: {
             channel: template.channel,
-            subject: hasSubject ? subject.trim() : null,
-            body,
-            isActive,
+            subject: hasSubject ? values.subject : null,
+            body: values.body,
+            isActive: values.isActive,
           },
         },
       ),
@@ -159,26 +175,44 @@ function TemplateForm({
       toast({ title: "Template saved", tone: "success" });
       onDone();
     },
-    onError: (failure) => setError(messageFor(failure)),
+    onError: (failure) => {
+      setPending(null);
+      setError(
+        applyApiError(failure, setFieldError, ["subject", "body", "isActive"]),
+      );
+    },
   });
 
-  function submit(event: FormEvent) {
-    event.preventDefault();
+  function review(values: TemplateValues) {
     const problem = placeholderProblem(
       template.placeholders,
-      hasSubject ? subject : "",
-      body,
+      hasSubject ? values.subject : "",
+      values.body,
     );
     if (problem) {
       setError(problem);
       return;
     }
+    if (
+      (hasSubject
+        ? values.subject === (template.subject ?? "").trim()
+        : true) &&
+      values.body === template.body &&
+      values.isActive === template.isActive
+    ) {
+      setError("Nothing has changed. Edit the wording first.");
+      return;
+    }
     setError(null);
-    save.mutate();
+    setPending(values);
   }
 
   return (
-    <form className="flex flex-col gap-4" onSubmit={submit} noValidate>
+    <form
+      className="flex flex-col gap-4"
+      onSubmit={(event) => void handleSubmit(review)(event)}
+      noValidate
+    >
       <FormAlert message={error} />
       {template.placeholders.length > 0 ? (
         <p className="text-body-sm text-muted">
@@ -189,22 +223,28 @@ function TemplateForm({
       {hasSubject ? (
         <Input
           label="Subject"
-          value={subject}
           maxLength={200}
-          onChange={(e) => setSubject(e.target.value)}
+          error={errors.subject?.message}
+          {...register("subject")}
         />
       ) : null}
       <Textarea
         label="Message"
-        value={body}
         maxLength={5000}
-        onChange={(e) => setBody(e.target.value)}
+        error={errors.body?.message}
+        {...register("body")}
       />
-      <Checkbox
-        label="Use this wording"
-        hint="When off, the built-in wording is sent."
-        checked={isActive}
-        onCheckedChange={(checked) => setIsActive(checked === true)}
+      <Controller
+        control={control}
+        name="isActive"
+        render={({ field }) => (
+          <Checkbox
+            label="Use this wording"
+            hint="When off, the built-in wording is sent."
+            checked={field.value}
+            onCheckedChange={(checked) => field.onChange(checked === true)}
+          />
+        )}
       />
       <DialogFooter>
         <DialogClose asChild>
@@ -212,10 +252,19 @@ function TemplateForm({
             Cancel
           </Button>
         </DialogClose>
-        <Button type="submit" className="h-10" loading={save.isPending}>
+        <Button type="submit" className="h-10">
           Save
         </Button>
       </DialogFooter>
+      <ConfirmDialog
+        open={pending !== null}
+        onOpenChange={(open) => !open && !save.isPending && setPending(null)}
+        title="Publish this wording?"
+        description={`Messages sent over ${template.channel} for ${template.key} use this wording from now on.`}
+        confirmLabel="Publish"
+        loading={save.isPending}
+        onConfirm={() => pending && save.mutate(pending)}
+      />
     </form>
   );
 }

@@ -66,5 +66,9 @@ test("a super admin publishes a new policy version", async ({ page }) => {
     .getByLabel("Text")
     .fill(`Privacy wording ${randomUUID().slice(0, 8)}.`);
   await dialog.getByRole("button", { name: "Publish new version" }).click();
+  await page
+    .getByRole("dialog", { name: "Publish this version?" })
+    .getByRole("button", { name: "Publish", exact: true })
+    .click();
   await expect(page.getByText(/Published version/).first()).toBeVisible();
 });

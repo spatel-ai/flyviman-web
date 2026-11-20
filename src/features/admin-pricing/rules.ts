@@ -1,10 +1,8 @@
-import type { AircraftCategory, Schemas } from "@/lib/api/types";
-import { ApiError } from "@/lib/api/errors";
+import type { Schemas } from "@/lib/api/types";
+import type { PricingRule } from "@/lib/pricing-rules";
 import { formatMoney, paiseToRupees } from "@/lib/format/money";
 
-export type PricingRule = Schemas["PricingRuleResponseDto"];
 export type RuleType = Schemas["CreatePricingRuleDto"]["type"];
-export type RuleScope = Schemas["CreatePricingRuleDto"]["scope"];
 
 /**
  * How each setting is entered. Bounds mirror the API's
@@ -206,20 +204,6 @@ export const RULE_TYPE_OPTIONS = RULE_TYPES.map((type) => ({
   label: RULE_META[type].label,
 }));
 
-export const CATEGORY_LABELS: Record<AircraftCategory, string> = {
-  TURBOPROP: "Turboprop",
-  LIGHT_JET: "Light jet",
-  MIDSIZE_JET: "Midsize jet",
-  HEAVY_JET: "Heavy jet",
-  HELICOPTER: "Helicopter",
-  AIR_AMBULANCE_FIXED: "Air ambulance (fixed wing)",
-  AIR_AMBULANCE_ROTARY: "Air ambulance (rotary)",
-};
-
-export const CATEGORY_OPTIONS = (
-  Object.entries(CATEGORY_LABELS) as [AircraftCategory, string][]
-).map(([value, label]) => ({ value, label }));
-
 /** Operator-owned types, seen here only in a calculation's applied rules. */
 const OPERATOR_TYPE_LABELS: Record<string, string> = {
   HOURLY_RATE: "Hourly rate",
@@ -230,16 +214,6 @@ const OPERATOR_TYPE_LABELS: Record<string, string> = {
 export function ruleLabel(type: string): string {
   return (
     RULE_META[type as RuleType]?.label ?? OPERATOR_TYPE_LABELS[type] ?? type
-  );
-}
-
-/** "All aircraft" for a platform rule, the category's name otherwise. */
-export function appliesTo(
-  rule: Pick<PricingRule, "scope" | "scopeRef">,
-): string {
-  if (rule.scope === "PLATFORM") return "All aircraft";
-  return (
-    CATEGORY_LABELS[rule.scopeRef as AircraftCategory] ?? rule.scopeRef ?? "—"
   );
 }
 
@@ -304,21 +278,6 @@ export function configToDraft(
     }
   }
   return draft;
-}
-
-/**
- * Refusals that mean the list on screen is out of date: another admin
- * changed, added or ended a rule since it loaded. The list is refetched so
- * trying again works on the latest version (security review, web M1).
- */
-const STALE_LIST_CODES: ReadonlySet<string> = new Set([
-  "PRICING_RULE_NOT_CURRENT",
-  "PRICING_RULE_EXISTS",
-  "NOT_FOUND",
-]);
-
-export function listIsStale(error: unknown): boolean {
-  return error instanceof ApiError && STALE_LIST_CODES.has(error.code);
 }
 
 /** A rule type this screen has a form for. */

@@ -17,8 +17,8 @@ import {
   routeLabel,
   validUntilLabel,
   windowLabel,
-} from "@/features/empty-legs/format";
-import type { OperatorEmptyLeg } from "@/features/empty-legs/types";
+} from "@/lib/empty-legs/format";
+import type { OperatorEmptyLeg } from "@/lib/empty-legs/types";
 import { apiFetch } from "@/lib/api/client";
 import { isNotFoundError } from "@/lib/api/errors";
 import { messageFor } from "@/lib/api/messages";
