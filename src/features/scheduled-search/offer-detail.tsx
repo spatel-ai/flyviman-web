@@ -4,7 +4,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { useState } from "react";
 import { LoadError } from "@/components/shared/load-error";
-import { PriceLabel } from "@/components/shared/price-label";
+import { PriceLabel, type PriceType } from "@/components/shared/price-label";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { buttonClasses } from "@/components/ui/button-classes";
@@ -14,7 +14,6 @@ import { apiFetch } from "@/lib/api/client";
 import { messageFor } from "@/lib/api/messages";
 import { queryKeys } from "@/lib/api/query-keys";
 import { formatDuration } from "@/lib/format/aircraft";
-import { formatMoney } from "@/lib/format/money";
 import {
   clock,
   enquiryHref,
@@ -29,20 +28,48 @@ import type { FareRules, RevalidateResult, ScheduledOffer } from "./types";
 
 const SEARCH_AGAIN = "/search?service=flights";
 
+/** A fee from the fare rules, labelled with the fare's price type (rule 1). */
+function FeeAmount({
+  feeMinor,
+  currency,
+  priceType,
+}: {
+  feeMinor: number;
+  currency: string;
+  priceType: PriceType;
+}) {
+  return (
+    <PriceLabel
+      amountMinor={feeMinor}
+      currency={currency}
+      priceType={priceType}
+      variant="compact"
+      className="inline-flex flex-row items-center gap-2 align-middle"
+    />
+  );
+}
+
 function Fee({
   allowed,
   feeMinor,
   currency,
+  priceType,
 }: {
   allowed: boolean;
   feeMinor?: number;
   currency: string;
+  priceType: PriceType;
 }) {
   if (!allowed) return <>Not allowed</>;
   return feeMinor ? (
     <>
-      Allowed for {formatMoney(feeMinor, currency)} per passenger, plus any fare
-      difference
+      Allowed for{" "}
+      <FeeAmount
+        feeMinor={feeMinor}
+        currency={currency}
+        priceType={priceType}
+      />{" "}
+      per passenger, plus any fare difference
     </>
   ) : (
     <>Allowed, no fee</>
@@ -102,12 +129,12 @@ function Outcome({
                       zoneOf(alt.segments[0], "from"),
                     )}
                   </span>
-                  <span className="tabular-nums">
-                    {formatMoney(alt.fare.amountMinor, alt.fare.currency)}
-                    <span className="ml-2 text-caption text-muted">
-                      Live fare
-                    </span>
-                  </span>
+                  <PriceLabel
+                    amountMinor={alt.fare.amountMinor}
+                    currency={alt.fare.currency}
+                    priceType={alt.fare.priceType}
+                    variant="compact"
+                  />
                 </button>
               </li>
             ))}
@@ -133,7 +160,7 @@ function Outcome({
             <PriceLabel
               amountMinor={offer.fare.amountMinor}
               currency={offer.fare.currency}
-              priceType="LIVE_FARE"
+              priceType={offer.fare.priceType}
               note={`${totalLabel(travellers)}, the fare you were shown`}
               className="text-muted"
             />
@@ -143,7 +170,7 @@ function Outcome({
             <PriceLabel
               amountMinor={fare.amountMinor}
               currency={fare.currency}
-              priceType="LIVE_FARE"
+              priceType={fare.priceType}
               note={`${totalLabel(travellers)}, rechecked before payment`}
               validUntil={validUntil}
               expired={expired}
@@ -154,7 +181,7 @@ function Outcome({
         <PriceLabel
           amountMinor={fare.amountMinor}
           currency={fare.currency}
-          priceType="LIVE_FARE"
+          priceType={fare.priceType}
           note={`${totalLabel(travellers)}, rechecked before payment`}
           validUntil={validUntil}
           expired={expired}
@@ -171,7 +198,7 @@ function Outcome({
         <div className="flex flex-col items-start gap-2 border-t border-border pt-3">
           <p className="text-body-sm text-muted">
             Booking scheduled flights opens soon. Until then our team can help
-            you book this fare.
+            with this fare.
           </p>
           <Link
             href={enquiryHref(offer, searchId)}
@@ -275,10 +302,11 @@ export function OfferDetail({
                     rules.data.data.cancellation.feeMinor ? (
                       <>
                         Refundable, fee{" "}
-                        {formatMoney(
-                          rules.data.data.cancellation.feeMinor,
-                          offer.fare.currency,
-                        )}
+                        <FeeAmount
+                          feeMinor={rules.data.data.cancellation.feeMinor}
+                          currency={offer.fare.currency}
+                          priceType={offer.fare.priceType}
+                        />
                       </>
                     ) : (
                       <>Refundable, no fee</>
@@ -293,6 +321,7 @@ export function OfferDetail({
                     allowed={rules.data.data.change.allowed}
                     feeMinor={rules.data.data.change.feeMinor}
                     currency={offer.fare.currency}
+                    priceType={offer.fare.priceType}
                   />
                 </dd>
               </dl>
@@ -324,7 +353,7 @@ export function OfferDetail({
               <PriceLabel
                 amountMinor={offer.fare.amountMinor}
                 currency={offer.fare.currency}
-                priceType="LIVE_FARE"
+                priceType={offer.fare.priceType}
                 note={`${totalLabel(travellers)}, rechecked before payment`}
                 validUntil={offer.validUntil}
                 expired={expired}

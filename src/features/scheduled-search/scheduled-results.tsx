@@ -133,7 +133,7 @@ function OfferCard({
         <PriceLabel
           amountMinor={offer.fare.amountMinor}
           currency={offer.fare.currency}
-          priceType="LIVE_FARE"
+          priceType={offer.fare.priceType}
           variant="compact"
           expired={expired}
         />
