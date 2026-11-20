@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { OperatorEmptyLeg } from "@/features/empty-legs/types";
+import type { OperatorEmptyLeg } from "@/lib/empty-legs/types";
 import {
   EMPTY_VALUES,
   emptyLegSchema,

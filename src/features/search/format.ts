@@ -4,26 +4,6 @@ import { formatMoney } from "@/lib/format/money";
 
 type Detail = Schemas["SearchResultDetailDto"];
 
-const CATEGORY_LABELS: Record<string, string> = {
-  TURBOPROP: "Turboprop",
-  LIGHT_JET: "Light jet",
-  MIDSIZE_JET: "Midsize jet",
-  HEAVY_JET: "Heavy jet",
-  HELICOPTER: "Helicopter",
-};
-
-export function categoryLabel(category: string): string {
-  return CATEGORY_LABELS[category] ?? category;
-}
-
-/** "1 h 05 min", "45 min". */
-export function formatDuration(minutes: number): string {
-  const hours = Math.floor(minutes / 60);
-  const rest = minutes % 60;
-  if (hours === 0) return `${rest} min`;
-  return `${hours} h ${String(rest).padStart(2, "0")} min`;
-}
-
 /**
  * The contact page, with the topic chosen and a message describing this
  * aircraft and trip. Nothing is booked: it is an enquiry (business rule 4).

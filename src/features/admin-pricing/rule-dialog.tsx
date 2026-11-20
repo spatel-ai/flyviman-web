@@ -21,19 +21,21 @@ import { apiFetch } from "@/lib/api/client";
 import { applyApiError } from "@/lib/api/messages";
 import type { AircraftCategory } from "@/lib/api/types";
 import {
-  appliesTo,
-  CATEGORY_OPTIONS,
   configToDraft,
   describeConfig,
   isRuleType,
-  listIsStale,
   RULE_META,
   RULE_TYPE_OPTIONS,
   ruleLabel,
-  type PricingRule,
-  type RuleScope,
   type RuleType,
 } from "./rules";
+import {
+  appliesTo,
+  CATEGORY_OPTIONS,
+  listIsStale,
+  type PricingRule,
+  type RuleScope,
+} from "@/lib/pricing-rules";
 import {
   fieldPaths,
   ruleSchema,

@@ -1,9 +1,8 @@
 import { z } from "zod";
 import { rupeesToPaise } from "@/lib/format/money";
+import { REASON_MAX, REASON_MIN } from "@/lib/pricing-rules";
 import { RULE_META, type FieldDef, type RuleType } from "./rules";
 
-export const REASON_MIN = 3;
-export const REASON_MAX = 500;
 
 const reason = z
   .string()

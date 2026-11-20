@@ -18,8 +18,8 @@ import {
   routeLabel,
   validUntilLabel,
   windowLabel,
-} from "@/features/empty-legs/format";
-import type { AdminEmptyLeg } from "@/features/empty-legs/types";
+} from "@/lib/empty-legs/format";
+import type { AdminEmptyLeg } from "@/lib/empty-legs/types";
 import { apiFetch } from "@/lib/api/client";
 import { messageFor } from "@/lib/api/messages";
 import { queryKeys } from "@/lib/api/query-keys";

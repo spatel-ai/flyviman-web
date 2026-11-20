@@ -2,7 +2,7 @@ import { z } from "zod";
 import type {
   EmptyLegInput,
   OperatorEmptyLeg,
-} from "@/features/empty-legs/types";
+} from "@/lib/empty-legs/types";
 import { paiseToRupees, rupeesToPaise } from "@/lib/format/money";
 import { localToUtc, utcToLocal } from "@/lib/format/zoned";
 

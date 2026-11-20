@@ -41,7 +41,7 @@ import {
   listIsStale,
   type PricingRule,
   type RuleScope,
-} from "@/features/admin-pricing/rules";
+} from "@/lib/pricing-rules";
 import {
   describeLimits,
   fromMatchingConfig,

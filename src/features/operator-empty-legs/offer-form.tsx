@@ -15,7 +15,7 @@ import { useToast } from "@/components/ui/toast";
 import type {
   EmptyLegAircraft,
   OperatorEmptyLeg,
-} from "@/features/empty-legs/types";
+} from "@/lib/empty-legs/types";
 import { apiFetch } from "@/lib/api/client";
 import { applyApiError } from "@/lib/api/messages";
 import { queryKeys } from "@/lib/api/query-keys";

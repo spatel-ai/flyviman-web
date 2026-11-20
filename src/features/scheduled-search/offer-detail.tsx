@@ -13,7 +13,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { apiFetch } from "@/lib/api/client";
 import { messageFor } from "@/lib/api/messages";
 import { queryKeys } from "@/lib/api/query-keys";
-import { formatDuration } from "@/features/search/format";
+import { formatDuration } from "@/lib/format/aircraft";
 import { formatMoney } from "@/lib/format/money";
 import {
   clock,

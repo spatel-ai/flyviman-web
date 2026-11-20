@@ -1,11 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { ApiError } from "@/lib/api/errors";
 import {
-  appliesTo,
   canManage,
   configToDraft,
   describeConfig,
-  listIsStale,
   RULE_TYPES,
 } from "./rules";
 import { ruleSchema } from "./schema";
@@ -25,17 +22,6 @@ describe("describeConfig", () => {
     expect(
       describeConfig("POSITIONING", { rateFactor: 0.8, freeWithinKm: 50 }),
     ).toBe("0.8 × hourly rate, free within 50 km");
-  });
-});
-
-describe("appliesTo", () => {
-  it("names all aircraft or the category", () => {
-    expect(appliesTo({ scope: "PLATFORM", scopeRef: null })).toBe(
-      "All aircraft",
-    );
-    expect(appliesTo({ scope: "CATEGORY", scopeRef: "TURBOPROP" })).toBe(
-      "Turboprop",
-    );
   });
 });
 
@@ -101,25 +87,6 @@ describe("ruleSchema", () => {
     for (const type of RULE_TYPES) {
       expect(() => ruleSchema(type)).not.toThrow();
     }
-  });
-});
-
-describe("listIsStale", () => {
-  it("refreshes the list when another admin got there first", () => {
-    for (const code of [
-      "PRICING_RULE_NOT_CURRENT",
-      "PRICING_RULE_EXISTS",
-      "NOT_FOUND",
-    ]) {
-      expect(listIsStale(new ApiError(409, code, "refused"))).toBe(true);
-    }
-  });
-
-  it("leaves the list alone for other failures", () => {
-    expect(listIsStale(new ApiError(400, "VALIDATION_ERROR", "bad"))).toBe(
-      false,
-    );
-    expect(listIsStale(new Error("network"))).toBe(false);
   });
 });
 

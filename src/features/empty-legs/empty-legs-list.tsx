@@ -23,7 +23,7 @@ import {
   type EmptyLegFilter,
 } from "./filters";
 import { OfferCard } from "./offer-card";
-import type { EmptyLegOffer } from "./types";
+import type { EmptyLegOffer } from "@/lib/empty-legs/types";
 
 /** The filters live in the address; the form edits a draft and applies it. */
 export function EmptyLegsList() {

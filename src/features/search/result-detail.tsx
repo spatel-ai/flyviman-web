@@ -19,12 +19,8 @@ import { formatDateTime } from "@/lib/format/date";
 import { formatMoney } from "@/lib/format/money";
 import { IMAGES } from "@/content/image-credits";
 import { isRoundTrip, strategyLabel } from "./round-trip";
-import {
-  categoryImage,
-  categoryLabel,
-  formatDuration,
-  requestHref,
-} from "./format";
+import { categoryLabel, formatDuration } from "@/lib/format/aircraft";
+import { categoryImage, requestHref } from "./format";
 
 type Detail = Schemas["SearchResultDetailDto"];
 

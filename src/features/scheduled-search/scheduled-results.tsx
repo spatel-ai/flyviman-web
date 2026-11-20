@@ -20,7 +20,7 @@ import { queryKeys } from "@/lib/api/query-keys";
 import { formatDay } from "@/lib/format/date";
 import { utcToLocal } from "@/lib/format/zoned";
 import { cn } from "@/lib/utils";
-import { formatDuration } from "@/features/search/format";
+import { formatDuration } from "@/lib/format/aircraft";
 import {
   applyFilters,
   carriersOf,
