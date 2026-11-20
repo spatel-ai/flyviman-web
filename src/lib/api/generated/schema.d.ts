@@ -3354,6 +3354,11 @@ export interface components {
       templateKey: string;
       title: string;
       body: string;
+      /**
+       * @description The site path the message is about (a booking, an air ambulance request), for the reader's own portal; null when there is none.
+       * @example /account/trips/FV-ABC123
+       */
+      href: string | null;
       /** Format: date-time */
       readAt: string | null;
       /** Format: date-time */

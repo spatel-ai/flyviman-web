@@ -1,6 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import Link from "next/link";
 import { useState } from "react";
 import { EmptyState } from "@/components/shared/empty-state";
 import { LoadError } from "@/components/shared/load-error";
@@ -94,18 +95,29 @@ export function Notifications() {
                   {formatDateTime(notification.createdAt)}
                 </p>
               </div>
-              {unread ? (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  loading={
-                    markRead.isPending && markRead.variables === notification.id
-                  }
-                  onClick={() => markRead.mutate(notification.id)}
-                >
-                  Mark as read
-                </Button>
-              ) : null}
+              <div className="flex shrink-0 items-center gap-2">
+                {notification.href ? (
+                  <Link
+                    href={notification.href}
+                    className="text-body-sm font-medium text-accent hover:underline"
+                  >
+                    View
+                  </Link>
+                ) : null}
+                {unread ? (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    loading={
+                      markRead.isPending &&
+                      markRead.variables === notification.id
+                    }
+                    onClick={() => markRead.mutate(notification.id)}
+                  >
+                    Mark as read
+                  </Button>
+                ) : null}
+              </div>
             </li>
           );
         })}

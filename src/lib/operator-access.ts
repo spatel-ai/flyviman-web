@@ -45,6 +45,10 @@ const FLEET = { href: "/operator/aircraft", label: "Fleet" };
 const AVAILABILITY = { href: "/operator/availability", label: "Availability" };
 const EMPTY_LEGS = { href: "/operator/empty-legs", label: "Empty legs" };
 const TEAM = { href: "/operator/team", label: "Team" };
+const NOTIFICATIONS = {
+  href: "/operator/notifications",
+  label: "Notifications",
+};
 const PRICING = { href: "/operator/pricing", label: "Pricing" };
 const APPLICATION = {
   href: "/operator/onboarding",
@@ -73,9 +77,10 @@ export function operatorNav(
           EMPTY_LEGS,
           PRICING,
           TEAM,
+          NOTIFICATIONS,
           APPLICATION,
         ]
-      : [FLEET, AVAILABILITY, PRICING, TEAM, APPLICATION];
+      : [FLEET, AVAILABILITY, PRICING, TEAM, NOTIFICATIONS, APPLICATION];
   }
   if (!live) return [];
   return [
@@ -88,5 +93,6 @@ export function operatorNav(
     ...(status === "APPROVED" && can(access, "MANAGE_EMPTY_LEGS")
       ? [EMPTY_LEGS]
       : []),
+    NOTIFICATIONS,
   ];
 }

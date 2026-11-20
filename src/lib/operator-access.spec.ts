@@ -42,6 +42,7 @@ describe("operatorNav", () => {
       "/operator/empty-legs",
       "/operator/pricing",
       "/operator/team",
+      "/operator/notifications",
       "/operator/onboarding",
     ]);
   });
@@ -80,6 +81,7 @@ describe("operatorNav", () => {
       "/operator",
       "/operator/aircraft",
       "/operator/availability",
+      "/operator/notifications",
     ]);
     const aircraftStaff: OperatorAccess = {
       ...availabilityStaff,
@@ -88,6 +90,7 @@ describe("operatorNav", () => {
     expect(hrefs(operatorNav("APPROVED", aircraftStaff))).toEqual([
       "/operator",
       "/operator/aircraft",
+      "/operator/notifications",
     ]);
     const emptyLegStaff: OperatorAccess = {
       ...availabilityStaff,
