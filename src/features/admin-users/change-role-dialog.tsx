@@ -106,6 +106,12 @@ function ChangeRoleForm({
         );
         return;
       }
+      if (error instanceof ApiError && error.code === "USER_LAST_SUPER_ADMIN") {
+        // Another super administrator changed at the same moment.
+        void queryClient.invalidateQueries({
+          queryKey: queryKeys.adminUsers({}).slice(0, 2),
+        });
+      }
       setFormError(
         error instanceof ApiError && error.code === "VALIDATION_ERROR"
           ? applyApiError(error, setError, ["role", "reason"])
