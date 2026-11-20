@@ -1892,6 +1892,26 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/search/{searchId}/results/{resultId}/promo-code": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Apply a promotion code to one result (preview, nothing stored)
+     * @description The trip priced again with the code, as a booking with `promoCode` would be: an `ESTIMATE` with the discount as its own line. 422 `PROMO_CODE_INVALID` (unknown or not started), `PROMO_CODE_EXPIRED`, `PROMO_CODE_NOT_APPLICABLE` (another category or route, or priced on request), `PROMO_CODE_LIMIT_REACHED` (overall, or the signed-in customer’s own); 409 `BOOKING_UNAVAILABLE`. On the search rate tier.
+     */
+    post: operations["SearchController_promoCode"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/v1/admin/category-config": {
     parameters: {
       query?: never;
@@ -2060,6 +2080,70 @@ export interface paths {
      * @description Applies to booking requests made from now on; every booking keeps the terms it was requested on. Identical tiers write nothing. 409 `PRICING_RULE_NOT_CURRENT` when `baseVersion` is no longer the version in force. Audited with before, after and the reason.
      */
     put: operations["AdminCancellationTermsController_change"];
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/admin/promotions": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * List promotion codes, newest first
+     * @description `status`: `SCHEDULED` (not started), `ACTIVE`, `ENDED` (past `endsAt` or ended early). Each carries its `uses` so far.
+     */
+    get: operations["AdminPromotionsController_list"];
+    put?: never;
+    /**
+     * Create a promotion code
+     * @description A percentage (`percent`) or a fixed amount (`amountMinor`) off the price before tax, funded by Flyviman and limited, with any `DISCOUNT` rule, to its charges on the trip. Optional category and route (both ends, either direction), validity window, caps overall and per customer. 409 `PROMOTION_CODE_EXISTS`. Audited (`promotion.create`) with the reason.
+     */
+    post: operations["AdminPromotionsController_create"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/admin/promotions/{id}/end": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * End a promotion now
+     * @description The code stops applying at once; bookings already made keep their price. 409 `PROMOTION_ENDED` when it has already ended. Audited (`promotion.end`) with before, after and the reason.
+     */
+    post: operations["AdminPromotionsController_end"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/admin/operators/{id}/pricing": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * An operator's rates and charges (read-only)
+     * @description The operator-wide defaults and each aircraft’s rate in force now, as the operator set them. Finance and super administrators only (403 for operations). 404 for an unknown operator.
+     */
+    get: operations["AdminOperatorPricingController_get"];
+    put?: never;
     post?: never;
     delete?: never;
     options?: never;
@@ -2405,6 +2489,26 @@ export interface paths {
      * @description Any status to any other, with a `reason` (3–500 characters) kept on the timeline and in the audit trail (before and after). To `CANCELLED` the cancellation terms apply and the refund due is recorded, as for a customer’s cancellation (409 `BOOKING_PAYMENT_IN_PROGRESS` while a payment waits for the gateway’s answer); to `EXPIRED`, `QUOTE_DECLINED` or `OPERATOR_UNAVAILABLE` the aircraft’s hold is released and an open quote closes `EXPIRED`; to `CONFIRMED` the held time is checked again first (409 `BOOKING_UNAVAILABLE`). 409 `BOOKING_INVALID_TRANSITION` when the status is unchanged or the booking changed meanwhile.
      */
     patch: operations["AdminBookingsController_override"];
+    trace?: never;
+  };
+  "/api/v1/admin/bookings/{reference}/price-override": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Override the price of a booking request with a new quote
+     * @description Issues a new quote (`QUOTE`) at `totalMinor`, superseding the open one, which is never edited; the customer accepts or declines it as any quote. Only while the request is `OPERATOR_PENDING`, after the operator has sent a quote, and before anything is paid: otherwise 409 `BOOKING_INVALID_TRANSITION`. Conditions carry over from the latest quote unless given. The booking’s calculation is copied with the override, its reason and who set it (`overrideReason`); Flyviman absorbs the difference. 409 `BOOKING_UNAVAILABLE` when the aircraft can no longer fly the trip. Audited (`booking.price_override`) with before, after and the reason.
+     */
+    post: operations["AdminPriceOverrideController_override"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
     trace?: never;
   };
   "/api/v1/bookings/{reference}/quotes": {
@@ -4798,6 +4902,35 @@ export interface components {
       /** @description Flyviman's cancellation tiers, the same for every operator (D-172). Send `version` as `cancellationTermsVersion` with the booking request. */
       cancellationTerms: components["schemas"]["CancellationTierTableDto"];
     };
+    ApplyPromoCodeDto: {
+      /** @example WINTER10 */
+      code: string;
+    };
+    PromoPriceDto: {
+      priceType: components["schemas"]["PriceType"];
+      /** @description Paise, with the code applied. */
+      amountMinor: number;
+      /** @example INR */
+      currency: string;
+      /** Format: date-time */
+      validUntil: string;
+    };
+    PromoLineDto: {
+      code: string;
+      label: string;
+      amountMinor: number;
+    };
+    PromoPreviewResponseDto: {
+      /** @example WINTER10 */
+      code: string;
+      /** @description The label of the discount line. */
+      name: string;
+      /** @description Paise the code takes off this trip; 0 when it lowers nothing here (it is then not worth sending). */
+      amountOffMinor: number;
+      price: components["schemas"]["PromoPriceDto"];
+      breakdown: components["schemas"]["PromoLineDto"][];
+      assumptions: string[];
+    };
     /**
      * @description Platform setting. Operators may override it per category.
      * @enum {string}
@@ -5217,6 +5350,145 @@ export interface components {
       /** @description Why the change is made. Kept in the audit record. */
       reason: string;
     };
+    PromotionResponseDto: {
+      /** Format: uuid */
+      id: string;
+      code: string;
+      name: string;
+      /** @enum {string} */
+      kind: "PERCENT" | "FIXED";
+      percent: number | null;
+      amountMinor: number | null;
+      /** @example INR */
+      currency: string;
+      /** @enum {string|null} */
+      category: "PRIVATE_CHARTER" | "HELICOPTER" | null;
+      /** Format: uuid */
+      originId: string | null;
+      originName: string | null;
+      /** Format: uuid */
+      destinationId: string | null;
+      destinationName: string | null;
+      /** Format: date-time */
+      startsAt: string;
+      /** Format: date-time */
+      endsAt: string;
+      maxUses: number | null;
+      maxUsesPerCustomer: number | null;
+      /** @description Bookings made with the code so far. */
+      uses: number;
+      /** @enum {string} */
+      status: "SCHEDULED" | "ACTIVE" | "ENDED";
+      /** Format: date-time */
+      endedAt: string | null;
+      /** @description Whether it can still be ended. */
+      endable: boolean;
+      /** Format: date-time */
+      createdAt: string;
+    };
+    CreatePromotionDto: {
+      /**
+       * @description Letters, digits and dashes, 3–32 characters; kept upper case. Unique: 409 `PROMOTION_CODE_EXISTS`.
+       * @example WINTER10
+       */
+      code: string;
+      /**
+       * @description Shown to the customer on the discount line.
+       * @example Winter offer
+       */
+      name: string;
+      /** @enum {string} */
+      kind: "PERCENT" | "FIXED";
+      /**
+       * @description PERCENT only: a share of the price before tax, more than 0 and at most 100, two decimals at most.
+       * @example 10
+       */
+      percent?: number;
+      /**
+       * @description FIXED only: paise off (₹500 is 50000).
+       * @example 50000
+       */
+      amountMinor?: number;
+      /**
+       * @example INR
+       * @enum {string}
+       */
+      currency: "INR";
+      /**
+       * @description Left out or null: charter and helicopter.
+       * @enum {string|null}
+       */
+      category?: "PRIVATE_CHARTER" | "HELICOPTER" | null;
+      /**
+       * Format: uuid
+       * @description With `destinationId`: only trips between the two places, either direction. Both or neither.
+       */
+      originId?: string | null;
+      /** Format: uuid */
+      destinationId?: string | null;
+      /** Format: date-time */
+      startsAt: string;
+      /**
+       * Format: date-time
+       * @description After `startsAt`, and in the future.
+       */
+      endsAt: string;
+      /** @description Bookings that may use the code in all. Null: no limit. */
+      maxUses?: number | null;
+      /** @description Bookings one customer may make with it. Null: no limit. */
+      maxUsesPerCustomer?: number | null;
+      /** @description Why the promotion is created. Kept in the audit record. */
+      reason: string;
+    };
+    EndPromotionDto: {
+      /** @description Why it is ended early. Kept in the audit record. */
+      reason: string;
+    };
+    AdminAircraftPricingDto: {
+      /**
+       * @description Hourly rate in paise (₹1,80,000 is 18000000).
+       * @example 18000000
+       */
+      hourlyRateMinor: number | null;
+      /** @description The aircraft's rates (hourly, sector, fixed routes) already include GST. They are reduced before tax is added. */
+      taxInclusive: boolean;
+      /** @description The aircraft's rates (hourly, sector, fixed routes) already include Flyviman's commission. They are reduced before commission is added. */
+      commissionInclusive: boolean;
+      /** @description Overrides the operator's minimum billable hours for this aircraft. Required; `null` clears the override. */
+      minBillableHours: number | null;
+      /**
+       * @description Null when no minimum is set.
+       * @enum {string|null}
+       */
+      minBillableHoursPer: "LEG" | "DAY" | null;
+      /**
+       * @description Price per flight in paise, used when the aircraft's pricing model is `SECTOR`. Left out: unchanged; `null` clears.
+       * @example 25000000
+       */
+      sectorRateMinor: number | null;
+      /** @description Empty when none is set. */
+      fixedRoutes: components["schemas"]["FixedRouteResponseDto"][] | null;
+      /** Format: uuid */
+      aircraftId: string;
+      /** @example INR */
+      currency: string;
+      /** @example VT-ABC */
+      registration: string;
+      manufacturer: string;
+      model: string;
+      /** @description Which of the rates the engine uses. */
+      pricingModel: components["schemas"]["AircraftPricingModel"];
+    };
+    AdminOperatorPricingDto: {
+      /** Format: uuid */
+      operatorId: string;
+      operatorName: string;
+      operator: components["schemas"]["OperatorPricingResponseDto"];
+      /** @description Newest first, at most 100. */
+      aircraft: components["schemas"]["AdminAircraftPricingDto"][];
+      /** @description All of the operator’s aircraft. */
+      aircraftTotal: number;
+    };
     AuditLogResponseDto: {
       /** Format: uuid */
       id: string;
@@ -5261,6 +5533,8 @@ export interface components {
       /** @description Saved passengers (`/me/passengers`) to copy onto the booking, at most the search’s passenger count. May be left out and set later. */
       passengerIds?: string[];
       specialRequests?: string;
+      /** @description A promotion code, already previewed with `POST /search/:searchId/results/:resultId/promo-code`; `expectedTotalMinor` is then the price with the code. Checked again, with the caps, as the booking is made: 422 `PROMO_CODE_INVALID`, `PROMO_CODE_EXPIRED`, `PROMO_CODE_NOT_APPLICABLE` (also for a result priced on request) or `PROMO_CODE_LIMIT_REACHED`, and nothing is booked. One use of the code per booking. */
+      promoCode?: string;
     };
     /** @enum {string} */
     BookingStatus:
@@ -5708,6 +5982,30 @@ export interface components {
       /** @description Why the status is overridden. Kept on the timeline and in the audit trail; never put passenger or medical details here. */
       reason: string;
     };
+    QuoteConditionsInputDto: {
+      /** @description What the price includes. */
+      inclusions: string[];
+      /** @description What the price leaves out. */
+      exclusions: string[];
+    };
+    OverridePriceDto: {
+      /** @description Paise: the all-in price the customer pays (taxes and fees included). */
+      totalMinor: number;
+      /**
+       * @example INR
+       * @enum {string}
+       */
+      currency: "INR";
+      /** @description Why the price is overridden. Kept on the calculation and in the audit record; never shown to the customer. */
+      reason: string;
+      /**
+       * Format: date-time
+       * @description Until when the customer may accept. Left out: 48 hours from now (`BOOKING_HOLD_HOURS`). Never after the first departure; at least an hour ahead.
+       */
+      validUntil?: string;
+      /** @description What the price includes and leaves out. Left out: those of the booking’s latest quote. The cancellation terms are always the latest quote’s (Flyviman’s, rule 9). */
+      conditions?: components["schemas"]["QuoteConditionsInputDto"];
+    };
     BookingMessageDto: {
       /** @enum {string} */
       from: "OPERATOR" | "CUSTOMER";
@@ -5812,12 +6110,6 @@ export interface components {
     RejectBookingRequestDto: {
       /** @description Why the request cannot be taken. Kept with the booking for the operator and Flyviman; the customer is told the request was not accepted. */
       reason: string;
-    };
-    QuoteConditionsInputDto: {
-      /** @description What the price includes. */
-      inclusions: string[];
-      /** @description What the price leaves out. */
-      exclusions: string[];
     };
     ReviseQuoteDto: {
       /** @description Paise: the operator's price for the trip, before Flyviman's commission, fees and tax (tax- and commission-exclusive). Flyviman's pricing rules work out the customer's total, labelled `QUOTE`, from it (D-172). */
@@ -8932,6 +9224,32 @@ export interface operations {
       };
     };
   };
+  SearchController_promoCode: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        searchId: string;
+        resultId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["ApplyPromoCodeDto"];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["PromoPreviewResponseDto"];
+        };
+      };
+    };
+  };
   AdminCategoryConfigController_list: {
     parameters: {
       query?: never;
@@ -9239,6 +9557,98 @@ export interface operations {
         };
         content: {
           "application/json": components["schemas"]["CancellationTierTableDto"];
+        };
+      };
+    };
+  };
+  AdminPromotionsController_list: {
+    parameters: {
+      query?: {
+        page?: number;
+        pageSize?: number;
+        status?: "SCHEDULED" | "ACTIVE" | "ENDED";
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["PromotionResponseDto"][];
+        };
+      };
+    };
+  };
+  AdminPromotionsController_create: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["CreatePromotionDto"];
+      };
+    };
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["PromotionResponseDto"];
+        };
+      };
+    };
+  };
+  AdminPromotionsController_end: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["EndPromotionDto"];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["PromotionResponseDto"];
+        };
+      };
+    };
+  };
+  AdminOperatorPricingController_get: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["AdminOperatorPricingDto"];
         };
       };
     };
@@ -9661,6 +10071,31 @@ export interface operations {
         };
         content: {
           "application/json": components["schemas"]["AdminBookingDetailDto"];
+        };
+      };
+    };
+  };
+  AdminPriceOverrideController_override: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        reference: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["OverridePriceDto"];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["QuoteResponseDto"];
         };
       };
     };

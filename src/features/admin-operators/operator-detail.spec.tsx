@@ -64,6 +64,9 @@ function serve(
   api.mockImplementation(((path: string) => {
     if (path === "me") return Promise.resolve(ok({ id: "me-1", role }));
     if (path === `admin/operators/${ID}`) return detail();
+    if (path === `admin/operators/${ID}/pricing`) {
+      return Promise.resolve(ok(pricing));
+    }
     const route = routes[path];
     if (route) return route();
     return Promise.reject(new Error(`Unexpected request: ${path}`));
@@ -85,6 +88,47 @@ function setup() {
   );
   return user;
 }
+
+const pricing: Schemas["AdminOperatorPricingDto"] = {
+  operatorId: ID,
+  operatorName: "Skyline Aviation Private Limited",
+  operator: {
+    minBillableHours: null,
+    minBillableHoursPer: null,
+    positioningRateFactor: null,
+    freeWithinKm: null,
+    landingFallbackMinor: null,
+    handlingFallbackMinor: null,
+    waitingHourlyMinor: null,
+    waitingFreeHours: null,
+    overnightMinor: null,
+    crewNightMinor: null,
+    fuelSurchargePerFlightMinor: null,
+    permitPerFlightMinor: null,
+    navigationPerFlightMinor: null,
+    otherChargeMinor: null,
+    otherChargeLabel: null,
+    currency: "INR",
+  },
+  aircraft: [
+    {
+      aircraftId: "ac-1",
+      registration: "VT-SKY",
+      manufacturer: "Embraer",
+      model: "Phenom 300",
+      pricingModel: "HOURLY",
+      hourlyRateMinor: 18_000_000,
+      taxInclusive: true,
+      commissionInclusive: false,
+      minBillableHours: null,
+      minBillableHoursPer: null,
+      sectorRateMinor: null,
+      fixedRoutes: [],
+      currency: "INR",
+    },
+  ],
+  aircraftTotal: 1,
+};
 
 describe("OperatorDetail", () => {
   // Braces matter: a returned function would be run as a cleanup hook.
@@ -124,6 +168,33 @@ describe("OperatorDetail", () => {
     expect(
       screen.getByRole("link", { name: "Back to operators" }),
     ).toHaveAttribute("href", "/admin/operators");
+  });
+
+  it("shows the operator's rates, read-only", async () => {
+    serve("FINANCE_ADMIN");
+    setup();
+
+    const heading = await screen.findByRole("heading", { name: "Pricing" });
+    const section = heading.parentElement!;
+    expect(await within(section).findByText("VT-SKY")).toBeInTheDocument();
+    expect(within(section).getByText(/1,80,000 per hour/)).toBeInTheDocument();
+    expect(within(section).getByText("includes GST")).toBeInTheDocument();
+    expect(within(section).queryByRole("button")).not.toBeInTheDocument();
+  });
+
+  it("does not show operations the operator's rates (finance and super admin only)", async () => {
+    serve("OPS");
+    setup();
+
+    expect(
+      await screen.findByRole("heading", { name: "Documents" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("heading", { name: "Pricing" }),
+    ).not.toBeInTheDocument();
+    expect(api.mock.calls.map(([path]) => path)).not.toContain(
+      `admin/operators/${ID}/pricing`,
+    );
   });
 
   it("gives a reviewer the decisions for an application under review", async () => {

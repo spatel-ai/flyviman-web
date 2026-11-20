@@ -6,6 +6,16 @@ export type OperatorAction = "approve" | "reject" | "suspend" | "reinstate";
 
 const REVIEWERS: readonly Role[] = ["OPS", "SUPER_ADMIN"];
 
+const RATE_READERS: readonly Role[] = ["FINANCE_ADMIN", "SUPER_ADMIN"];
+
+/**
+ * Operators' rates are commercial: finance and super administrators only
+ * (owner, 2026-11-20). This only hides the panel; the API decides.
+ */
+export function canReadRates(role: Role | undefined): boolean {
+  return role !== undefined && RATE_READERS.includes(role);
+}
+
 /** Finance is read-only. This only hides buttons; the API decides. */
 export function canReview(role: Role | undefined): boolean {
   return role !== undefined && REVIEWERS.includes(role);

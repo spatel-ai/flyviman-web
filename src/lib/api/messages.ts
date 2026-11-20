@@ -45,6 +45,14 @@ const MESSAGES: Record<string, string> = {
     "Flyviman's cancellation terms changed since you opened this aircraft. Read the new terms, then send your request again.",
   PRICING_RULE_REQUIRED:
     "A rule for all aircraft cannot be ended, because every price relies on it. Change its value instead.",
+  PROMOTION_CODE_EXISTS:
+    "A promotion with this code already exists. Choose another code.",
+  PROMOTION_ENDED:
+    "This promotion has already ended. The list now shows its latest state.",
+  PROMO_CODE_INVALID: "This code is not valid. Check it and try again.",
+  PROMO_CODE_EXPIRED: "This code has expired.",
+  PROMO_CODE_NOT_APPLICABLE: "This code cannot be used on this trip.",
+  PROMO_CODE_LIMIT_REACHED: "This code has reached its limit of uses.",
   CONTENT_VERSION_CONFLICT:
     "This policy changed since you opened it. It has been reloaded: open it again to see the latest text.",
   CONTENT_UNCHANGED: "Nothing has changed. Edit the title or the text first.",

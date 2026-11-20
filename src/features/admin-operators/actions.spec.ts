@@ -4,6 +4,7 @@ import type { OperatorStatus, Role } from "@/lib/api/types";
 import {
   actionErrorMessage,
   availableActions,
+  canReadRates,
   canReview,
   isStale,
 } from "./actions";
@@ -77,5 +78,14 @@ describe("isStale", () => {
     );
     expect(isStale(new ApiError(404, "NOT_FOUND", "x"))).toBe(true);
     expect(isStale(new ApiError(403, "FORBIDDEN", "x"))).toBe(false);
+  });
+});
+
+describe("canReadRates", () => {
+  it("is true for finance and super administrators only", () => {
+    expect(canReadRates("FINANCE_ADMIN")).toBe(true);
+    expect(canReadRates("SUPER_ADMIN")).toBe(true);
+    expect(canReadRates("OPS")).toBe(false);
+    expect(canReadRates(undefined)).toBe(false);
   });
 });
