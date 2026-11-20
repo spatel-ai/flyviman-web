@@ -143,7 +143,7 @@ test("a visitor searches, opens a result and requests the aircraft as an enquiry
   ).toBeVisible();
   await expect(
     page
-      .getByText(/Cancellation conditions/)
+      .getByText(/cancellation terms/i)
       .filter({ visible: true })
       .first(),
   ).toBeVisible();
@@ -156,7 +156,7 @@ test("a visitor searches, opens a result and requests the aircraft as an enquiry
         .getByText("Estimate", { exact: true })
         .or(bar.getByText("Price on request")),
     ).toBeVisible();
-    await expect(bar.getByText(/Cancellation conditions/)).toBeVisible();
+    await expect(bar.getByText(/cancellation terms/i)).toBeVisible();
     await expectPageEndClear(page);
   }
 
@@ -286,6 +286,10 @@ test("round-trip results and detail show the strategy and the extra lines", asyn
   for (const line of [/^Flying$/, /^Overnight at /, /^Crew allowance, /]) {
     await expect(main.getByText(line).first()).toBeVisible();
   }
+  // Flyviman's cancellation tiers, before the request button (rule 9).
+  await expect(
+    main.getByRole("region", { name: "Cancellation terms" }),
+  ).toContainText("before departure, or a no-show");
 });
 
 test("the open travellers picker leaves the Search button usable", async ({

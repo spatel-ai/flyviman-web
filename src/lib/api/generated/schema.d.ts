@@ -2046,6 +2046,27 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/admin/cancellation-terms": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** The cancellation tiers in force */
+    get: operations["AdminCancellationTermsController_current"];
+    /**
+     * Change the cancellation tiers (creates a new version)
+     * @description Applies to booking requests made from now on; every booking keeps the terms it was requested on. Identical tiers write nothing. 409 `PRICING_RULE_NOT_CURRENT` when `baseVersion` is no longer the version in force. Audited with before, after and the reason.
+     */
+    put: operations["AdminCancellationTermsController_change"];
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/v1/admin/audit-logs": {
     parameters: {
       query?: never;
@@ -2429,7 +2450,7 @@ export interface paths {
     put?: never;
     /**
      * Send a quote, or a revision that replaces the open one
-     * @description Only while the request is `OPERATOR_PENDING` (409 `BOOKING_INVALID_TRANSITION`). The quote is `SENT` with `priceType` `QUOTE`; an open quote is `SUPERSEDED` (a sent quote is never edited). Valid for 48 hours (`BOOKING_HOLD_HOURS`) unless `validUntil` is given (at least an hour ahead, never after departure; 400 otherwise); the hold is kept as long. Checks approval and the held time like accept (409 `OPERATOR_NOT_APPROVED`, `AIRCRAFT_NOT_APPROVED`, `BOOKING_UNAVAILABLE`). Audited; the customer is notified.
+     * @description Only while the request is `OPERATOR_PENDING` (409 `BOOKING_INVALID_TRANSITION`). The quote is `SENT` with `priceType` `QUOTE`; an open quote is `SUPERSEDED` (a sent quote is never edited). Valid for 48 hours (`BOOKING_HOLD_HOURS`) unless `validUntil` is given (at least an hour ahead, never after departure; 400 otherwise); the hold is kept as long. The body carries the operator’s price (`operatorPriceMinor`, before Flyviman’s charges and tax); Flyviman’s pricing rules add commission, fees and tax and store the calculation, and the customer sees the total only. The quote carries the cancellation terms the request was made on (D-172). Checks approval and the held time like accept (409 `OPERATOR_NOT_APPROVED`, `AIRCRAFT_NOT_APPROVED`, `BOOKING_UNAVAILABLE`). Audited; the customer is notified.
      */
     post: operations["OperatorBookingRequestsController_reviseQuote"];
     delete?: never;
@@ -4316,6 +4337,22 @@ export interface components {
      * @enum {string}
      */
     BookingMode: "INSTANT" | "REQUEST";
+    CancellationTierDto: {
+      /** @description Applies when cancelling at least this many hours before departure (a boundary falls in the cheaper tier). */
+      minHoursBeforeDeparture: number;
+      /** @description Whole percent of the confirmed price. */
+      chargePercent: number;
+    };
+    CancellationTierTableDto: {
+      /** @description The version in force. Send it back as `cancellationTermsVersion` when making a booking request, and as `baseVersion` when changing the tiers. */
+      version: number;
+      /** @description Longest notice first; the last tier starts at 0 hours. */
+      tiers: components["schemas"]["CancellationTierDto"][];
+      /** @description The terms in words, shown to the customer and snapshotted on a booking request word for word. */
+      summary: string;
+      /** Format: date-time */
+      validFrom: string;
+    };
     SearchResultDetailDto: {
       /** Format: uuid */
       resultId: string;
@@ -4351,8 +4388,10 @@ export interface components {
       /** @description How a booking made from this result is handled: the category's configuration with the operator's override (C2). A booking from an estimate still waits for the operator. */
       bookingMode: components["schemas"]["BookingMode"];
       confirmationRequirements: string[];
-      /** @description Shown before the customer commits (business rule 9). */
+      /** @description Shown before the customer commits (business rule 9): `cancellationTerms.summary`, word for word. */
       cancellationNote: string;
+      /** @description Flyviman's cancellation tiers, the same for every operator (D-172). Send `version` as `cancellationTermsVersion` with the booking request. */
+      cancellationTerms: components["schemas"]["CancellationTierTableDto"];
     };
     /**
      * @description Platform setting. Operators may override it per category.
@@ -4765,6 +4804,14 @@ export interface components {
       /** @description Finance and super administrators only; null for operations. */
       finance: components["schemas"]["CalculationFinanceDto"] | null;
     };
+    ChangeCancellationTermsDto: {
+      /** @description Longest notice first, each notice once, ending with a tier at 0 hours; a charge never falls as the notice shortens. */
+      tiers: components["schemas"]["CancellationTierDto"][];
+      /** @description The `version` the change was made from. 409 `PRICING_RULE_NOT_CURRENT` when another change came first. */
+      baseVersion: number;
+      /** @description Why the change is made. Kept in the audit record. */
+      reason: string;
+    };
     AuditLogResponseDto: {
       /** Format: uuid */
       id: string;
@@ -4804,6 +4851,8 @@ export interface components {
        * @enum {string}
        */
       currency: "INR";
+      /** @description The `cancellationTerms.version` the result detail showed (rule 9). If Flyviman's tiers have changed since, 409 `BOOKING_TERMS_CHANGED` carries the current `version` and `summary`; show them and send again with the new version and a new `Idempotency-Key`. */
+      cancellationTermsVersion: number;
       /** @description Saved passengers (`/me/passengers`) to copy onto the booking, at most the search’s passenger count. May be left out and set later. */
       passengerIds?: string[];
       specialRequests?: string;
@@ -5079,6 +5128,7 @@ export interface components {
       /** @description True while the customer can still accept or decline it (sent, and before `validUntil`). */
       open: boolean;
       price: components["schemas"]["QuotePriceDto"];
+      /** @description `summary` and `charges` are Flyviman's cancellation terms the booking was requested on (D-172); `inclusions` and `exclusions` are the operator's. */
       conditions: components["schemas"]["QuoteConditionsDto"];
       /** Format: date-time */
       createdAt: string;
@@ -5103,6 +5153,34 @@ export interface components {
       manufacturer: string;
       model: string;
     };
+    OperatorQuotePriceDto: {
+      /** @description As the quote: `QUOTE` until accepted, then `CONFIRMED`. */
+      priceType: components["schemas"]["PriceType"];
+      /** @description Paise: the operator's price as entered. */
+      amountMinor: number;
+      /** @description Paise: what Flyviman pays the operator (the price, less commission where commission is deducted). */
+      payableMinor: number;
+      /** @example INR */
+      currency: string;
+    };
+    OperatorQuoteResponseDto: {
+      /** @example FLY-QT-7K2M9Q */
+      reference: string;
+      /** @example FLY-BK-7K2M9Q */
+      bookingReference: string;
+      status: components["schemas"]["QuoteStatus"];
+      /** @description True while the customer can still accept or decline it (sent, and before `validUntil`). */
+      open: boolean;
+      price: components["schemas"]["QuotePriceDto"];
+      /** @description `summary` and `charges` are Flyviman's cancellation terms the booking was requested on (D-172); `inclusions` and `exclusions` are the operator's. */
+      conditions: components["schemas"]["QuoteConditionsDto"];
+      /** Format: date-time */
+      createdAt: string;
+      /** Format: date-time */
+      updatedAt: string;
+      /** @description Null for a quote sent before quotes were priced from the operator's price (D-172). */
+      operatorPrice: components["schemas"]["OperatorQuotePriceDto"] | null;
+    };
     OperatorBookingRequestDto: {
       /** @example FLY-BK-7K2M9Q */
       reference: string;
@@ -5119,7 +5197,7 @@ export interface components {
        */
       holdExpiresAt: string | null;
       /** @description The newest quote sent, if any. */
-      quote: components["schemas"]["QuoteResponseDto"] | null;
+      quote: components["schemas"]["OperatorQuoteResponseDto"] | null;
       /** Format: date-time */
       createdAt: string;
       /** Format: date-time */
@@ -5148,7 +5226,7 @@ export interface components {
        */
       holdExpiresAt: string | null;
       /** @description The newest quote sent, if any. */
-      quote: components["schemas"]["QuoteResponseDto"] | null;
+      quote: components["schemas"]["OperatorQuoteResponseDto"] | null;
       /** Format: date-time */
       createdAt: string;
       /** Format: date-time */
@@ -5157,7 +5235,7 @@ export interface components {
       cancellationTerms: components["schemas"]["CancellationTermsDto"];
       specialRequests: string | null;
       /** @description Newest first. */
-      quotes: components["schemas"]["QuoteResponseDto"][];
+      quotes: components["schemas"]["OperatorQuoteResponseDto"][];
       /** @description Questions and answers, oldest first. */
       messages: components["schemas"]["BookingMessageDto"][];
       /** @description Internal notes, oldest first. */
@@ -5167,25 +5245,15 @@ export interface components {
       /** @description Why the request cannot be taken. Kept with the booking for the operator and Flyviman; the customer is told the request was not accepted. */
       reason: string;
     };
-    QuoteChargeInputDto: {
-      /** @description Applies when cancelling at least this many hours before departure. */
-      minHoursBeforeDeparture: number;
-      /** @description Of the total. */
-      chargePercent: number;
-    };
     QuoteConditionsInputDto: {
-      /** @description The cancellation conditions in words, shown to the customer before they accept (business rule 9). */
-      summary: string;
-      /** @description Cancellation charges by notice, longest notice first, each notice once. Empty: nothing is charged on cancellation. */
-      charges: components["schemas"]["QuoteChargeInputDto"][];
       /** @description What the price includes. */
       inclusions: string[];
       /** @description What the price leaves out. */
       exclusions: string[];
     };
     ReviseQuoteDto: {
-      /** @description Paise: the all-in price the customer pays (taxes and fees included). */
-      totalMinor: number;
+      /** @description Paise: the operator's price for the trip, before Flyviman's commission, fees and tax (tax- and commission-exclusive). Flyviman's pricing rules work out the customer's total, labelled `QUOTE`, from it (D-172). */
+      operatorPriceMinor: number;
       /**
        * @example INR
        * @enum {string}
@@ -8274,6 +8342,48 @@ export interface operations {
       };
     };
   };
+  AdminCancellationTermsController_current: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["CancellationTierTableDto"];
+        };
+      };
+    };
+  };
+  AdminCancellationTermsController_change: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["ChangeCancellationTermsDto"];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["CancellationTierTableDto"];
+        };
+      };
+    };
+  };
   AdminAuditController_list: {
     parameters: {
       query?: {
@@ -8772,7 +8882,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/json": components["schemas"]["QuoteResponseDto"];
+          "application/json": components["schemas"]["OperatorQuoteResponseDto"];
         };
       };
     };

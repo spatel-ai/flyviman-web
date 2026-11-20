@@ -30,6 +30,16 @@ const detail = {
   warnings: [],
   confirmationRequirements: [],
   cancellationNote: "Cancellation terms apply.",
+  cancellationTerms: {
+    version: 3,
+    summary: "Cancellation terms apply.",
+    validFrom: "2026-11-20T00:00:00.000Z",
+    tiers: [
+      { minHoursBeforeDeparture: 72, chargePercent: 10 },
+      { minHoursBeforeDeparture: 24, chargePercent: 50 },
+      { minHoursBeforeDeparture: 0, chargePercent: 100 },
+    ],
+  },
 };
 
 vi.mock("@/lib/api/client", () => ({
@@ -48,5 +58,26 @@ describe("ResultDetail breakdown", () => {
     );
     expect(await screen.findByText("Flying time, 1.5 hours")).toBeTruthy();
     expect(screen.getByText("A line the web has not met")).toBeTruthy();
+  });
+});
+
+describe("ResultDetail cancellation terms", () => {
+  it("shows Flyviman's tiers before the customer requests (rule 9)", async () => {
+    render(
+      <QueryClientProvider client={new QueryClient()}>
+        <ResultDetail searchId="s1" resultId="r1" />
+      </QueryClientProvider>,
+    );
+    const section = await screen.findByRole("region", {
+      name: "Cancellation terms",
+    });
+    expect(section.textContent).toContain("72 hours or more before departure");
+    expect(section.textContent).toContain(
+      "24 hours to under 72 hours before departure",
+    );
+    expect(section.textContent).toContain(
+      "Under 24 hours before departure, or a no-show",
+    );
+    expect(section.textContent).toContain("100% of the price");
   });
 });

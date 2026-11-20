@@ -21,6 +21,7 @@ import { IMAGES } from "@/content/image-credits";
 import { isRoundTrip, strategyLabel } from "./round-trip";
 import { categoryLabel, formatDuration } from "@/lib/format/aircraft";
 import { categoryImage, requestHref } from "./format";
+import { noticeLabel } from "@/lib/cancellation-tiers";
 
 type Detail = Schemas["SearchResultDetailDto"];
 
@@ -198,7 +199,34 @@ export function ResultDetail({
                 <li key={item}>{item}</li>
               ))}
             </ul>
-            <p className="text-body-sm text-muted">{detail.cancellationNote}</p>
+          </section>
+
+          <section
+            aria-labelledby="cancellation-terms"
+            className="flex flex-col gap-2"
+          >
+            <h2 id="cancellation-terms" className="text-title">
+              Cancellation terms
+            </h2>
+            <p className="text-body-sm text-muted">
+              The same for every operator, and kept with your request as shown
+              here. A charge is taken only from a confirmed price.
+            </p>
+            <ul className="flex flex-col gap-1 text-body-sm">
+              {detail.cancellationTerms.tiers.map((tier, index, tiers) => (
+                <li
+                  key={tier.minHoursBeforeDeparture}
+                  className="flex justify-between gap-4"
+                >
+                  <span className="text-muted">
+                    {noticeLabel(tiers, index)}
+                  </span>
+                  <span className="shrink-0">
+                    {tier.chargePercent}% of the price
+                  </span>
+                </li>
+              ))}
+            </ul>
           </section>
         </div>
 
