@@ -3,7 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { EmptyState } from "@/components/shared/empty-state";
 import { FormAlert } from "@/components/shared/form-alert";
 import { LoadError } from "@/components/shared/load-error";
@@ -160,13 +160,13 @@ function PolicyForm({
     register,
     handleSubmit,
     setError: setFieldError,
-    watch,
+    control,
     formState: { errors },
   } = useForm<PolicyValues>({
     resolver: zodResolver(policySchema),
     defaultValues: { title: policy.title, body: policy.body },
   });
-  const { title, body } = watch();
+  const [title, body] = useWatch({ control, name: ["title", "body"] });
 
   const publish = useMutation({
     mutationFn: (values: PolicyValues) =>
