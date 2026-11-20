@@ -90,7 +90,10 @@ src/
   lib/
     api/                   apiFetch, ApiError, messages by error code, query keys, generated types
     auth/                  session and server-side API reads (server only), roles
-    format/                money, date and time-zone formatting (zoned.ts)
+    empty-legs/            empty-leg offer types and formatting, shared by the customer, operator and admin pages
+    format/                money, date and time-zone formatting (zoned.ts); aircraft.ts (categoryLabel,
+                           formatDuration)
+    pricing-rules.ts       pricing rule helpers shared by the admin pricing and matching-limits pages
     env.ts                 validated public environment; serverApiUrl (direct API address for
                            server-side calls when API_PROXY_TARGET is set)
     utils.ts               cn()
