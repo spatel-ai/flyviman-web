@@ -281,8 +281,13 @@ test.describe("an idle session", () => {
   });
 
   test("can still be signed out, and stays signed out", async ({ page }) => {
-    await page.getByRole("button", { name: "Account menu" }).click();
-    await page.getByRole("menuitem", { name: "Sign out" }).click();
+    // A click before hydration is lost (D-116): open until it shows.
+    const signOut = page.getByRole("menuitem", { name: "Sign out" });
+    await expect(async () => {
+      await page.getByRole("button", { name: "Account menu" }).click();
+      await expect(signOut).toBeVisible({ timeout: 1_000 });
+    }).toPass();
+    await signOut.click();
     await expect(page).toHaveURL("/login");
 
     // The refresh cookie must not bring the session back.
