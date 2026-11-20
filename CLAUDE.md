@@ -52,14 +52,15 @@ src/
   app/
     (customer)/            customer site: home, search (landing, [searchId], [searchId]/[resultId]), about, services,
                            charter, charter/fleet, aviation-solutions, aircraft-sales (and [slug]), pilots, contact,
-                           account/ (profile, passengers, notifications, trips, trips/[reference]), book/[searchId]/[resultId] (request a flight), legal/[slug], legal/image-credits,
+                           account/ (profile, passengers, notifications, trips, trips/[reference], air-ambulance, air-ambulance/[reference]), air-ambulance (landing and request form), book/[searchId]/[resultId] (request a flight), legal/[slug], legal/image-credits,
                            compare/home-v1 (the frozen pre-M12 home, noindex and unlinked, until the owner chooses; D-110)
     (auth)/                login, register, verify, forgot-password, reset-password, operator/register
     (operator)/operator/   operator portal: dashboard, onboarding, aircraft (list, new, [id]),
-                           availability (fleet timeline, [aircraftId] calendar), pricing, team, requests (list, [reference])
+                           availability (fleet timeline, [aircraftId] calendar), pricing, team, requests (list, [reference]), air-ambulance (list, [reference]), notifications
     (admin)/admin/         admin portal: dashboard, operators, operators/[id], users, aircraft,
                            aircraft/[id], locations, documents, pricing/rules,
-                           pricing/calculations, pricing/calculations/[id], enquiries, enquiries/[id]
+                           pricing/calculations, pricing/calculations/[id], enquiries, enquiries/[id],
+                           air-ambulance (queue, [reference]), promotions, notifications
     layout.tsx             root: font, theme script, providers
     globals.css            design tokens
   components/
@@ -84,9 +85,9 @@ src/
   features/<feature>/      feature UI, hooks, schemas (auth, account, booking-request, trips, home, home-v1 (frozen), about, services, charter,
                            contact, legal, aviation-solutions, aircraft-sales, pilots,
                            search (results, filters, detail), search-landing,
-                           operator-onboarding, operator-aircraft, operator-availability, operator-staff, operator-pricing, operator-requests,
+                           operator-onboarding, operator-aircraft, operator-availability, operator-staff, operator-pricing, operator-requests, operator-air-ambulance, air-ambulance,
                            admin-operators, admin-users, admin-aircraft, admin-locations, admin-documents,
-                           admin-pricing, admin-enquiries)
+                           admin-pricing, admin-enquiries, admin-air-ambulance, admin-promotions, admin-cancellation-terms)
   lib/
     api/                   apiFetch, ApiError, messages by error code, query keys, generated types
     auth/                  session and server-side API reads (server only), roles
