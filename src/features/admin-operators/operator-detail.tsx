@@ -35,6 +35,7 @@ import {
   serviceLabel,
 } from "./labels";
 import { useMe } from "@/lib/api/use-me";
+import { OperatorPricingPanel } from "./operator-pricing";
 
 type OperatorDetailData = Schemas["AdminOperatorDetailDto"];
 type OperatorDocument = Schemas["OperatorDocumentResponseDto"];
@@ -142,6 +143,11 @@ export function OperatorDetail({ id }: { id: string }) {
         <Card variant="raised">
           <h2 className="text-title">Documents</h2>
           <Documents operator={operator} canDecide={canReview(role)} />
+        </Card>
+
+        <Card variant="raised">
+          <h2 className="text-title">Pricing</h2>
+          <OperatorPricingPanel operatorId={operator.id} />
         </Card>
       </div>
     </>

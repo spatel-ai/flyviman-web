@@ -21,6 +21,7 @@ import { IMAGES } from "@/content/image-credits";
 import { isRoundTrip, strategyLabel } from "./round-trip";
 import { categoryLabel, formatDuration } from "@/lib/format/aircraft";
 import { categoryImage, requestHref } from "./format";
+import { PromoCode } from "./promo-code";
 
 type Detail = Schemas["SearchResultDetailDto"];
 
@@ -156,6 +157,11 @@ export function ResultDetail({
                     ))}
                   </tbody>
                 </table>
+                <PromoCode
+                  searchId={searchId}
+                  resultId={resultId}
+                  expired={expired}
+                />
               </>
             ) : (
               <div className="flex flex-col gap-2">

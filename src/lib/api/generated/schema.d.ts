@@ -4923,9 +4923,9 @@ export interface components {
        * Format: uuid
        * @description With `destinationId`: only trips between the two places, either direction. Both or neither.
        */
-      originId?: Record<string, never> | null;
+      originId?: string | null;
       /** Format: uuid */
-      destinationId?: Record<string, never> | null;
+      destinationId?: string | null;
       /** Format: date-time */
       startsAt: string;
       /**
@@ -4934,9 +4934,9 @@ export interface components {
        */
       endsAt: string;
       /** @description Bookings that may use the code in all. Null: no limit. */
-      maxUses?: Record<string, never> | null;
+      maxUses?: number | null;
       /** @description Bookings one customer may make with it. Null: no limit. */
-      maxUsesPerCustomer?: Record<string, never> | null;
+      maxUsesPerCustomer?: number | null;
       /** @description Why the promotion is created. Kept in the audit record. */
       reason: string;
     };
