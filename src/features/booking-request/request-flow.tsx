@@ -75,14 +75,13 @@ export function RequestFlow({
   const [error, setError] = useState<string | null>(null);
   const [changed, setChanged] = useState<NewEstimate | null>(null);
 
+  // Same key and shape as the result page (the whole response), so they share the cache.
   const result = useQuery({
     queryKey: queryKeys.searchResult(searchId, resultId),
-    queryFn: async () =>
-      (
-        await apiFetch<Detail>(
-          `search/${encodeURIComponent(searchId)}/results/${encodeURIComponent(resultId)}`,
-        )
-      ).data,
+    queryFn: () =>
+      apiFetch<Detail>(
+        `search/${encodeURIComponent(searchId)}/results/${encodeURIComponent(resultId)}`,
+      ),
   });
   const passengers = useQuery({
     queryKey: queryKeys.passengers,
@@ -156,7 +155,7 @@ export function RequestFlow({
     );
   }
 
-  const detail = result.data;
+  const detail = result.data.data;
   const leg = detail.legs[0];
   const expired = now > 0 && new Date(detail.validUntil).getTime() < now;
   const limit = detail.passengerCount;
