@@ -376,8 +376,9 @@ export function configForApi(
   config: Record<string, unknown>,
 ): Record<string, unknown> {
   if (type === "MIN_BILLABLE_HOURS" && config.per === "LEG") {
-    const { per: _per, ...rest } = config;
-    return rest;
+    return Object.fromEntries(
+      Object.entries(config).filter(([key]) => key !== "per"),
+    );
   }
   return config;
 }

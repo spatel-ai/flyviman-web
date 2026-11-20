@@ -171,7 +171,7 @@ function Editor({
         />
       ) : null}
       {model === "FIXED_ROUTE" ? (
-        <fieldset className="flex flex-col gap-4">
+        <fieldset className="flex min-w-0 flex-col gap-4">
           <legend className="text-body font-medium">Fixed routes</legend>
           <p className="text-body-sm text-muted">
             A price per flight on each route, the same in either direction.
@@ -182,7 +182,7 @@ function Editor({
               key={field.id}
               role="group"
               aria-label={`Route ${index + 1}`}
-              className="flex flex-col gap-3 rounded-md bg-surface p-4"
+              className="flex min-w-0 flex-col gap-3 rounded-md bg-surface p-4 [&>*]:min-w-0"
             >
               <Controller
                 control={control}
