@@ -2280,7 +2280,7 @@ export interface paths {
     };
     /**
      * What cancelling now would cost, before the customer commits
-     * @description Worked out from the cancellation terms the booking was made on (rule 9) and the notice left before the first departure. A charge is money only when the price is `CONFIRMED` (`amountKnown`); before that the rule that applies is shown and `chargeMinor` is 0. `refundMinor` is what is due back (refunds are made later; nothing moves here), null while the amount paid cannot be read. 409 `BOOKING_NOT_CANCELLABLE` once completed, cancelled or otherwise closed; another customer’s booking is 404.
+     * @description Worked out from the cancellation terms the booking was made on (rule 9) and the notice left before the first departure. A charge is money only when the price is `CONFIRMED` (`amountKnown`); before that the rule that applies is shown and `chargeMinor` is 0. `paidMinor` is what was paid towards the booking (less refunds) and `refundMinor` what is due back, paid less the charge (finance refunds it from its queue; nothing moves here). 409 `BOOKING_NOT_CANCELLABLE` once completed, cancelled or otherwise closed; another customer’s booking is 404.
      */
     get: operations["BookingsController_cancellationQuote"];
     put?: never;
@@ -2790,13 +2790,57 @@ export interface paths {
       path?: never;
       cookie?: never;
     };
-    get?: never;
+    /**
+     * The payments of one of the caller’s bookings, with receipts
+     * @description Newest first: every attempt with its status, method type, refunds, and `receipt` (null until it has succeeded; the same as `GET /payments/:reference/receipt`). What is due now is the booking’s `amountDue`. Another customer’s booking is 404.
+     */
+    get: operations["PaymentsController_forBooking"];
     put?: never;
     /**
      * Create a gateway order for what the booking owes now
-     * @description Only for a booking `AWAITING_PAYMENT` with a `CONFIRMED` price and nothing paid: model A and B take the full total (B once the operator has accepted), model C the deposit (the category’s percent, rounded up to the next paisa). 409 `PAYMENT_NOT_DUE` otherwise (`details` says why), 409 `PAYMENT_ALREADY_PAID`, 409 `PAYMENT_AMOUNT_MISMATCH` when `expectedAmountMinor` is not the amount due (the amount due, currency and purpose are in `details`), 502 `PAYMENT_PROVIDER_ERROR`. While a payment for the same amount is `INITIATED` or `PENDING` it is returned again instead of a second order. Open the gateway’s checkout with `checkout`. Never changes the booking’s status. A repeat with the same `Idempotency-Key` and body returns the first answer.
+     * @description For a booking `AWAITING_PAYMENT` with a `CONFIRMED` price and nothing paid: model A and B take the full total (B once the operator has accepted), model C the deposit (the category’s percent, rounded up to the next paisa). After a model C deposit (`paymentStatus` `PARTIALLY_PAID`), the balance: the total less what was paid (purpose `BALANCE`), while the booking is `AWAITING_PAYMENT`, `CONFIRMED` or `SCHEDULED` and before the first departure; once it succeeds the booking is `PAID`. 409 `PAYMENT_NOT_DUE` otherwise (`details` says why), 409 `PAYMENT_ALREADY_PAID`, 409 `PAYMENT_AMOUNT_MISMATCH` when `expectedAmountMinor` is not the amount due (the amount due, currency and purpose are in `details`), 502 `PAYMENT_PROVIDER_ERROR`. While a payment for the same amount is `INITIATED` or `PENDING` it is returned again instead of a second order. Open the gateway’s checkout with `checkout`. Never changes the booking’s status. A repeat with the same `Idempotency-Key` and body returns the first answer.
      */
     post: operations["PaymentsController_create"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/payments/{reference}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * One payment, with its refunds
+     * @description For the customer who owes it (poll it after checkout), or finance and the super administrator. `status` is the payment’s own; the booking’s `paymentStatus` summarises all its payments. `method` is the method type only (never card details). Refunds carry no reason. Someone else’s payment is 404.
+     */
+    get: operations["PaymentsController_detail"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/payments/{reference}/receipt": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * The receipt of a payment (not a GST tax invoice)
+     * @description For a payment whose money arrived; 409 `PAYMENT_NOT_SUCCEEDED` before that. The issuer (`RECEIPT_ISSUER_*`), the booking reference, the amount labelled `CONFIRMED`, the method type (never card details, rule 10), when it was paid, and its refunds with what was kept. It says, in `notice`, that it is a payment receipt and not a GST tax invoice: the invoice format is not decided (open decision 13). JSON; the web renders it. Someone else’s payment is 404.
+     */
+    get: operations["PaymentsController_receipt"];
+    put?: never;
+    post?: never;
     delete?: never;
     options?: never;
     head?: never;
@@ -2837,6 +2881,86 @@ export interface paths {
      * @description For the payment gateway only. The signature over the exact body is verified before anything else, and a refused call is stored nowhere; `:provider` is the configured gateway (`mock` in this build). A verified event is stored once (unique per provider event ID) and applied in the same transaction before the 200: a repeated delivery is acknowledged and changes nothing, except that a notice stored before its order was known is applied when it is delivered again. Outcomes only move a payment forward (a failure after a success is ignored); a success changes the booking’s `paymentStatus`, and its status only through the confirmation rule (`CONFIRMED` once the operator’s acceptance, the confirmed price and the payment due are all in; a payment alone never confirms); a success for a closed or already-paid booking is recorded and flagged for operations. A second capture with another gateway payment ID on a paid order is flagged for operations (`DUPLICATE_CAPTURE`). An event for an unknown order is stored and acknowledged (never a 5xx); a status sweep asks the gateway about payments still open after 15 minutes. Limited per address (120 a minute by default, `RATE_LIMIT_WEBHOOK_PER_MINUTE`; 429 `RATE_LIMITED`).
      */
     post: operations["PaymentWebhooksController_receive"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/admin/payments": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Payments, newest first
+     * @description Filter by `status`, `reviewReason` (payments flagged for a person) or `bookingReference`. Each with its method type, refunds and `reviewReason`.
+     */
+    get: operations["AdminPaymentsController_payments"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/admin/refunds": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Refunds, newest first
+     * @description Filter by `status`. Each with its payment, booking, reason and what is still refundable from the payment.
+     */
+    get: operations["AdminPaymentsController_list"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/admin/payments/{reference}/refunds": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Start a refund of a payment, in full or in part
+     * @description For a payment whose money arrived (`SUCCEEDED`, `REFUND_PENDING` or `PARTIALLY_REFUNDED`; otherwise 409 `PAYMENT_NOT_REFUNDABLE`), up to what is still refundable: its amount less refunds completed or under way (409 `REFUND_EXCEEDS_REMAINDER`, the remainder in `details`). The refund is recorded `REQUESTED` and the payment and booking `paymentStatus` become `REFUND_PENDING` before the gateway is asked; the answer is the refund as recorded: `PENDING` while the gateway returns the money, `FAILED` if it refused (the amount is refundable again), or still `REQUESTED` if the gateway could not be reached (its notice settles it later; start no second refund for it). The gateway’s notice completes it: the payment becomes `PARTIALLY_REFUNDED` or `REFUNDED`. Audited with the reason. Never changes the booking’s status. A repeat with the same `Idempotency-Key` and body returns the first answer. Another payment’s or an unknown reference is 404.
+     */
+    post: operations["AdminPaymentsController_create"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/admin/refunds/due": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Payments to refund (the finance queue)
+     * @description Oldest first. `CANCELLATION`: a cancelled booking’s refund due (paid less the charge, recorded at cancellation) less refunds made since, spread over its payments; `BOOKING_CLOSED`: a payment that succeeded after the booking expired or was cancelled; `ALREADY_PAID`: a second payment for a paid booking. Each row is one payment with `dueMinor` to refund; a row leaves the queue once refunds completed or under way cover it. Nothing is refunded automatically. Payments flagged `AMOUNT_MISMATCH` or `DUPLICATE_CAPTURE` are not listed: their extra money is not on a payment this API can refund.
+     */
+    get: operations["AdminPaymentsController_due"];
+    put?: never;
+    post?: never;
     delete?: never;
     options?: never;
     head?: never;
@@ -5720,6 +5844,21 @@ export interface components {
       /** Format: date-time */
       createdAt: string;
     };
+    /**
+     * @description `FULL` (models A and B), `DEPOSIT` (model C) or `BALANCE` (the rest after a model C deposit).
+     * @enum {string}
+     */
+    PaymentPurpose: "FULL" | "DEPOSIT" | "BALANCE";
+    BookingAmountDueDto: {
+      /** @description Paise: send it as `expectedAmountMinor`. */
+      amountMinor: number;
+      /** @example INR */
+      currency: string;
+      /** @description Only a confirmed price is ever charged (rule 1). */
+      priceType: components["schemas"]["PriceType"];
+      /** @description `FULL` (models A and B), `DEPOSIT` (model C) or `BALANCE` (the rest after a model C deposit). */
+      kind: components["schemas"]["PaymentPurpose"];
+    };
     ItineraryLegDto: {
       /** Format: uuid */
       originId: string;
@@ -5813,6 +5952,8 @@ export interface components {
       status: components["schemas"]["BookingStatus"];
       /** @description Separate from `status`: payment never confirms a booking by itself. */
       paymentStatus: components["schemas"]["BookingPaymentStatus"];
+      /** @description What is due now (the same rule `POST /bookings/:reference/payments` applies), or null when nothing is: not awaiting payment, price not confirmed, operator not yet accepted (model B), paid, or past departure for a balance (W4-1). */
+      amountDue: components["schemas"]["BookingAmountDueDto"] | null;
       /**
        * @description As resolved when the booking was made.
        * @enum {string}
@@ -5860,10 +6001,10 @@ export interface components {
       amountKnown: boolean;
       /** @description Paise charged if cancelled now; rounded down. Send it back as `expectedChargeMinor` to cancel. */
       chargeMinor: number;
-      /** @description Paise paid so far; null while it cannot be read yet (M9). */
-      paidMinor: number | null;
-      /** @description Paise due back: paid less the charge, never below 0. Null when `paidMinor` is null. Refunds are made later (M9); nothing is moved here. */
-      refundMinor: number | null;
+      /** @description Paise paid towards the booking: succeeded payments less refunds completed or under way, leaving out money flagged for a refund of its own (a late or second payment). */
+      paidMinor: number;
+      /** @description Paise due back: paid less the charge, never below 0. Nothing is moved here: finance makes the refund from its queue (`GET /admin/refunds/due`). */
+      refundMinor: number;
       /** @description What the figures mean, in one sentence. */
       explanation: string;
       /** Format: date-time */
@@ -6029,8 +6170,6 @@ export interface components {
       /** Format: date-time */
       updatedAt: string;
     };
-    /** @enum {string} */
-    PaymentPurpose: "FULL" | "DEPOSIT" | "BALANCE";
     /** @enum {string} */
     PaymentStatus:
       | "INITIATED"
@@ -6271,15 +6410,6 @@ export interface components {
       validUntil?: string;
       conditions: components["schemas"]["QuoteConditionsInputDto"];
     };
-    CreatePaymentDto: {
-      /** @description Paise: the amount due that the customer was shown and agrees to pay. If it is not what is due now, 409 `PAYMENT_AMOUNT_MISMATCH` carries the amount due. */
-      expectedAmountMinor: number;
-      /**
-       * @example INR
-       * @enum {string}
-       */
-      currency: "INR";
-    };
     PaymentPriceDto: {
       /** @description Only a confirmed price is ever charged (rule 1). */
       priceType: components["schemas"]["PriceType"];
@@ -6299,6 +6429,133 @@ export interface components {
       /** @example order_mock_000001 */
       orderId: string;
     };
+    PaymentMethodDto: {
+      /**
+       * @description The gateway’s method type (`card`, `upi`, `netbanking`, `wallet`, …); null when it did not say.
+       * @example upi
+       */
+      type: string | null;
+      /**
+       * @description For display.
+       * @example UPI
+       */
+      label: string;
+    };
+    /**
+     * @description `REQUESTED` (recorded, the gateway not yet answered), `PENDING` (the gateway is returning it), `COMPLETED` or `FAILED`.
+     * @enum {string}
+     */
+    RefundStatus: "REQUESTED" | "PENDING" | "COMPLETED" | "FAILED";
+    RefundSummaryDto: {
+      /** @example FLY-RF-7K2M9Q */
+      reference: string;
+      /** @description Paise. */
+      amountMinor: number;
+      /** @example INR */
+      currency: string;
+      /** @description `REQUESTED` (recorded, the gateway not yet answered), `PENDING` (the gateway is returning it), `COMPLETED` or `FAILED`. */
+      status: components["schemas"]["RefundStatus"];
+      /** Format: date-time */
+      createdAt: string;
+      /**
+       * Format: date-time
+       * @description When it last changed: completion or failure once settled.
+       */
+      updatedAt: string;
+    };
+    ReceiptIssuerDto: {
+      /** @example Flyviman */
+      name: string;
+      address: string | null;
+      email: string | null;
+      phone: string | null;
+    };
+    PaymentReceiptDto: {
+      /** @enum {string} */
+      documentType: "PAYMENT_RECEIPT";
+      /**
+       * @description Shown on every receipt, word for word.
+       * @example This is a payment receipt, not a GST tax invoice.
+       */
+      notice: string;
+      /**
+       * @description The payment reference.
+       * @example FLY-PY-7K2M9Q
+       */
+      receiptNumber: string;
+      /** Format: date-time */
+      issuedAt: string;
+      issuer: components["schemas"]["ReceiptIssuerDto"];
+      /** @example FLY-BK-7K2M9Q */
+      bookingReference: string;
+      category: components["schemas"]["ServiceCategory"];
+      /** @description `FULL`, `DEPOSIT` or `BALANCE`. */
+      purpose: components["schemas"]["PaymentPurpose"];
+      /** @description What was paid, labelled `CONFIRMED` (rule 1). */
+      amount: components["schemas"]["PaymentPriceDto"];
+      method: components["schemas"]["PaymentMethodDto"];
+      /** Format: date-time */
+      paidAt: string;
+      /** @description Oldest first. */
+      refunds: components["schemas"]["RefundSummaryDto"][];
+      /** @description Paise returned so far (completed refunds). */
+      refundedMinor: number;
+      /** @description Paise kept: the amount less refunds returned. */
+      netPaidMinor: number;
+    };
+    BookingPaymentDto: {
+      /** @example FLY-PY-7K2M9Q */
+      reference: string;
+      /** @example FLY-BK-7K2M9Q */
+      bookingReference: string;
+      /** @description Only a verified gateway notice makes it `SUCCEEDED` or `FAILED`; the checkout result makes it `PENDING` at most. */
+      status: components["schemas"]["PaymentStatus"];
+      /** @description `FULL` (models A and B), `DEPOSIT` (model C) or `BALANCE` (the rest after a model C deposit). */
+      purpose: components["schemas"]["PaymentPurpose"];
+      price: components["schemas"]["PaymentPriceDto"];
+      checkout: components["schemas"]["PaymentCheckoutDto"];
+      /** Format: date-time */
+      paidAt: string | null;
+      /** Format: date-time */
+      createdAt: string;
+      method: components["schemas"]["PaymentMethodDto"];
+      /** @description Paise returned so far (completed refunds). */
+      refundedMinor: number;
+      /** @description Oldest first. */
+      refunds: components["schemas"]["RefundSummaryDto"][];
+      /** @description Null until the payment has succeeded. */
+      receipt: components["schemas"]["PaymentReceiptDto"] | null;
+    };
+    PaymentDetailDto: {
+      /** @example FLY-PY-7K2M9Q */
+      reference: string;
+      /** @example FLY-BK-7K2M9Q */
+      bookingReference: string;
+      /** @description Only a verified gateway notice makes it `SUCCEEDED` or `FAILED`; the checkout result makes it `PENDING` at most. */
+      status: components["schemas"]["PaymentStatus"];
+      /** @description `FULL` (models A and B), `DEPOSIT` (model C) or `BALANCE` (the rest after a model C deposit). */
+      purpose: components["schemas"]["PaymentPurpose"];
+      price: components["schemas"]["PaymentPriceDto"];
+      checkout: components["schemas"]["PaymentCheckoutDto"];
+      /** Format: date-time */
+      paidAt: string | null;
+      /** Format: date-time */
+      createdAt: string;
+      method: components["schemas"]["PaymentMethodDto"];
+      /** @description Paise returned so far (completed refunds). */
+      refundedMinor: number;
+      /** @description Oldest first. */
+      refunds: components["schemas"]["RefundSummaryDto"][];
+    };
+    CreatePaymentDto: {
+      /** @description Paise: the amount due that the customer was shown and agrees to pay. If it is not what is due now, 409 `PAYMENT_AMOUNT_MISMATCH` carries the amount due. */
+      expectedAmountMinor: number;
+      /**
+       * @example INR
+       * @enum {string}
+       */
+      currency: "INR";
+    };
     PaymentResponseDto: {
       /** @example FLY-PY-7K2M9Q */
       reference: string;
@@ -6306,7 +6563,7 @@ export interface components {
       bookingReference: string;
       /** @description Only a verified gateway notice makes it `SUCCEEDED` or `FAILED`; the checkout result makes it `PENDING` at most. */
       status: components["schemas"]["PaymentStatus"];
-      /** @description `FULL` (models A and B) or `DEPOSIT` (model C). */
+      /** @description `FULL` (models A and B), `DEPOSIT` (model C) or `BALANCE` (the rest after a model C deposit). */
       purpose: components["schemas"]["PaymentPurpose"];
       price: components["schemas"]["PaymentPriceDto"];
       checkout: components["schemas"]["PaymentCheckoutDto"];
@@ -6326,6 +6583,95 @@ export interface components {
     WebhookAckResponseDto: {
       /** @example true */
       received: boolean;
+    };
+    AdminPaymentDto: {
+      /** @example FLY-PY-7K2M9Q */
+      reference: string;
+      /** @example FLY-BK-7K2M9Q */
+      bookingReference: string;
+      /** @description Only a verified gateway notice makes it `SUCCEEDED` or `FAILED`; the checkout result makes it `PENDING` at most. */
+      status: components["schemas"]["PaymentStatus"];
+      /** @description `FULL` (models A and B), `DEPOSIT` (model C) or `BALANCE` (the rest after a model C deposit). */
+      purpose: components["schemas"]["PaymentPurpose"];
+      price: components["schemas"]["PaymentPriceDto"];
+      checkout: components["schemas"]["PaymentCheckoutDto"];
+      /** Format: date-time */
+      paidAt: string | null;
+      /** Format: date-time */
+      createdAt: string;
+      method: components["schemas"]["PaymentMethodDto"];
+      /** @description Paise returned so far (completed refunds). */
+      refundedMinor: number;
+      /** @description Oldest first. */
+      refunds: components["schemas"]["RefundSummaryDto"][];
+      /** @description Set when a verified event needs a person: `BOOKING_CLOSED`, `ALREADY_PAID`, `AMOUNT_MISMATCH`, `DUPLICATE_CAPTURE`. */
+      reviewReason: components["schemas"]["PaymentReviewReason"] | null;
+    };
+    RefundResponseDto: {
+      /** @example FLY-RF-7K2M9Q */
+      reference: string;
+      /** @description Paise. */
+      amountMinor: number;
+      /** @example INR */
+      currency: string;
+      /** @description `REQUESTED` (recorded, the gateway not yet answered), `PENDING` (the gateway is returning it), `COMPLETED` or `FAILED`. */
+      status: components["schemas"]["RefundStatus"];
+      /** Format: date-time */
+      createdAt: string;
+      /**
+       * Format: date-time
+       * @description When it last changed: completion or failure once settled.
+       */
+      updatedAt: string;
+      /** @example FLY-PY-7K2M9Q */
+      paymentReference: string;
+      /** @example FLY-BK-7K2M9Q */
+      bookingReference: string;
+      reason: string;
+      /** @description The payment after this refund was recorded. */
+      paymentStatus: components["schemas"]["PaymentStatus"];
+      /** @description Paise still refundable from the payment after this refund (refunds completed or under way count). */
+      refundableMinor: number;
+    };
+    CreateRefundDto: {
+      /** @description Paise to return: the whole refundable remainder for a full refund, or less for a partial one. More than the remainder is 409 `REFUND_EXCEEDS_REMAINDER`. */
+      amountMinor: number;
+      /**
+       * @example INR
+       * @enum {string}
+       */
+      currency: "INR";
+      /** @description Why the money goes back, for the audit trail (rule 6). Not shown to the customer. No personal or card details. */
+      reason: string;
+    };
+    /**
+     * @description `CANCELLATION`: a cancellation left money due back (paid less the charge); `BOOKING_CLOSED`: a payment succeeded after the booking expired or was cancelled; `ALREADY_PAID`: a second payment for a paid booking.
+     * @enum {string}
+     */
+    RefundDueKind: "CANCELLATION" | "BOOKING_CLOSED" | "ALREADY_PAID";
+    RefundDueItemDto: {
+      /** @description `CANCELLATION`: a cancellation left money due back (paid less the charge); `BOOKING_CLOSED`: a payment succeeded after the booking expired or was cancelled; `ALREADY_PAID`: a second payment for a paid booking. */
+      kind: components["schemas"]["RefundDueKind"];
+      /** @example FLY-BK-7K2M9Q */
+      bookingReference: string;
+      bookingStatus: components["schemas"]["BookingStatus"];
+      bookingPaymentStatus: components["schemas"]["BookingPaymentStatus"];
+      /** @example FLY-PY-7K2M9Q */
+      paymentReference: string;
+      paymentStatus: components["schemas"]["PaymentStatus"];
+      /** @description Paise the payment took. */
+      paymentAmountMinor: number;
+      /** @description Paise still refundable from this payment. */
+      refundableMinor: number;
+      /** @description Paise to refund from this payment: the cancellation’s outstanding refund due (spread over its payments, newest first), or the whole remainder of a flagged payment. */
+      dueMinor: number;
+      /** @example INR */
+      currency: string;
+      /**
+       * Format: date-time
+       * @description When it became due: the cancellation, or the payment.
+       */
+      since: string;
     };
     /** @enum {string} */
     PatientMobility: "AMBULATORY" | "ASSISTED" | "NON_AMBULATORY";
@@ -10636,6 +10982,27 @@ export interface operations {
       };
     };
   };
+  PaymentsController_forBooking: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        reference: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["BookingPaymentDto"][];
+        };
+      };
+    };
+  };
   PaymentsController_create: {
     parameters: {
       query?: never;
@@ -10660,6 +11027,48 @@ export interface operations {
         };
         content: {
           "application/json": components["schemas"]["PaymentResponseDto"];
+        };
+      };
+    };
+  };
+  PaymentsController_detail: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        reference: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["PaymentDetailDto"];
+        };
+      };
+    };
+  };
+  PaymentsController_receipt: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        reference: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["PaymentReceiptDto"];
         };
       };
     };
@@ -10724,6 +11133,104 @@ export interface operations {
           [name: string]: unknown;
         };
         content?: never;
+      };
+    };
+  };
+  AdminPaymentsController_payments: {
+    parameters: {
+      query?: {
+        page?: number;
+        pageSize?: number;
+        status?: components["schemas"]["PaymentStatus"];
+        reviewReason?: components["schemas"]["PaymentReviewReason"];
+        bookingReference?: string;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["AdminPaymentDto"][];
+        };
+      };
+    };
+  };
+  AdminPaymentsController_list: {
+    parameters: {
+      query?: {
+        page?: number;
+        pageSize?: number;
+        status?: components["schemas"]["RefundStatus"];
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["RefundResponseDto"][];
+        };
+      };
+    };
+  };
+  AdminPaymentsController_create: {
+    parameters: {
+      query?: never;
+      header: {
+        /** @description A UUID, new for each refund and reused on retry. */
+        "Idempotency-Key": string;
+      };
+      path: {
+        reference: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["CreateRefundDto"];
+      };
+    };
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["RefundResponseDto"];
+        };
+      };
+    };
+  };
+  AdminPaymentsController_due: {
+    parameters: {
+      query?: {
+        page?: number;
+        pageSize?: number;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["RefundDueItemDto"][];
+        };
       };
     };
   };

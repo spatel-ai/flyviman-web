@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ChangeRequestsList } from "@/features/admin-bookings/change-requests-list";
+import { canActOnBookings } from "@/features/admin-bookings/status";
+import { getSession } from "@/lib/auth/session";
 
 export const metadata: Metadata = { title: "Change requests" };
 
@@ -14,8 +17,15 @@ export default function AdminChangeRequestsPage() {
         answer. The customer sees your note.
       </p>
       <Suspense fallback={<Skeleton className="mt-6 h-72" />}>
-        <ChangeRequestsList />
+        <ForRole />
       </Suspense>
     </>
   );
+}
+
+/** Operations and super administrators answer change requests; others go back. */
+async function ForRole() {
+  const session = await getSession();
+  if (!canActOnBookings(session?.role)) redirect("/admin");
+  return <ChangeRequestsList />;
 }

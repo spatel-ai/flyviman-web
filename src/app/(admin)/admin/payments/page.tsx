@@ -1,9 +1,8 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { FinanceOnly, NotAvailableYet } from "@/features/admin-finance/notes";
+import { FinanceOnly } from "@/features/admin-finance/notes";
 import { PaymentsList } from "@/features/admin-finance/payments-list";
-import { FINANCE_ROUTES_READY } from "@/lib/api/payments";
 import { getSession } from "@/lib/auth/session";
 
 export const metadata: Metadata = { title: "Payments" };
@@ -29,9 +28,5 @@ async function ForRole() {
   if (session?.role !== "FINANCE_ADMIN" && session?.role !== "SUPER_ADMIN") {
     return <FinanceOnly />;
   }
-  return FINANCE_ROUTES_READY ? (
-    <PaymentsList />
-  ) : (
-    <NotAvailableYet what="Payment records" />
-  );
+  return <PaymentsList />;
 }

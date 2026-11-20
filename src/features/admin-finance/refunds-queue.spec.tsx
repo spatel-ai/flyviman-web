@@ -12,7 +12,7 @@ type Init = {
   body?: unknown;
 };
 let posts: { path: string; init: Init }[] = [];
-let lists = 0;
+let dueLists = 0;
 let refuse: ApiError | null = null;
 vi.mock("@/lib/api/client", () => ({
   apiFetch: async (path: string, init: Init = {}) => {
@@ -21,30 +21,47 @@ vi.mock("@/lib/api/client", () => ({
       if (refuse) throw refuse;
       return { data: {} };
     }
-    lists += 1;
+    const meta = { page: 1, pageSize: 20, total: 1 };
+    if (path === "admin/refunds") {
+      return {
+        data: [
+          {
+            reference: "FLY-RF-9",
+            amountMinor: 50_000,
+            currency: "INR",
+            status: "COMPLETED",
+            createdAt: "2099-01-03T00:00:00.000Z",
+            updatedAt: "2099-01-03T00:00:00.000Z",
+            paymentReference: "FLY-PY-9",
+            bookingReference: "FLY-BK-9",
+            reason: "Goodwill",
+            paymentStatus: "PARTIALLY_REFUNDED",
+            refundableMinor: 0,
+          },
+        ],
+        meta,
+      };
+    }
+    dueLists += 1;
     return {
       data: [
         {
+          kind: "CANCELLATION",
           bookingReference: "FLY-BK-1",
+          bookingStatus: "CANCELLED",
+          bookingPaymentStatus: "PAID",
           paymentReference: "FLY-PY-1",
-          amountMinor: 2_500_000,
+          paymentStatus: "SUCCEEDED",
+          paymentAmountMinor: 5_000_000,
+          refundableMinor: 5_000_000,
+          dueMinor: 2_500_000,
           currency: "INR",
-          status: "REFUND_DUE",
-          dueSince: "2099-01-01T00:00:00.000Z",
-        },
-        {
-          bookingReference: "FLY-BK-2",
-          paymentReference: "FLY-PY-2",
-          amountMinor: 100_000,
-          currency: "INR",
-          status: "REFUND_PENDING",
-          dueSince: "2099-01-02T00:00:00.000Z",
+          since: "2099-01-01T00:00:00.000Z",
         },
       ],
-      meta: { page: 1, pageSize: 20, total: 2 },
+      meta,
     };
   },
-  apiUrl: (path: string) => path,
 }));
 
 function show() {
@@ -63,38 +80,45 @@ function show() {
 
 beforeEach(() => {
   posts = [];
-  lists = 0;
+  dueLists = 0;
   refuse = null;
 });
 
-async function start(reason: string) {
+async function open() {
   await userEvent.click(
-    await screen.findByRole("button", { name: "Start refund for FLY-BK-1" }),
+    await screen.findByRole("button", { name: "Refund FLY-BK-1" }),
   );
   const dialog = screen.getByRole("dialog");
   expect(within(dialog).getByText(/cannot be undone/)).toBeInTheDocument();
-  const confirm = within(dialog).getByRole("button", { name: "Start refund" });
-  expect(confirm).toBeDisabled();
-  if (reason)
-    await userEvent.type(within(dialog).getByLabelText("Reason"), reason);
-  return { dialog, confirm };
+  expect(within(dialog).getByLabelText(/Amount to refund/)).toHaveValue(
+    "25000",
+  );
+  return dialog;
 }
 
 describe("RefundsQueue", () => {
-  it("offers to start only refunds that are due", async () => {
+  it("needs a reason before it sends anything", async () => {
     show();
+    const dialog = await open();
+    await userEvent.click(
+      within(dialog).getByRole("button", { name: "Refund" }),
+    );
     expect(
-      await screen.findByRole("button", { name: "Start refund for FLY-BK-1" }),
+      await within(dialog).findByText(/Give a reason/),
     ).toBeInTheDocument();
-    expect(
-      screen.queryByRole("button", { name: "Start refund for FLY-BK-2" }),
-    ).not.toBeInTheDocument();
+    expect(posts).toHaveLength(0);
   });
 
-  it("needs a reason, then starts the refund once with an Idempotency-Key", async () => {
+  it("refunds the amount due once, with an Idempotency-Key", async () => {
     show();
-    const { confirm } = await start("Cancelled by the customer in time");
-    await userEvent.click(confirm);
+    const dialog = await open();
+    await userEvent.type(
+      within(dialog).getByLabelText("Reason"),
+      "Cancelled by the customer in time",
+    );
+    await userEvent.click(
+      within(dialog).getByRole("button", { name: "Refund" }),
+    );
     await waitFor(() => expect(posts).toHaveLength(1));
     expect(posts[0].path).toBe("admin/payments/FLY-PY-1/refunds");
     expect(posts[0].init.body).toEqual({
@@ -106,17 +130,28 @@ describe("RefundsQueue", () => {
       /^[0-9a-f-]{36}$/,
     );
     await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
-    await waitFor(() => expect(lists).toBe(2));
+    await waitFor(() => expect(dueLists).toBe(2));
   });
 
-  it("shows a refusal on the page and reloads the queue", async () => {
-    refuse = new ApiError(409, "CONFLICT", "Already refunded.");
+  it("shows a refusal in the form and reloads the queue", async () => {
+    refuse = new ApiError(409, "REFUND_EXCEEDS_REMAINDER", "Too much.");
     show();
-    const { confirm } = await start("Duplicate request");
-    await userEvent.click(confirm);
-    expect(await screen.findByRole("alert")).toHaveTextContent(
-      "Already refunded.",
+    const dialog = await open();
+    await userEvent.type(within(dialog).getByLabelText("Reason"), "Duplicate");
+    await userEvent.click(
+      within(dialog).getByRole("button", { name: "Refund" }),
     );
-    await waitFor(() => expect(lists).toBe(2));
+    expect(await within(dialog).findByRole("alert")).toHaveTextContent(
+      /more than is left to refund/,
+    );
+    await waitFor(() => expect(dueLists).toBe(2));
+  });
+
+  it("lists refunds already started under History", async () => {
+    show();
+    await userEvent.click(await screen.findByRole("tab", { name: "History" }));
+    expect(await screen.findByText("FLY-BK-9")).toBeInTheDocument();
+    expect(screen.getByText("Goodwill")).toBeInTheDocument();
+    expect(screen.getByText("Completed")).toBeInTheDocument();
   });
 });

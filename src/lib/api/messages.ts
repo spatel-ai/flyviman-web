@@ -94,6 +94,12 @@ const MESSAGES: Record<string, string> = {
     "This operator has no approved air ambulance aircraft, so it cannot fly this mission. Choose another operator.",
   UPLOAD_NOT_FOUND:
     "The upload was not found. Choose the file again and retry.",
+  PAYMENT_NOT_SUCCEEDED:
+    "This payment has not succeeded, so it has no receipt and cannot be refunded.",
+  PAYMENT_NOT_REFUNDABLE:
+    "This payment can no longer be refunded. The list has been refreshed.",
+  REFUND_EXCEEDS_REMAINDER:
+    "This is more than is left to refund on the payment. The list has been refreshed: check the amount.",
   PAYMENT_NOT_DUE:
     "Nothing is due on this trip right now. The page has been refreshed.",
   PAYMENT_ALREADY_PAID:

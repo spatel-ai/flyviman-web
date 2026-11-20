@@ -12,11 +12,9 @@ import { buttonClasses } from "@/components/ui/button-classes";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { isNotFoundError } from "@/lib/api/errors";
-import { FINANCE_ROUTES_READY } from "@/lib/api/payments";
 import type { Schemas } from "@/lib/api/types";
 import { categoryLabel, formatDuration } from "@/lib/format/aircraft";
 import { formatDateTime } from "@/lib/format/date";
-import { paymentDue } from "@/lib/payments/amount-due";
 import { CancelDialog } from "./cancel-dialog";
 import { ChangeRequests } from "./change-request";
 import { useBooking, useMessages, useQuotes } from "./hooks";
@@ -65,7 +63,8 @@ export function TripDetail({ reference }: { reference: string }) {
 function Loaded({ booking }: { booking: Booking }) {
   const [cancelling, setCancelling] = useState(false);
   const { itinerary } = booking;
-  const due = paymentDue(booking);
+  // The API decides what is due now (W4-1); null hides Pay.
+  const due = booking.amountDue;
   const queryState = {
     quotes: useQuotes(booking.reference),
     messages: useMessages(booking.reference),
@@ -101,27 +100,33 @@ function Loaded({ booking }: { booking: Booking }) {
       {due ? (
         <Card className="flex flex-col gap-3" aria-label="Payment due">
           <h2 className="text-title">
-            {due.kind === "deposit" ? "Deposit due" : "Payment due"}
+            {due.kind === "DEPOSIT"
+              ? "Deposit due"
+              : due.kind === "BALANCE"
+                ? "Balance due"
+                : "Payment due"}
           </h2>
-          {due.kind === "full" ? (
-            <PriceLabel
-              amountMinor={due.amountMinor}
-              currency={due.currency}
-              priceType="CONFIRMED"
-            />
-          ) : (
+          <PriceLabel
+            amountMinor={due.amountMinor}
+            currency={due.currency}
+            priceType={due.priceType}
+          />
+          {due.kind === "DEPOSIT" ? (
             <p className="text-body-sm text-muted">
-              This trip takes a deposit now and the balance later. The deposit
-              is shown on the next page, before you pay.
+              This trip takes a deposit now and the balance later.
             </p>
-          )}
+          ) : null}
           {/* A full page load: only the payment page's policy allows the
               payment provider (lib/csp.ts). */}
           <a
             href={`/account/trips/${encodeURIComponent(booking.reference)}/pay`}
             className={buttonClasses({ className: "self-start" })}
           >
-            {due.kind === "deposit" ? "Pay deposit" : "Pay"}
+            {due.kind === "DEPOSIT"
+              ? "Pay deposit"
+              : due.kind === "BALANCE"
+                ? "Pay balance"
+                : "Pay"}
           </a>
         </Card>
       ) : null}
@@ -176,9 +181,7 @@ function Loaded({ booking }: { booking: Booking }) {
         )}
       </section>
 
-      {FINANCE_ROUTES_READY ? (
-        <PaymentHistory reference={booking.reference} />
-      ) : null}
+      <PaymentHistory reference={booking.reference} />
 
       <Quotes reference={booking.reference} />
       <Messages

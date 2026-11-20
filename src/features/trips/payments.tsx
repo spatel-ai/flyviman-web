@@ -17,9 +17,8 @@ const PURPOSE: Record<string, string> = {
 };
 
 /**
- * The trip's payments, newest first, each with its own status and, once
- * settled, its receipt. Shown when W4-1's routes exist
- * (FINANCE_ROUTES_READY).
+ * The trip's payments, each with its own status and, once it has succeeded,
+ * a link to its printable receipt.
  */
 export function PaymentHistory({ reference }: { reference: string }) {
   const payments = useQuery({
@@ -61,11 +60,9 @@ export function PaymentHistory({ reference }: { reference: string }) {
                 priceType={payment.price.priceType}
                 variant="compact"
               />
-              {payment.receiptAvailable ? (
+              {payment.receipt ? (
                 <a
-                  href={receiptHref(payment.reference)}
-                  target="_blank"
-                  rel="noopener"
+                  href={receiptHref(reference, payment.reference)}
                   className="text-body-sm text-accent hover:underline"
                 >
                   Receipt for {payment.reference}

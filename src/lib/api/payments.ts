@@ -1,15 +1,8 @@
-import {
-  amountDueFromDetails,
-  type AmountDue,
-} from "@/lib/payments/amount-due";
-import { apiFetch, apiUrl, type ApiResult } from "./client";
-import { ApiError } from "./errors";
+import { apiFetch, type ApiResult } from "./client";
 import type { Schemas } from "./types";
 
 /**
- * Every payment call the site makes, in one place (M9, W4-3). The routes in
- * the first part exist; the second part (payment records, receipts, finance
- * and refunds) is W4-1's, written ahead of it: see FINANCE_ROUTES_READY.
+ * Every payment call the site makes, in one place (M9, W4-3 and W4-1).
  */
 
 export type PaymentOrder = Schemas["PaymentResponseDto"];
@@ -39,44 +32,6 @@ export async function createPaymentOrder(
       body: { expectedAmountMinor: due.amountMinor, currency: due.currency },
     })
   ).data;
-}
-
-/**
- * An amount that is never due: the gateway's smallest order is one rupee
- * (100 paise), so offering one paisa is always refused, and nothing is
- * created.
- */
-const NEVER_DUE_MINOR = 1;
-
-/**
- * The amount due now, for a model C deposit, which only the API can work
- * out. The API states the amount due when it refuses another amount
- * (`PAYMENT_AMOUNT_MISMATCH`); offering one paisa asks without creating an
- * order. Any other refusal is thrown as it came.
- *
- * TODO: replace with the amount due on the booking once the API returns it
- * (asked of the lead in the W4-3 report).
- */
-export async function lookUpAmountDue(
-  reference: string,
-  currency: string,
-  key: string,
-): Promise<AmountDue> {
-  try {
-    await createPaymentOrder(
-      reference,
-      { amountMinor: NEVER_DUE_MINOR, currency },
-      key,
-    );
-  } catch (error) {
-    if (error instanceof ApiError && error.code === "PAYMENT_AMOUNT_MISMATCH") {
-      const due = amountDueFromDetails(error.details);
-      if (due) return due;
-    }
-    throw error;
-  }
-  // Unreachable unless the API accepted a one-paisa order.
-  throw new ApiError(500, "UNKNOWN_ERROR", "Unexpected answer.");
 }
 
 /**
@@ -134,44 +89,16 @@ export async function deliverMockNotice(
 }
 
 // ---------------------------------------------------------------------------
-// W4-1: payment records, receipts, finance and refunds.
-//
-// TODO(W4-1): these routes and shapes are written ahead of W4-1 and are not
-// in the API yet. When it merges: check each path and shape against
-// `openapi.json`, replace the interfaces below with `Schemas[...]`, and set
-// FINANCE_ROUTES_READY to true. Nothing calls them until then.
+// Payment records, receipts, finance and refunds (W4-1).
 // ---------------------------------------------------------------------------
 
-/** Whether W4-1's routes exist. The pages that need them say so until then. */
-export const FINANCE_ROUTES_READY = false;
-
-/** One payment attempt, as its customer or finance sees it. */
-export interface PaymentRecord {
-  reference: string;
-  bookingReference: string;
-  /** INITIATED to REFUNDED; unknown values are shown as sent. */
-  status: string;
-  /** FULL, DEPOSIT or BALANCE. */
-  purpose: string;
-  price: { priceType: "CONFIRMED"; amountMinor: number; currency: string };
-  refundedMinor: number;
-  paidAt: string | null;
-  createdAt: string;
-  /** Whether a receipt can be opened (a settled payment). */
-  receiptAvailable: boolean;
-}
-
-/** A refund finance owes: a cancelled booking's money not yet returned. */
-export interface RefundDue {
-  bookingReference: string;
-  paymentReference: string;
-  /** What the cancellation terms say is owed back. */
-  amountMinor: number;
-  currency: string;
-  /** REFUND_DUE, REFUND_PENDING, REFUNDED or FAILED. */
-  status: string;
-  dueSince: string;
-}
+/** One payment attempt, as its customer sees it, with its receipt once settled. */
+export type BookingPayment = Schemas["BookingPaymentDto"];
+export type PaymentReceipt = Schemas["PaymentReceiptDto"];
+export type AdminPayment = Schemas["AdminPaymentDto"];
+/** A refund finance owes: money taken that has not gone back yet. */
+export type RefundDue = Schemas["RefundDueItemDto"];
+export type Refund = Schemas["RefundResponseDto"];
 
 export interface PaymentFilter {
   status?: string;
@@ -179,29 +106,29 @@ export interface PaymentFilter {
   pageSize: number;
 }
 
-/** TODO(W4-1): assumed `GET bookings/:reference/payments`, newest first. */
+/** `GET bookings/:reference/payments`: the customer's payments on a trip. */
 export async function listBookingPayments(
   reference: string,
-): Promise<PaymentRecord[]> {
-  return (await apiFetch<PaymentRecord[]>(`${booking(reference)}/payments`))
+): Promise<BookingPayment[]> {
+  return (await apiFetch<BookingPayment[]>(`${booking(reference)}/payments`))
     .data;
 }
 
-/** TODO(W4-1): `GET payments/:reference`. */
-export async function getPayment(reference: string): Promise<PaymentRecord> {
-  return (await apiFetch<PaymentRecord>(payment(reference))).data;
+/** `GET payments/:reference/receipt`: only for a payment that succeeded. */
+export async function getReceipt(reference: string): Promise<PaymentReceipt> {
+  return (await apiFetch<PaymentReceipt>(`${payment(reference)}/receipt`)).data;
 }
 
-/** TODO(W4-1): assumed `GET payments/:reference/receipt`, opened as a document. */
-export function receiptHref(reference: string): string {
-  return apiUrl(`${payment(reference)}/receipt`);
+/** The site's printable receipt page for a payment. */
+export function receiptHref(bookingReference: string, reference: string) {
+  return `/account/trips/${encodeURIComponent(bookingReference)}/receipts/${encodeURIComponent(reference)}`;
 }
 
-/** TODO(W4-1): assumed `GET admin/payments`, paged, newest first. */
+/** `GET admin/payments`, paged, newest first. */
 export function listAdminPayments(
   filter: PaymentFilter,
-): Promise<ApiResult<PaymentRecord[]>> {
-  return apiFetch<PaymentRecord[]>("admin/payments", {
+): Promise<ApiResult<AdminPayment[]>> {
+  return apiFetch<AdminPayment[]>("admin/payments", {
     query: {
       status: filter.status,
       page: filter.page,
@@ -210,26 +137,38 @@ export function listAdminPayments(
   });
 }
 
-/** TODO(W4-1): assumed `GET admin/refunds`, the due queue, oldest first. */
+/** `GET admin/refunds/due`: money owed back, oldest first. */
 export function listRefundsDue(
   page: number,
   pageSize: number,
 ): Promise<ApiResult<RefundDue[]>> {
-  return apiFetch<RefundDue[]>("admin/refunds", { query: { page, pageSize } });
+  return apiFetch<RefundDue[]>("admin/refunds/due", {
+    query: { page, pageSize },
+  });
+}
+
+/** `GET admin/refunds`: refunds started, newest first. */
+export function listRefunds(
+  page: number,
+  pageSize: number,
+): Promise<ApiResult<Refund[]>> {
+  return apiFetch<Refund[]>("admin/refunds", { query: { page, pageSize } });
 }
 
 /**
- * TODO(W4-1): assumed `POST admin/payments/:reference/refunds` with an
- * Idempotency-Key. Money moves, so the reason is required and audited.
+ * `POST admin/payments/:reference/refunds` with an Idempotency-Key. Money
+ * moves, so the reason is required and audited.
  */
 export async function startRefund(
   paymentReference: string,
-  input: { amountMinor: number; currency: string; reason: string },
+  input: Schemas["CreateRefundDto"],
   key: string,
-): Promise<void> {
-  await apiFetch(`admin/${payment(paymentReference)}/refunds`, {
-    method: "POST",
-    headers: { "Idempotency-Key": key },
-    body: input,
-  });
+): Promise<Refund> {
+  return (
+    await apiFetch<Refund>(`admin/${payment(paymentReference)}/refunds`, {
+      method: "POST",
+      headers: { "Idempotency-Key": key },
+      body: input,
+    })
+  ).data;
 }

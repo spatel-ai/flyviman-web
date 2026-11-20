@@ -21,14 +21,13 @@ import { ApiError, isNotFoundError } from "@/lib/api/errors";
 import { messageFor } from "@/lib/api/messages";
 import {
   createPaymentOrder,
-  lookUpAmountDue,
   verifyPayment,
   type PaymentOrder,
 } from "@/lib/api/payments";
 import { queryKeys } from "@/lib/api/query-keys";
 import type { Schemas } from "@/lib/api/types";
-import { newKey, useAttemptKey } from "@/lib/idempotency";
-import { paymentDue, paymentSettled } from "@/lib/payments/amount-due";
+import { useAttemptKey } from "@/lib/idempotency";
+import { amountDueTitle, paymentSettled } from "@/lib/payments/amount-due";
 import {
   checkoutReducer,
   INITIAL,
@@ -63,12 +62,20 @@ export function PayPage({ reference }: { reference: string }) {
     refetchInterval: isPolling(state) ? POLL_INTERVAL_MS : false,
   });
 
+  // Where the payment summary stood when the page opened: a balance payer
+  // starts at PARTIALLY_PAID, so only a move from here is this payment.
   const paymentStatus = booking.data?.paymentStatus;
+  const [startedFrom, setStartedFrom] = useState<string | undefined>();
+  if (paymentStatus && startedFrom === undefined) setStartedFrom(paymentStatus);
   useEffect(() => {
-    if (paymentStatus && paymentSettled(paymentStatus)) {
+    if (
+      paymentStatus &&
+      startedFrom &&
+      paymentSettled(paymentStatus, startedFrom)
+    ) {
       dispatch({ type: "SETTLED" });
     }
-  }, [paymentStatus]);
+  }, [paymentStatus, startedFrom]);
 
   useEffect(() => {
     if (state.step !== "waiting") return;
@@ -214,21 +221,8 @@ function Due({
   const queryClient = useQueryClient();
   const attempt = useAttemptKey();
   const [order, setOrder] = useState<PaymentOrder | null>(null);
-  const due = paymentDue(booking);
-  const deposit = useQuery({
-    queryKey: queryKeys.paymentAmountDue(booking.reference),
-    queryFn: () =>
-      lookUpAmountDue(
-        booking.reference,
-        booking.price?.currency ?? "INR",
-        newKey(),
-      ),
-    enabled: due?.kind === "deposit",
-    // Never kept: the amount due is read again each time it is shown.
-    gcTime: 0,
-    retry: false,
-  });
-
+  // The API's own rule for what is due now (W4-1); null hides Pay.
+  const due = booking.amountDue;
   if (!due) {
     return (
       <Card className="flex flex-col gap-3">
@@ -240,15 +234,7 @@ function Due({
     );
   }
 
-  const amount =
-    due.kind === "full"
-      ? { amountMinor: due.amountMinor, currency: due.currency }
-      : deposit.data
-        ? {
-            amountMinor: deposit.data.amountMinor,
-            currency: deposit.data.currency,
-          }
-        : null;
+  const amount = { amountMinor: due.amountMinor, currency: due.currency };
 
   function refresh() {
     void queryClient.invalidateQueries({
@@ -257,7 +243,6 @@ function Due({
   }
 
   async function pay() {
-    if (!amount) return;
     dispatch({ type: "PAY" });
     const key = attempt.keyFor({ reference: booking.reference, ...amount });
     try {
@@ -270,7 +255,6 @@ function Due({
       if (!(error instanceof ApiError && error.status === 0)) attempt.rotate();
       if (error instanceof ApiError && STALE.has(error.code)) {
         refresh();
-        void deposit.refetch();
       }
       dispatch({ type: "ORDER_FAILED", error });
     }
@@ -308,36 +292,28 @@ function Due({
   return (
     <>
       <Card className="flex flex-col gap-3" aria-label="Amount due now">
-        <h2 className="text-title">
-          {due.kind === "deposit" ? "Deposit due now" : "Amount due now"}
-        </h2>
-        {amount ? (
-          <PriceLabel
-            amountMinor={amount.amountMinor}
-            currency={amount.currency}
-            priceType="CONFIRMED"
-          />
-        ) : deposit.isError ? (
-          <LoadError
-            what="the deposit due"
-            error={deposit.error}
-            onRetry={() => void deposit.refetch()}
-          />
-        ) : (
-          <Skeleton className="h-12 w-48" />
-        )}
-        {due.kind === "deposit" ? (
+        <h2 className="text-title">{amountDueTitle(due.kind)}</h2>
+        <PriceLabel
+          amountMinor={due.amountMinor}
+          currency={due.currency}
+          priceType={due.priceType}
+        />
+        {due.kind === "DEPOSIT" && booking.price ? (
           <>
             <p className="text-body-sm text-muted">
               This trip takes a deposit now and the balance later. The trip
               total is:
             </p>
             <PriceLabel
-              amountMinor={due.totalMinor}
-              currency={due.currency}
-              priceType="CONFIRMED"
+              amountMinor={booking.price.amountMinor}
+              currency={booking.price.currency}
+              priceType={booking.price.priceType}
             />
           </>
+        ) : due.kind === "BALANCE" ? (
+          <p className="text-body-sm text-muted">
+            The rest of the trip price, after the deposit you have paid.
+          </p>
         ) : (
           <p className="text-body-sm text-muted">
             The full price of the trip is paid now.
@@ -362,13 +338,12 @@ function Due({
         </div>
       ) : (
         <div className="flex flex-col items-start gap-2">
-          <Button
-            size="lg"
-            loading={busy}
-            disabled={!amount}
-            onClick={() => void pay()}
-          >
-            {due.kind === "deposit" ? "Pay deposit" : "Pay now"}
+          <Button size="lg" loading={busy} onClick={() => void pay()}>
+            {due.kind === "DEPOSIT"
+              ? "Pay deposit"
+              : due.kind === "BALANCE"
+                ? "Pay balance"
+                : "Pay now"}
           </Button>
           <p className="text-caption text-muted">
             Your booking is confirmed once the payment provider confirms the
