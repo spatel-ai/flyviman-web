@@ -2858,7 +2858,7 @@ export interface paths {
     put?: never;
     /**
      * Report the checkout result
-     * @description The signature is checked through the gateway (400 `PAYMENT_SIGNATURE_INVALID`, also for another order’s result). Not final: a valid result makes the payment `PENDING` at most; only the gateway’s verified notice makes it `SUCCEEDED` or `FAILED`, so poll the booking’s `paymentStatus`. Repeating it changes nothing.
+     * @description The signature is checked through the gateway (400 `PAYMENT_SIGNATURE_INVALID`, also for another order’s result). Not final: a valid result makes the payment `PENDING` at most; only the gateway’s verified notice makes it `SUCCEEDED` or `FAILED`, so poll the booking’s `paymentStatus`. While the payment is `PENDING` the booking’s hold on the aircraft is kept (48 hours from the order at most, never past the trip). Repeating it changes nothing.
      */
     post: operations["PaymentsController_verify"];
     delete?: never;
@@ -2956,7 +2956,7 @@ export interface paths {
     };
     /**
      * Payments to refund (the finance queue)
-     * @description Oldest first. `CANCELLATION`: a cancelled booking’s refund due (paid less the charge, recorded at cancellation) less refunds made since, spread over its payments; `BOOKING_CLOSED`: a payment that succeeded after the booking expired or was cancelled; `ALREADY_PAID`: a second payment for a paid booking. Each row is one payment with `dueMinor` to refund; a row leaves the queue once refunds completed or under way cover it. Nothing is refunded automatically. Payments flagged `AMOUNT_MISMATCH` or `DUPLICATE_CAPTURE` are not listed: their extra money is not on a payment this API can refund.
+     * @description Oldest first. `CANCELLATION`: a cancelled booking’s refund due (paid less the charge, recorded at cancellation) less refunds made since, spread over its payments; `BOOKING_CLOSED`: a payment that succeeded after the booking expired or was cancelled, or for a booking that could not be confirmed because the trip can no longer be flown as booked; `ALREADY_PAID`: a second payment for a paid booking. Each row is one payment with `dueMinor` to refund; a row leaves the queue once refunds completed or under way cover it. Nothing is refunded automatically. Payments flagged `AMOUNT_MISMATCH` or `DUPLICATE_CAPTURE` are not listed: their extra money is not on a payment this API can refund.
      */
     get: operations["AdminPaymentsController_due"];
     put?: never;
@@ -6645,12 +6645,12 @@ export interface components {
       reason: string;
     };
     /**
-     * @description `CANCELLATION`: a cancellation left money due back (paid less the charge); `BOOKING_CLOSED`: a payment succeeded after the booking expired or was cancelled; `ALREADY_PAID`: a second payment for a paid booking.
+     * @description `CANCELLATION`: a cancellation left money due back (paid less the charge); `BOOKING_CLOSED`: a payment succeeded after the booking expired or was cancelled, or for a booking that could not be confirmed because the trip can no longer be flown as booked (the booking stays `AWAITING_PAYMENT`); `ALREADY_PAID`: a second payment for a paid booking.
      * @enum {string}
      */
     RefundDueKind: "CANCELLATION" | "BOOKING_CLOSED" | "ALREADY_PAID";
     RefundDueItemDto: {
-      /** @description `CANCELLATION`: a cancellation left money due back (paid less the charge); `BOOKING_CLOSED`: a payment succeeded after the booking expired or was cancelled; `ALREADY_PAID`: a second payment for a paid booking. */
+      /** @description `CANCELLATION`: a cancellation left money due back (paid less the charge); `BOOKING_CLOSED`: a payment succeeded after the booking expired or was cancelled, or for a booking that could not be confirmed because the trip can no longer be flown as booked (the booking stays `AWAITING_PAYMENT`); `ALREADY_PAID`: a second payment for a paid booking. */
       kind: components["schemas"]["RefundDueKind"];
       /** @example FLY-BK-7K2M9Q */
       bookingReference: string;
