@@ -15,11 +15,6 @@ const valid: QuoteValues = {
   price: "1,80,000",
   validDate: "2030-01-12",
   validTime: "12:00",
-  summary: "Free until 72 hours before.",
-  charges: [
-    { hours: "72", percent: "0" },
-    { hours: "0", percent: "50" },
-  ],
   inclusions: "Crew\n Fuel \n\n",
   exclusions: "Lounge",
 };
@@ -34,15 +29,10 @@ function issues(values: Partial<QuoteValues>) {
 describe("the quote body", () => {
   it("turns rupees into paise and India time into UTC", () => {
     expect(toReviseQuoteBody(valid)).toEqual({
-      totalMinor: 18_000_000,
+      operatorPriceMinor: 18_000_000,
       currency: "INR",
       validUntil: "2030-01-12T06:30:00.000Z",
       conditions: {
-        summary: "Free until 72 hours before.",
-        charges: [
-          { minHoursBeforeDeparture: 72, chargePercent: 0 },
-          { minHoursBeforeDeparture: 0, chargePercent: 50 },
-        ],
         inclusions: ["Crew", "Fuel"],
         exclusions: ["Lounge"],
       },
@@ -50,9 +40,9 @@ describe("the quote body", () => {
   });
 
   it("keeps paise", () => {
-    expect(toReviseQuoteBody({ ...valid, price: "2500.50" }).totalMinor).toBe(
-      250_050,
-    );
+    expect(
+      toReviseQuoteBody({ ...valid, price: "2500.50" }).operatorPriceMinor,
+    ).toBe(250_050);
   });
 });
 
@@ -83,26 +73,6 @@ describe("quote validation", () => {
     ]);
   });
 
-  it("asks for the cancellation words", () => {
-    expect(issues({ summary: "  " })).toHaveLength(1);
-  });
-
-  it("wants the longest notice first, each once, within bounds", () => {
-    expect(
-      issues({
-        charges: [
-          { hours: "24", percent: "10" },
-          { hours: "24", percent: "20" },
-        ],
-      }),
-    ).toEqual(["charges.1.hours: Longest notice first, each notice once"]);
-    expect(issues({ charges: [{ hours: "1.5", percent: "101" }] })).toEqual([
-      "charges.0.hours: Whole hours, 0 to 8760",
-      "charges.0.percent: Whole percent, 0 to 100",
-    ]);
-    expect(issues({ charges: [] })).toEqual([]);
-  });
-
   it("limits the lists", () => {
     expect(issues({ inclusions: "x".repeat(201) })).toHaveLength(1);
     expect(issues({ exclusions: Array(21).fill("a").join("\n") })).toHaveLength(
@@ -126,47 +96,46 @@ describe("defaults", () => {
     });
   });
 
-  it("starts a first quote from the terms the customer saw, a revision from the last quote", () => {
-    const terms = {
-      version: 1 as const,
-      source: "PLATFORM" as const,
-      summary: "Platform terms",
-      charges: [{ minHoursBeforeDeparture: 48, chargePercent: 25 }],
-      acceptedAt: "2030-01-09T00:00:00Z",
-    };
+  it("starts a first quote blank, a revision from the operator's own last price", () => {
     const legs = [{ departureAt: DEPARTURE }] as never;
-    const first = quoteDefaults(
-      { quotes: [], cancellationTerms: terms, legs },
-      NOW,
-    );
-    expect(first).toMatchObject({
+    expect(quoteDefaults({ quotes: [], legs }, NOW)).toMatchObject({
       price: "",
-      summary: "Platform terms",
-      charges: [{ hours: "48", percent: "25" }],
     });
+    const conditions = {
+      summary: "Flyviman terms",
+      charges: [],
+      inclusions: ["Crew"],
+      exclusions: [],
+    };
     const revised = quoteDefaults(
       {
         quotes: [
           {
-            price: { amountMinor: 61_000_050 },
-            conditions: {
-              summary: "Mine",
-              charges: [],
-              inclusions: ["Crew"],
-              exclusions: [],
-            },
+            // The customer's total carries Flyviman's charges: never reused.
+            price: { amountMinor: 72_000_000 },
+            operatorPrice: { amountMinor: 61_000_050 },
+            conditions,
           },
         ] as never,
-        cancellationTerms: terms,
         legs,
       },
       NOW,
     );
-    expect(revised).toMatchObject({
-      price: "610000.5",
-      summary: "Mine",
-      charges: [],
-      inclusions: "Crew",
-    });
+    expect(revised).toMatchObject({ price: "610000.5", inclusions: "Crew" });
+    // A quote sent before quotes were priced from the operator's price.
+    const older = quoteDefaults(
+      {
+        quotes: [
+          {
+            price: { amountMinor: 72_000_000 },
+            operatorPrice: null,
+            conditions,
+          },
+        ] as never,
+        legs,
+      },
+      NOW,
+    );
+    expect(older.price).toBe("");
   });
 });

@@ -61,6 +61,30 @@ export function newEstimateFrom(error: unknown): NewEstimate | null {
   };
 }
 
+interface Attempt {
+  values: RequestOutput;
+  expectedTotalMinor: number | undefined;
+  cancellationTermsVersion: number;
+}
+
+interface NewTerms {
+  version: number;
+  summary: string;
+}
+
+/** Flyviman's new cancellation terms a 409 BOOKING_TERMS_CHANGED carries, or null. */
+export function newTermsFrom(error: unknown): NewTerms | null {
+  if (!(error instanceof ApiError) || error.code !== "BOOKING_TERMS_CHANGED") {
+    return null;
+  }
+  const fields = Object.fromEntries(
+    error.details.map((d) => [d.field ?? "", d.issue]),
+  );
+  const version = Number(fields.cancellationTermsVersion);
+  if (!Number.isSafeInteger(version) || !fields.summary) return null;
+  return { version, summary: fields.summary };
+}
+
 /**
  * Sends a booking request from a search result: who is flying, special
  * requests, the cancellation conditions, and the labelled price, then the
@@ -142,6 +166,8 @@ function RequestForm({
   const attempt = useAttemptKey();
   const [error, setError] = useState<string | null>(null);
   const [changed, setChanged] = useState<NewEstimate | null>(null);
+  const [newTerms, setNewTerms] = useState<NewTerms | null>(null);
+  const [last, setLast] = useState<Attempt | null>(null);
   const limit = detail.passengerCount;
   const {
     register,
@@ -158,13 +184,12 @@ function RequestForm({
     mutationFn: ({
       values,
       expectedTotalMinor,
-    }: {
-      values: RequestOutput;
-      expectedTotalMinor: number | undefined;
-    }) => {
+      cancellationTermsVersion,
+    }: Attempt) => {
       const body = {
         searchId,
         resultId,
+        cancellationTermsVersion,
         currency: "INR",
         ...(expectedTotalMinor === undefined ? {} : { expectedTotalMinor }),
         passengerIds: values.passengerIds,
@@ -182,11 +207,13 @@ function RequestForm({
       await queryClient.invalidateQueries({ queryKey: ["trips"] });
       router.push(`/account/trips/${data.reference}`);
     },
-    onError: async (failure) => {
+    onError: async (failure, sent) => {
       if (!(failure instanceof ApiError && failure.status === 0)) {
         attempt.rotate();
       }
+      setLast(sent);
       setChanged(newEstimateFrom(failure));
+      setNewTerms(newTermsFrom(failure));
       setError(
         applyApiError(failure, setFieldError, [
           "passengerIds",
@@ -206,11 +233,21 @@ function RequestForm({
   const expired = now > 0 && new Date(detail.validUntil).getTime() < now;
   const price = detail.price;
 
-  function submit(expected: number | undefined) {
+  // What the customer agreed to: a resend after a price or terms change
+  // keeps the other agreement, so neither is sent stale.
+  function submit(
+    expected: number | undefined,
+    version: number = detail.cancellationTerms.version,
+  ) {
     return handleSubmit((values) => {
       setError(null);
       setChanged(null);
-      send.mutate({ values, expectedTotalMinor: expected });
+      setNewTerms(null);
+      send.mutate({
+        values,
+        expectedTotalMinor: expected,
+        cancellationTermsVersion: version,
+      });
     });
   }
 
@@ -314,11 +351,30 @@ function RequestForm({
         {...register("specialRequests")}
       />
 
-      <CancellationTerms summary={detail.cancellationNote} charges={[]} />
+      {newTerms ? null : (
+        <CancellationTerms
+          summary={detail.cancellationTerms.summary}
+          charges={detail.cancellationTerms.tiers}
+        />
+      )}
 
       <div className="flex flex-col gap-3">
         <FormAlert message={error} />
-        {changed ? (
+        {newTerms ? (
+          <Card className="flex flex-col gap-3">
+            <CancellationTerms summary={newTerms.summary} charges={[]} />
+            <Button
+              type="button"
+              loading={send.isPending}
+              onClick={(event) =>
+                void submit(last?.expectedTotalMinor, newTerms.version)(event)
+              }
+              className="self-start"
+            >
+              Agree to the new terms and send request
+            </Button>
+          </Card>
+        ) : changed ? (
           <Card className="flex flex-col gap-3">
             <PriceLabel
               amountMinor={changed.totalMinor}
@@ -329,7 +385,12 @@ function RequestForm({
             <Button
               type="button"
               loading={send.isPending}
-              onClick={(event) => void submit(changed.totalMinor)(event)}
+              onClick={(event) =>
+                void submit(
+                  changed.totalMinor,
+                  last?.cancellationTermsVersion,
+                )(event)
+              }
               className="self-start"
             >
               Agree and send request

@@ -19,8 +19,6 @@ export interface QuoteValues {
   price: string;
   validDate: string;
   validTime: string;
-  summary: string;
-  charges: { hours: string; percent: string }[];
   /** One per line. */
   inclusions: string;
   exclusions: string;
@@ -33,14 +31,13 @@ function lines(text: string): string[] {
     .filter(Boolean);
 }
 
-const whole = (value: string, max: number) =>
-  /^\d{1,5}$/.test(value.trim()) && Number(value) <= max;
-
 /**
- * The quote form's rules, as the API's: an amount above zero up to ₹10
- * crore, valid at least an hour ahead and never after the first departure,
- * cancellation charges with the longest notice first, each notice once.
- * A factory, so `now` and the departure are given (and testable).
+ * The quote form's rules, as the API's: the operator's price above zero up
+ * to ₹10 crore (the API also refuses a price whose customer total, with
+ * Flyviman's charges and tax, would pass ₹10 crore), valid at least an hour
+ * ahead and never after the first departure. The cancellation terms are
+ * Flyviman's (D-172), not the operator's. A factory, so `now` and the
+ * departure are given (and testable).
  */
 export function quoteSchema({
   departureAt,
@@ -54,12 +51,6 @@ export function quoteSchema({
       price: z.string(),
       validDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Choose a date"),
       validTime: z.string().regex(/^\d{2}:\d{2}$/, "Choose a time"),
-      summary: z
-        .string()
-        .trim()
-        .min(1, "Say what the customer can cancel, and when")
-        .max(2000, "Keep this under 2,000 characters"),
-      charges: z.array(z.object({ hours: z.string(), percent: z.string() })),
       inclusions: z.string(),
       exclusions: z.string(),
     })
@@ -94,24 +85,6 @@ export function quoteSchema({
         }
       }
 
-      let previous = Infinity;
-      values.charges.forEach((charge, index) => {
-        if (!whole(charge.hours, 8760)) {
-          issue(["charges", index, "hours"], "Whole hours, 0 to 8760");
-        } else if (Number(charge.hours) >= previous) {
-          issue(
-            ["charges", index, "hours"],
-            "Longest notice first, each notice once",
-          );
-        } else {
-          previous = Number(charge.hours);
-        }
-        if (!whole(charge.percent, 100)) {
-          issue(["charges", index, "percent"], "Whole percent, 0 to 100");
-        }
-      });
-      if (values.charges.length > 10) issue(["charges"], "At most 10 charges");
-
       for (const field of ["inclusions", "exclusions"] as const) {
         const list = lines(values[field]);
         if (list.length > MAX_LINES) {
@@ -124,21 +97,16 @@ export function quoteSchema({
 }
 
 /**
- * The one place the form becomes the request. W3-11 changes the operator's
- * amount to "their own price" with the engine adding Flyviman's commission,
- * fees and tax: change `price` handling here and nothing else.
+ * The one place the form becomes the request: the operator's own price;
+ * Flyviman's pricing rules add commission, fees and tax for the customer
+ * (D-172).
  */
 export function toReviseQuoteBody(values: QuoteValues): ReviseQuoteBody {
   return {
-    totalMinor: rupeesToPaise(values.price) ?? 0,
+    operatorPriceMinor: rupeesToPaise(values.price) ?? 0,
     currency: "INR",
     validUntil: localToUtc(values.validDate, values.validTime, QUOTE_ZONE),
     conditions: {
-      summary: values.summary.trim(),
-      charges: values.charges.map((charge) => ({
-        minHoursBeforeDeparture: Number(charge.hours),
-        chargePercent: Number(charge.percent),
-      })),
       inclusions: lines(values.inclusions),
       exclusions: lines(values.exclusions),
     },
@@ -159,24 +127,22 @@ export function defaultValidity(
 }
 
 /**
- * A first quote starts from the cancellation terms the customer was shown;
- * a revision from the newest quote, so only what changes is retyped.
+ * A revision starts from the newest quote, so only what changes is retyped:
+ * the operator's own price (never the customer's total, which carries
+ * Flyviman's charges), blank for a quote sent before quotes were priced
+ * from it.
  */
 export function quoteDefaults(
-  request: Pick<Detail, "quotes" | "cancellationTerms" | "legs">,
+  request: Pick<Detail, "quotes" | "legs">,
   now: number,
 ): QuoteValues {
   const previous = request.quotes[0];
   const conditions = previous?.conditions;
-  const charges = conditions?.charges ?? request.cancellationTerms.charges;
   return {
-    price: previous ? paiseToRupees(previous.price.amountMinor) : "",
+    price: previous?.operatorPrice
+      ? paiseToRupees(previous.operatorPrice.amountMinor)
+      : "",
     ...defaultValidity(request.legs[0].departureAt, now),
-    summary: conditions?.summary ?? request.cancellationTerms.summary,
-    charges: charges.map((charge) => ({
-      hours: String(charge.minHoursBeforeDeparture),
-      percent: String(charge.chargePercent),
-    })),
     inclusions: (conditions?.inclusions ?? []).join("\n"),
     exclusions: (conditions?.exclusions ?? []).join("\n"),
   };

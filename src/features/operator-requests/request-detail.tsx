@@ -212,13 +212,30 @@ function Loaded({
                   <p className="font-medium">{quote.reference}</p>
                   <Badge tone={status.tone}>{status.label}</Badge>
                 </div>
-                <PriceLabel
-                  amountMinor={quote.price.amountMinor}
-                  currency={quote.price.currency}
-                  priceType={quote.price.priceType}
-                  validUntil={quote.price.validUntil}
-                  expired={quote.status === "EXPIRED"}
-                />
+                {quote.operatorPrice ? (
+                  <div className="flex flex-col gap-1">
+                    <p className="text-caption text-muted">Your price</p>
+                    <PriceLabel
+                      amountMinor={quote.operatorPrice.amountMinor}
+                      currency={quote.operatorPrice.currency}
+                      priceType={quote.operatorPrice.priceType}
+                      expired={quote.status === "EXPIRED"}
+                    />
+                  </div>
+                ) : null}
+                <div className="flex flex-col gap-1">
+                  <p className="text-caption text-muted">
+                    The customer&apos;s total, with Flyviman&apos;s fees and
+                    taxes
+                  </p>
+                  <PriceLabel
+                    amountMinor={quote.price.amountMinor}
+                    currency={quote.price.currency}
+                    priceType={quote.price.priceType}
+                    validUntil={quote.price.validUntil}
+                    expired={quote.status === "EXPIRED"}
+                  />
+                </div>
                 <p className="text-caption text-muted">
                   Sent {formatDateTime(quote.createdAt)}
                 </p>

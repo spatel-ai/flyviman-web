@@ -2,7 +2,8 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
-import { useFieldArray, useForm } from "react-hook-form";
+import { useForm } from "react-hook-form";
+import { CancellationTerms } from "@/components/shared/cancellation-terms";
 import { FormAlert } from "@/components/shared/form-alert";
 import { Button } from "@/components/ui/button";
 import { DialogClose, DialogFooter } from "@/components/ui/dialog";
@@ -20,19 +21,12 @@ import {
 
 type Detail = Schemas["OperatorBookingRequestDetailDto"];
 
-const FIELDS = [
-  "price",
-  "validDate",
-  "summary",
-  "inclusions",
-  "exclusions",
-] as const;
+const FIELDS = ["price", "validDate", "inclusions", "exclusions"] as const;
 
 /** API field names mapped to the form's own. */
 const ALIASES = {
-  totalMinor: "price",
+  operatorPriceMinor: "price",
   validUntil: "validDate",
-  "conditions.summary": "summary",
   "conditions.inclusions": "inclusions",
   "conditions.exclusions": "exclusions",
 } as const;
@@ -61,7 +55,6 @@ export function QuoteForm({
   const [defaults] = useState(() => quoteDefaults(request, Date.now()));
   const {
     register,
-    control,
     handleSubmit,
     setError,
     formState: { errors, isSubmitting },
@@ -69,7 +62,6 @@ export function QuoteForm({
     resolver: zodResolver(schema),
     defaultValues: defaults,
   });
-  const charges = useFieldArray({ control, name: "charges" });
 
   async function onSubmit(values: QuoteValues) {
     setFormError(null);
@@ -96,7 +88,7 @@ export function QuoteForm({
         label="Your price (₹)"
         inputMode="decimal"
         autoComplete="off"
-        hint="In rupees. The customer sees it as a quote until they accept."
+        hint="In rupees, before Flyviman's charges. Flyviman's fees and taxes are added for the customer, who sees the total as a quote until they accept."
         className="h-10"
         error={errors.price?.message}
         {...register("price")}
@@ -126,61 +118,16 @@ export function QuoteForm({
           stays held until then.
         </p>
       </fieldset>
-      <Textarea
-        label="Cancellation conditions"
-        hint="Shown to the customer before they accept."
-        rows={3}
-        error={errors.summary?.message}
-        {...register("summary")}
-      />
-      <fieldset className="flex flex-col gap-2">
-        <legend className="mb-1 text-body-sm font-medium">
-          Cancellation charges
-        </legend>
-        {charges.fields.length === 0 ? (
-          <p className="text-body-sm text-muted">
-            None: nothing is charged on cancellation.
-          </p>
-        ) : null}
-        {charges.fields.map((field, index) => (
-          <div key={field.id} className="flex items-start gap-2">
-            <Input
-              label="Hours before departure"
-              inputMode="numeric"
-              className="h-10"
-              error={errors.charges?.[index]?.hours?.message}
-              {...register(`charges.${index}.hours`)}
-            />
-            <Input
-              label="Charge (% of total)"
-              inputMode="numeric"
-              className="h-10"
-              error={errors.charges?.[index]?.percent?.message}
-              {...register(`charges.${index}.percent`)}
-            />
-            <Button
-              variant="secondary"
-              className="mt-7 h-10"
-              aria-label={`Remove charge ${index + 1}`}
-              onClick={() => charges.remove(index)}
-            >
-              Remove
-            </Button>
-          </div>
-        ))}
-        {errors.charges?.message ? (
-          <p role="alert" className="text-body-sm text-danger">
-            {errors.charges.message}
-          </p>
-        ) : null}
-        <Button
-          variant="secondary"
-          className="h-10 self-start"
-          onClick={() => charges.append({ hours: "", percent: "" })}
-        >
-          Add a charge
-        </Button>
-      </fieldset>
+      <div className="flex flex-col gap-1">
+        <CancellationTerms
+          summary={request.cancellationTerms.summary}
+          charges={request.cancellationTerms.charges}
+        />
+        <p className="text-caption text-muted">
+          Flyviman&apos;s terms, the same for every operator. The quote shows
+          them to the customer before they accept.
+        </p>
+      </div>
       <Textarea
         label="What the price includes"
         hint="One per line."

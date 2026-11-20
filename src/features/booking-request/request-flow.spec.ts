@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { ApiError } from "@/lib/api/errors";
-import { newEstimateFrom } from "./request-flow";
+import { newEstimateFrom, newTermsFrom } from "./request-flow";
 
 describe("newEstimateFrom", () => {
   it("reads the new estimate a price change carries", () => {
@@ -27,6 +27,24 @@ describe("newEstimateFrom", () => {
     ).toBeNull();
     expect(
       newEstimateFrom(new ApiError(409, "BOOKING_UNAVAILABLE", "x")),
+    ).toBeNull();
+  });
+});
+
+describe("newTermsFrom", () => {
+  it("reads the new terms a terms change carries", () => {
+    const error = new ApiError(409, "BOOKING_TERMS_CHANGED", "changed", [
+      { field: "cancellationTermsVersion", issue: "3" },
+      { field: "summary", issue: "72 hours or more before departure: 10%." },
+    ]);
+    expect(newTermsFrom(error)).toEqual({
+      version: 3,
+      summary: "72 hours or more before departure: 10%.",
+    });
+  });
+  it("is null for other errors", () => {
+    expect(
+      newTermsFrom(new ApiError(409, "BOOKING_PRICE_CHANGED", "x")),
     ).toBeNull();
   });
 });

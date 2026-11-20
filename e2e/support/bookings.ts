@@ -10,15 +10,11 @@ function inDays(days: number, hourUtc = 0): Date {
   return date;
 }
 
+/** The operator's own price; Flyviman's charges and tax are added (D-172). */
 const QUOTE = {
-  totalMinor: 61_000_000,
+  operatorPriceMinor: 61_000_000,
   currency: "INR",
   conditions: {
-    summary: "Free cancellation until 72 hours before departure; 50% after.",
-    charges: [
-      { minHoursBeforeDeparture: 72, chargePercent: 0 },
-      { minHoursBeforeDeparture: 0, chargePercent: 50 },
-    ],
     inclusions: ["Crew", "Fuel"],
     exclusions: ["Airport lounge"],
   },
@@ -134,11 +130,18 @@ export async function requestThroughApi(
   searched: Awaited<ReturnType<typeof searchFor>>,
   passengerId: string,
 ) {
+  // The Flyviman terms the result detail shows, agreed to with the request.
+  const detail = await page.request.get(
+    `${API_URL}search/${searched.searchId}/results/${searched.resultId}`,
+  );
+  expect(detail.status()).toBe(200);
   const response = await page.request.post(`${API_URL}bookings`, {
     headers: { ...(await csrf(page)), "Idempotency-Key": randomUUID() },
     data: {
       searchId: searched.searchId,
       resultId: searched.resultId,
+      cancellationTermsVersion: (await detail.json()).data.cancellationTerms
+        .version as number,
       currency: "INR",
       ...(searched.price
         ? { expectedTotalMinor: searched.price.amountMinor }

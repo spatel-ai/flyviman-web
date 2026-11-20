@@ -129,14 +129,14 @@ test("a customer accepts the operator's quote after reading its conditions", asy
   await expect(main.getByText("Quote", { exact: true })).toBeVisible();
   await expect(main.getByText(/Valid until/)).toBeVisible();
   await expect(
-    main.getByText(/Free cancellation until 72 hours/).first(),
+    main.getByText(/72 hours or more before departure/).first(),
   ).toBeVisible();
   await expectNoSidewaysScroll(page);
 
   await main.getByRole("button", { name: "Accept quote" }).click();
   const dialog = page.getByRole("dialog");
   await expect(
-    dialog.getByText(/Free cancellation until 72 hours/),
+    dialog.getByText(/72 hours or more before departure/).first(),
   ).toBeVisible();
   await dialog.getByRole("button", { name: "Accept quote" }).click();
 

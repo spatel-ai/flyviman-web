@@ -97,11 +97,18 @@ export async function requestedTrip(
     (entry: { aircraft: { id: string } }) => entry.aircraft.id === aircraft.id,
   );
   expect(result, "the new aircraft is in the results").toBeTruthy();
+  // The Flyviman terms the result detail shows, agreed to with the request.
+  const detail = await customer.get(
+    `${API_URL}search/${found.searchId}/results/${result.resultId}`,
+  );
+  expect(detail.status()).toBe(200);
   const booking = await customer.post(`${API_URL}bookings`, {
     headers: { ...customerHeaders, "Idempotency-Key": randomUUID() },
     data: {
       searchId: found.searchId,
       resultId: result.resultId,
+      cancellationTermsVersion: (await detail.json()).data.cancellationTerms
+        .version as number,
       currency: "INR",
       ...(priced ? { expectedTotalMinor: result.price.amountMinor } : {}),
       ...(specialRequests ? { specialRequests } : {}),
