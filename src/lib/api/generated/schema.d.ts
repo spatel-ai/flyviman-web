@@ -5162,6 +5162,8 @@ export interface components {
       messages: components["schemas"]["BookingMessageDto"][];
       /** @description Internal notes, oldest first. */
       notes: components["schemas"]["BookingNoteDto"][];
+      /** @description Change and cancellation requests, newest first; answer an open one (`REQUESTED`) with `POST /operator/change-requests/:id/decide`. */
+      changeRequests: components["schemas"]["ChangeRequestResponseDto"][];
     };
     RejectBookingRequestDto: {
       /** @description Why the request cannot be taken. Kept with the booking for the operator and Flyviman; the customer is told the request was not accepted. */
