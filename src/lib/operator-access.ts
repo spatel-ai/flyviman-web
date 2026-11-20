@@ -40,6 +40,7 @@ export interface PortalLink {
 }
 
 const DASHBOARD = { href: "/operator", label: "Dashboard" };
+const REQUESTS = { href: "/operator/requests", label: "Requests" };
 const FLEET = { href: "/operator/aircraft", label: "Fleet" };
 const AVAILABILITY = { href: "/operator/availability", label: "Availability" };
 const EMPTY_LEGS = { href: "/operator/empty-legs", label: "Empty legs" };
@@ -64,12 +65,24 @@ export function operatorNav(
   if (isOperatorAdmin(access)) {
     if (!live) return [APPLICATION];
     return status === "APPROVED"
-      ? [DASHBOARD, FLEET, AVAILABILITY, EMPTY_LEGS, PRICING, TEAM, APPLICATION]
+      ? [
+          DASHBOARD,
+          REQUESTS,
+          FLEET,
+          AVAILABILITY,
+          EMPTY_LEGS,
+          PRICING,
+          TEAM,
+          APPLICATION,
+        ]
       : [FLEET, AVAILABILITY, PRICING, TEAM, APPLICATION];
   }
   if (!live) return [];
   return [
     ...(status === "APPROVED" ? [DASHBOARD] : []),
+    ...(status === "APPROVED" && can(access, "MANAGE_BOOKINGS")
+      ? [REQUESTS]
+      : []),
     ...(access.capabilities.length > 0 ? [FLEET] : []),
     ...(can(access, "MANAGE_AVAILABILITY") ? [AVAILABILITY] : []),
     ...(status === "APPROVED" && can(access, "MANAGE_EMPTY_LEGS")
