@@ -57,7 +57,9 @@ test("finance reads a pricing change; operations sees it as restricted", async (
     await page.goto(
       `/admin/audit-logs?entityType=PricingRule&entityId=${ruleId}&action=pricing_rule.create`,
     );
-    await expect(page.getByLabel("Entity ID")).toHaveValue(ruleId);
+    await expect(page.getByRole("textbox", { name: "Entity ID" })).toHaveValue(
+      ruleId,
+    );
     await expect(page.getByText("pricing_rule.create").first()).toBeVisible();
     await page
       .getByRole("button", { name: /View pricing_rule.create/ })
@@ -73,7 +75,9 @@ test("finance reads a pricing change; operations sees it as restricted", async (
     await expect(sheet).toHaveCount(0);
 
     // A filter that matches nothing says so, and Clear returns to the list.
-    await page.getByLabel("Action").fill("no.such.action");
+    await page
+      .getByRole("textbox", { name: "Action", exact: true })
+      .fill("no.such.action");
     await page.getByRole("button", { name: "Apply filters" }).click();
     await expect(page).toHaveURL(/action=no\.such\.action/);
     await expect(
