@@ -25,3 +25,24 @@ export const staffSchema = z.object({
 
 export type StaffInput = z.input<typeof staffSchema>;
 export type StaffValues = z.output<typeof staffSchema>;
+
+/** The API's reason limits (`ChangeUserRoleDto`). */
+export const REASON_MIN = 3;
+export const REASON_MAX = 500;
+
+export const changeRoleSchema = z.object({
+  role: z.enum(STAFF_ROLES, "Choose a role."),
+  reason: z
+    .string()
+    .trim()
+    .min(REASON_MIN, `Give a reason of at least ${REASON_MIN} characters.`)
+    .max(REASON_MAX, `Use at most ${REASON_MAX} characters.`),
+});
+
+export type ChangeRoleInput = z.input<typeof changeRoleSchema>;
+export type ChangeRoleValues = z.output<typeof changeRoleSchema>;
+
+/** Whether an account holds an internal role, and so can change role. */
+export function isStaffRole(role: Role): boolean {
+  return (STAFF_ROLES as readonly Role[]).includes(role);
+}
