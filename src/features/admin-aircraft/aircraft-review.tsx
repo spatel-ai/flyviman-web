@@ -45,7 +45,9 @@ export function AircraftReview({ id }: { id: string }) {
       setAction(null);
       setError(null);
       // The queue tabs and this detail share the ["admin", "aircraft"] prefix.
-      await queryClient.invalidateQueries({ queryKey: ["admin", "aircraft"] });
+      await queryClient.invalidateQueries({
+        queryKey: queryKeys.adminAircraftAll,
+      });
     },
     onError: (failure) => setError(messageFor(failure)),
   });
@@ -66,7 +68,7 @@ export function AircraftReview({ id }: { id: string }) {
     router.push("/admin/aircraft");
     queryClient.removeQueries({ queryKey: queryKeys.adminAircraftDetail(id) });
     await queryClient.invalidateQueries({
-      queryKey: ["admin", "aircraft"],
+      queryKey: queryKeys.adminAircraftAll,
       predicate: (query) => query.queryKey[2] !== id,
     });
   }

@@ -1,6 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { queryKeys } from "@/lib/api/query-keys";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { useState } from "react";
@@ -155,8 +156,10 @@ function DecideForm({
 
   const refresh = () =>
     Promise.all([
-      queryClient.invalidateQueries({ queryKey: ["admin", "change-requests"] }),
-      queryClient.invalidateQueries({ queryKey: ["admin", "bookings"] }),
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.adminChangeRequestsAll,
+      }),
+      queryClient.invalidateQueries({ queryKey: queryKeys.adminBookingsAll }),
     ]);
 
   const decide = useMutation({

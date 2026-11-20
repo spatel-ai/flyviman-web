@@ -204,7 +204,7 @@ function RequestForm({
       });
     },
     onSuccess: async ({ data }) => {
-      await queryClient.invalidateQueries({ queryKey: ["trips"] });
+      await queryClient.invalidateQueries({ queryKey: queryKeys.tripsAll });
       router.push(`/account/trips/${data.reference}`);
     },
     onError: async (failure, sent) => {

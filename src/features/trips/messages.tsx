@@ -61,7 +61,7 @@ export function Messages({
         queryClient.invalidateQueries({
           queryKey: queryKeys.booking(reference),
         }),
-        queryClient.invalidateQueries({ queryKey: ["trips"] }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.tripsAll }),
       ]);
     },
     onError: async (failure) => {

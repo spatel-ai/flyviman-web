@@ -1,6 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { queryKeys } from "@/lib/api/query-keys";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { Controller, useForm, useWatch } from "react-hook-form";
@@ -83,14 +84,16 @@ function OverrideForm({
     onSuccess: async () => {
       toast({ title: "Status changed", tone: "success" });
       onClose();
-      await queryClient.invalidateQueries({ queryKey: ["admin", "bookings"] });
+      await queryClient.invalidateQueries({
+        queryKey: queryKeys.adminBookingsAll,
+      });
     },
     onError: async (failure) => {
       setError(applyApiError(failure, setFieldError, ["status", "reason"]));
       // A conflict means the booking moved: show it as it is now.
       if (failure instanceof ApiError && failure.status === 409) {
         await queryClient.invalidateQueries({
-          queryKey: ["admin", "bookings"],
+          queryKey: queryKeys.adminBookingsAll,
         });
       }
     },

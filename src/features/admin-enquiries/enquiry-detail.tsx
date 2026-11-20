@@ -34,7 +34,9 @@ export function EnquiryDetail({ id }: { id: string }) {
         method: "POST",
       }),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ["admin", "enquiries"] });
+      void queryClient.invalidateQueries({
+        queryKey: queryKeys.adminEnquiriesAll,
+      });
       toast({ title: "Marked as handled", tone: "success" });
     },
     onError: (failure) => toast({ title: messageFor(failure), tone: "danger" }),
