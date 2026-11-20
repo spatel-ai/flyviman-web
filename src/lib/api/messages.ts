@@ -26,6 +26,17 @@ const MESSAGES: Record<string, string> = {
   LOCATION_CODE_IN_USE: "Another location already has this code.",
   OPERATOR_NOT_APPROVED:
     "Your organisation must be approved by Flyviman before you can change this.",
+  AIRCRAFT_NOT_APPROVED:
+    "This aircraft is not approved, so it cannot take the request. Contact Flyviman if you think this is wrong.",
+  BOOKING_UNAVAILABLE:
+    "The aircraft can no longer fly this trip at the held time. The request has been refreshed: reject it or ask the customer.",
+  BOOKING_INVALID_TRANSITION:
+    "This request has changed since you opened it, so that action is no longer available. It has been refreshed.",
+  QUOTE_EXPIRED: "That quote has expired. Send a new one.",
+  QUOTE_INVALID_TRANSITION:
+    "That quote has already been answered or replaced. The request has been refreshed.",
+  CHANGE_REQUEST_DECIDED:
+    "This change request has already been answered. The request has been refreshed.",
   PRICING_RULE_EXISTS:
     "A rule of this kind is already in force for these aircraft. Change that rule instead.",
   PRICING_RULE_NOT_CURRENT:

@@ -36,6 +36,7 @@ describe("operatorNav", () => {
   it("offers administrators the whole portal once approved", () => {
     expect(hrefs(operatorNav("APPROVED", admin))).toEqual([
       "/operator",
+      "/operator/requests",
       "/operator/aircraft",
       "/operator/availability",
       "/operator/empty-legs",
@@ -43,6 +44,22 @@ describe("operatorNav", () => {
       "/operator/team",
       "/operator/onboarding",
     ]);
+  });
+
+  it("offers requests only to staff who manage bookings, once approved", () => {
+    const bookingStaff: OperatorAccess = {
+      ...availabilityStaff,
+      capabilities: ["MANAGE_BOOKINGS"],
+    };
+    expect(hrefs(operatorNav("APPROVED", bookingStaff))).toContain(
+      "/operator/requests",
+    );
+    expect(hrefs(operatorNav("SUSPENDED", bookingStaff))).not.toContain(
+      "/operator/requests",
+    );
+    expect(hrefs(operatorNav("APPROVED", availabilityStaff))).not.toContain(
+      "/operator/requests",
+    );
   });
 
   it("offers only the application before approval", () => {

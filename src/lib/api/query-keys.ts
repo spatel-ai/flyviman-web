@@ -23,6 +23,12 @@ export const queryKeys = {
   operatorAircraftDetail: (id: string) => ["operator", "aircraft", id] as const,
   /** Every aircraft in reach, for pickers (under the operatorAircraft prefix). */
   operatorAircraftAll: ["operator", "aircraft", "all"] as const,
+  /** Every request key starts with ["operator", "requests"]. */
+  operatorRequests: (filter: object) =>
+    ["operator", "requests", "list", filter] as const,
+  operatorRequestsAll: ["operator", "requests"] as const,
+  operatorRequest: (reference: string) =>
+    ["operator", "requests", "one", reference] as const,
   operatorStaff: ["operator", "staff"] as const,
   operatorPricing: ["operator", "pricing"] as const,
   operatorRestrictions: ["operator", "restrictions"] as const,

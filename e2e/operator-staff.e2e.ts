@@ -80,9 +80,16 @@ test("an operator invites a staff member, who manages only the aircraft assigned
   await expect(nav.getByRole("link", { name: "Fleet" })).toBeVisible();
   await expect(nav.getByRole("link", { name: "Availability" })).toBeVisible();
   await expect(nav.getByRole("link", { name: "Team" })).toHaveCount(0);
+  // Without "Manage bookings" there is no Requests item, and the page says so.
+  await expect(nav.getByRole("link", { name: "Requests" })).toHaveCount(0);
   await expect(
     nav.getByRole("link", { name: "Company and documents" }),
   ).toHaveCount(0);
+
+  await staff.goto("/operator/requests");
+  await expect(
+    staff.getByRole("main").getByText("Not part of your access"),
+  ).toBeVisible();
 
   await staff.goto("/operator/aircraft");
   await expect(
