@@ -149,7 +149,7 @@ test("a visitor searches, opens a result and requests the aircraft as an enquiry
   ).toBeVisible();
   if (isMobile) {
     // The sticky bar carries the action, the label and the note (rules 1, 9).
-    const bar = page.getByRole("region", { name: "Request this aircraft" });
+    const bar = page.getByRole("region", { name: "Request this flight" });
     await expectBarAboveTabBar(page, bar);
     await expect(
       bar
@@ -160,7 +160,7 @@ test("a visitor searches, opens a result and requests the aircraft as an enquiry
     await expectPageEndClear(page);
   }
 
-  await page.getByRole("link", { name: "Request this aircraft" }).click();
+  await page.getByRole("link", { name: "Send an enquiry instead" }).click();
   await expect(page).toHaveURL(/\/contact\?topic=PRIVATE_CHARTER/);
   await expect(page.getByRole("textbox", { name: "Message" })).toHaveValue(
     /I would like to request the .+ Search reference/,

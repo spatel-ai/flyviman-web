@@ -35,6 +35,30 @@ const MESSAGES: Record<string, string> = {
   CONTENT_VERSION_CONFLICT:
     "This policy changed since you opened it. It has been reloaded: open it again to see the latest text.",
   CONTENT_UNCHANGED: "Nothing has changed. Edit the title or the text first.",
+  BOOKING_PRICE_CHANGED:
+    "The price has changed since you looked. Review the new figure before you send the request.",
+  BOOKING_UNAVAILABLE:
+    "This aircraft can no longer fly this trip. Go back to the results and choose another.",
+  BOOKING_CATEGORY_DISABLED:
+    "Requests for this kind of flight are not open at the moment.",
+  BOOKING_DUPLICATE:
+    "You already have an open request for this aircraft at about this time. Find it under your trips.",
+  BOOKING_LIMIT_REACHED:
+    "You have as many open requests as we allow. Wait for an answer or cancel one under your trips.",
+  BOOKING_NOT_CANCELLABLE:
+    "This trip can no longer be cancelled. It may already be closed.",
+  BOOKING_CANCELLATION_CHANGED:
+    "The cancellation charge has changed. The new figures are shown: check them and confirm again.",
+  BOOKING_INVALID_TRANSITION:
+    "This trip has moved on since you opened it. The page has been refreshed.",
+  CHANGE_REQUEST_OPEN:
+    "You already have a change request waiting for an answer.",
+  CHANGE_REQUEST_NOT_ALLOWED:
+    "A change can no longer be requested for this trip.",
+  CHANGE_REQUEST_DECIDED: "This change request has already been answered.",
+  QUOTE_EXPIRED: "This quote has expired. Ask the operator for a new one.",
+  QUOTE_INVALID_TRANSITION:
+    "This quote has been answered or replaced. The page has been refreshed.",
   INTERNAL_ERROR: "Something went wrong on our side. Please try again.",
 };
 

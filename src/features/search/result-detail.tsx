@@ -65,6 +65,7 @@ export function ResultDetail({
 
   const detail = result.data.data;
   const leg = detail.legs[0];
+  const bookHref = `/book/${encodeURIComponent(searchId)}/${encodeURIComponent(resultId)}`;
   const expired = now > 0 && new Date(detail.validUntil).getTime() < now;
 
   return (
@@ -214,22 +215,28 @@ export function ResultDetail({
             {detail.passengerCount === 1 ? "" : "s"}
           </p>
           <Link
-            href={requestHref(detail)}
+            href={bookHref}
             className={buttonClasses({
               size: "lg",
               className: "max-md:hidden",
             })}
           >
-            Request this aircraft
+            Request this flight
           </Link>
           <p className="text-caption text-muted">
-            This sends an enquiry. Nothing is booked or charged. The operator
+            This sends a request. Nothing is booked or charged. The operator
             confirms the aircraft and the price first.
           </p>
+          <Link
+            href={requestHref(detail)}
+            className="text-body-sm text-accent hover:underline"
+          >
+            Send an enquiry instead
+          </Link>
         </aside>
       </div>
 
-      <StickyActionBar label="Request this aircraft">
+      <StickyActionBar label="Request this flight">
         <div className="flex items-center justify-between gap-3">
           {detail.price ? (
             <PriceLabel
@@ -243,11 +250,8 @@ export function ResultDetail({
           ) : (
             <p className="text-title">Price on request</p>
           )}
-          <Link
-            href={requestHref(detail)}
-            className={buttonClasses({ size: "md" })}
-          >
-            Request this aircraft
+          <Link href={bookHref} className={buttonClasses({ size: "md" })}>
+            Request this flight
           </Link>
         </div>
         <p className="mt-2 line-clamp-2 text-caption text-muted">
