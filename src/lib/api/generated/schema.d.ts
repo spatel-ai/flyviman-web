@@ -2066,6 +2066,126 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/bookings/{reference}/cancellation-quote": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * What cancelling now would cost, before the customer commits
+     * @description Worked out from the cancellation terms the booking was made on (rule 9) and the notice left before the first departure. A charge is money only when the price is `CONFIRMED` (`amountKnown`); before that the rule that applies is shown and `chargeMinor` is 0. `refundMinor` is what is due back (refunds are made later; nothing moves here), null while the amount paid cannot be read. 409 `BOOKING_NOT_CANCELLABLE` once completed, cancelled or otherwise closed; another customer’s booking is 404.
+     */
+    get: operations["BookingsController_cancellationQuote"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/bookings/{reference}/cancel": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Cancel a booking at the charge shown
+     * @description Send the `chargeMinor` from the cancellation quote as `expectedChargeMinor`; if the charge differs now, 409 `BOOKING_CANCELLATION_CHANGED` with the current `chargeMinor`, `currency` and `refundMinor` in `details`. Moves the booking to `CANCELLED` at once, records the terms applied and the refund due on its timeline and as a completed cancellation request, closes any open change request, and is audited. 409 `BOOKING_NOT_CANCELLABLE` once completed, cancelled or otherwise closed; another customer’s booking is 404. A repeat with the same `Idempotency-Key` and body returns the first answer.
+     */
+    post: operations["BookingsController_cancel"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/bookings/{reference}/change-requests": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Ask for a change to a booking
+     * @description Free text, answered by the operator or operations with a note. One open request per booking: 409 `CHANGE_REQUEST_OPEN`. Only while the booking is in progress (requested up to scheduled): 409 `CHANGE_REQUEST_NOT_ALLOWED`. A price change comes as a revised quote. Another customer’s booking is 404.
+     */
+    post: operations["BookingsController_requestChange"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/me/bookings": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * The caller’s trips, upcoming or past, newest first
+     * @description Summary rows only: no passengers or special requests (`GET /bookings/:reference` has those). `view=upcoming` lists bookings in progress (`REQUESTED` up to `SCHEDULED`); `view=past` the rest. At most 50 per page.
+     */
+    get: operations["MeBookingsController_list"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/operator/change-requests/{id}/decide": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Approve or decline a change request, with a note
+     * @description Operator administrators for their operator’s bookings; staff for bookings on aircraft in their reach. Another operator’s request is 404; an operator that is not approved gets 409 `OPERATOR_NOT_APPROVED`. The note is shown to the customer. 409 `CHANGE_REQUEST_DECIDED` when it has already been answered. A price change goes through a revised quote.
+     */
+    post: operations["OperatorChangeRequestsController_decide"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/admin/change-requests/{id}/decide": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Approve or decline a change request, with a note
+     * @description Operations, for any booking. The note is shown to the customer. 409 `CHANGE_REQUEST_DECIDED` when it has already been answered. A price change goes through a revised quote.
+     */
+    post: operations["AdminChangeRequestsController_decide"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/v1/webhooks/payments/{provider}": {
     parameters: {
       query?: never;
@@ -4463,6 +4583,25 @@ export interface components {
       documentExpiry: string | null;
       specialAssistance: string | null;
     };
+    /** @enum {string} */
+    ChangeRequestKind: "CHANGE" | "CANCELLATION";
+    /** @enum {string} */
+    ChangeRequestStatus: "REQUESTED" | "APPROVED" | "REJECTED" | "COMPLETED";
+    ChangeRequestResponseDto: {
+      /** Format: uuid */
+      id: string;
+      /** @example FLY-BK-7K2M9Q */
+      bookingReference: string;
+      kind: components["schemas"]["ChangeRequestKind"];
+      status: components["schemas"]["ChangeRequestStatus"];
+      details: string;
+      /** @description The decision’s note, once decided. */
+      decisionNote: string | null;
+      /** Format: date-time */
+      decidedAt: string | null;
+      /** Format: date-time */
+      createdAt: string;
+    };
     BookingResponseDto: {
       /** @example FLY-BK-7K2M9Q */
       reference: string;
@@ -4486,9 +4625,91 @@ export interface components {
       specialRequests: string | null;
       passengers: components["schemas"]["BookingPassengerDto"][];
       /** Format: date-time */
+      confirmedAt: string | null;
+      /** Format: date-time */
+      cancelledAt: string | null;
+      /** @description Change and cancellation requests, newest first. */
+      changeRequests: components["schemas"]["ChangeRequestResponseDto"][];
+      /** Format: date-time */
       createdAt: string;
       /** Format: date-time */
       updatedAt: string;
+    };
+    CancellationQuoteDto: {
+      /** @example FLY-BK-7K2M9Q */
+      reference: string;
+      status: components["schemas"]["BookingStatus"];
+      /** @description The terms the booking was made on (rule 9). */
+      terms: components["schemas"]["CancellationTermsDto"];
+      /** @description Whole hours from now to the first departure; 0 once passed. */
+      hoursBeforeDeparture: number;
+      /** @description The rule that applies now. Notice shorter than every rule gets the last (shortest-notice) rule. Null when the terms carry no charges. */
+      appliedCharge: components["schemas"]["CancellationChargeDto"] | null;
+      /** @description Of the booking’s price. */
+      priceType: components["schemas"]["PriceType"];
+      /** @description The booking’s price, paise. */
+      totalMinor: number;
+      /** @example INR */
+      currency: string;
+      /** @description True only when the price is `CONFIRMED`. Otherwise the rule is shown but no money is charged: `chargeMinor` is 0. */
+      amountKnown: boolean;
+      /** @description Paise charged if cancelled now; rounded down. Send it back as `expectedChargeMinor` to cancel. */
+      chargeMinor: number;
+      /** @description Paise paid so far; null while it cannot be read yet (M9). */
+      paidMinor: number | null;
+      /** @description Paise due back: paid less the charge, never below 0. Null when `paidMinor` is null. Refunds are made later (M9); nothing is moved here. */
+      refundMinor: number | null;
+      /** @description What the figures mean, in one sentence. */
+      explanation: string;
+      /** Format: date-time */
+      evaluatedAt: string;
+    };
+    CancelBookingDto: {
+      /** @description Paise: the charge the customer was shown (`GET …/cancellation-quote`). If it differs now, 409 `BOOKING_CANCELLATION_CHANGED` carries the new figures. */
+      expectedChargeMinor: number;
+      /**
+       * @example INR
+       * @enum {string}
+       */
+      currency: "INR";
+      reason?: string;
+    };
+    BookingCancelledDto: {
+      /** @example FLY-BK-7K2M9Q */
+      reference: string;
+      status: components["schemas"]["BookingStatus"];
+      /** Format: date-time */
+      cancelledAt: string;
+      cancellation: components["schemas"]["CancellationQuoteDto"];
+    };
+    CreateChangeRequestDto: {
+      /** @description What the customer would like changed, in their words. */
+      details: string;
+    };
+    TripSummaryDto: {
+      /** @example FLY-BK-7K2M9Q */
+      reference: string;
+      category: components["schemas"]["ServiceCategory"];
+      status: components["schemas"]["BookingStatus"];
+      paymentStatus: components["schemas"]["BookingPaymentStatus"];
+      price: components["schemas"]["BookingPriceDto"];
+      tripType: components["schemas"]["SearchTripType"];
+      originName: string;
+      destinationName: string;
+      /**
+       * Format: date-time
+       * @description The first departure.
+       */
+      departureAt: string;
+      passengerCount: number;
+      /** Format: date-time */
+      createdAt: string;
+    };
+    DecideChangeRequestDto: {
+      /** @enum {string} */
+      decision: "APPROVED" | "REJECTED";
+      /** @description Shown to the customer. */
+      note: string;
     };
     WebhookAckResponseDto: {
       /** @example true */
@@ -7528,6 +7749,154 @@ export interface operations {
         };
         content: {
           "application/json": components["schemas"]["BookingResponseDto"];
+        };
+      };
+    };
+  };
+  BookingsController_cancellationQuote: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        reference: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["CancellationQuoteDto"];
+        };
+      };
+    };
+  };
+  BookingsController_cancel: {
+    parameters: {
+      query?: never;
+      header: {
+        /** @description A UUID, new for each cancellation and reused on retry. */
+        "Idempotency-Key": string;
+      };
+      path: {
+        reference: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["CancelBookingDto"];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["BookingCancelledDto"];
+        };
+      };
+    };
+  };
+  BookingsController_requestChange: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        reference: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["CreateChangeRequestDto"];
+      };
+    };
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ChangeRequestResponseDto"];
+        };
+      };
+    };
+  };
+  MeBookingsController_list: {
+    parameters: {
+      query?: {
+        page?: number;
+        pageSize?: number;
+        /** @description `upcoming`: bookings still in progress (requested up to scheduled). `past`: completed, cancelled, expired, declined or unavailable. Decided by status, not by the departure time. */
+        view?: "upcoming" | "past";
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["TripSummaryDto"][];
+        };
+      };
+    };
+  };
+  OperatorChangeRequestsController_decide: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["DecideChangeRequestDto"];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ChangeRequestResponseDto"];
+        };
+      };
+    };
+  };
+  AdminChangeRequestsController_decide: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["DecideChangeRequestDto"];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ChangeRequestResponseDto"];
         };
       };
     };
