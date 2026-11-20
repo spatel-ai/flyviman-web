@@ -204,6 +204,26 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/admin/roles": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Roles, the routes each may call, and staff capabilities
+     * @description Generated from the route metadata the role guard enforces. Route-level only: services narrow further by record and field.
+     */
+    get: operations["AdminRolesController_get"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/v1/admin/users": {
     parameters: {
       query?: never;
@@ -256,9 +276,29 @@ export interface paths {
     head?: never;
     /**
      * Suspend or reinstate a user
-     * @description Needs a reason and is audited. A suspended user is refused on their next request.
+     * @description Needs a reason and is audited. A suspended user is refused on their next request. 409 `USER_LAST_SUPER_ADMIN` when suspending the last active super administrator.
      */
     patch: operations["AdminUsersController_setStatus"];
+    trace?: never;
+  };
+  "/api/v1/admin/users/{id}/role": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    /**
+     * Change an internal account's role
+     * @description OPS, FINANCE_ADMIN or SUPER_ADMIN, for internal accounts only. Needs a reason and is audited (`user.role_change`). Ends every sign-in of the account. 409 `USER_INVALID_TRANSITION` for your own account, a non-staff account or the same role; 409 `USER_LAST_SUPER_ADMIN` when it would leave no active super administrator.
+     */
+    patch: operations["AdminUsersController_changeRole"];
     trace?: never;
   };
   "/api/v1/admin/staff": {
@@ -2939,6 +2979,43 @@ export interface components {
       /** Format: password */
       password: string;
     };
+    RoleDefinitionDto: {
+      role: components["schemas"]["Role"];
+      /** @description A Flyviman staff role (admin portal). */
+      internal: boolean;
+      description: string;
+    };
+    RouteAccessDto: {
+      /** @example PATCH */
+      method: string;
+      /**
+       * @description Without the `/api/v1` prefix.
+       * @example /admin/users/:id/role
+       */
+      path: string;
+      summary: string | null;
+      /** @description Open to anyone, signed in or not. */
+      public: boolean;
+      /** @description The roles the role check lets through; empty for a public route. Services may narrow further by record or field (ownership, staff capabilities, finance-only figures). */
+      roles: components["schemas"]["Role"][];
+    };
+    /** @enum {string} */
+    StaffCapability:
+      | "MANAGE_AIRCRAFT"
+      | "MANAGE_AVAILABILITY"
+      | "MANAGE_EMPTY_LEGS"
+      | "MANAGE_BOOKINGS";
+    CapabilityDefinitionDto: {
+      capability: components["schemas"]["StaffCapability"];
+      description: string;
+    };
+    RoleMatrixResponseDto: {
+      roles: components["schemas"]["RoleDefinitionDto"][];
+      /** @description Every route with the roles allowed, read from the same metadata the role guard enforces. Sorted by path, then method. */
+      routes: components["schemas"]["RouteAccessDto"][];
+      /** @description Operator staff capabilities, which operator administrators give their staff. Administrators hold them all. */
+      capabilities: components["schemas"]["CapabilityDefinitionDto"][];
+    };
     AdminUserResponseDto: {
       /** Format: uuid */
       id: string;
@@ -2961,6 +3038,15 @@ export interface components {
       /** @enum {string} */
       status: "ACTIVE" | "SUSPENDED";
       /** @description Why the status is being changed. Audited. */
+      reason: string;
+    };
+    ChangeUserRoleDto: {
+      /**
+       * @description The new internal role. Only internal staff change role.
+       * @enum {string}
+       */
+      role: "OPS" | "FINANCE_ADMIN" | "SUPER_ADMIN";
+      /** @description Why the role is being changed. Audited. */
       reason: string;
     };
     CreateStaffDto: {
@@ -3185,12 +3271,6 @@ export interface components {
     /** @enum {string} */
     OperatorStatus:
       "DRAFT" | "PENDING_REVIEW" | "APPROVED" | "REJECTED" | "SUSPENDED";
-    /** @enum {string} */
-    StaffCapability:
-      | "MANAGE_AIRCRAFT"
-      | "MANAGE_AVAILABILITY"
-      | "MANAGE_EMPTY_LEGS"
-      | "MANAGE_BOOKINGS";
     OperatorAccessDto: {
       /** @enum {string} */
       role: "OPERATOR_ADMIN" | "OPERATOR_STAFF";
@@ -6170,6 +6250,25 @@ export interface operations {
       };
     };
   };
+  AdminRolesController_get: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["RoleMatrixResponseDto"];
+        };
+      };
+    };
+  };
   AdminUsersController_list: {
     parameters: {
       query?: {
@@ -6229,6 +6328,31 @@ export interface operations {
     requestBody: {
       content: {
         "application/json": components["schemas"]["SetUserStatusDto"];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["AdminUserResponseDto"];
+        };
+      };
+    };
+  };
+  AdminUsersController_changeRole: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["ChangeUserRoleDto"];
       };
     };
     responses: {

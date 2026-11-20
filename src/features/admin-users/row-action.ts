@@ -1,4 +1,5 @@
 import type { Role, UserStatus } from "@/lib/api/types";
+import { isStaffRole } from "./staff-schema";
 
 export type UserRowAction = "suspend" | "reinstate";
 
@@ -24,6 +25,23 @@ export function rowAction(
   if (user.status === "ACTIVE") return "suspend";
   if (user.status === "SUSPENDED") return "reinstate";
   return null;
+}
+
+/**
+ * Whether the viewer may change this account's role: super administrators,
+ * for internal accounts other than their own. The API also keeps the last
+ * active super administrator.
+ */
+export function canChangeRole(
+  user: { id: string; role: Role },
+  viewer: Viewer | undefined,
+): boolean {
+  return (
+    !!viewer &&
+    canManageUsers(viewer) &&
+    user.id !== viewer.id &&
+    isStaffRole(user.role)
+  );
 }
 
 export interface RowActionPresentation {

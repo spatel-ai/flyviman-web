@@ -21,6 +21,7 @@ export const queryKeys = {
   adminOperators: (filter: object) => ["admin", "operators", filter] as const,
   adminOperator: (id: string) => ["admin", "operators", id] as const,
   adminUsers: (filter: object) => ["admin", "users", filter] as const,
+  adminRoles: ["admin", "roles"] as const,
   adminEnquiries: (filter: object) => ["admin", "enquiries", filter] as const,
   adminEnquiry: (id: string) => ["admin", "enquiries", id] as const,
   /** Every content key starts with ["admin", "content"]. */

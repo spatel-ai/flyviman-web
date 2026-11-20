@@ -23,6 +23,8 @@ const MESSAGES: Record<string, string> = {
     "This request was refused because it did not come from the Flyviman site.",
   UNAUTHENTICATED: "Your session has ended. Sign in again.",
   FORBIDDEN: "You do not have access to this.",
+  USER_LAST_SUPER_ADMIN:
+    "This is the last active super administrator. Give another account that role first.",
   LOCATION_CODE_IN_USE: "Another location already has this code.",
   OPERATOR_NOT_APPROVED:
     "Your organisation must be approved by Flyviman before you can change this.",

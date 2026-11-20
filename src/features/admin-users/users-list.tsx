@@ -28,6 +28,7 @@ import type { Schemas } from "@/lib/api/types";
 import { ROLE_LABELS } from "@/lib/auth/roles";
 import { formatDateTime } from "@/lib/format/date";
 import { AddStaffDialog } from "./add-staff-dialog";
+import { ChangeRoleDialog } from "./change-role-dialog";
 import {
   isFiltered,
   PAGE_SIZE,
@@ -43,6 +44,7 @@ import {
 } from "./filters";
 import { InlineError } from "@/components/shared/inline-error";
 import {
+  canChangeRole,
   canManageUsers,
   ROW_ACTIONS,
   rowAction,
@@ -86,6 +88,7 @@ export function UsersList() {
     action: UserRowAction;
   } | null>(null);
   const [problem, setProblem] = useState<string | null>(null);
+  const [roleTarget, setRoleTarget] = useState<AdminUser | null>(null);
 
   const { data, isPending, isError, error, refetch } = useQuery({
     queryKey: queryKeys.adminUsers(filter),
@@ -260,19 +263,34 @@ export function UsersList() {
                           </TableCell>
                           {manages ? (
                             <TableCell>
-                              {action ? (
-                                <Button
-                                  variant="secondary"
-                                  className="h-10"
-                                  aria-label={`${ROW_ACTIONS[action].label} ${who}`}
-                                  onClick={() => {
-                                    setProblem(null);
-                                    setTarget({ user, action });
-                                  }}
-                                >
-                                  {ROW_ACTIONS[action].label}
-                                </Button>
-                              ) : null}
+                              <div className="flex flex-wrap gap-2">
+                                {action ? (
+                                  <Button
+                                    variant="secondary"
+                                    className="h-10"
+                                    aria-label={`${ROW_ACTIONS[action].label} ${who}`}
+                                    onClick={() => {
+                                      setProblem(null);
+                                      setTarget({ user, action });
+                                    }}
+                                  >
+                                    {ROW_ACTIONS[action].label}
+                                  </Button>
+                                ) : null}
+                                {canChangeRole(user, viewer) ? (
+                                  <Button
+                                    variant="secondary"
+                                    className="h-10"
+                                    aria-label={`Change role of ${who}`}
+                                    onClick={() => {
+                                      setProblem(null);
+                                      setRoleTarget(user);
+                                    }}
+                                  >
+                                    Change role
+                                  </Button>
+                                ) : null}
+                              </div>
                             </TableCell>
                           ) : null}
                         </TableRow>
@@ -291,6 +309,13 @@ export function UsersList() {
           )}
         </>
       )}
+
+      {roleTarget ? (
+        <ChangeRoleDialog
+          user={roleTarget}
+          onClose={() => setRoleTarget(null)}
+        />
+      ) : null}
 
       {target && presentation ? (
         <ConfirmDialog

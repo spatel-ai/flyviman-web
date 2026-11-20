@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Role } from "@/lib/api/types";
-import { canManageUsers, rowAction } from "./row-action";
+import { canChangeRole, canManageUsers, rowAction } from "./row-action";
 
 const admin = { id: "admin-1", role: "SUPER_ADMIN" as Role };
 
@@ -44,5 +44,31 @@ describe("canManageUsers", () => {
     expect(canManageUsers(admin)).toBe(true);
     expect(canManageUsers({ id: "v1", role: "OPS" })).toBe(false);
     expect(canManageUsers(undefined)).toBe(false);
+  });
+});
+
+describe("canChangeRole", () => {
+  it.each<Role>(["OPS", "FINANCE_ADMIN", "SUPER_ADMIN"])(
+    "lets a super administrator change the role of %s",
+    (role) => {
+      expect(canChangeRole({ id: "u1", role }, admin)).toBe(true);
+    },
+  );
+
+  it.each<Role>(["CUSTOMER", "OPERATOR_ADMIN", "OPERATOR_STAFF"])(
+    "offers nothing for a %s account",
+    (role) => {
+      expect(canChangeRole({ id: "u1", role }, admin)).toBe(false);
+    },
+  );
+
+  it("offers nothing on the viewer's own row, or to other roles", () => {
+    expect(canChangeRole({ id: "admin-1", role: "SUPER_ADMIN" }, admin)).toBe(
+      false,
+    );
+    expect(
+      canChangeRole({ id: "u1", role: "OPS" }, { id: "x", role: "OPS" }),
+    ).toBe(false);
+    expect(canChangeRole({ id: "u1", role: "OPS" }, undefined)).toBe(false);
   });
 });
