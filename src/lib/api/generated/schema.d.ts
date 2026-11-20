@@ -1861,7 +1861,7 @@ export interface paths {
     };
     /**
      * Service category configuration
-     * @description Platform booking mode and payment model per category and region, by region then category. Read only until M10.
+     * @description Platform booking mode, payment model and Model C deposit percent per category and region, by region then category. Read only until M10.
      */
     get: operations["AdminCategoryConfigController_list"];
     put?: never;
@@ -2186,6 +2186,46 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/bookings/{reference}/payments": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Create a gateway order for what the booking owes now
+     * @description Only for a booking `AWAITING_PAYMENT` with a `CONFIRMED` price and nothing paid: model A and B take the full total (B once the operator has accepted), model C the deposit (the category’s percent, rounded up to the next paisa). 409 `PAYMENT_NOT_DUE` otherwise (`details` says why), 409 `PAYMENT_ALREADY_PAID`, 409 `PAYMENT_AMOUNT_MISMATCH` when `expectedAmountMinor` is not the amount due (the amount due, currency and purpose are in `details`), 502 `PAYMENT_PROVIDER_ERROR`. While a payment for the same amount is `INITIATED` or `PENDING` it is returned again instead of a second order. Open the gateway’s checkout with `checkout`. Never changes the booking’s status. A repeat with the same `Idempotency-Key` and body returns the first answer.
+     */
+    post: operations["PaymentsController_create"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/payments/{reference}/verify": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Report the checkout result
+     * @description The signature is checked through the gateway (400 `PAYMENT_SIGNATURE_INVALID`, also for another order’s result). Not final: a valid result makes the payment `PENDING` at most; only the gateway’s verified notice makes it `SUCCEEDED` or `FAILED`, so poll the booking’s `paymentStatus`. Repeating it changes nothing.
+     */
+    post: operations["PaymentsController_verify"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/v1/webhooks/payments/{provider}": {
     parameters: {
       query?: never;
@@ -2197,7 +2237,7 @@ export interface paths {
     put?: never;
     /**
      * Gateway notification
-     * @description For the payment gateway only. The signature over the exact body is verified before anything else; `:provider` is the configured gateway (`mock` in this build). Records nothing yet. Limited per address (120 a minute by default, `RATE_LIMIT_WEBHOOK_PER_MINUTE`; 429 `RATE_LIMITED`).
+     * @description For the payment gateway only. The signature over the exact body is verified before anything else, and a refused call is stored nowhere; `:provider` is the configured gateway (`mock` in this build). A verified event is stored once (unique per provider event ID) and applied in the same transaction before the 200: a repeated delivery is acknowledged and changes nothing. Outcomes only move a payment forward (a failure after a success is ignored); a success never changes the booking’s status, only its `paymentStatus`; a success for a closed or already-paid booking is recorded and flagged for operations. An event for an unknown order is stored and acknowledged. Limited per address (120 a minute by default, `RATE_LIMIT_WEBHOOK_PER_MINUTE`; 429 `RATE_LIMITED`).
      */
     post: operations["PaymentWebhooksController_receive"];
     delete?: never;
@@ -4043,6 +4083,11 @@ export interface components {
       bookingMode: components["schemas"]["BookingMode"];
       /** @description Platform setting. Operators may override it per category. */
       paymentModel: components["schemas"]["PaymentModel"];
+      /**
+       * @description The deposit taken under payment model C, in whole percent of the confirmed total, rounded up to the next paisa.
+       * @example 25
+       */
+      depositPercent: number;
       /** Format: date-time */
       updatedAt: string;
     };
@@ -4710,6 +4755,75 @@ export interface components {
       decision: "APPROVED" | "REJECTED";
       /** @description Shown to the customer. */
       note: string;
+    };
+    CreatePaymentDto: {
+      /** @description Paise: the amount due that the customer was shown and agrees to pay. If it is not what is due now, 409 `PAYMENT_AMOUNT_MISMATCH` carries the amount due. */
+      expectedAmountMinor: number;
+      /**
+       * @example INR
+       * @enum {string}
+       */
+      currency: "INR";
+    };
+    /**
+     * @description Only a verified gateway notice makes it `SUCCEEDED` or `FAILED`; the checkout result makes it `PENDING` at most.
+     * @enum {string}
+     */
+    PaymentStatus:
+      | "INITIATED"
+      | "PENDING"
+      | "SUCCEEDED"
+      | "FAILED"
+      | "REFUND_PENDING"
+      | "PARTIALLY_REFUNDED"
+      | "REFUNDED";
+    /**
+     * @description `FULL` (models A and B) or `DEPOSIT` (model C).
+     * @enum {string}
+     */
+    PaymentPurpose: "FULL" | "DEPOSIT" | "BALANCE";
+    PaymentPriceDto: {
+      /** @description Only a confirmed price is ever charged (rule 1). */
+      priceType: components["schemas"]["PriceType"];
+      /** @description Paise. */
+      amountMinor: number;
+      /** @example INR */
+      currency: string;
+    };
+    PaymentCheckoutDto: {
+      /**
+       * @description The gateway the checkout is opened with.
+       * @example mock
+       */
+      provider: string;
+      /** @description The public key ID. Never a secret. */
+      keyId: string;
+      /** @example order_mock_000001 */
+      orderId: string;
+    };
+    PaymentResponseDto: {
+      /** @example FLY-PY-7K2M9Q */
+      reference: string;
+      /** @example FLY-BK-7K2M9Q */
+      bookingReference: string;
+      /** @description Only a verified gateway notice makes it `SUCCEEDED` or `FAILED`; the checkout result makes it `PENDING` at most. */
+      status: components["schemas"]["PaymentStatus"];
+      /** @description `FULL` (models A and B) or `DEPOSIT` (model C). */
+      purpose: components["schemas"]["PaymentPurpose"];
+      price: components["schemas"]["PaymentPriceDto"];
+      checkout: components["schemas"]["PaymentCheckoutDto"];
+      /** Format: date-time */
+      paidAt: string | null;
+      /** Format: date-time */
+      createdAt: string;
+    };
+    VerifyPaymentDto: {
+      /** @example order_mock_000001 */
+      providerOrderId: string;
+      /** @example pay_mock_000002 */
+      providerPaymentId: string;
+      /** @description The checkout signature (hex HMAC-SHA256). */
+      signature: string;
     };
     WebhookAckResponseDto: {
       /** @example true */
@@ -7897,6 +8011,59 @@ export interface operations {
         };
         content: {
           "application/json": components["schemas"]["ChangeRequestResponseDto"];
+        };
+      };
+    };
+  };
+  PaymentsController_create: {
+    parameters: {
+      query?: never;
+      header: {
+        /** @description A UUID, new for each payment attempt and reused on retry. */
+        "Idempotency-Key": string;
+      };
+      path: {
+        reference: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["CreatePaymentDto"];
+      };
+    };
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["PaymentResponseDto"];
+        };
+      };
+    };
+  };
+  PaymentsController_verify: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        reference: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["VerifyPaymentDto"];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["PaymentResponseDto"];
         };
       };
     };
