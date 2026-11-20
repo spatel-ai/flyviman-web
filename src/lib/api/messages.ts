@@ -29,14 +29,14 @@ const MESSAGES: Record<string, string> = {
   AIRCRAFT_NOT_APPROVED:
     "This aircraft is not approved, so it cannot take the request. Contact Flyviman if you think this is wrong.",
   BOOKING_UNAVAILABLE:
-    "The aircraft can no longer fly this trip at the held time. The request has been refreshed: reject it or ask the customer.",
+    "The aircraft can no longer fly this trip at that time. The page has been refreshed: choose another aircraft or ask the other party.",
   BOOKING_INVALID_TRANSITION:
-    "This request has changed since you opened it, so that action is no longer available. It has been refreshed.",
-  QUOTE_EXPIRED: "That quote has expired. Send a new one.",
+    "This booking has changed since you opened it, so that action is no longer available. The page has been refreshed.",
+  QUOTE_EXPIRED: "This quote has expired. A new one is needed.",
   QUOTE_INVALID_TRANSITION:
-    "That quote has already been answered or replaced. The request has been refreshed.",
+    "This quote has already been answered or replaced. The page has been refreshed.",
   CHANGE_REQUEST_DECIDED:
-    "This change request has already been answered. The request has been refreshed.",
+    "This change request has already been answered. The page has been refreshed.",
   PRICING_RULE_EXISTS:
     "A rule of this kind is already in force for these aircraft. Change that rule instead.",
   PRICING_RULE_NOT_CURRENT:
@@ -48,8 +48,6 @@ const MESSAGES: Record<string, string> = {
   CONTENT_UNCHANGED: "Nothing has changed. Edit the title or the text first.",
   BOOKING_PRICE_CHANGED:
     "The price has changed since you looked. Review the new figure before you send the request.",
-  BOOKING_UNAVAILABLE:
-    "This aircraft can no longer fly this trip. Go back to the results and choose another.",
   BOOKING_CATEGORY_DISABLED:
     "Requests for this kind of flight are not open at the moment.",
   BOOKING_DUPLICATE:
@@ -60,16 +58,10 @@ const MESSAGES: Record<string, string> = {
     "This trip can no longer be cancelled. It may already be closed.",
   BOOKING_CANCELLATION_CHANGED:
     "The cancellation charge has changed. The new figures are shown: check them and confirm again.",
-  BOOKING_INVALID_TRANSITION:
-    "This trip has moved on since you opened it. The page has been refreshed.",
   CHANGE_REQUEST_OPEN:
     "You already have a change request waiting for an answer.",
   CHANGE_REQUEST_NOT_ALLOWED:
     "A change can no longer be requested for this trip.",
-  CHANGE_REQUEST_DECIDED: "This change request has already been answered.",
-  QUOTE_EXPIRED: "This quote has expired. Ask the operator for a new one.",
-  QUOTE_INVALID_TRANSITION:
-    "This quote has been answered or replaced. The page has been refreshed.",
   INTERNAL_ERROR: "Something went wrong on our side. Please try again.",
 };
 
