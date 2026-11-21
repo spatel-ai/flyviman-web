@@ -138,7 +138,7 @@ Full structure and the page map: `../docs/frontend/frontend-design.md`.
 - **Redirecting into a page with a form** from a page that streams: use `ClientRedirect`, not `redirect()` (which also reloads the destination a moment later).
 - **Photographs** come only from `src/content/image-credits.ts`, where each has alt text, photographer, source and licence. Rules for choosing one: `../docs/frontend/motion-design.md`. They apply to Flyviman's own pictures too.
 - **Class names** are merged with `cn` (`lib/utils.ts`), which knows our type-scale names. A new `--text-*` token must be added to its list, or a text colour beside it is silently dropped (D-078).
-- **Visual baseline:** `e2e/visual.e2e.ts` compares screenshots of the main pages. After an intended visual change run `npm run test:e2e -- visual --update-snapshots` and commit the new images.
+- **Visual baseline:** `e2e/visual.e2e.ts` compares screenshots of the main pages; a page that shows live figures is shot with stubbed or masked values, never the database's. After an intended visual change run `npm run test:e2e -- visual --update-snapshots` and commit the new images.
 - **No tokens in `localStorage` or `sessionStorage`.** The session is the API's `HttpOnly` cookies. (The theme preference is stored there; it is not a credential.)
 
 ## Testing
