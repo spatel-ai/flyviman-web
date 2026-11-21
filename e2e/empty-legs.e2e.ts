@@ -186,12 +186,12 @@ test("an operator adds an offer, operations approve it, customers see it, the op
     visitor.getByText("Quote", { exact: true }).first(),
   ).toBeVisible();
   await expect(
-    visitor.getByRole("heading", { name: "Conditions" }),
+    visitor.getByRole("heading", { name: "Conditions", exact: true }),
   ).toBeVisible();
   await expect(visitor.getByText(CONDITIONS)).toBeVisible();
   await expect(
-    visitor.getByRole("link", { name: "Ask about this flight" }).first(),
-  ).toHaveAttribute("href", /\/contact\?topic=PRIVATE_CHARTER&message=/);
+    visitor.getByRole("link", { name: "Request this empty leg" }).first(),
+  ).toHaveAttribute("href", `/book/empty-leg/${id}`);
   await expect(visitor.getByRole("link", { name: "Sign in" })).toBeVisible();
 
   // The operator withdraws it, after confirming.

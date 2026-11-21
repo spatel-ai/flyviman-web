@@ -135,9 +135,9 @@ test("operations are not offered the roles page and are told who manages it", as
 
   await page.goto("/admin/roles");
   await expect(
-    page.getByText(
-      "Roles and permissions are managed by super administrators.",
-    ),
+    page
+      .getByRole("main")
+      .getByText("Roles and permissions are managed by super administrators."),
   ).toBeVisible();
   await expect(page.getByRole("table")).toHaveCount(0);
 });
