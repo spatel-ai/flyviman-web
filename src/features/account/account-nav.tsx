@@ -5,7 +5,8 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 
 const ITEMS = [
-  { href: "/account", label: "Profile" },
+  { href: "/account", label: "Overview" },
+  { href: "/account/profile", label: "Profile" },
   { href: "/account/trips", label: "Trips" },
   { href: "/account/passengers", label: "Saved passengers" },
   { href: "/account/notifications", label: "Notifications" },

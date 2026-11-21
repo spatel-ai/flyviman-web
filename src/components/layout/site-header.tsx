@@ -14,7 +14,8 @@ const LINK =
   "flex h-9 items-center rounded-pill px-4 text-body-sm font-medium transition-colors duration-150 ease-standard";
 
 const CUSTOMER_LINKS = [
-  { href: "/account", label: "Profile" },
+  { href: "/account", label: "Overview" },
+  { href: "/account/profile", label: "Profile" },
   { href: "/account/passengers", label: "Saved passengers" },
   { href: "/account/notifications", label: "Notifications" },
 ];

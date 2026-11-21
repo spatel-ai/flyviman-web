@@ -1,5 +1,5 @@
 import { ClientRedirect } from "@/components/shared/client-redirect";
-import { Card } from "@/components/ui/card";
+import { OperatorDashboard } from "@/features/operator-dashboard/operator-dashboard";
 import type { Schemas } from "@/lib/api/types";
 import { serverGet } from "@/lib/auth/server-api";
 
@@ -21,12 +21,9 @@ export default async function OperatorDashboardPage() {
   return (
     <>
       <h1 className="text-h2">Dashboard</h1>
-      <Card variant="raised" className="mt-6">
-        <h2 className="text-title">Nothing to show yet</h2>
-        <p className="mt-2 text-muted">
-          Your aircraft, booking requests and upcoming trips will appear here.
-        </p>
-      </Card>
+      <div className="mt-6">
+        <OperatorDashboard />
+      </div>
     </>
   );
 }

@@ -4,6 +4,8 @@ export const queryKeys = {
   /** Every trip list key starts with ["trips"]. */
   tripsAll: ["trips"] as const,
   trips: (view: string, page: number) => ["trips", view, page] as const,
+  /** The account overview's own read of upcoming trips (under tripsAll). */
+  tripsOverview: ["trips", "overview"] as const,
   /** Every key for one booking starts with ["bookings", reference]. */
   booking: (reference: string) => ["bookings", reference] as const,
   bookingQuotes: (reference: string) =>
@@ -52,6 +54,7 @@ export const queryKeys = {
   adminLocations: (filter: object) => ["admin", "locations", filter] as const,
   adminExpiringDocuments: (filter: object) =>
     ["admin", "documents", "expiring", filter] as const,
+  operatorDashboard: ["operator", "dashboard"] as const,
   operatorAircraft: ["operator", "aircraft"] as const,
   operatorAircraftDetail: (id: string) => ["operator", "aircraft", id] as const,
   /** Every aircraft in reach, for pickers (under the operatorAircraft prefix). */
