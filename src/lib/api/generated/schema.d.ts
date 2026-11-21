@@ -1688,7 +1688,7 @@ export interface paths {
     head?: never;
     /**
      * Update an offer
-     * @description Drafts and published offers. On a published offer the aircraft, origin and destination are locked (409 `EMPTY_LEG_FIELD_LOCKED`); a change notifies customers following it, or, when review is required, returns it to review. Audited.
+     * @description Drafts and published offers. On a published offer the aircraft, origin and destination are locked (409 `EMPTY_LEG_FIELD_LOCKED`); while a customer’s booking request for it is live the price and departure window are fixed (409 `EMPTY_LEG_HAS_LIVE_REQUEST`); a change notifies customers following it, or, when review is required, returns it to review. Audited.
      */
     patch: operations["OperatorEmptyLegsController_update"];
     trace?: never;
@@ -1724,7 +1724,7 @@ export interface paths {
     put?: never;
     /**
      * Withdraw
-     * @description From draft, review or published; final. Customers following a published offer are told. Audited.
+     * @description From draft, review or published; final. Not while a customer’s booking request for it is live (409 `EMPTY_LEG_HAS_LIVE_REQUEST`). Customers following a published offer are told. Audited.
      */
     post: operations["OperatorEmptyLegsController_withdraw"];
     delete?: never;
@@ -5270,8 +5270,10 @@ export interface components {
       editable: boolean;
       /** @description Whether publish is allowed (draft). */
       publishable: boolean;
-      /** @description Whether withdraw is allowed (draft, under review or published). */
+      /** @description Whether withdraw is allowed (draft, under review or published, with no live booking request). */
       withdrawable: boolean;
+      /** @description A customer’s booking request for the offer is live (M8-C): until it is answered the price and departure window cannot change and the offer cannot be withdrawn (409 `EMPTY_LEG_HAS_LIVE_REQUEST`). */
+      hasLiveRequest: boolean;
       /** Format: date-time */
       createdAt: string;
       /** Format: date-time */
@@ -5369,8 +5371,10 @@ export interface components {
       editable: boolean;
       /** @description Whether publish is allowed (draft). */
       publishable: boolean;
-      /** @description Whether withdraw is allowed (draft, under review or published). */
+      /** @description Whether withdraw is allowed (draft, under review or published, with no live booking request). */
       withdrawable: boolean;
+      /** @description A customer’s booking request for the offer is live (M8-C): until it is answered the price and departure window cannot change and the offer cannot be withdrawn (409 `EMPTY_LEG_HAS_LIVE_REQUEST`). */
+      hasLiveRequest: boolean;
       /** Format: date-time */
       createdAt: string;
       /** Format: date-time */
@@ -6690,7 +6694,8 @@ export interface components {
       | "CHANGE_REQUESTED"
       | "CANCELLATION_REQUESTED"
       | "ESCALATED"
-      | "ESCALATION_RESOLVED";
+      | "ESCALATION_RESOLVED"
+      | "PASSENGERS_CHANGED";
     AdminBookingEventDto: {
       /** Format: uuid */
       id: string;
@@ -7130,7 +7135,8 @@ export interface components {
       | "QUESTION_ASKED"
       | "QUESTION_ANSWERED"
       | "CHANGE_REQUESTED"
-      | "CHANGE_REQUEST_ANSWERED";
+      | "CHANGE_REQUEST_ANSWERED"
+      | "PASSENGERS_UPDATED";
     /** @enum {string} */
     BookingEventActor: "YOU" | "OPERATOR" | "FLYVIMAN" | "SYSTEM";
     CustomerBookingEventDto: {

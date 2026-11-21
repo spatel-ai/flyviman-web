@@ -113,6 +113,23 @@ export function OfferEditor({ id }: { id: string }) {
           {error}
         </p>
       ) : null}
+      {item.hasLiveRequest ? (
+        <Card variant="raised" role="status">
+          <p className="text-body-sm font-medium">
+            A customer has requested this offer
+          </p>
+          <p className="text-body-sm">
+            Its price and departure window are fixed, and it cannot be
+            withdrawn, until you answer the request.{" "}
+            <Link
+              href="/operator/requests"
+              className="text-accent hover:underline"
+            >
+              Go to requests
+            </Link>
+          </p>
+        </Card>
+      ) : null}
       {item.reviewNote ? (
         <Card variant="raised">
           <p className="text-body-sm font-medium">Why it was not approved</p>
