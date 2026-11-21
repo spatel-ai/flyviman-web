@@ -109,8 +109,10 @@ export function contentSecurityPolicy(options: CspOptions): string {
  * The header that carries the policy. CSP_REPORT_ONLY=1 switches it to
  * report-only, for an emergency when the policy blocks something it should
  * not: violations are then logged in the browser console and nothing is
- * blocked. Read when the site is built (`next.config.ts`), and for the
- * portals on each request (`proxy.ts`).
+ * blocked. Read when the site is built (`next.config.ts`), and by the
+ * portals' policy when the server runs (`proxy.ts`): set it for both, as a
+ * redeploy does. Set only at run time, the portals keep the enforced
+ * build-time policy and report against the nonce-based one.
  */
 export function cspHeaderName(
   reportOnly = process.env.CSP_REPORT_ONLY === "1",
