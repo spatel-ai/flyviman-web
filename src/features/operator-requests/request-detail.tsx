@@ -17,6 +17,7 @@ import { isNotFoundError } from "@/lib/api/errors";
 import { messageFor } from "@/lib/api/messages";
 import { queryKeys } from "@/lib/api/query-keys";
 import type { Schemas } from "@/lib/api/types";
+import { linesNotInSummary } from "@/lib/cancellation-tiers";
 import { formatDateTime } from "@/lib/format/date";
 import { FormAlert } from "@/components/shared/form-alert";
 import { ChangeRequests } from "./change-requests";
@@ -102,6 +103,11 @@ function Loaded({
   conflict: ReturnType<typeof useAct>["conflict"];
   problem: string | null;
 }) {
+  // The saved summary already words Flyviman's tiers; list them only if not.
+  const termLines = linesNotInSummary(
+    request.cancellationTerms.summary,
+    request.cancellationTerms.charges,
+  );
   return (
     <div className="mt-4 flex flex-col gap-6">
       <div className="flex flex-wrap items-center gap-3">
@@ -185,13 +191,10 @@ function Loaded({
       <Card>
         <h2 className="text-title">Cancellation terms in force</h2>
         <p className="mt-2 text-body-sm">{request.cancellationTerms.summary}</p>
-        {request.cancellationTerms.charges.length > 0 ? (
+        {termLines.length > 0 ? (
           <ul className="mt-2 flex flex-col gap-1 text-body-sm text-muted">
-            {request.cancellationTerms.charges.map((charge) => (
-              <li key={charge.minHoursBeforeDeparture}>
-                {charge.minHoursBeforeDeparture} hours or more before departure:{" "}
-                {charge.chargePercent}% of the total
-              </li>
+            {termLines.map((line) => (
+              <li key={line}>{line}</li>
             ))}
           </ul>
         ) : null}
