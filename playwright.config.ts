@@ -53,6 +53,7 @@ export default defineConfig({
       env: {
         NODE_ENV: "test",
         ENABLE_DEV_TOOLS: "true",
+        MESSAGING_PROVIDER: "mock",
         PORT: String(API_PORT),
         WEB_ORIGIN: ORIGIN,
         // Tests sign in and request codes far more often than a person does.
