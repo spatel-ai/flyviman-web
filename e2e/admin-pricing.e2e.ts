@@ -349,9 +349,19 @@ test("finance traces an estimate in the calculation viewer; operations see it wi
     page.getByRole("heading", { level: 1, name: "Price calculations" }),
   ).toBeVisible();
   await expectNoSidewaysScroll(page);
-  const listed = page.getByRole("row").filter({ hasText: registration });
-  await expect(listed).toContainText("Estimate");
-  await listed.getByRole("link").click();
+  // The search priced every light jet in Mumbai, and the list is paged, so
+  // this aircraft's row may sit on a later page: find its calculation by
+  // aircraft through the same endpoint the list reads, then open it.
+  const found = await page.request.get(`${API_URL}admin/price-calculations`, {
+    params: { searchId, aircraftId: id, pageSize: 1 },
+  });
+  expect(found.status()).toBe(200);
+  const [calculation] = (await found.json()).data as {
+    id: string;
+    priceType: string;
+  }[];
+  expect(calculation.priceType).toBe("ESTIMATE");
+  await page.goto(`/admin/pricing/calculations/${calculation.id}`);
   await expect(page.getByRole("heading", { level: 1 })).toContainText(
     registration,
   );
