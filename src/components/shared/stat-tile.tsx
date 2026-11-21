@@ -21,7 +21,9 @@ export function StatTile({
     <Link href={href} className="block rounded-lg focus-visible:outline-2">
       <Card variant="interactive" className="h-full">
         <p className="text-body-sm text-muted">{label}</p>
-        <p className="mt-2 text-h2 tabular-nums">{value}</p>
+        <p data-stat-value className="mt-2 text-h2 tabular-nums">
+          {value}
+        </p>
         {caption ? (
           <p className="mt-1 text-body-sm text-muted">{caption}</p>
         ) : null}
