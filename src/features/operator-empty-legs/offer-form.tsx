@@ -17,6 +17,7 @@ import type {
   OperatorEmptyLeg,
 } from "@/lib/empty-legs/types";
 import { apiFetch } from "@/lib/api/client";
+import { ApiError } from "@/lib/api/errors";
 import { applyApiError } from "@/lib/api/messages";
 import { queryKeys } from "@/lib/api/query-keys";
 import type { Schemas } from "@/lib/api/types";
@@ -101,8 +102,18 @@ export function OfferForm({
       });
       router.push(`/operator/empty-legs/${encodeURIComponent(data.id)}`);
     },
-    onError: (error) =>
-      setFormError(applyApiError(error, setError, FIELDS, EMPTY_LEG_ALIASES)),
+    onError: async (error) => {
+      setFormError(applyApiError(error, setError, FIELDS, EMPTY_LEG_ALIASES));
+      // A customer's request now holds the offer: show the notice above.
+      if (
+        error instanceof ApiError &&
+        error.code === "EMPTY_LEG_HAS_LIVE_REQUEST"
+      ) {
+        await queryClient.invalidateQueries({
+          queryKey: queryKeys.operatorEmptyLegs,
+        });
+      }
+    },
   });
 
   return (

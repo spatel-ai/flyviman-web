@@ -17,6 +17,7 @@ import { categoryLabel, formatDuration } from "@/lib/format/aircraft";
 import { formatDateTime } from "@/lib/format/date";
 import { CancelDialog } from "./cancel-dialog";
 import { ChangeRequests } from "./change-request";
+import { TripDocuments } from "./documents";
 import { useBooking, useEvents } from "./hooks";
 import { Messages } from "./messages";
 import { canEditPassengers, PassengersDialog } from "./passengers-dialog";
@@ -143,7 +144,9 @@ function Loaded({ booking }: { booking: Booking }) {
             >
               {leg.originName} to {leg.destinationName}
               <span className="block text-body-sm text-muted">
-                {formatDateTime(leg.departureAt)}
+                {itinerary.emptyLeg
+                  ? `Between ${formatDateTime(leg.departureAt)} and ${formatDateTime(itinerary.emptyLeg.departureTo)}; the operator confirms the time`
+                  : formatDateTime(leg.departureAt)}
               </span>
             </li>
           ))}
@@ -180,16 +183,20 @@ function Loaded({ booking }: { booking: Booking }) {
 
       <PaymentHistory reference={booking.reference} />
 
+      <TripDocuments reference={booking.reference} />
+
       <Quotes reference={booking.reference} />
       <Messages
         reference={booking.reference}
         awaitingAnswer={booking.status === "CLARIFICATION_REQUESTED"}
       />
 
-      <CancellationTerms
-        summary={booking.cancellationTerms.summary}
-        charges={booking.cancellationTerms.charges}
-      />
+      <div id="cancellation-terms">
+        <CancellationTerms
+          summary={booking.cancellationTerms.summary}
+          charges={booking.cancellationTerms.charges}
+        />
+      </div>
 
       {booking.passengers.length > 0 || booking.specialRequests || editable ? (
         <section

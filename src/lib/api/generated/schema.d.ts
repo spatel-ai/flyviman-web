@@ -1596,7 +1596,7 @@ export interface paths {
     };
     /**
      * Empty-leg offer detail
-     * @description 410 `EMPTY_LEG_EXPIRED` or `EMPTY_LEG_WITHDRAWN` for an offer that was listed and has ended; 404 for any other offer that is not listed. `interested` tells a signed-in customer whether they follow it; the answer is then `Cache-Control: private, no-store`.
+     * @description 410 `EMPTY_LEG_EXPIRED` or `EMPTY_LEG_WITHDRAWN` for an offer that was listed and has ended; 404 for any other offer that is not listed (including one another customer has requested, until that request ends). `cancellationTerms` are Flyviman’s tiers in force, shown before a booking request (rule 9). `interested` tells a signed-in customer whether they follow it; the answer is then `Cache-Control: private, no-store`.
      */
     get: operations["EmptyLegsController_detail"];
     put?: never;
@@ -1688,7 +1688,7 @@ export interface paths {
     head?: never;
     /**
      * Update an offer
-     * @description Drafts and published offers. On a published offer the aircraft, origin and destination are locked (409 `EMPTY_LEG_FIELD_LOCKED`); a change notifies customers following it, or, when review is required, returns it to review. Audited.
+     * @description Drafts and published offers. On a published offer the aircraft, origin and destination are locked (409 `EMPTY_LEG_FIELD_LOCKED`); while a customer’s booking request for it is live the price and departure window are fixed (409 `EMPTY_LEG_HAS_LIVE_REQUEST`); a change notifies customers following it, or, when review is required, returns it to review. Audited.
      */
     patch: operations["OperatorEmptyLegsController_update"];
     trace?: never;
@@ -1724,7 +1724,7 @@ export interface paths {
     put?: never;
     /**
      * Withdraw
-     * @description From draft, review or published; final. Customers following a published offer are told. Audited.
+     * @description From draft, review or published; final. Not while a customer’s booking request for it is live (409 `EMPTY_LEG_HAS_LIVE_REQUEST`). Customers following a published offer are told. Audited.
      */
     post: operations["OperatorEmptyLegsController_withdraw"];
     delete?: never;
@@ -1787,205 +1787,6 @@ export interface paths {
      * @description From `PENDING_REVIEW` back to `DRAFT`, with the reason as `reviewNote`. Audited; the operator is told.
      */
     post: operations["AdminEmptyLegsController_reject"];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  "/api/v1/search/scheduled": {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Search scheduled flights across airline suppliers
-     * @description Suppliers are called in parallel, each with a timeout. One that times out or fails is listed in `providers` and `partial` is true; the others' fares are still returned.
-     */
-    post: operations["ScheduledSearchController_search"];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  "/api/v1/search/scheduled/revalidate": {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Recheck the fare and seats of a selected flight
-     * @description A changed fare is returned, never hidden. 503 `SEARCH_PROVIDER_UNAVAILABLE` when the airline does not answer.
-     */
-    post: operations["ScheduledSearchController_revalidate"];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  "/api/v1/search/scheduled/{searchId}": {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    /** A stored scheduled search and its results (404 once expired) */
-    get: operations["ScheduledSearchController_get"];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  "/api/v1/search/scheduled/{searchId}/offers/{offerId}/fare-rules": {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    /** Fare rules of one offer: baggage, cancellation and changes */
-    get: operations["ScheduledSearchController_fareRules"];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  "/api/v1/search/charter": {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /** Search eligible charter aircraft with estimates */
-    post: operations["SearchController_charter"];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  "/api/v1/search/helicopter": {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /** Search helicopter options with estimates */
-    post: operations["SearchController_helicopter"];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  "/api/v1/search/calendar": {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    /** Lowest estimate and aircraft count for each day of a month */
-    get: operations["SearchController_calendar"];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  "/api/v1/search/{searchId}": {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    /** A stored search and its results */
-    get: operations["SearchController_get"];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  "/api/v1/search/{searchId}/results/{resultId}": {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    /** One result with its breakdown and conditions */
-    get: operations["SearchController_result"];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  "/api/v1/search/{searchId}/results/{resultId}/promo-code": {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Apply a promotion code to one result (preview, nothing stored)
-     * @description The trip priced again with the code, as a booking with `promoCode` would be: an `ESTIMATE` with the discount as its own line. 422 `PROMO_CODE_INVALID` (unknown or not started), `PROMO_CODE_EXPIRED`, `PROMO_CODE_NOT_APPLICABLE` (another category or route, or priced on request), `PROMO_CODE_LIMIT_REACHED` (overall, or the signed-in customer’s own); 409 `BOOKING_UNAVAILABLE`. On the search rate tier.
-     */
-    post: operations["SearchController_promoCode"];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  "/api/v1/admin/category-config": {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    /**
-     * Service category configuration
-     * @description Platform booking mode, payment model and Model C deposit percent per category and region, by region then category. Read only until M10.
-     */
-    get: operations["AdminCategoryConfigController_list"];
-    put?: never;
-    post?: never;
     delete?: never;
     options?: never;
     head?: never;
@@ -2223,6 +2024,205 @@ export interface paths {
      * @description Newest first. Filter by entity, actor, action and time range. Pricing rule records show before, after and reason to finance and super admins only, and of matching limits (MATCHING_LIMITS) to operations; other roles get null for those fields. Passenger and medical fields inside before and after are null for roles that may not read them (medical: super admin only; identity document numbers: no one; passenger details: operations and super admin). `restricted` is true on every row where something was withheld or redacted.
      */
     get: operations["AdminAuditController_list"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/search/scheduled": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Search scheduled flights across airline suppliers
+     * @description Suppliers are called in parallel, each with a timeout. One that times out or fails is listed in `providers` and `partial` is true; the others' fares are still returned.
+     */
+    post: operations["ScheduledSearchController_search"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/search/scheduled/revalidate": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Recheck the fare and seats of a selected flight
+     * @description A changed fare is returned, never hidden. 503 `SEARCH_PROVIDER_UNAVAILABLE` when the airline does not answer.
+     */
+    post: operations["ScheduledSearchController_revalidate"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/search/scheduled/{searchId}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** A stored scheduled search and its results (404 once expired) */
+    get: operations["ScheduledSearchController_get"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/search/scheduled/{searchId}/offers/{offerId}/fare-rules": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Fare rules of one offer: baggage, cancellation and changes */
+    get: operations["ScheduledSearchController_fareRules"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/search/charter": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Search eligible charter aircraft with estimates */
+    post: operations["SearchController_charter"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/search/helicopter": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Search helicopter options with estimates */
+    post: operations["SearchController_helicopter"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/search/calendar": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Lowest estimate and aircraft count for each day of a month */
+    get: operations["SearchController_calendar"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/search/{searchId}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** A stored search and its results */
+    get: operations["SearchController_get"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/search/{searchId}/results/{resultId}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** One result with its breakdown and conditions */
+    get: operations["SearchController_result"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/search/{searchId}/results/{resultId}/promo-code": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Apply a promotion code to one result (preview, nothing stored)
+     * @description The trip priced again with the code, as a booking with `promoCode` would be: an `ESTIMATE` with the discount as its own line. 422 `PROMO_CODE_INVALID` (unknown or not started), `PROMO_CODE_EXPIRED`, `PROMO_CODE_NOT_APPLICABLE` (another category or route, or priced on request), `PROMO_CODE_LIMIT_REACHED` (overall, or the signed-in customer’s own); 409 `BOOKING_UNAVAILABLE`. On the search rate tier.
+     */
+    post: operations["SearchController_promoCode"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/admin/category-config": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Service category configuration
+     * @description Platform booking mode, payment model and Model C deposit percent per category and region, by region then category. Read only until M10.
+     */
+    get: operations["AdminCategoryConfigController_list"];
     put?: never;
     post?: never;
     delete?: never;
@@ -2546,7 +2546,7 @@ export interface paths {
     head?: never;
     /**
      * Override the status, with a reason
-     * @description Any status to any other, with a `reason` (3–500 characters) kept on the timeline and in the audit trail (before and after). To `CANCELLED` the cancellation terms apply and the refund due is recorded, as for a customer’s cancellation (409 `BOOKING_PAYMENT_IN_PROGRESS` while a payment waits for the gateway’s answer); to `EXPIRED`, `QUOTE_DECLINED` or `OPERATOR_UNAVAILABLE` the aircraft’s hold is released and an open quote closes `EXPIRED`; to `CONFIRMED` the held time is checked again first (409 `BOOKING_UNAVAILABLE`). 409 `BOOKING_INVALID_TRANSITION` when the status is unchanged or the booking changed meanwhile.
+     * @description Any status to any other, with a `reason` (3–500 characters) kept on the timeline and in the audit trail (before and after). To `CANCELLED` the cancellation terms apply and the refund due is recorded, as for a customer’s cancellation (409 `BOOKING_PAYMENT_IN_PROGRESS` while a payment waits for the gateway’s answer); to `EXPIRED`, `QUOTE_DECLINED` or `OPERATOR_UNAVAILABLE` the aircraft’s hold is released and an open quote closes `EXPIRED`; to `CONFIRMED` the held time is checked again first (409 `BOOKING_UNAVAILABLE`); reopening an ended empty-leg booking while another booking holds the offer is 409 `BOOKING_UNAVAILABLE`. 409 `BOOKING_INVALID_TRANSITION` when the status is unchanged or the booking changed meanwhile.
      */
     patch: operations["AdminBookingsController_override"];
     trace?: never;
@@ -2877,6 +2877,86 @@ export interface paths {
      * @description From any status before `COMPLETED`. Moves the booking to `CANCELLED` at once, releases the aircraft’s hold, closes any open quote and change request, and records a completed cancellation with no charge: everything the customer paid is recorded as due back, for Flyviman finance to refund (nothing is refunded here). The reason is kept for you and Flyviman, stored encrypted; the customer is told the booking was cancelled. 409 `BOOKING_NOT_CANCELLABLE` once completed or closed; 409 `BOOKING_PAYMENT_IN_PROGRESS` while a payment waits for the gateway’s final answer. Audited. A repeat with the same `Idempotency-Key` and body returns the first answer.
      */
     post: operations["OperatorBookingsController_cancel"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/bookings/empty-leg": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Request a booking of a listed empty-leg offer
+     * @description The offer must be listed (published, still valid, approved operator and aircraft, not requested by anyone else) and its departure window not yet begun; otherwise 409 `BOOKING_UNAVAILABLE`, also when the aircraft is no longer free over the window. 409 `BOOKING_DUPLICATE` when the caller has already requested it. The price is the offer’s, a `QUOTE` (the operator’s own price) until the operator accepts: 409 `BOOKING_PRICE_CHANGED` when it is not `expectedTotalMinor`, with the current price in `details` (`totalMinor`, `currency`, `priceType`, `validUntil`). 409 `BOOKING_TERMS_CHANGED` when Flyviman’s cancellation tiers changed since the offer was shown (rule 9). 400 `VALIDATION_ERROR` when `passengerCount` exceeds the offer’s seats. 422 `BOOKING_CATEGORY_DISABLED`; 409 `BOOKING_LIMIT_REACHED`; 404 for a passenger that is not the caller’s. Limited per caller as `POST /bookings` (429 `RATE_LIMITED`). Holds the aircraft over the departure window (48 hours by default, `BOOKING_HOLD_HOURS`, never past the window’s end) and goes to the operator (`OPERATOR_PENDING`): never confirmed here. The leg’s `departureAt` is the window’s start; the operator confirms the time. The offer becomes `BOOKED` when the booking is confirmed, and is listed again if the request ends first. A repeat with the same `Idempotency-Key` and body returns the first answer.
+     */
+    post: operations["EmptyLegBookingsController_create"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/bookings/{reference}/documents": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * The documents of one of the caller’s bookings
+     * @description Worked out from the booking, nothing stored: the confirmation (available once `CONFIRMED`, `SCHEDULED` or `COMPLETED`), a receipt for each payment whose money arrived, and the cancellation terms accepted with the request. Another customer’s booking is 404.
+     */
+    get: operations["BookingDocumentsController_list"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/admin/bookings/{reference}/escalate": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Escalate a booking, with a reason
+     * @description Flags the booking for operations’ attention (`escalatedAt`, the list’s `escalated=true` filter) without changing its status. `reason` (3–500 characters) is kept on the timeline and in the audit trail (`booking.escalate`). 409 `BOOKING_ESCALATION_CONFLICT` when it is already escalated.
+     */
+    post: operations["AdminBookingEscalationController_escalate"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/admin/bookings/{reference}/resolve-escalation": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Resolve a booking’s escalation, with a note
+     * @description Clears the flag. `reason` (3–500 characters) says how it was resolved; kept on the timeline and in the audit trail (`booking.escalation_resolve`). 409 `BOOKING_ESCALATION_CONFLICT` when it is not escalated.
+     */
+    post: operations["AdminBookingEscalationController_resolve"];
     delete?: never;
     options?: never;
     head?: never;
@@ -5110,6 +5190,22 @@ export interface components {
       /** @description Booking conditions. */
       conditions: string;
     };
+    CancellationTierDto: {
+      /** @description Applies when cancelling at least this many hours before departure (a boundary falls in the cheaper tier). */
+      minHoursBeforeDeparture: number;
+      /** @description Whole percent of the confirmed price. */
+      chargePercent: number;
+    };
+    CancellationTierTableDto: {
+      /** @description The version in force. Send it back as `cancellationTermsVersion` when making a booking request, and as `baseVersion` when changing the tiers. */
+      version: number;
+      /** @description Longest notice first; the last tier starts at 0 hours. */
+      tiers: components["schemas"]["CancellationTierDto"][];
+      /** @description The terms in words, shown to the customer and snapshotted on a booking request word for word. */
+      summary: string;
+      /** Format: date-time */
+      validFrom: string;
+    };
     EmptyLegDetailResponseDto: {
       /** Format: uuid */
       id: string;
@@ -5135,6 +5231,8 @@ export interface components {
       conditions: string;
       /** @description Whether the signed-in customer follows this offer for change alerts. False when not signed in as a customer. */
       interested: boolean;
+      /** @description Flyviman's cancellation tiers, shown before a booking request (rule 9). Send `version` as `cancellationTermsVersion` with `POST /bookings/empty-leg`. */
+      cancellationTerms: components["schemas"]["CancellationTierTableDto"];
     };
     EmptyLegInterestResponseDto: {
       /** Format: uuid */
@@ -5190,8 +5288,10 @@ export interface components {
       editable: boolean;
       /** @description Whether publish is allowed (draft). */
       publishable: boolean;
-      /** @description Whether withdraw is allowed (draft, under review or published). */
+      /** @description Whether withdraw is allowed (draft, under review or published, with no live booking request). */
       withdrawable: boolean;
+      /** @description A customer’s booking request for the offer is live (M8-C): until it is answered the price and departure window cannot change and the offer cannot be withdrawn (409 `EMPTY_LEG_HAS_LIVE_REQUEST`). */
+      hasLiveRequest: boolean;
       /** Format: date-time */
       createdAt: string;
       /** Format: date-time */
@@ -5289,8 +5389,10 @@ export interface components {
       editable: boolean;
       /** @description Whether publish is allowed (draft). */
       publishable: boolean;
-      /** @description Whether withdraw is allowed (draft, under review or published). */
+      /** @description Whether withdraw is allowed (draft, under review or published, with no live booking request). */
       withdrawable: boolean;
+      /** @description A customer’s booking request for the offer is live (M8-C): until it is answered the price and departure window cannot change and the offer cannot be withdrawn (409 `EMPTY_LEG_HAS_LIVE_REQUEST`). */
+      hasLiveRequest: boolean;
       /** Format: date-time */
       createdAt: string;
       /** Format: date-time */
@@ -5300,433 +5402,6 @@ export interface components {
     };
     EmptyLegReasonDto: {
       reason: string;
-    };
-    ScheduledPassengersDto: {
-      /** @example 1 */
-      adults: number;
-      /**
-       * @description Seated. Adults and children together at most 9.
-       * @example 0
-       */
-      children: number;
-      /**
-       * @description On a lap: at most one per adult.
-       * @example 0
-       */
-      infants: number;
-    };
-    /** @enum {string} */
-    ScheduledCabin: "ECONOMY" | "PREMIUM_ECONOMY" | "BUSINESS";
-    ScheduledSearchDto: {
-      /**
-       * Format: uuid
-       * @description An active airport with an IATA code (`GET /locations`).
-       */
-      originId: string;
-      /** Format: uuid */
-      destinationId: string;
-      /**
-       * Format: date
-       * @description Local date at the origin, `YYYY-MM-DD`: today there or later, within a year.
-       * @example 2026-12-05
-       */
-      departureDate: string;
-      /**
-       * Format: date
-       * @description For a return trip: local date at the destination, on or after `departureDate`, within a year. Results then hold both directions.
-       * @example 2026-12-08
-       */
-      returnDate?: string;
-      passengers: components["schemas"]["ScheduledPassengersDto"];
-      cabin: components["schemas"]["ScheduledCabin"];
-    };
-    /** @enum {string} */
-    ScheduledProviderStatus: "OK" | "TIMEOUT" | "ERROR";
-    ScheduledProviderStatusDto: {
-      /** @example mock */
-      name: string;
-      status: components["schemas"]["ScheduledProviderStatus"];
-    };
-    ScheduledCarrierDto: {
-      /** @example 6E */
-      code: string;
-      /** @example IndiGo */
-      name: string;
-    };
-    ScheduledLocationDto: {
-      /** Format: uuid */
-      id: string;
-      name: string;
-      iata: string | null;
-      icao: string | null;
-      /** @example Asia/Kolkata */
-      timeZone: string;
-    };
-    ScheduledSegmentDto: {
-      from: components["schemas"]["ScheduledLocationDto"];
-      to: components["schemas"]["ScheduledLocationDto"];
-      /**
-       * @description Local time at `from`, ISO 8601 with its offset.
-       * @example 2026-12-05T06:15:00+05:30
-       */
-      departAt: string;
-      /**
-       * @description Local time at `to`, ISO 8601 with its offset.
-       * @example 2026-12-05T08:25:00+05:30
-       */
-      arriveAt: string;
-      /** @example 6E 2131 */
-      flightNumber: string;
-      durationMinutes: number;
-    };
-    /** @enum {string} */
-    ScheduledDirection: "OUTBOUND" | "RETURN";
-    ScheduledFareDto: {
-      /** @description Paise, the total for all travellers: adults, children and infants together. */
-      amountMinor: number;
-      /** @enum {string} */
-      currency: "INR";
-      /**
-       * @description The supplier's price now; rechecked by revalidation before payment.
-       * @enum {string}
-       */
-      priceType: "LIVE_FARE";
-      /** @example SAVER */
-      fareFamily: string;
-    };
-    ScheduledBaggageDto: {
-      cabinKg: number;
-      checkedKg: number;
-    };
-    ScheduledOfferDto: {
-      /** Format: uuid */
-      offerId: string;
-      carrier: components["schemas"]["ScheduledCarrierDto"];
-      segments: components["schemas"]["ScheduledSegmentDto"][];
-      direction: components["schemas"]["ScheduledDirection"];
-      stops: number;
-      fare: components["schemas"]["ScheduledFareDto"];
-      baggage: components["schemas"]["ScheduledBaggageDto"];
-      refundable: boolean;
-      /**
-       * Format: date-time
-       * @description The fare holds until then. Set at search time, when the search itself expires; a revalidation may store a new fare and validity, never past that.
-       */
-      validUntil: string;
-    };
-    ScheduledSearchResponseDto: {
-      /** Format: uuid */
-      searchId: string;
-      /** @description True when a supplier timed out or failed: the results hold only the others. */
-      partial: boolean;
-      providers: components["schemas"]["ScheduledProviderStatusDto"][];
-      /** @description The party searched for: every fare is the total for all of them. */
-      passengers: components["schemas"]["ScheduledPassengersDto"];
-      /** @description Outbound first, then return; each by departure, then fare. Only flights with seats for the whole party; an offer found sold out at revalidation is left out. */
-      results: components["schemas"]["ScheduledOfferDto"][];
-    };
-    RevalidateScheduledDto: {
-      /** Format: uuid */
-      searchId: string;
-      /** Format: uuid */
-      offerId: string;
-    };
-    /** @enum {string} */
-    ScheduledRevalidationStatus: "AVAILABLE" | "PRICE_CHANGED" | "SOLD_OUT";
-    ScheduledRevalidationDto: {
-      status: components["schemas"]["ScheduledRevalidationStatus"];
-      /** @description The fare now. Absent when sold out. */
-      fare?: components["schemas"]["ScheduledFareDto"];
-      /**
-       * Format: date-time
-       * @description How long the rechecked fare holds, never past the search's expiry. Absent when sold out.
-       */
-      validUntil?: string;
-    };
-    ScheduledFareRuleDto: {
-      /** @example Cancellation */
-      title: string;
-      text: string;
-    };
-    ScheduledCancellationDto: {
-      refundable: boolean;
-      /** @description Paise per passenger. Absent when the fare is not refundable. */
-      feeMinor?: number;
-    };
-    ScheduledChangeDto: {
-      allowed: boolean;
-      /** @description Paise per passenger, plus any fare difference. Absent when changes are not allowed. */
-      feeMinor?: number;
-    };
-    ScheduledFareRulesDto: {
-      /** Format: uuid */
-      offerId: string;
-      rules: components["schemas"]["ScheduledFareRuleDto"][];
-      cancellation: components["schemas"]["ScheduledCancellationDto"];
-      change: components["schemas"]["ScheduledChangeDto"];
-    };
-    /** @enum {string} */
-    SearchTripType: "ONE_WAY" | "ROUND_TRIP";
-    /**
-     * @description Limit to one fixed-wing category. All of them when left out.
-     * @enum {string}
-     */
-    CharterCategory: "TURBOPROP" | "LIGHT_JET" | "MIDSIZE_JET" | "HEAVY_JET";
-    CharterSearchDto: {
-      /**
-       * Format: uuid
-       * @description An active location (`GET /locations`).
-       */
-      originId: string;
-      /** Format: uuid */
-      destinationId: string;
-      /**
-       * @description ISO 8601 with offset, at least an hour ahead.
-       * @example 2026-12-05T10:00:00+05:30
-       */
-      departureAt: string;
-      /** @default ONE_WAY */
-      tripType: components["schemas"]["SearchTripType"];
-      /**
-       * @description Round trips only, and required for them (null or absent for one way): when the return flight leaves the destination. ISO 8601 with offset, at least an hour after `departureAt` and within 30 days of it.
-       * @example 2026-12-07T16:00:00+05:30
-       */
-      returnAt?: string | null;
-      /** @example 4 */
-      passengerCount: number;
-      /** @description Limit to one fixed-wing category. All of them when left out. */
-      category?: components["schemas"]["CharterCategory"];
-    };
-    SearchLegDto: {
-      /** Format: uuid */
-      originId: string;
-      originName: string;
-      /** Format: uuid */
-      destinationId: string;
-      destinationName: string;
-      /** Format: date-time */
-      departureAt: string;
-    };
-    SearchAircraftDto: {
-      /** Format: uuid */
-      id: string;
-      manufacturer: string;
-      model: string;
-      category: components["schemas"]["AircraftCategory"];
-      passengerCapacity: number;
-    };
-    /**
-     * @description How the round trip was priced: the aircraft waits at the destination, or returns to base between the flights. Null for a one-way trip or a price on request.
-     * @enum {string}
-     */
-    RoundTripStrategy: "WAIT" | "RETURN_TO_BASE";
-    SearchPriceDto: {
-      priceType: components["schemas"]["PriceType"];
-      /** @description Paise. */
-      amountMinor: number;
-      /** @example INR */
-      currency: string;
-    };
-    SearchResultDto: {
-      /** Format: uuid */
-      resultId: string;
-      aircraft: components["schemas"]["SearchAircraftDto"];
-      operatorName: string;
-      /** @description The flying the customer books: out and back for a round trip. */
-      distanceKm: number;
-      /** @description Out and back for a round trip. Null when unknown. */
-      flightMinutes: number | null;
-      tripType: components["schemas"]["SearchTripType"];
-      /**
-       * Format: date-time
-       * @description The return departure; null for a one-way trip.
-       */
-      returnAt: string | null;
-      /** @description How the round trip was priced: the aircraft waits at the destination, or returns to base between the flights. Null for a one-way trip or a price on request. */
-      roundTripStrategy: components["schemas"]["RoundTripStrategy"] | null;
-      /** @description Always an `ESTIMATE`. Null when the price is on request. */
-      price: components["schemas"]["SearchPriceDto"] | null;
-      /** @description True when the estimate leaves something out (landing, handling, positioning, waiting, tax and so on): the result detail lists what, under `exclusions`. False for a price on request. */
-      incomplete: boolean;
-      /** Format: date-time */
-      validUntil: string;
-      warnings: string[];
-    };
-    SearchResponseDto: {
-      /** Format: uuid */
-      searchId: string;
-      category: components["schemas"]["ServiceCategory"];
-      /** @description The fixed-wing class asked for; null for any. */
-      aircraftCategory: components["schemas"]["CharterCategory"] | null;
-      /** @description One leg, or the outbound and the return for a round trip. */
-      legs: components["schemas"]["SearchLegDto"][];
-      passengerCount: number;
-      /** Format: date-time */
-      createdAt: string;
-      /** @description Priced first, cheapest first. */
-      results: components["schemas"]["SearchResultDto"][];
-      /** @description Charter only (empty otherwise): listed empty legs on the same or a nearby route, leaving within two days of the first departure, with enough seats. Each carries its own price and `priceType`. Soonest and closest first, at most five. */
-      emptyLegAlternatives: components["schemas"]["EmptyLegResponseDto"][];
-    };
-    HelicopterSearchDto: {
-      /**
-       * Format: uuid
-       * @description An active location (`GET /locations`).
-       */
-      originId: string;
-      /** Format: uuid */
-      destinationId: string;
-      /**
-       * @description ISO 8601 with offset, at least an hour ahead.
-       * @example 2026-12-05T10:00:00+05:30
-       */
-      departureAt: string;
-      /** @default ONE_WAY */
-      tripType: components["schemas"]["SearchTripType"];
-      /**
-       * @description Round trips only, and required for them (null or absent for one way): when the return flight leaves the destination. ISO 8601 with offset, at least an hour after `departureAt` and within 30 days of it.
-       * @example 2026-12-07T16:00:00+05:30
-       */
-      returnAt?: string | null;
-      /** @example 4 */
-      passengerCount: number;
-    };
-    FareCalendarDayDto: {
-      /** @example 2026-12-05 */
-      date: string;
-      /** @description Aircraft that can fly the route at 10:00 India time. */
-      availableCount: number;
-      /** @description The lowest estimate that day. Null when none is priced. */
-      lowest: components["schemas"]["SearchPriceDto"] | null;
-    };
-    FareCalendarResponseDto: {
-      /** @example 2026-12 */
-      month: string;
-      /** @description Days inside the minimum notice are left out. */
-      days: components["schemas"]["FareCalendarDayDto"][];
-    };
-    BreakdownLineDto: {
-      /**
-       * @description `FLYING` is every flight (the legs, priced hourly, per sector or at a fixed route price, with any minimum billable hours, positioning, any return to base between them and Flyviman's markup) in one line; other codes as the engine sets them (`WAITING`, `OVERNIGHT`, `CREW`, `PARKING`, `FUEL_SURCHARGE`, `PERMIT`, `NAVIGATION`, `OTHER` under the operator's label, `LANDING_HANDLING`, `MIN_CHARGE`, `PLATFORM_FEE`, `SERVICE_FEE`, `DISCOUNT` as a negative amount under the promotion's name, `TAX`).
-       * @example FLYING
-       */
-      code: string;
-      label: string;
-      /** @description Paise. */
-      amountMinor: number;
-      basis?: string;
-    };
-    /**
-     * @description How a booking made from this result is handled: the category's configuration with the operator's override (C2). A booking from an estimate still waits for the operator.
-     * @enum {string}
-     */
-    BookingMode: "INSTANT" | "REQUEST";
-    CancellationTierDto: {
-      /** @description Applies when cancelling at least this many hours before departure (a boundary falls in the cheaper tier). */
-      minHoursBeforeDeparture: number;
-      /** @description Whole percent of the confirmed price. */
-      chargePercent: number;
-    };
-    CancellationTierTableDto: {
-      /** @description The version in force. Send it back as `cancellationTermsVersion` when making a booking request, and as `baseVersion` when changing the tiers. */
-      version: number;
-      /** @description Longest notice first; the last tier starts at 0 hours. */
-      tiers: components["schemas"]["CancellationTierDto"][];
-      /** @description The terms in words, shown to the customer and snapshotted on a booking request word for word. */
-      summary: string;
-      /** Format: date-time */
-      validFrom: string;
-    };
-    SearchResultDetailDto: {
-      /** Format: uuid */
-      resultId: string;
-      aircraft: components["schemas"]["SearchAircraftDto"];
-      operatorName: string;
-      /** @description The flying the customer books: out and back for a round trip. */
-      distanceKm: number;
-      /** @description Out and back for a round trip. Null when unknown. */
-      flightMinutes: number | null;
-      tripType: components["schemas"]["SearchTripType"];
-      /**
-       * Format: date-time
-       * @description The return departure; null for a one-way trip.
-       */
-      returnAt: string | null;
-      /** @description How the round trip was priced: the aircraft waits at the destination, or returns to base between the flights. Null for a one-way trip or a price on request. */
-      roundTripStrategy: components["schemas"]["RoundTripStrategy"] | null;
-      /** @description Always an `ESTIMATE`. Null when the price is on request. */
-      price: components["schemas"]["SearchPriceDto"] | null;
-      /** @description True when the estimate leaves something out (landing, handling, positioning, waiting, tax and so on): the result detail lists what, under `exclusions`. False for a price on request. */
-      incomplete: boolean;
-      /** Format: date-time */
-      validUntil: string;
-      warnings: string[];
-      /** Format: uuid */
-      searchId: string;
-      legs: components["schemas"]["SearchLegDto"][];
-      passengerCount: number;
-      breakdown: components["schemas"]["BreakdownLineDto"][];
-      assumptions: string[];
-      /** @description What the estimate leaves out. */
-      exclusions: string[];
-      /** @description How a booking made from this result is handled: the category's configuration with the operator's override (C2). A booking from an estimate still waits for the operator. */
-      bookingMode: components["schemas"]["BookingMode"];
-      confirmationRequirements: string[];
-      /** @description Shown before the customer commits (business rule 9): `cancellationTerms.summary`, word for word. */
-      cancellationNote: string;
-      /** @description Flyviman's cancellation tiers, the same for every operator (D-172). Send `version` as `cancellationTermsVersion` with the booking request. */
-      cancellationTerms: components["schemas"]["CancellationTierTableDto"];
-    };
-    ApplyPromoCodeDto: {
-      /** @example WINTER10 */
-      code: string;
-    };
-    PromoPriceDto: {
-      priceType: components["schemas"]["PriceType"];
-      /** @description Paise, with the code applied. */
-      amountMinor: number;
-      /** @example INR */
-      currency: string;
-      /** Format: date-time */
-      validUntil: string;
-    };
-    PromoLineDto: {
-      code: string;
-      label: string;
-      amountMinor: number;
-    };
-    PromoPreviewResponseDto: {
-      /** @example WINTER10 */
-      code: string;
-      /** @description The label of the discount line. */
-      name: string;
-      /** @description Paise the code takes off this trip; 0 when it lowers nothing here (it is then not worth sending). */
-      amountOffMinor: number;
-      price: components["schemas"]["PromoPriceDto"];
-      breakdown: components["schemas"]["PromoLineDto"][];
-      assumptions: string[];
-    };
-    /**
-     * @description Platform setting. Operators may override it per category.
-     * @enum {string}
-     */
-    PaymentModel: "A_INSTANT" | "B_OPERATOR_CONFIRMED" | "C_DEPOSIT";
-    CategoryConfigResponseDto: {
-      category: components["schemas"]["ServiceCategory"];
-      /** @example IN */
-      region: string;
-      isEnabled: boolean;
-      /** @description Platform setting. Operators may override it per category; air ambulance is always REQUEST. */
-      bookingMode: components["schemas"]["BookingMode"];
-      /** @description Platform setting. Operators may override it per category. */
-      paymentModel: components["schemas"]["PaymentModel"];
-      /**
-       * @description The deposit taken under payment model C, in whole percent of the confirmed total, rounded up to the next paisa.
-       * @example 25
-       */
-      depositPercent: number;
-      /** Format: date-time */
-      updatedAt: string;
     };
     OperatorPricingResponseDto: {
       /**
@@ -6285,6 +5960,417 @@ export interface components {
       /** Format: date-time */
       createdAt: string;
     };
+    ScheduledPassengersDto: {
+      /** @example 1 */
+      adults: number;
+      /**
+       * @description Seated. Adults and children together at most 9.
+       * @example 0
+       */
+      children: number;
+      /**
+       * @description On a lap: at most one per adult.
+       * @example 0
+       */
+      infants: number;
+    };
+    /** @enum {string} */
+    ScheduledCabin: "ECONOMY" | "PREMIUM_ECONOMY" | "BUSINESS";
+    ScheduledSearchDto: {
+      /**
+       * Format: uuid
+       * @description An active airport with an IATA code (`GET /locations`).
+       */
+      originId: string;
+      /** Format: uuid */
+      destinationId: string;
+      /**
+       * Format: date
+       * @description Local date at the origin, `YYYY-MM-DD`: today there or later, within a year.
+       * @example 2026-12-05
+       */
+      departureDate: string;
+      /**
+       * Format: date
+       * @description For a return trip: local date at the destination, on or after `departureDate`, within a year. Results then hold both directions.
+       * @example 2026-12-08
+       */
+      returnDate?: string;
+      passengers: components["schemas"]["ScheduledPassengersDto"];
+      cabin: components["schemas"]["ScheduledCabin"];
+    };
+    /** @enum {string} */
+    ScheduledProviderStatus: "OK" | "TIMEOUT" | "ERROR";
+    ScheduledProviderStatusDto: {
+      /** @example mock */
+      name: string;
+      status: components["schemas"]["ScheduledProviderStatus"];
+    };
+    ScheduledCarrierDto: {
+      /** @example 6E */
+      code: string;
+      /** @example IndiGo */
+      name: string;
+    };
+    ScheduledLocationDto: {
+      /** Format: uuid */
+      id: string;
+      name: string;
+      iata: string | null;
+      icao: string | null;
+      /** @example Asia/Kolkata */
+      timeZone: string;
+    };
+    ScheduledSegmentDto: {
+      from: components["schemas"]["ScheduledLocationDto"];
+      to: components["schemas"]["ScheduledLocationDto"];
+      /**
+       * @description Local time at `from`, ISO 8601 with its offset.
+       * @example 2026-12-05T06:15:00+05:30
+       */
+      departAt: string;
+      /**
+       * @description Local time at `to`, ISO 8601 with its offset.
+       * @example 2026-12-05T08:25:00+05:30
+       */
+      arriveAt: string;
+      /** @example 6E 2131 */
+      flightNumber: string;
+      durationMinutes: number;
+    };
+    /** @enum {string} */
+    ScheduledDirection: "OUTBOUND" | "RETURN";
+    ScheduledFareDto: {
+      /** @description Paise, the total for all travellers: adults, children and infants together. */
+      amountMinor: number;
+      /** @enum {string} */
+      currency: "INR";
+      /**
+       * @description The supplier's price now; rechecked by revalidation before payment.
+       * @enum {string}
+       */
+      priceType: "LIVE_FARE";
+      /** @example SAVER */
+      fareFamily: string;
+    };
+    ScheduledBaggageDto: {
+      cabinKg: number;
+      checkedKg: number;
+    };
+    ScheduledOfferDto: {
+      /** Format: uuid */
+      offerId: string;
+      carrier: components["schemas"]["ScheduledCarrierDto"];
+      segments: components["schemas"]["ScheduledSegmentDto"][];
+      direction: components["schemas"]["ScheduledDirection"];
+      stops: number;
+      fare: components["schemas"]["ScheduledFareDto"];
+      baggage: components["schemas"]["ScheduledBaggageDto"];
+      refundable: boolean;
+      /**
+       * Format: date-time
+       * @description The fare holds until then. Set at search time, when the search itself expires; a revalidation may store a new fare and validity, never past that.
+       */
+      validUntil: string;
+    };
+    ScheduledSearchResponseDto: {
+      /** Format: uuid */
+      searchId: string;
+      /** @description True when a supplier timed out or failed: the results hold only the others. */
+      partial: boolean;
+      providers: components["schemas"]["ScheduledProviderStatusDto"][];
+      /** @description The party searched for: every fare is the total for all of them. */
+      passengers: components["schemas"]["ScheduledPassengersDto"];
+      /** @description Outbound first, then return; each by departure, then fare. Only flights with seats for the whole party; an offer found sold out at revalidation is left out. */
+      results: components["schemas"]["ScheduledOfferDto"][];
+    };
+    RevalidateScheduledDto: {
+      /** Format: uuid */
+      searchId: string;
+      /** Format: uuid */
+      offerId: string;
+    };
+    /** @enum {string} */
+    ScheduledRevalidationStatus: "AVAILABLE" | "PRICE_CHANGED" | "SOLD_OUT";
+    ScheduledRevalidationDto: {
+      status: components["schemas"]["ScheduledRevalidationStatus"];
+      /** @description The fare now. Absent when sold out. */
+      fare?: components["schemas"]["ScheduledFareDto"];
+      /**
+       * Format: date-time
+       * @description How long the rechecked fare holds, never past the search's expiry. Absent when sold out.
+       */
+      validUntil?: string;
+    };
+    ScheduledFareRuleDto: {
+      /** @example Cancellation */
+      title: string;
+      text: string;
+    };
+    ScheduledCancellationDto: {
+      refundable: boolean;
+      /** @description Paise per passenger. Absent when the fare is not refundable. */
+      feeMinor?: number;
+    };
+    ScheduledChangeDto: {
+      allowed: boolean;
+      /** @description Paise per passenger, plus any fare difference. Absent when changes are not allowed. */
+      feeMinor?: number;
+    };
+    ScheduledFareRulesDto: {
+      /** Format: uuid */
+      offerId: string;
+      rules: components["schemas"]["ScheduledFareRuleDto"][];
+      cancellation: components["schemas"]["ScheduledCancellationDto"];
+      change: components["schemas"]["ScheduledChangeDto"];
+    };
+    /** @enum {string} */
+    SearchTripType: "ONE_WAY" | "ROUND_TRIP";
+    /**
+     * @description Limit to one fixed-wing category. All of them when left out.
+     * @enum {string}
+     */
+    CharterCategory: "TURBOPROP" | "LIGHT_JET" | "MIDSIZE_JET" | "HEAVY_JET";
+    CharterSearchDto: {
+      /**
+       * Format: uuid
+       * @description An active location (`GET /locations`).
+       */
+      originId: string;
+      /** Format: uuid */
+      destinationId: string;
+      /**
+       * @description ISO 8601 with offset, at least an hour ahead.
+       * @example 2026-12-05T10:00:00+05:30
+       */
+      departureAt: string;
+      /** @default ONE_WAY */
+      tripType: components["schemas"]["SearchTripType"];
+      /**
+       * @description Round trips only, and required for them (null or absent for one way): when the return flight leaves the destination. ISO 8601 with offset, at least an hour after `departureAt` and within 30 days of it.
+       * @example 2026-12-07T16:00:00+05:30
+       */
+      returnAt?: string | null;
+      /** @example 4 */
+      passengerCount: number;
+      /** @description Limit to one fixed-wing category. All of them when left out. */
+      category?: components["schemas"]["CharterCategory"];
+    };
+    SearchLegDto: {
+      /** Format: uuid */
+      originId: string;
+      originName: string;
+      /** Format: uuid */
+      destinationId: string;
+      destinationName: string;
+      /** Format: date-time */
+      departureAt: string;
+    };
+    SearchAircraftDto: {
+      /** Format: uuid */
+      id: string;
+      manufacturer: string;
+      model: string;
+      category: components["schemas"]["AircraftCategory"];
+      passengerCapacity: number;
+    };
+    /**
+     * @description How the round trip was priced: the aircraft waits at the destination, or returns to base between the flights. Null for a one-way trip or a price on request.
+     * @enum {string}
+     */
+    RoundTripStrategy: "WAIT" | "RETURN_TO_BASE";
+    SearchPriceDto: {
+      priceType: components["schemas"]["PriceType"];
+      /** @description Paise. */
+      amountMinor: number;
+      /** @example INR */
+      currency: string;
+    };
+    SearchResultDto: {
+      /** Format: uuid */
+      resultId: string;
+      aircraft: components["schemas"]["SearchAircraftDto"];
+      operatorName: string;
+      /** @description The flying the customer books: out and back for a round trip. */
+      distanceKm: number;
+      /** @description Out and back for a round trip. Null when unknown. */
+      flightMinutes: number | null;
+      tripType: components["schemas"]["SearchTripType"];
+      /**
+       * Format: date-time
+       * @description The return departure; null for a one-way trip.
+       */
+      returnAt: string | null;
+      /** @description How the round trip was priced: the aircraft waits at the destination, or returns to base between the flights. Null for a one-way trip or a price on request. */
+      roundTripStrategy: components["schemas"]["RoundTripStrategy"] | null;
+      /** @description Always an `ESTIMATE`. Null when the price is on request. */
+      price: components["schemas"]["SearchPriceDto"] | null;
+      /** @description True when the estimate leaves something out (landing, handling, positioning, waiting, tax and so on): the result detail lists what, under `exclusions`. False for a price on request. */
+      incomplete: boolean;
+      /** Format: date-time */
+      validUntil: string;
+      warnings: string[];
+    };
+    SearchResponseDto: {
+      /** Format: uuid */
+      searchId: string;
+      category: components["schemas"]["ServiceCategory"];
+      /** @description The fixed-wing class asked for; null for any. */
+      aircraftCategory: components["schemas"]["CharterCategory"] | null;
+      /** @description One leg, or the outbound and the return for a round trip. */
+      legs: components["schemas"]["SearchLegDto"][];
+      passengerCount: number;
+      /** Format: date-time */
+      createdAt: string;
+      /** @description Priced first, cheapest first. */
+      results: components["schemas"]["SearchResultDto"][];
+      /** @description Charter only (empty otherwise): listed empty legs on the same or a nearby route, leaving within two days of the first departure, with enough seats. Each carries its own price and `priceType`. Soonest and closest first, at most five. */
+      emptyLegAlternatives: components["schemas"]["EmptyLegResponseDto"][];
+    };
+    HelicopterSearchDto: {
+      /**
+       * Format: uuid
+       * @description An active location (`GET /locations`).
+       */
+      originId: string;
+      /** Format: uuid */
+      destinationId: string;
+      /**
+       * @description ISO 8601 with offset, at least an hour ahead.
+       * @example 2026-12-05T10:00:00+05:30
+       */
+      departureAt: string;
+      /** @default ONE_WAY */
+      tripType: components["schemas"]["SearchTripType"];
+      /**
+       * @description Round trips only, and required for them (null or absent for one way): when the return flight leaves the destination. ISO 8601 with offset, at least an hour after `departureAt` and within 30 days of it.
+       * @example 2026-12-07T16:00:00+05:30
+       */
+      returnAt?: string | null;
+      /** @example 4 */
+      passengerCount: number;
+    };
+    FareCalendarDayDto: {
+      /** @example 2026-12-05 */
+      date: string;
+      /** @description Aircraft that can fly the route at 10:00 India time. */
+      availableCount: number;
+      /** @description The lowest estimate that day. Null when none is priced. */
+      lowest: components["schemas"]["SearchPriceDto"] | null;
+    };
+    FareCalendarResponseDto: {
+      /** @example 2026-12 */
+      month: string;
+      /** @description Days inside the minimum notice are left out. */
+      days: components["schemas"]["FareCalendarDayDto"][];
+    };
+    BreakdownLineDto: {
+      /**
+       * @description `FLYING` is every flight (the legs, priced hourly, per sector or at a fixed route price, with any minimum billable hours, positioning, any return to base between them and Flyviman's markup) in one line; other codes as the engine sets them (`WAITING`, `OVERNIGHT`, `CREW`, `PARKING`, `FUEL_SURCHARGE`, `PERMIT`, `NAVIGATION`, `OTHER` under the operator's label, `LANDING_HANDLING`, `MIN_CHARGE`, `PLATFORM_FEE`, `SERVICE_FEE`, `DISCOUNT` as a negative amount under the promotion's name, `TAX`).
+       * @example FLYING
+       */
+      code: string;
+      label: string;
+      /** @description Paise. */
+      amountMinor: number;
+      basis?: string;
+    };
+    /**
+     * @description How a booking made from this result is handled: the category's configuration with the operator's override (C2). A booking from an estimate still waits for the operator.
+     * @enum {string}
+     */
+    BookingMode: "INSTANT" | "REQUEST";
+    SearchResultDetailDto: {
+      /** Format: uuid */
+      resultId: string;
+      aircraft: components["schemas"]["SearchAircraftDto"];
+      operatorName: string;
+      /** @description The flying the customer books: out and back for a round trip. */
+      distanceKm: number;
+      /** @description Out and back for a round trip. Null when unknown. */
+      flightMinutes: number | null;
+      tripType: components["schemas"]["SearchTripType"];
+      /**
+       * Format: date-time
+       * @description The return departure; null for a one-way trip.
+       */
+      returnAt: string | null;
+      /** @description How the round trip was priced: the aircraft waits at the destination, or returns to base between the flights. Null for a one-way trip or a price on request. */
+      roundTripStrategy: components["schemas"]["RoundTripStrategy"] | null;
+      /** @description Always an `ESTIMATE`. Null when the price is on request. */
+      price: components["schemas"]["SearchPriceDto"] | null;
+      /** @description True when the estimate leaves something out (landing, handling, positioning, waiting, tax and so on): the result detail lists what, under `exclusions`. False for a price on request. */
+      incomplete: boolean;
+      /** Format: date-time */
+      validUntil: string;
+      warnings: string[];
+      /** Format: uuid */
+      searchId: string;
+      legs: components["schemas"]["SearchLegDto"][];
+      passengerCount: number;
+      breakdown: components["schemas"]["BreakdownLineDto"][];
+      assumptions: string[];
+      /** @description What the estimate leaves out. */
+      exclusions: string[];
+      /** @description How a booking made from this result is handled: the category's configuration with the operator's override (C2). A booking from an estimate still waits for the operator. */
+      bookingMode: components["schemas"]["BookingMode"];
+      confirmationRequirements: string[];
+      /** @description Shown before the customer commits (business rule 9): `cancellationTerms.summary`, word for word. */
+      cancellationNote: string;
+      /** @description Flyviman's cancellation tiers, the same for every operator (D-172). Send `version` as `cancellationTermsVersion` with the booking request. */
+      cancellationTerms: components["schemas"]["CancellationTierTableDto"];
+    };
+    ApplyPromoCodeDto: {
+      /** @example WINTER10 */
+      code: string;
+    };
+    PromoPriceDto: {
+      priceType: components["schemas"]["PriceType"];
+      /** @description Paise, with the code applied. */
+      amountMinor: number;
+      /** @example INR */
+      currency: string;
+      /** Format: date-time */
+      validUntil: string;
+    };
+    PromoLineDto: {
+      code: string;
+      label: string;
+      amountMinor: number;
+    };
+    PromoPreviewResponseDto: {
+      /** @example WINTER10 */
+      code: string;
+      /** @description The label of the discount line. */
+      name: string;
+      /** @description Paise the code takes off this trip; 0 when it lowers nothing here (it is then not worth sending). */
+      amountOffMinor: number;
+      price: components["schemas"]["PromoPriceDto"];
+      breakdown: components["schemas"]["PromoLineDto"][];
+      assumptions: string[];
+    };
+    /**
+     * @description Platform setting. Operators may override it per category.
+     * @enum {string}
+     */
+    PaymentModel: "A_INSTANT" | "B_OPERATOR_CONFIRMED" | "C_DEPOSIT";
+    CategoryConfigResponseDto: {
+      category: components["schemas"]["ServiceCategory"];
+      /** @example IN */
+      region: string;
+      isEnabled: boolean;
+      /** @description Platform setting. Operators may override it per category; air ambulance is always REQUEST. */
+      bookingMode: components["schemas"]["BookingMode"];
+      /** @description Platform setting. Operators may override it per category. */
+      paymentModel: components["schemas"]["PaymentModel"];
+      /**
+       * @description The deposit taken under payment model C, in whole percent of the confirmed total, rounded up to the next paisa.
+       * @example 25
+       */
+      depositPercent: number;
+      /** Format: date-time */
+      updatedAt: string;
+    };
     CreateBookingDto: {
       /**
        * Format: uuid
@@ -6366,15 +6452,37 @@ export interface components {
       category: components["schemas"]["AircraftCategory"];
       passengerCapacity: number;
     };
+    ItineraryEmptyLegDto: {
+      /** Format: uuid */
+      id: string;
+      /** @example FLY-EL-7K2M9Q */
+      reference: string;
+      /**
+       * Format: date-time
+       * @description The end of the departure window; the leg’s `departureAt` is its start. The operator confirms the time.
+       */
+      departureTo: string;
+      /** @description The offer’s conditions as shown before the request. */
+      conditions: string;
+    };
     ItineraryDto: {
       /** @enum {number} */
       version: 1;
-      /** @enum {string} */
-      source: "SEARCH";
-      /** Format: uuid */
-      searchId: string;
-      /** Format: uuid */
-      resultId: string;
+      /**
+       * @description A search result, or an empty-leg offer (`emptyLeg`).
+       * @enum {string}
+       */
+      source: "SEARCH" | "EMPTY_LEG";
+      /**
+       * Format: uuid
+       * @description Null for an empty-leg booking.
+       */
+      searchId: string | null;
+      /**
+       * Format: uuid
+       * @description Null for an empty-leg booking.
+       */
+      resultId: string | null;
       tripType: components["schemas"]["SearchTripType"];
       passengerCount: number;
       /** @description One leg, or the outbound and the return. */
@@ -6384,6 +6492,8 @@ export interface components {
       operatorName: string;
       distanceKm: number;
       flightMinutes: number | null;
+      /** @description The offer, for an empty-leg booking; null otherwise. */
+      emptyLeg: components["schemas"]["ItineraryEmptyLegDto"] | null;
     };
     CancellationChargeDto: {
       minHoursBeforeDeparture: number;
@@ -6583,6 +6693,11 @@ export interface components {
        * @description The operations owner.
        */
       assignedToId: string | null;
+      /**
+       * Format: date-time
+       * @description Set while operations have the booking escalated.
+       */
+      escalatedAt: string | null;
       /** Format: date-time */
       createdAt: string;
     };
@@ -6595,7 +6710,10 @@ export interface components {
       | "NOTE"
       | "MESSAGE"
       | "CHANGE_REQUESTED"
-      | "CANCELLATION_REQUESTED";
+      | "CANCELLATION_REQUESTED"
+      | "ESCALATED"
+      | "ESCALATION_RESOLVED"
+      | "PASSENGERS_CHANGED";
     AdminBookingEventDto: {
       /** Format: uuid */
       id: string;
@@ -6605,7 +6723,7 @@ export interface components {
       /** Format: uuid */
       actorId: string | null;
       actorRole: components["schemas"]["Role"] | null;
-      /** @description The reason of a status override (also in the audit trail). */
+      /** @description The reason of a status override, an escalation or its resolution (also in the audit trail). */
       overrideReason: string | null;
       /** Format: date-time */
       createdAt: string;
@@ -6687,6 +6805,14 @@ export interface components {
       /** Format: date-time */
       createdAt: string;
     };
+    AdminBookingEscalationDto: {
+      /** Format: date-time */
+      escalatedAt: string;
+      /** @description The reason given (also in the audit trail). */
+      reason: string;
+      /** Format: uuid */
+      escalatedById: string | null;
+    };
     AdminBookingDetailDto: {
       /** @example FLY-BK-7K2M9Q */
       reference: string;
@@ -6712,6 +6838,11 @@ export interface components {
        * @description The operations owner.
        */
       assignedToId: string | null;
+      /**
+       * Format: date-time
+       * @description Set while operations have the booking escalated.
+       */
+      escalatedAt: string | null;
       /** Format: date-time */
       createdAt: string;
       bookingMode: components["schemas"]["BookingMode"];
@@ -6738,6 +6869,8 @@ export interface components {
       changeRequests: components["schemas"]["ChangeRequestResponseDto"][];
       /** @description Newest first. */
       payments: components["schemas"]["AdminBookingPaymentDto"][];
+      /** @description The open escalation, or null. */
+      escalation: components["schemas"]["AdminBookingEscalationDto"] | null;
     };
     AssignBookingDto: {
       /**
@@ -6964,6 +7097,54 @@ export interface components {
       /** @description Why you cannot fly it. Kept for you and Flyviman (stored encrypted); the customer is told the booking was cancelled. */
       reason: string;
     };
+    CreateEmptyLegBookingDto: {
+      /**
+       * Format: uuid
+       * @description From `GET /empty-legs`.
+       */
+      emptyLegId: string;
+      /** @description Who is flying; at most the offer’s `seatsAvailable`. */
+      passengerCount: number;
+      /** @description Paise: the offer’s price as the customer saw it. If the operator changed it since, 409 `BOOKING_PRICE_CHANGED` carries the new one in `details` (`totalMinor`, `currency`, `priceType`, `validUntil`); send it back with a new `Idempotency-Key` to agree to it. */
+      expectedTotalMinor: number;
+      /**
+       * @example INR
+       * @enum {string}
+       */
+      currency: "INR";
+      /** @description The `cancellationTerms.version` the offer detail showed (rule 9). If Flyviman's tiers have changed since, 409 `BOOKING_TERMS_CHANGED` carries the current `version` and `summary`. */
+      cancellationTermsVersion: number;
+      /** @description Saved passengers (`/me/passengers`) to copy onto the booking, at most `passengerCount`. May be left out and set later. */
+      passengerIds?: string[];
+      specialRequests?: string;
+    };
+    /**
+     * @description `CONFIRMATION`: the confirmed itinerary, from the booking (`GET /bookings/:reference`). `RECEIPT`: a payment whose money arrived (`GET /payments/:paymentReference/receipt`). `CANCELLATION_TERMS`: the terms the customer accepted when requesting (`cancellationTerms` on the booking).
+     * @enum {string}
+     */
+    BookingDocumentKind: "CONFIRMATION" | "RECEIPT" | "CANCELLATION_TERMS";
+    BookingDocumentDto: {
+      /** @description `CONFIRMATION`: the confirmed itinerary, from the booking (`GET /bookings/:reference`). `RECEIPT`: a payment whose money arrived (`GET /payments/:paymentReference/receipt`). `CANCELLATION_TERMS`: the terms the customer accepted when requesting (`cancellationTerms` on the booking). */
+      kind: components["schemas"]["BookingDocumentKind"];
+      /** @example Booking confirmation */
+      title: string;
+      /** @description Whether it can be opened now. The confirmation is listed before the booking is confirmed, unavailable, so the customer knows it is coming. */
+      available: boolean;
+      /**
+       * @description For a `RECEIPT`, the payment; null otherwise.
+       * @example FLY-PY-7K2M9Q
+       */
+      paymentReference: string | null;
+      /**
+       * Format: date-time
+       * @description When it was issued: confirmed, paid, or the terms accepted. Null while unavailable.
+       */
+      issuedAt: string | null;
+    };
+    BookingEscalationInputDto: {
+      /** @description Why the booking is escalated, or how the escalation was resolved. Kept on the timeline and in the audit trail; never put passenger or medical details here. */
+      reason: string;
+    };
     /** @enum {string} */
     CustomerEventKind:
       | "STATUS_CHANGED"
@@ -6972,7 +7153,8 @@ export interface components {
       | "QUESTION_ASKED"
       | "QUESTION_ANSWERED"
       | "CHANGE_REQUESTED"
-      | "CHANGE_REQUEST_ANSWERED";
+      | "CHANGE_REQUEST_ANSWERED"
+      | "PASSENGERS_UPDATED";
     /** @enum {string} */
     BookingEventActor: "YOU" | "OPERATOR" | "FLYVIMAN" | "SYSTEM";
     CustomerBookingEventDto: {
@@ -10739,256 +10921,6 @@ export interface operations {
       };
     };
   };
-  ScheduledSearchController_search: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        "application/json": components["schemas"]["ScheduledSearchDto"];
-      };
-    };
-    responses: {
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["ScheduledSearchResponseDto"];
-        };
-      };
-    };
-  };
-  ScheduledSearchController_revalidate: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        "application/json": components["schemas"]["RevalidateScheduledDto"];
-      };
-    };
-    responses: {
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["ScheduledRevalidationDto"];
-        };
-      };
-    };
-  };
-  ScheduledSearchController_get: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        searchId: string;
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["ScheduledSearchResponseDto"];
-        };
-      };
-    };
-  };
-  ScheduledSearchController_fareRules: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        searchId: string;
-        offerId: string;
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["ScheduledFareRulesDto"];
-        };
-      };
-    };
-  };
-  SearchController_charter: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        "application/json": components["schemas"]["CharterSearchDto"];
-      };
-    };
-    responses: {
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["SearchResponseDto"];
-        };
-      };
-    };
-  };
-  SearchController_helicopter: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        "application/json": components["schemas"]["HelicopterSearchDto"];
-      };
-    };
-    responses: {
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["SearchResponseDto"];
-        };
-      };
-    };
-  };
-  SearchController_calendar: {
-    parameters: {
-      query: {
-        category: "PRIVATE_CHARTER" | "HELICOPTER";
-        originId: string;
-        destinationId: string;
-        /** @description YYYY-MM. */
-        month: string;
-        passengerCount: number;
-        aircraftCategory?: components["schemas"]["CharterCategory"];
-      };
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["FareCalendarResponseDto"];
-        };
-      };
-    };
-  };
-  SearchController_get: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        searchId: string;
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["SearchResponseDto"];
-        };
-      };
-    };
-  };
-  SearchController_result: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        searchId: string;
-        resultId: string;
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["SearchResultDetailDto"];
-        };
-      };
-    };
-  };
-  SearchController_promoCode: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        searchId: string;
-        resultId: string;
-      };
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        "application/json": components["schemas"]["ApplyPromoCodeDto"];
-      };
-    };
-    responses: {
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["PromoPreviewResponseDto"];
-        };
-      };
-    };
-  };
-  AdminCategoryConfigController_list: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["CategoryConfigResponseDto"][];
-        };
-      };
-    };
-  };
   OperatorPricingController_getOperator: {
     parameters: {
       query?: never;
@@ -11403,6 +11335,256 @@ export interface operations {
       };
     };
   };
+  ScheduledSearchController_search: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["ScheduledSearchDto"];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ScheduledSearchResponseDto"];
+        };
+      };
+    };
+  };
+  ScheduledSearchController_revalidate: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["RevalidateScheduledDto"];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ScheduledRevalidationDto"];
+        };
+      };
+    };
+  };
+  ScheduledSearchController_get: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        searchId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ScheduledSearchResponseDto"];
+        };
+      };
+    };
+  };
+  ScheduledSearchController_fareRules: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        searchId: string;
+        offerId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ScheduledFareRulesDto"];
+        };
+      };
+    };
+  };
+  SearchController_charter: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["CharterSearchDto"];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["SearchResponseDto"];
+        };
+      };
+    };
+  };
+  SearchController_helicopter: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["HelicopterSearchDto"];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["SearchResponseDto"];
+        };
+      };
+    };
+  };
+  SearchController_calendar: {
+    parameters: {
+      query: {
+        category: "PRIVATE_CHARTER" | "HELICOPTER";
+        originId: string;
+        destinationId: string;
+        /** @description YYYY-MM. */
+        month: string;
+        passengerCount: number;
+        aircraftCategory?: components["schemas"]["CharterCategory"];
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["FareCalendarResponseDto"];
+        };
+      };
+    };
+  };
+  SearchController_get: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        searchId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["SearchResponseDto"];
+        };
+      };
+    };
+  };
+  SearchController_result: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        searchId: string;
+        resultId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["SearchResultDetailDto"];
+        };
+      };
+    };
+  };
+  SearchController_promoCode: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        searchId: string;
+        resultId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["ApplyPromoCodeDto"];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["PromoPreviewResponseDto"];
+        };
+      };
+    };
+  };
+  AdminCategoryConfigController_list: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["CategoryConfigResponseDto"][];
+        };
+      };
+    };
+  };
   BookingsController_create: {
     parameters: {
       query?: never;
@@ -11682,6 +11864,8 @@ export interface operations {
         from?: string;
         /** @description Requested before. */
         to?: string;
+        /** @description `true`: only bookings operations have escalated (M8-C). */
+        escalated?: "true";
       };
       header?: never;
       path?: never;
@@ -12222,6 +12406,103 @@ export interface operations {
         };
         content: {
           "application/json": components["schemas"]["OperatorBookingDetailDto"];
+        };
+      };
+    };
+  };
+  EmptyLegBookingsController_create: {
+    parameters: {
+      query?: never;
+      header: {
+        /** @description A UUID, new for each booking request and reused on retry. */
+        "Idempotency-Key": string;
+      };
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["CreateEmptyLegBookingDto"];
+      };
+    };
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["BookingCreatedDto"];
+        };
+      };
+    };
+  };
+  BookingDocumentsController_list: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        reference: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["BookingDocumentDto"][];
+        };
+      };
+    };
+  };
+  AdminBookingEscalationController_escalate: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        reference: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["BookingEscalationInputDto"];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["AdminBookingDetailDto"];
+        };
+      };
+    };
+  };
+  AdminBookingEscalationController_resolve: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        reference: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["BookingEscalationInputDto"];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["AdminBookingDetailDto"];
         };
       };
     };

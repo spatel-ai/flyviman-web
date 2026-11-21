@@ -106,6 +106,9 @@ export function buildTimeline(events: readonly Event[]): TimelineEntry[] {
             note: event.note ?? undefined,
           },
         ];
+      case "PASSENGERS_UPDATED":
+        // Counts only reach the timeline; no names.
+        return [{ ...base, label: "Passengers updated" }];
       default:
         return [];
     }

@@ -30,3 +30,14 @@ export const decideSchema = z.object({
 export type OverrideValues = z.input<typeof overrideSchema>;
 export type NoteValues = z.input<typeof noteSchema>;
 export type DecideValues = z.input<typeof decideSchema>;
+
+// The API's limits for an escalation's reason or resolution: 3 to 500.
+export const escalationSchema = z.object({
+  reason: z
+    .string()
+    .trim()
+    .min(3, "Give a reason of at least 3 characters.")
+    .max(500, "Use at most 500 characters."),
+});
+
+export type EscalationValues = z.input<typeof escalationSchema>;

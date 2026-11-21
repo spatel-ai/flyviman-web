@@ -8,6 +8,7 @@ import { EmptyState } from "@/components/shared/empty-state";
 import { LoadError } from "@/components/shared/load-error";
 import { PriceLabel } from "@/components/shared/price-label";
 import { StatusBadge } from "@/components/shared/status-badge";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -31,6 +32,7 @@ import {
   CATEGORY_OPTIONS,
   categoryName,
   DEFAULT_FILTER,
+  ESCALATION_OPTIONS,
   isFiltered,
   PAGE_SIZE,
   parseBookingFilter,
@@ -136,6 +138,15 @@ export function BookingsList() {
           }
           className="h-10 w-48 max-w-full"
         />
+        <Select
+          label="Escalation"
+          options={ESCALATION_OPTIONS}
+          value={filter.escalated ? "ESCALATED" : "ALL"}
+          onValueChange={(value) =>
+            show({ ...filter, escalated: value === "ESCALATED", page: 1 })
+          }
+          className="h-10 w-44 max-w-full"
+        />
         <Input
           label="Requested from"
           type="date"
@@ -224,6 +235,11 @@ export function BookingsList() {
                             <span className="block text-caption text-muted">
                               {categoryName(row.category)}
                             </span>
+                            {row.escalatedAt ? (
+                              <Badge tone="danger" className="mt-1">
+                                Escalated
+                              </Badge>
+                            ) : null}
                           </TableCell>
                           <TableCell>
                             {row.originName} to {row.destinationName}
@@ -279,6 +295,9 @@ export function BookingsList() {
                           {row.customer.email ?? row.customer.phone ?? "-"}
                         </p>
                         <div className="flex flex-wrap gap-2">
+                          {row.escalatedAt ? (
+                            <Badge tone="danger">Escalated</Badge>
+                          ) : null}
                           <StatusBadge kind="booking" status={row.status} />
                           <StatusBadge
                             kind="payment"

@@ -33,6 +33,8 @@ const EVENTS: Record<string, string> = {
   MESSAGE: "Message",
   CHANGE_REQUESTED: "Change requested",
   CANCELLATION_REQUESTED: "Cancellation requested",
+  ESCALATED: "Escalated",
+  ESCALATION_RESOLVED: "Escalation resolved",
 };
 
 /** An unknown event type from a newer API shows as sent. */

@@ -19,6 +19,7 @@ import type { Schemas } from "@/lib/api/types";
 import { formatDateTime, formatDay } from "@/lib/format/date";
 import { categoryName, STATUS_LABELS } from "./filters";
 import { ChangeRequestCard } from "./change-request-card";
+import { EscalationBanner, EscalationControl } from "./escalation";
 import { Notes } from "./notes";
 import { OverrideDialog } from "./override-dialog";
 import { OwnerControl } from "./owner-control";
@@ -124,7 +125,10 @@ function Loaded({
         <span className="text-body-sm text-muted">
           {categoryName(booking.category)}
         </span>
+        {booking.escalation ? <Badge tone="danger">Escalated</Badge> : null}
       </div>
+
+      <EscalationBanner booking={booking} />
 
       {isPaidNotConfirmed(booking) ? (
         <div
@@ -153,7 +157,9 @@ function Loaded({
                   {leg.originName} to {leg.destinationName}
                 </span>
                 <span className="block text-muted">
-                  Departs {formatDateTime(leg.departureAt)}
+                  {itinerary.emptyLeg
+                    ? `Empty leg ${itinerary.emptyLeg.reference}: between ${formatDateTime(leg.departureAt)} and ${formatDateTime(itinerary.emptyLeg.departureTo)}`
+                    : `Departs ${formatDateTime(leg.departureAt)}`}
                 </span>
               </li>
             ))}
@@ -221,7 +227,7 @@ function Loaded({
             assignedToId={booking.assignedToId}
             viewerId={viewerId}
           />
-          <div>
+          <div className="flex flex-wrap gap-3">
             <Button
               variant="secondary"
               className="h-10"
@@ -229,6 +235,7 @@ function Loaded({
             >
               Override status
             </Button>
+            <EscalationControl booking={booking} />
           </div>
           <OverrideDialog
             booking={booking}
