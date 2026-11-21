@@ -33,8 +33,8 @@ import {
   formatAddress,
   formatDay,
   missingLabel,
-  serviceLabel,
 } from "./labels";
+import { serviceLabel } from "@/lib/format/labels";
 import { useMe } from "@/lib/api/use-me";
 import { OperatorPricingPanel } from "./operator-pricing";
 

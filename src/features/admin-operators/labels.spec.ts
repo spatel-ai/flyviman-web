@@ -4,7 +4,6 @@ import {
   formatAddress,
   formatDay,
   missingLabel,
-  serviceLabel,
 } from "./labels";
 
 describe("labels", () => {
@@ -14,11 +13,6 @@ describe("labels", () => {
     expect(documentTypeLabel("REGISTRATION")).toBe("Company registration");
     expect(documentTypeLabel("OTHER")).toBe("Other");
     expect(documentTypeLabel("NEW_TYPE")).toBe("NEW_TYPE");
-  });
-
-  it("names services", () => {
-    expect(serviceLabel("PRIVATE_CHARTER")).toBe("Private charter");
-    expect(serviceLabel("toString")).toBe("toString");
   });
 
   it("words what is still missing", () => {

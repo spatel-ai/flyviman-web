@@ -33,6 +33,7 @@ export const queryKeys = {
   operatorDocuments: ["operator", "documents"] as const,
   adminOperators: (filter: object) => ["admin", "operators", filter] as const,
   adminOperator: (id: string) => ["admin", "operators", id] as const,
+  adminUsersAll: ["admin", "users"] as const,
   adminUsers: (filter: object) => ["admin", "users", filter] as const,
   adminRoles: ["admin", "roles"] as const,
   /** Prefix of every admin booking key (lists and details). */
@@ -49,6 +50,7 @@ export const queryKeys = {
   adminEnquiry: (id: string) => ["admin", "enquiries", id] as const,
   /** Every content key starts with ["admin", "content"]. */
   adminContent: (part: string) => ["admin", "content", part] as const,
+  adminPaymentsAll: ["admin", "payments"] as const,
   adminPayments: (filter: object) => ["admin", "payments", filter] as const,
   /** Every refund key starts with ["admin", "refunds"]. */
   adminRefundsAll: ["admin", "refunds"] as const,
@@ -111,6 +113,7 @@ export const queryKeys = {
   adminAircraftAll: ["admin", "aircraft"] as const,
   adminAircraft: (status: string) => ["admin", "aircraft", status] as const,
   adminAircraftDetail: (id: string) => ["admin", "aircraft", id] as const,
+  emptyLegsAll: ["empty-legs"] as const,
   emptyLegs: (filter: string) => ["empty-legs", "list", filter] as const,
   emptyLeg: (id: string) => ["empty-legs", "one", id] as const,
   operatorEmptyLegs: ["operator", "empty-legs"] as const,

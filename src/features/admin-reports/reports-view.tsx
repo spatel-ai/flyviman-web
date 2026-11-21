@@ -10,11 +10,11 @@ import { buttonClasses } from "@/components/ui/button-classes";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { serviceLabel } from "@/features/admin-operators/labels";
 import { apiFetch, apiUrl } from "@/lib/api/client";
 import { queryKeys } from "@/lib/api/query-keys";
 import type { Role, Schemas } from "@/lib/api/types";
 import { formatDay } from "@/lib/format/date";
+import { serviceLabel } from "@/lib/format/labels";
 import {
   AirAmbulanceBody,
   BookingsBody,
@@ -45,27 +45,45 @@ const CATEGORIES = [
 
 const ALL = "ALL";
 
-function render(report: ReportFilter["report"], data: unknown): ReactNode {
-  switch (report) {
-    case "overview":
-      return <OverviewBody data={data as Schemas["OverviewReportDto"]} />;
-    case "search":
-      return <SearchBody data={data as Schemas["SearchReportDto"]} />;
-    case "bookings":
-      return <BookingsBody data={data as Schemas["BookingReportDto"]} />;
-    case "revenue":
-      return <RevenueBody data={data as Schemas["RevenueReportDto"]} />;
-    case "payments":
-      return <PaymentsBody data={data as Schemas["PaymentReportDto"]} />;
-    case "operators":
-      return <OperatorsBody data={data as Schemas["OperatorReportDto"]} />;
-    case "empty-legs":
-      return <EmptyLegsBody data={data as Schemas["EmptyLegReportDto"]} />;
-    case "air-ambulance":
-      return (
-        <AirAmbulanceBody data={data as Schemas["AirAmbulanceReportDto"]} />
-      );
-  }
+type ReportBodies = {
+  overview: Schemas["OverviewReportDto"];
+  search: Schemas["SearchReportDto"];
+  bookings: Schemas["BookingReportDto"];
+  revenue: Schemas["RevenueReportDto"];
+  payments: Schemas["PaymentReportDto"];
+  operators: Schemas["OperatorReportDto"];
+  "empty-legs": Schemas["EmptyLegReportDto"];
+  "air-ambulance": Schemas["AirAmbulanceReportDto"];
+};
+
+type Renderers = {
+  [K in keyof ReportBodies]: (data: ReportBodies[K]) => ReactNode;
+};
+
+const RENDERERS: Renderers = {
+  overview: (data) => <OverviewBody data={data} />,
+  search: (data) => <SearchBody data={data} />,
+  bookings: (data) => <BookingsBody data={data} />,
+  revenue: (data) => <RevenueBody data={data} />,
+  payments: (data) => <PaymentsBody data={data} />,
+  operators: (data) => <OperatorsBody data={data} />,
+  "empty-legs": (data) => <EmptyLegsBody data={data} />,
+  "air-ambulance": (data) => <AirAmbulanceBody data={data} />,
+};
+
+async function fetchReport<K extends keyof ReportBodies>(
+  report: K,
+  query: ReturnType<typeof reportQuery>,
+): Promise<ReportBodies[K]> {
+  return (await apiFetch<ReportBodies[K]>(`admin/reports/${report}`, { query }))
+    .data;
+}
+
+function render<K extends keyof ReportBodies>(
+  report: K,
+  data: ReportBodies[K],
+): ReactNode {
+  return RENDERERS[report](data);
 }
 
 /** The reports a role may open, with a period and filters in the URL. */
@@ -79,9 +97,7 @@ export function ReportsView({ role }: { role: Role }) {
 
   const { data, isPending, isError, error, refetch } = useQuery({
     queryKey: queryKeys.adminReport(filter.report, query),
-    queryFn: async () =>
-      (await apiFetch<unknown>(`admin/reports/${filter.report}`, { query }))
-        .data,
+    queryFn: () => fetchReport(filter.report, query),
   });
 
   function show(next: ReportFilter) {
@@ -117,7 +133,7 @@ export function ReportsView({ role }: { role: Role }) {
       <p className="text-body-sm text-muted">
         {formatDay(filter.from)} to {formatDay(filter.to)}, India time. These
         are totals of confirmed and actual amounts, not prices on offer, so they
-        carry no price label.
+        are labelled as confirmed.
       </p>
 
       {isError ? (

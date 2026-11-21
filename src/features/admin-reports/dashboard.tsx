@@ -8,14 +8,8 @@ import { apiFetch } from "@/lib/api/client";
 import { queryKeys } from "@/lib/api/query-keys";
 import type { Role, Schemas } from "@/lib/api/types";
 import { formatDay } from "@/lib/format/date";
-import { formatMoney } from "@/lib/format/money";
 import { defaultPeriod } from "./filters";
-
-function money(amounts: Schemas["MoneyTotalDto"][]): string {
-  return amounts.length === 0
-    ? "—"
-    : amounts.map((a) => formatMoney(a.amountMinor, a.currency)).join(" · ");
-}
+import { MoneyLines } from "./parts";
 
 /** Headline figures for the last 30 days and the current queues. */
 export function AdminDashboard({ role }: { role: Role }) {
@@ -85,7 +79,7 @@ export function AdminDashboard({ role }: { role: Role }) {
               href="/admin/refunds"
               label="Refunds due"
               value={finance.refundsDue.count}
-              caption={money(finance.refundsDue.amounts)}
+              caption={<MoneyLines amounts={finance.refundsDue.amounts} />}
             />
           ) : null}
         </div>
@@ -116,18 +110,18 @@ export function AdminDashboard({ role }: { role: Role }) {
                 href="/admin/payments"
                 label="Payments taken"
                 value={finance.paymentsTaken.count}
-                caption={money(finance.paymentsTaken.amounts)}
+                caption={<MoneyLines amounts={finance.paymentsTaken.amounts} />}
               />
               <StatTile
                 href={reportHref("revenue", fin)}
                 label="Confirmed booking value"
-                value={money(finance.confirmedBookingValue)}
+                value={<MoneyLines amounts={finance.confirmedBookingValue} />}
                 caption="Actual, confirmed bookings"
               />
               <StatTile
                 href={reportHref("revenue", fin)}
                 label="Flyviman revenue"
-                value={money(finance.platformRevenue)}
+                value={<MoneyLines amounts={finance.platformRevenue} />}
                 caption="Before tax"
               />
             </>

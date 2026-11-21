@@ -55,9 +55,6 @@ import { useMe } from "@/lib/api/use-me";
 
 type AdminUser = Schemas["AdminUserResponseDto"];
 
-// Every user list query sits under this prefix.
-const USER_QUERIES = queryKeys.adminUsers({}).slice(0, 2);
-
 const COLUMNS = ["Email / phone", "Role", "Status", "Last sign-in", "Created"];
 
 function statusErrorMessage(error: unknown): string {
@@ -113,14 +110,14 @@ export function UsersList() {
         body: { status: ROW_ACTIONS[action].status, reason },
       }),
     onSuccess: (_result, { action }) => {
-      void queryClient.invalidateQueries({ queryKey: USER_QUERIES });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.adminUsersAll });
       setTarget(null);
       toast({ title: ROW_ACTIONS[action].done, tone: "success" });
     },
     onError: (failure) => {
       setTarget(null);
       setProblem(statusErrorMessage(failure));
-      void queryClient.invalidateQueries({ queryKey: USER_QUERIES });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.adminUsersAll });
     },
   });
 
@@ -131,14 +128,14 @@ export function UsersList() {
         { method: "POST", body: { reason } },
       ),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: USER_QUERIES });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.adminUsersAll });
       setEraseTarget(null);
       toast({ title: "Personal data erased", tone: "success" });
     },
     onError: (failure) => {
       setEraseTarget(null);
       setProblem(eraseErrorMessage(failure));
-      void queryClient.invalidateQueries({ queryKey: USER_QUERIES });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.adminUsersAll });
     },
   });
 

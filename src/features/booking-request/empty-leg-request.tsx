@@ -175,7 +175,7 @@ function RequestForm({
     },
     onSuccess: async ({ data }) => {
       await queryClient.invalidateQueries({ queryKey: queryKeys.tripsAll });
-      await queryClient.invalidateQueries({ queryKey: ["empty-legs"] });
+      await queryClient.invalidateQueries({ queryKey: queryKeys.emptyLegsAll });
       router.push(`/account/trips/${data.reference}`);
     },
     onError: async (failure, sent) => {

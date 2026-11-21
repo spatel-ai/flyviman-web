@@ -9,11 +9,9 @@ import { useToast } from "@/components/ui/toast";
 import { apiFetch } from "@/lib/api/client";
 import { messageFor } from "@/lib/api/messages";
 import { queryKeys } from "@/lib/api/query-keys";
+import type { Schemas } from "@/lib/api/types";
 
-interface Preferences {
-  smsOptedOut: boolean;
-  whatsappOptedOut: boolean;
-}
+type Preferences = Schemas["NotificationPreferencesResponseDto"];
 
 /** SMS and WhatsApp opt-outs, shared by the customer and operator pages. */
 export function MessagePreferences() {

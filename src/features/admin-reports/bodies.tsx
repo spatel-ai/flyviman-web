@@ -1,9 +1,15 @@
 import { StatusBadge } from "@/components/shared/status-badge";
-import { serviceLabel } from "@/features/admin-operators/labels";
 import type { Schemas } from "@/lib/api/types";
-import { formatMoney } from "@/lib/format/money";
+import { serviceLabel } from "@/lib/format/labels";
 import { formatMinutes, formatRate, humanise } from "./filters";
-import { DataTable, Figure, FigureGrid, MoneyLines, Section } from "./parts";
+import {
+  DataTable,
+  Figure,
+  FigureGrid,
+  MoneyAmount,
+  MoneyLines,
+  Section,
+} from "./parts";
 
 type S = Schemas;
 
@@ -219,10 +225,26 @@ export function BookingsBody({ data }: { data: S["BookingReportDto"] }) {
 export function RevenueBody({ data }: { data: S["RevenueReportDto"] }) {
   const cells = (f: S["RevenueFiguresDto"]) => [
     f.bookings,
-    formatMoney(f.grossValueMinor, f.currency),
-    formatMoney(f.taxMinor, f.currency),
-    formatMoney(f.operatorPayableMinor, f.currency),
-    formatMoney(f.platformRevenueMinor, f.currency),
+    <MoneyAmount
+      key="grossValueMinor"
+      amountMinor={f.grossValueMinor}
+      currency={f.currency}
+    />,
+    <MoneyAmount
+      key="taxMinor"
+      amountMinor={f.taxMinor}
+      currency={f.currency}
+    />,
+    <MoneyAmount
+      key="operatorPayableMinor"
+      amountMinor={f.operatorPayableMinor}
+      currency={f.currency}
+    />,
+    <MoneyAmount
+      key="platformRevenueMinor"
+      amountMinor={f.platformRevenueMinor}
+      currency={f.currency}
+    />,
     f.withoutCalculation,
   ];
   const columns = [

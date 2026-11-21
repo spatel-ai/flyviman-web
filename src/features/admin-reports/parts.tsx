@@ -8,17 +8,39 @@ import {
   TableHeaderCell,
   TableRow,
 } from "@/components/ui/table";
+import { PriceLabel } from "@/components/shared/price-label";
 import type { Schemas } from "@/lib/api/types";
-import { formatMoney } from "@/lib/format/money";
 
 export type Money = Schemas["MoneyTotalDto"];
+
+/** A report amount: a sum of confirmed or actual money, labelled as such. */
+export function MoneyAmount({
+  amountMinor,
+  currency,
+}: {
+  amountMinor: number;
+  currency: string;
+}): ReactNode {
+  return (
+    <PriceLabel
+      amountMinor={amountMinor}
+      currency={currency}
+      priceType="CONFIRMED"
+      variant="compact"
+      className="items-start"
+    />
+  );
+}
 
 /** Amounts per currency, one per line; "—" when there are none. */
 export function MoneyLines({ amounts }: { amounts: Money[] }): ReactNode {
   if (amounts.length === 0) return "—";
   return amounts.map((amount) => (
     <span key={amount.currency} className="block">
-      {formatMoney(amount.amountMinor, amount.currency)}
+      <MoneyAmount
+        amountMinor={amount.amountMinor}
+        currency={amount.currency}
+      />
     </span>
   ));
 }

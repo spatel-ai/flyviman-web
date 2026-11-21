@@ -3,14 +3,6 @@ import type { Schemas } from "@/lib/api/types";
 
 type Address = Schemas["AddressDto"];
 
-const SERVICES: Record<Schemas["ServiceCategory"], string> = {
-  SCHEDULED_AIRLINE: "Scheduled airline",
-  PRIVATE_CHARTER: "Private charter",
-  HELICOPTER: "Helicopter",
-  EMPTY_LEG: "Empty legs",
-  AIR_AMBULANCE: "Air ambulance",
-};
-
 const MISSING: Record<string, string> = {
   registrationNumber: "Registration number",
   businessAddress: "Business address",
@@ -22,10 +14,6 @@ function known(map: Record<string, string>, key: string): string | undefined {
 }
 
 export const documentTypeLabel = operatorDocumentLabel;
-
-export function serviceLabel(category: string): string {
-  return known(SERVICES, category) ?? category;
-}
 
 /** Wording for an entry of the API's `missing` list, such as `document:AOC`. */
 export function missingLabel(item: string): string {

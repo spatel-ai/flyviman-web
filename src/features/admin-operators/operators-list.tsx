@@ -36,7 +36,7 @@ import {
   type StatusFilter,
 } from "./filters";
 import { InlineError } from "@/components/shared/inline-error";
-import { serviceLabel } from "./labels";
+import { serviceLabel } from "@/lib/format/labels";
 
 type OperatorSummary = Schemas["AdminOperatorSummaryDto"];
 
