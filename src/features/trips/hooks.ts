@@ -38,3 +38,16 @@ export function useMessages(reference: string) {
       ).data,
   });
 }
+
+/** The trip's timeline, as the API lists it for the customer. */
+export function useEvents(reference: string) {
+  return useQuery({
+    queryKey: queryKeys.bookingEvents(reference),
+    queryFn: async () =>
+      (
+        await apiFetch<Schemas["CustomerBookingEventDto"][]>(
+          `bookings/${encodeURIComponent(reference)}/events`,
+        )
+      ).data,
+  });
+}

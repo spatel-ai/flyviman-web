@@ -12,6 +12,8 @@ export const queryKeys = {
     ["bookings", reference, "quotes"] as const,
   bookingMessages: (reference: string) =>
     ["bookings", reference, "messages"] as const,
+  bookingEvents: (reference: string) =>
+    ["bookings", reference, "events"] as const,
   paymentReceipt: (reference: string) =>
     ["payments", reference, "receipt"] as const,
   bookingPayments: (reference: string) =>
@@ -52,11 +54,21 @@ export const queryKeys = {
   adminRefunds: (page: number) =>
     ["admin", "refunds", "history", page] as const,
   adminRefundsDue: (page: number) => ["admin", "refunds", "due", page] as const,
+  adminReport: (report: string, filter: object) =>
+    ["admin", "reports", report, filter] as const,
+  /** Every settlement key starts with ["admin", "settlements"]. */
+  adminSettlementsAll: ["admin", "settlements"] as const,
+  adminSettlements: (filter: object) =>
+    ["admin", "settlements", filter] as const,
+  adminReconciliation: (period: object) =>
+    ["admin", "reconciliation", period] as const,
   adminAuditLogs: (filter: object) => ["admin", "audit-logs", filter] as const,
   adminLocations: (filter: object) => ["admin", "locations", filter] as const,
   adminExpiringDocuments: (filter: object) =>
     ["admin", "documents", "expiring", filter] as const,
   operatorDashboard: ["operator", "dashboard"] as const,
+  operatorSettlements: (page: number) =>
+    ["operator", "settlements", page] as const,
   operatorAircraft: ["operator", "aircraft"] as const,
   operatorAircraftDetail: (id: string) => ["operator", "aircraft", id] as const,
   /** Every aircraft in reach, for pickers (under the operatorAircraft prefix). */
@@ -67,6 +79,12 @@ export const queryKeys = {
   operatorRequestsAll: ["operator", "requests"] as const,
   operatorRequest: (reference: string) =>
     ["operator", "requests", "one", reference] as const,
+  /** Every operator booking key starts with ["operator", "bookings"]. */
+  operatorBookings: (filter: object) =>
+    ["operator", "bookings", "list", filter] as const,
+  operatorBookingsAll: ["operator", "bookings"] as const,
+  operatorBooking: (reference: string) =>
+    ["operator", "bookings", "one", reference] as const,
   operatorStaff: ["operator", "staff"] as const,
   operatorPricing: ["operator", "pricing"] as const,
   operatorRestrictions: ["operator", "restrictions"] as const,

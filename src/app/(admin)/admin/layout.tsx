@@ -76,6 +76,16 @@ const NAV: (NavItem & { roles: Role[] })[] = [
     roles: ["FINANCE_ADMIN", "SUPER_ADMIN"],
   },
   {
+    href: "/admin/settlements",
+    label: "Settlements",
+    roles: ["FINANCE_ADMIN", "SUPER_ADMIN"],
+  },
+  {
+    href: "/admin/reconciliation",
+    label: "Reconciliation",
+    roles: ["FINANCE_ADMIN", "SUPER_ADMIN"],
+  },
+  {
     href: "/admin/enquiries",
     label: "Enquiries",
     roles: ["OPS", "SUPER_ADMIN"],
@@ -83,6 +93,7 @@ const NAV: (NavItem & { roles: Role[] })[] = [
   { href: "/admin/content", label: "Content", roles: ["OPS", "SUPER_ADMIN"] },
   { href: "/admin/users", label: "Users", roles: ["OPS", "SUPER_ADMIN"] },
   { href: "/admin/roles", label: "Roles", roles: ["SUPER_ADMIN"] },
+  { href: "/admin/reports", label: "Reports", roles: INTERNAL },
   { href: "/admin/audit-logs", label: "Audit log", roles: INTERNAL },
   {
     href: "/admin/notifications",

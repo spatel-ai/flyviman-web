@@ -2803,6 +2803,86 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/operator/bookings": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Bookings on your aircraft, newest first
+     * @description By default the upcoming trips (`CONFIRMED`, `SCHEDULED`); filter by `status`, `aircraftId` and the first departure (`departureFrom`, `departureTo`). Each carries `status` and `paymentStatus` separately, and the customer’s total with its `priceType`. No passenger data.
+     */
+    get: operations["OperatorBookingsController_list"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/operator/bookings/{reference}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * A booking: trip, statuses, terms, manifest and what you can do
+     * @description The manifest (`passengers`, names only) is shown once the booking is `CONFIRMED`, `SCHEDULED` or `COMPLETED`. `actions` says which moves are open now.
+     */
+    get: operations["OperatorBookingsController_detail"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/operator/bookings/{reference}/status": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    /**
+     * Mark a booking scheduled or completed
+     * @description `CONFIRMED` → `SCHEDULED`; `SCHEDULED` → `COMPLETED` once the last leg has departed. 409 `BOOKING_INVALID_TRANSITION` from any other status, before departure, or when the booking changed meanwhile. Audited, on the booking’s timeline.
+     */
+    patch: operations["OperatorBookingsController_changeStatus"];
+    trace?: never;
+  };
+  "/api/v1/operator/bookings/{reference}/cancel": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Cancel a booking you cannot fly, with a reason
+     * @description From any status before `COMPLETED`. Moves the booking to `CANCELLED` at once, releases the aircraft’s hold, closes any open quote and change request, and records a completed cancellation with no charge: everything the customer paid is recorded as due back, for Flyviman finance to refund (nothing is refunded here). The reason is kept for you and Flyviman, stored encrypted; the customer is told the booking was cancelled. 409 `BOOKING_NOT_CANCELLABLE` once completed or closed; 409 `BOOKING_PAYMENT_IN_PROGRESS` while a payment waits for the gateway’s final answer. Audited. A repeat with the same `Idempotency-Key` and body returns the first answer.
+     */
+    post: operations["OperatorBookingsController_cancel"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/v1/bookings/empty-leg": {
     parameters: {
       query?: never;
@@ -2877,6 +2957,66 @@ export interface paths {
      * @description Clears the flag. `reason` (3–500 characters) says how it was resolved; kept on the timeline and in the audit trail (`booking.escalation_resolve`). 409 `BOOKING_ESCALATION_CONFLICT` when it is not escalated.
      */
     post: operations["AdminBookingEscalationController_resolve"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/bookings/{reference}/events": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * The booking’s timeline as the customer sees it, oldest first
+     * @description Status changes, quotes sent (with the quoted total as a `QUOTE`), payment status changes, the operator’s questions and the customer’s answers (the words are in `GET /bookings/:reference/messages`), change requests with their details and the answers with their notes. Never internal notes, the operator’s reasons, override reasons or who did it beyond `YOU`, `OPERATOR`, `FLYVIMAN` or `SYSTEM`. Another customer’s booking is 404.
+     */
+    get: operations["BookingSelfServiceController_events"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/bookings/{reference}/passengers": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    /**
+     * Replace the booking’s passengers with saved passengers
+     * @description Copies the saved passengers (`passengerIds`, the caller’s own, 404 otherwise) onto the booking as they are now, replacing those it had: at least one, at most the trip’s passenger count (400 `VALIDATION_ERROR`). Only from `REQUESTED` up to `CONFIRMED` and until 24 hours before the first departure: 409 `BOOKING_PASSENGERS_LOCKED` otherwise. Document numbers and assistance notes are stored encrypted; audited with passenger counts only. The booking’s operator, if any, is told (`booking.passengers_changed`, in-app and email, the count only). Answers the reference and the passenger count only (`GET /bookings/:reference` has the details). A repeat with the same `Idempotency-Key` and body returns the first answer. Another customer’s booking is 404.
+     */
+    put: operations["BookingSelfServiceController_replacePassengers"];
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/bookings/{reference}/revalidate": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Check the booking again before paying (rule 3)
+     * @description Whether the trip can still be flown as booked (the trip ahead, the operator and aircraft approved and in service, the held time free), with the same check the confirmation rule makes; `reason` when not (`CLOSED` for a booking completed, cancelled or otherwise ended). Answers the labelled price, `priceExpired` for an estimate past its validity, and `amountDue` (null when the trip is not available). A `CONFIRMED` price is never repriced. Nothing is written. Another customer’s booking is 404.
+     */
+    post: operations["BookingSelfServiceController_revalidate"];
     delete?: never;
     options?: never;
     head?: never;
@@ -3059,6 +3199,86 @@ export interface paths {
      * @description Oldest first. `CANCELLATION`: a cancelled booking’s refund due (paid less the charge, recorded at cancellation) less refunds made since, spread over its payments; `BOOKING_CLOSED`: a payment that succeeded after the booking expired or was cancelled, or for a booking that could not be confirmed because the trip can no longer be flown as booked; `ALREADY_PAID`: a second payment for a paid booking. Each row is one payment with `dueMinor` to refund; a row leaves the queue once refunds completed or under way cover it. Nothing is refunded automatically. Payments flagged `AMOUNT_MISMATCH` or `DUPLICATE_CAPTURE` are not listed: their extra money is not on a payment this API can refund.
      */
     get: operations["AdminPaymentsController_due"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/admin/settlements": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Operator settlements, newest first
+     * @description One per completed booking with money kept, created by a job every 5 minutes: `payableMinor` = money kept − `commissionMinor` − `taxMinor`, from the price calculation of the price booked. `DUE` once the booking is `COMPLETED` and its price was paid in full, no refund is on its way and the figures add up to the money kept; otherwise `NOT_DUE`, with `notDueReason`. A refund after the trip comes out of the payable; one larger than the payable leaves it `NOT_DUE` (“Refund exceeds payable — finance to resolve.”). Filter by `status`.
+     */
+    get: operations["AdminSettlementsController_list"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/admin/settlements/{id}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    /**
+     * Hold, release or mark a settlement paid
+     * @description `ON_HOLD` from `NOT_DUE` or `DUE`; `DUE` from `ON_HOLD` releases the hold: the record becomes what the rules give now (`DUE` or `NOT_DUE`, see `notDueReason`); `PAID` from `DUE` with the payout’s bank `paymentReference` and the `expectedPayableMinor` shown, only while still due (409 `SETTLEMENT_NOT_DUE`, the reason in `details`) and unchanged (409 `SETTLEMENT_CHANGED`, the current payable in `details`). A `PAID` record never changes again: marking it paid with the same reference returns it, another reference is 409 `SETTLEMENT_ALREADY_PAID`; any other move is 409 `SETTLEMENT_INVALID_TRANSITION`. Audited with the reason. A repeat with the same `Idempotency-Key` and body returns the first answer.
+     */
+    patch: operations["AdminSettlementsController_change"];
+    trace?: never;
+  };
+  "/api/v1/admin/reconciliation": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Reconciliation report for a period
+     * @description Per currency: payments whose money arrived (by `paidAt`), refunds started (by `createdAt`, completed and still open), bookings with a payment created in the period and the money kept on them now, settlements created (by `createdAt`) and paid out (by `paidAt`). Then the mismatches, checked as they are now, on every booking with a payment, refund or settlement in the period or completed in it. Reads Flyviman’s own record only; it does not ask the gateway. The period is at most 92 days (400 `VALIDATION_ERROR`).
+     */
+    get: operations["AdminSettlementsController_report"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/operator/settlements": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Own settlement records, newest first
+     * @description What Flyviman owes the caller’s organisation per completed booking: the money kept, the commission and tax deducted, the payable, its status and, once paid, the bank reference of the payout.
+     */
+    get: operations["OperatorSettlementsController_list"];
     put?: never;
     post?: never;
     delete?: never;
@@ -3442,6 +3662,186 @@ export interface paths {
      * @description Sets `handledAt` and writes an audit record (topic and ids only). Repeating the call on a handled enquiry changes nothing and records nothing.
      */
     post: operations["AdminEnquiriesController_handle"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/admin/reports/overview": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Headline figures for the admin dashboard
+     * @description `from` and `to` are calendar days in India (`YYYY-MM-DD`, both included; IST day boundaries); by default the last 30 days, at most 366 days (400 `VALIDATION_ERROR` otherwise, also for `from` after `to`). `inPeriod` counts what happened in the period; `now` is the current state whatever the period. `finance` (payments taken, refunds due, confirmed booking value, Flyviman's revenue) is for finance and the super administrator only and is omitted for operations.
+     */
+    get: operations["AdminReportsController_overview"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/admin/reports/search": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Search volume and search-to-request conversion
+     * @description `from` and `to` are calendar days in India (`YYYY-MM-DD`, both included; IST day boundaries); by default the last 30 days, at most 366 days (400 `VALIDATION_ERROR` otherwise, also for `from` after `to`). Filter: `category`. Conversion is booking requests made in the period per search, by category; a request is not traced to its search.
+     */
+    get: operations["AdminReportsController_search"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/admin/reports/bookings": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Booking requests, confirmations and cancellations
+     * @description `from` and `to` are calendar days in India (`YYYY-MM-DD`, both included; IST day boundaries); by default the last 30 days, at most 366 days (400 `VALIDATION_ERROR` otherwise, also for `from` after `to`). Filters: `category`, `operatorId`. The requests made in the period, by their current booking status (never the payment status). Each figures block has `finance` (confirmed value, Flyviman's revenue) for finance and the super administrator only; omitted for operations.
+     */
+    get: operations["AdminReportsController_bookings"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/admin/reports/revenue": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Gross booking value, operator payable and Flyviman revenue
+     * @description `from` and `to` are calendar days in India (`YYYY-MM-DD`, both included; IST day boundaries); by default the last 30 days, at most 366 days (400 `VALIDATION_ERROR` otherwise, also for `from` after `to`). Filters: `category`, `operatorId`. Bookings confirmed in the period and still confirmed, scheduled or completed; amounts from each booking's price calculation (the accepted quote's, else the booking's own), per currency.
+     */
+    get: operations["AdminReportsController_revenue"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/admin/reports/payments": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Payment success, failure and refund rates
+     * @description `from` and `to` are calendar days in India (`YYYY-MM-DD`, both included; IST day boundaries); by default the last 30 days, at most 366 days (400 `VALIDATION_ERROR` otherwise, also for `from` after `to`). Payment attempts and refunds started in the period. No card data or gateway references.
+     */
+    get: operations["AdminReportsController_payments"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/admin/reports/operators": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Operator response time, declines and outcomes
+     * @description `from` and `to` are calendar days in India (`YYYY-MM-DD`, both included; IST day boundaries); by default the last 30 days, at most 366 days (400 `VALIDATION_ERROR` otherwise, also for `from` after `to`). Filter: `operatorId`. Booking requests made to each operator in the period; the response time is to the first accept, reject or quote by the operator's staff.
+     */
+    get: operations["AdminReportsController_operators"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/admin/reports/empty-legs": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Empty-leg listing performance and conversion
+     * @description `from` and `to` are calendar days in India (`YYYY-MM-DD`, both included; IST day boundaries); by default the last 30 days, at most 366 days (400 `VALIDATION_ERROR` otherwise, also for `from` after `to`). Filter: `operatorId`. Offers created in the period.
+     */
+    get: operations["AdminReportsController_emptyLegs"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/admin/reports/air-ambulance": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Air ambulance volumes, response time and fulfilment
+     * @description `from` and `to` are calendar days in India (`YYYY-MM-DD`, both included; IST day boundaries); by default the last 30 days, at most 366 days (400 `VALIDATION_ERROR` otherwise, also for `from` after `to`). Requests made in the period. Counts and timings only: never patient, medical or contact data.
+     */
+    get: operations["AdminReportsController_airAmbulance"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/admin/reports/{report}/export": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * A report as CSV
+     * @description The same report, filters and role gate as `GET /admin/reports/:report`: a role the report is not open to gets 403 `FORBIDDEN`, a filter the report does not take 400 `VALIDATION_ERROR`, an unknown report 404. `from` and `to` are calendar days in India (`YYYY-MM-DD`, both included; IST day boundaries); by default the last 30 days, at most 366 days (400 `VALIDATION_ERROR` otherwise, also for `from` after `to`). `text/csv` as an attachment, one figure per row: `section,dimension,metric,currency,value` (money in paise). Finance fields appear only for finance and the super administrator. Text that a spreadsheet would read as a formula is prefixed with `'`.
+     */
+    get: operations["AdminReportsController_export"];
+    put?: never;
+    post?: never;
     delete?: never;
     options?: never;
     head?: never;
@@ -6609,6 +7009,71 @@ export interface components {
       validUntil?: string;
       conditions: components["schemas"]["QuoteConditionsInputDto"];
     };
+    OperatorBookingSummaryDto: {
+      /** @example FLY-BK-7K2M9Q */
+      reference: string;
+      status: components["schemas"]["BookingStatus"];
+      /** @description Separate from `status`: a payment never confirms a booking by itself. */
+      paymentStatus: components["schemas"]["BookingPaymentStatus"];
+      category: components["schemas"]["ServiceCategory"];
+      aircraft: components["schemas"]["BookingRequestAircraftDto"];
+      legs: components["schemas"]["ItineraryLegDto"][];
+      passengerCount: number;
+      /** @description The customer’s total with its `priceType`. Null for a request still priced on request. */
+      price: components["schemas"]["BookingPriceDto"] | null;
+      /** Format: date-time */
+      createdAt: string;
+    };
+    OperatorBookingPassengerDto: {
+      firstName: string;
+      lastName: string;
+    };
+    OperatorBookingActionsDto: {
+      /** @description `CONFIRMED` → `SCHEDULED`. */
+      schedule: boolean;
+      /** @description `SCHEDULED` → `COMPLETED`, once the last leg has departed. */
+      complete: boolean;
+      /** @description Cancel, with a reason, before it is completed. */
+      cancel: boolean;
+    };
+    OperatorBookingDetailDto: {
+      /** @example FLY-BK-7K2M9Q */
+      reference: string;
+      status: components["schemas"]["BookingStatus"];
+      /** @description Separate from `status`: a payment never confirms a booking by itself. */
+      paymentStatus: components["schemas"]["BookingPaymentStatus"];
+      category: components["schemas"]["ServiceCategory"];
+      aircraft: components["schemas"]["BookingRequestAircraftDto"];
+      legs: components["schemas"]["ItineraryLegDto"][];
+      passengerCount: number;
+      /** @description The customer’s total with its `priceType`. Null for a request still priced on request. */
+      price: components["schemas"]["BookingPriceDto"] | null;
+      /** Format: date-time */
+      createdAt: string;
+      itinerary: components["schemas"]["ItineraryDto"];
+      cancellationTerms: components["schemas"]["CancellationTermsDto"];
+      specialRequests: string | null;
+      /** @description The manifest (names only), once the booking is `CONFIRMED`, `SCHEDULED` or `COMPLETED`; null before then and after a cancellation. */
+      passengers: components["schemas"]["OperatorBookingPassengerDto"][] | null;
+      /** Format: date-time */
+      confirmedAt: string | null;
+      /** Format: date-time */
+      cancelledAt: string | null;
+      actions: components["schemas"]["OperatorBookingActionsDto"];
+      /** Format: date-time */
+      updatedAt: string;
+    };
+    UpdateOperatorBookingStatusDto: {
+      /**
+       * @description `SCHEDULED` from `CONFIRMED`; `COMPLETED` from `SCHEDULED`, once the last leg has departed.
+       * @enum {string}
+       */
+      status: "SCHEDULED" | "COMPLETED";
+    };
+    CancelOperatorBookingDto: {
+      /** @description Why you cannot fly it. Kept for you and Flyviman (stored encrypted); the customer is told the booking was cancelled. */
+      reason: string;
+    };
     CreateEmptyLegBookingDto: {
       /**
        * Format: uuid
@@ -6656,6 +7121,74 @@ export interface components {
     BookingEscalationInputDto: {
       /** @description Why the booking is escalated, or how the escalation was resolved. Kept on the timeline and in the audit trail; never put passenger or medical details here. */
       reason: string;
+    };
+    /** @enum {string} */
+    CustomerEventKind:
+      | "STATUS_CHANGED"
+      | "QUOTE_SENT"
+      | "PAYMENT_UPDATED"
+      | "QUESTION_ASKED"
+      | "QUESTION_ANSWERED"
+      | "CHANGE_REQUESTED"
+      | "CHANGE_REQUEST_ANSWERED";
+    /** @enum {string} */
+    BookingEventActor: "YOU" | "OPERATOR" | "FLYVIMAN" | "SYSTEM";
+    CustomerBookingEventDto: {
+      /** Format: uuid */
+      id: string;
+      kind: components["schemas"]["CustomerEventKind"];
+      by: components["schemas"]["BookingEventActor"];
+      /** @description `STATUS_CHANGED` only; null for the request being made. */
+      fromStatus: components["schemas"]["BookingStatus"] | null;
+      /** @description `STATUS_CHANGED` only. */
+      toStatus: components["schemas"]["BookingStatus"] | null;
+      /** @description `QUOTE_SENT` only: the quoted total (`QUOTE`). */
+      price: components["schemas"]["BookingPriceDto"] | null;
+      /** @example FLY-QT-7K2M9Q */
+      quoteReference: string | null;
+      /** @description `PAYMENT_UPDATED` only: the payment status it moved to. */
+      paymentStatus: components["schemas"]["BookingPaymentStatus"] | null;
+      /**
+       * Format: uuid
+       * @description The change request, for `CHANGE_REQUEST*` entries.
+       */
+      changeRequestId: string | null;
+      /** @description `CHANGE_REQUEST_ANSWERED` only. */
+      decision: components["schemas"]["ChangeRequestStatus"] | null;
+      /** @description The note written for the customer with a change request’s answer. */
+      note: string | null;
+      /** Format: date-time */
+      createdAt: string;
+    };
+    ReplacePassengersDto: {
+      /** @description Saved passengers (`/me/passengers`): at least one and at most the trip’s passenger count. Their details are copied onto the booking as they are now. */
+      passengerIds: string[];
+    };
+    PassengersReplacedDto: {
+      /** @example FLY-BK-7K2M9Q */
+      reference: string;
+      passengerCount: number;
+    };
+    /** @enum {string} */
+    BookingUnavailableReason:
+      | "CLOSED"
+      | "DEPARTED"
+      | "OPERATOR_NOT_APPROVED"
+      | "AIRCRAFT_NOT_AVAILABLE"
+      | "TIME_TAKEN"
+      | "UNAVAILABLE";
+    BookingRevalidationDto: {
+      /** @description Whether the trip can still be flown as booked: the trip ahead, the operator and aircraft approved and in service, the held time free. */
+      available: boolean;
+      reason: components["schemas"]["BookingUnavailableReason"] | null;
+      /** @description The booking’s price, labelled. A `CONFIRMED` price is fixed once agreed and never repriced; null for a request priced on request. */
+      price: components["schemas"]["BookingPriceDto"] | null;
+      /** @description True for an `ESTIMATE` past its `validUntil`: the operator’s answer prices the trip again. Always false for a `CONFIRMED` price. */
+      priceExpired: boolean;
+      /** @description What the booking owes now, by the rule payment creation applies; null when nothing is due or the trip is not available. */
+      amountDue: components["schemas"]["BookingAmountDueDto"] | null;
+      /** Format: date-time */
+      checkedAt: string;
     };
     PaymentPriceDto: {
       /** @description Only a confirmed price is ever charged (rule 1). */
@@ -6919,6 +7452,147 @@ export interface components {
        * @description When it became due: the cancellation, or the payment.
        */
       since: string;
+    };
+    /** @enum {string} */
+    SettlementStatus: "NOT_DUE" | "DUE" | "PAID" | "ON_HOLD";
+    AdminSettlementDto: {
+      /** Format: uuid */
+      id: string;
+      /** @example FLY-BK-7K2M9Q */
+      bookingReference: string;
+      bookingStatus: components["schemas"]["BookingStatus"];
+      /** Format: uuid */
+      operatorId: string;
+      operatorName: string;
+      /** @description Paise owed to the operator: the money kept towards the booking less commission and tax. */
+      payableMinor: number;
+      /** @description Paise: Flyviman’s revenue on the price (commission, markup and service fee, less its discount). */
+      commissionMinor: number;
+      /** @description Paise of tax collected on the price. */
+      taxMinor: number;
+      /** @description Paise kept towards the booking now (credited less refunds). Payable + commission + tax equals it when the record is consistent. */
+      keptMinor: number;
+      /** @example INR */
+      currency: string;
+      /** @description `NOT_DUE` (the trip is not flown or not paid in full, a refund is on its way or the money kept does not cover the figures), `DUE`, `ON_HOLD` (held by finance) or `PAID` (paid out by hand; never changes again). */
+      status: components["schemas"]["SettlementStatus"];
+      /**
+       * @description For `NOT_DUE` and `ON_HOLD`: why it is not due by the rules now (the trip not completed, the price not paid in full, a refund on its way, a refund larger than the payable, more kept than the price); null when due, and for `DUE` and `PAID`.
+       * @example Refund exceeds payable — finance to resolve.
+       */
+      notDueReason: string | null;
+      /** Format: date-time */
+      paidAt: string | null;
+      /** @description The bank transfer reference of the payout. */
+      paymentReference: string | null;
+      /** Format: date-time */
+      createdAt: string;
+      /** Format: date-time */
+      updatedAt: string;
+    };
+    UpdateSettlementDto: {
+      /**
+       * @description `ON_HOLD` from `NOT_DUE` or `DUE`; `DUE` from `ON_HOLD` releases the hold (the record becomes what the rules give now: `DUE` or `NOT_DUE`); `PAID` from `DUE`.
+       * @enum {string}
+       */
+      status: "DUE" | "PAID" | "ON_HOLD";
+      /** @description Why, for the audit trail (rule 6). No personal or bank account details. */
+      reason: string;
+      /** @description Required for `PAID`: the bank transfer reference of the payout (letters, digits, spaces, `-`, `_`, `/`, `.`). */
+      paymentReference?: string;
+      /** @description Required for `PAID`: the payable finance paid out, as shown. Another amount than the record’s is 409 `SETTLEMENT_CHANGED`. */
+      expectedPayableMinor?: number;
+    };
+    ReconciliationTotalsDto: {
+      /** @example INR */
+      currency: string;
+      /** @description Payments whose money arrived (`SUCCEEDED` or later), by `paidAt` in the period. */
+      paymentsCount: number;
+      /** @description Paise: their amounts. */
+      paymentsInMinor: number;
+      /** @description Paise of those that were not towards a booking (paid after it closed, or paid twice): owed back. */
+      extraMoneyMinor: number;
+      /** @description Paise of refunds started in the period that completed. */
+      refundsCompletedMinor: number;
+      /** @description Paise of refunds started in the period still on their way (`REQUESTED`, `PENDING`). */
+      refundsOpenMinor: number;
+      /** @description Bookings with a payment created in the period whose money arrived. */
+      bookingsCount: number;
+      /** @description Paise kept towards those bookings now: credited less refunds (extra money left out). */
+      bookingsKeptMinor: number;
+      /** @description Settlements created in the period. */
+      settlementsCount: number;
+      /** @description Paise payable to operators on them. */
+      settlementsPayableMinor: number;
+      /** @description Paise of commission on them. */
+      settlementsCommissionMinor: number;
+      /** @description Paise of tax on them. */
+      settlementsTaxMinor: number;
+      /** @description Paise paid out to operators, by `paidAt` in the period. */
+      settlementsPaidMinor: number;
+    };
+    /**
+     * @description `PAYMENT_SUMMARY_MISMATCH` (the booking’s payment status is not what its payments say); `PAYMENT_FLAGGED` (another amount or a second capture at the gateway: check its dashboard); `EXTRA_MONEY_UNREFUNDED` (money paid after closing or twice, not yet refunded); `PAYMENT_STUCK` and `REFUND_STUCK` (no final answer after 24 hours); `KEPT_EXCEEDS_TOTAL`; `SETTLEMENT_MISSING` (a completed booking with money kept and no settlement); `SETTLEMENT_AMOUNT_MISMATCH` (the settlement’s figures do not add up to the money kept now); `SETTLEMENT_BOOKING_NOT_COMPLETED` (a due or paid settlement whose booking is no longer `COMPLETED`).
+     * @enum {string}
+     */
+    ReconciliationMismatchKind:
+      | "PAYMENT_SUMMARY_MISMATCH"
+      | "PAYMENT_FLAGGED"
+      | "EXTRA_MONEY_UNREFUNDED"
+      | "PAYMENT_STUCK"
+      | "REFUND_STUCK"
+      | "KEPT_EXCEEDS_TOTAL"
+      | "SETTLEMENT_MISSING"
+      | "SETTLEMENT_AMOUNT_MISMATCH"
+      | "SETTLEMENT_BOOKING_NOT_COMPLETED";
+    ReconciliationMismatchDto: {
+      /** @description `PAYMENT_SUMMARY_MISMATCH` (the booking’s payment status is not what its payments say); `PAYMENT_FLAGGED` (another amount or a second capture at the gateway: check its dashboard); `EXTRA_MONEY_UNREFUNDED` (money paid after closing or twice, not yet refunded); `PAYMENT_STUCK` and `REFUND_STUCK` (no final answer after 24 hours); `KEPT_EXCEEDS_TOTAL`; `SETTLEMENT_MISSING` (a completed booking with money kept and no settlement); `SETTLEMENT_AMOUNT_MISMATCH` (the settlement’s figures do not add up to the money kept now); `SETTLEMENT_BOOKING_NOT_COMPLETED` (a due or paid settlement whose booking is no longer `COMPLETED`). */
+      kind: components["schemas"]["ReconciliationMismatchKind"];
+      bookingReference: string | null;
+      paymentReference: string | null;
+      refundReference: string | null;
+      /** Format: uuid */
+      settlementId: string | null;
+      /** @description What is wrong, for finance. */
+      detail: string;
+      /** @description Paise at stake, when there is one amount. */
+      amountMinor: number | null;
+      currency: string | null;
+    };
+    ReconciliationReportDto: {
+      /** Format: date-time */
+      from: string;
+      /** Format: date-time */
+      to: string;
+      /** Format: date-time */
+      generatedAt: string;
+      totals: components["schemas"]["ReconciliationTotalsDto"][];
+      /** @description At most 200, bookings first by reference. */
+      mismatches: components["schemas"]["ReconciliationMismatchDto"][];
+      /** @description Mismatches found, including any not listed. */
+      mismatchTotal: number;
+    };
+    OperatorSettlementDto: {
+      /** Format: uuid */
+      id: string;
+      /** @example FLY-BK-7K2M9Q */
+      bookingReference: string;
+      /** @description Paise Flyviman kept from the customer for the booking now (paid less refunds). */
+      keptMinor: number;
+      /** @description Paise of Flyviman’s commission deducted. */
+      commissionMinor: number;
+      /** @description Paise of tax deducted (collected by Flyviman). */
+      taxMinor: number;
+      /** @description Paise owed to the operator. */
+      payableMinor: number;
+      /** @example INR */
+      currency: string;
+      status: components["schemas"]["SettlementStatus"];
+      /** Format: date-time */
+      paidAt: string | null;
+      paymentReference: string | null;
+      /** Format: date-time */
+      createdAt: string;
     };
     /** @enum {string} */
     PatientMobility: "AMBULATORY" | "ASSISTED" | "NON_AMBULATORY";
@@ -7351,6 +8025,364 @@ export interface components {
       handledAt: string | null;
       /** Format: date-time */
       createdAt: string;
+    };
+    ReportPeriodDto: {
+      /**
+       * Format: date
+       * @example 2026-11-01
+       */
+      from: string;
+      /**
+       * Format: date
+       * @example 2026-11-30
+       */
+      to: string;
+      /** @example Asia/Kolkata */
+      timeZone: string;
+      /**
+       * Format: date-time
+       * @description The start of `from` in India, UTC.
+       */
+      startsAt: string;
+      /**
+       * Format: date-time
+       * @description The start of the day after `to` in India, UTC (excluded).
+       */
+      endsBefore: string;
+    };
+    BookingStatusCountDto: {
+      status: components["schemas"]["BookingStatus"];
+      count: number;
+    };
+    OverviewPeriodFiguresDto: {
+      /** @description Searches made in the period. */
+      searches: number;
+      /** @description Booking requests made in the period. */
+      bookingRequests: number;
+      /** @description The booking requests made in the period, by their current booking status (not the payment status). */
+      bookingsByStatus: components["schemas"]["BookingStatusCountDto"][];
+      /** @description Air ambulance requests made in the period. */
+      airAmbulanceRequests: number;
+    };
+    OverviewCurrentFiguresDto: {
+      /** @description Booking requests waiting on the operator now (`REQUESTED`, `OPERATOR_PENDING`, `CLARIFICATION_REQUESTED`). */
+      openBookingRequests: number;
+      /** @description Operators waiting for review now. */
+      operatorsPendingReview: number;
+      /** @description Air ambulance requests not yet `COMPLETED`, `DECLINED` or `CANCELLED`. */
+      airAmbulanceOpen: number;
+    };
+    MoneyTotalDto: {
+      /** @example INR */
+      currency: string;
+      /** @description Minor units (paise). */
+      amountMinor: number;
+    };
+    CountWithAmountsDto: {
+      count: number;
+      amounts: components["schemas"]["MoneyTotalDto"][];
+    };
+    OverviewFinanceDto: {
+      /** @description In the period: payments whose money arrived (`paidAt`), counted at their full amount even if refunded since. */
+      paymentsTaken: components["schemas"]["CountWithAmountsDto"];
+      /** @description Now: the finance refunds-due queue (`GET /admin/refunds/due`), its rows and the amounts due. */
+      refundsDue: components["schemas"]["CountWithAmountsDto"];
+      /** @description In the period: the total of bookings confirmed (`confirmedAt`) and still `CONFIRMED`, `SCHEDULED` or `COMPLETED`. */
+      confirmedBookingValue: components["schemas"]["MoneyTotalDto"][];
+      /** @description Flyviman's revenue on those bookings (commission, markup and fees, less discounts, before tax), from their price calculations. */
+      platformRevenue: components["schemas"]["MoneyTotalDto"][];
+    };
+    OverviewReportDto: {
+      period: components["schemas"]["ReportPeriodDto"];
+      inPeriod: components["schemas"]["OverviewPeriodFiguresDto"];
+      /** @description Figures as they are now, whatever the period. */
+      now: components["schemas"]["OverviewCurrentFiguresDto"];
+      /** @description Finance and super administrator only; omitted otherwise. */
+      finance?: components["schemas"]["OverviewFinanceDto"];
+    };
+    ReportFiltersDto: {
+      category: components["schemas"]["ServiceCategory"] | null;
+      /** Format: uuid */
+      operatorId: string | null;
+    };
+    SearchFiguresDto: {
+      searches: number;
+      /** @description Searches that offered nothing. */
+      withoutResults: number;
+      /** @description Results offered per search, 1 decimal. */
+      averageResults: number | null;
+      /** @description Whole ms. */
+      averageDurationMs: number | null;
+      /** @description Booking requests made in the period in the same categories. Not traced to the search they came from. */
+      bookingRequests: number;
+      /** @description Booking requests per search. A share from 0 to 1, rounded to 4 decimals; null when there is nothing to divide by. */
+      conversionRate: number | null;
+    };
+    SearchCategoryFiguresDto: {
+      searches: number;
+      /** @description Searches that offered nothing. */
+      withoutResults: number;
+      /** @description Results offered per search, 1 decimal. */
+      averageResults: number | null;
+      /** @description Whole ms. */
+      averageDurationMs: number | null;
+      /** @description Booking requests made in the period in the same categories. Not traced to the search they came from. */
+      bookingRequests: number;
+      /** @description Booking requests per search. A share from 0 to 1, rounded to 4 decimals; null when there is nothing to divide by. */
+      conversionRate: number | null;
+      category: components["schemas"]["ServiceCategory"];
+    };
+    SearchReportDto: {
+      period: components["schemas"]["ReportPeriodDto"];
+      filters: components["schemas"]["ReportFiltersDto"];
+      totals: components["schemas"]["SearchFiguresDto"];
+      byCategory: components["schemas"]["SearchCategoryFiguresDto"][];
+    };
+    BookingFinanceDto: {
+      /** @description The total of the confirmed bookings (`CONFIRMED`, `SCHEDULED`, `COMPLETED`). Estimates of open requests are never added. */
+      confirmedValue: components["schemas"]["MoneyTotalDto"][];
+      /** @description Flyviman's revenue on them (commission, markup and fees, less discounts, before tax). */
+      platformRevenue: components["schemas"]["MoneyTotalDto"][];
+      /** @description Confirmed bookings with no price calculation (for example scheduled fares): in `confirmedValue`, not in `platformRevenue`. */
+      withoutCalculation: number;
+    };
+    BookingFiguresDto: {
+      /** @description Requests made in the period. */
+      requested: number;
+      /** @description Still in progress: `REQUESTED`, `OPERATOR_PENDING`, `CLARIFICATION_REQUESTED`, `PRICE_CONFIRMED`, `AWAITING_PAYMENT`. */
+      open: number;
+      /** @description `CONFIRMED`, `SCHEDULED` or `COMPLETED`. */
+      confirmed: number;
+      /** @description `OPERATOR_UNAVAILABLE` or `QUOTE_DECLINED`. */
+      declined: number;
+      expired: number;
+      cancelled: number;
+      /** @description Confirmed per request. A share from 0 to 1, rounded to 4 decimals; null when there is nothing to divide by. */
+      confirmationRate: number | null;
+      /** @description Finance and super administrator only; omitted otherwise. */
+      finance?: components["schemas"]["BookingFinanceDto"];
+    };
+    BookingCategoryFiguresDto: {
+      /** @description Requests made in the period. */
+      requested: number;
+      /** @description Still in progress: `REQUESTED`, `OPERATOR_PENDING`, `CLARIFICATION_REQUESTED`, `PRICE_CONFIRMED`, `AWAITING_PAYMENT`. */
+      open: number;
+      /** @description `CONFIRMED`, `SCHEDULED` or `COMPLETED`. */
+      confirmed: number;
+      /** @description `OPERATOR_UNAVAILABLE` or `QUOTE_DECLINED`. */
+      declined: number;
+      expired: number;
+      cancelled: number;
+      /** @description Confirmed per request. A share from 0 to 1, rounded to 4 decimals; null when there is nothing to divide by. */
+      confirmationRate: number | null;
+      /** @description Finance and super administrator only; omitted otherwise. */
+      finance?: components["schemas"]["BookingFinanceDto"];
+      category: components["schemas"]["ServiceCategory"];
+    };
+    BookingReportDto: {
+      period: components["schemas"]["ReportPeriodDto"];
+      filters: components["schemas"]["ReportFiltersDto"];
+      /** @description The requests made in the period, by their current booking status. */
+      totals: components["schemas"]["BookingFiguresDto"];
+      byStatus: components["schemas"]["BookingStatusCountDto"][];
+      byCategory: components["schemas"]["BookingCategoryFiguresDto"][];
+    };
+    RevenueFiguresDto: {
+      /** @example INR */
+      currency: string;
+      bookings: number;
+      /** @description Paise: what customers pay (gross booking value). */
+      grossValueMinor: number;
+      /** @description Paise: tax in the priced bookings. */
+      taxMinor: number;
+      /** @description Paise: what Flyviman pays operators. */
+      operatorPayableMinor: number;
+      /** @description Paise: Flyviman's net revenue (commission, markup and fees, less discounts, before tax). Can be negative. */
+      platformRevenueMinor: number;
+      /** @description Bookings with no price calculation: in `grossValueMinor` only. */
+      withoutCalculation: number;
+    };
+    RevenueCategoryRowDto: {
+      /** @example INR */
+      currency: string;
+      bookings: number;
+      /** @description Paise: what customers pay (gross booking value). */
+      grossValueMinor: number;
+      /** @description Paise: tax in the priced bookings. */
+      taxMinor: number;
+      /** @description Paise: what Flyviman pays operators. */
+      operatorPayableMinor: number;
+      /** @description Paise: Flyviman's net revenue (commission, markup and fees, less discounts, before tax). Can be negative. */
+      platformRevenueMinor: number;
+      /** @description Bookings with no price calculation: in `grossValueMinor` only. */
+      withoutCalculation: number;
+      category: components["schemas"]["ServiceCategory"];
+    };
+    RevenueOperatorRowDto: {
+      /** @example INR */
+      currency: string;
+      bookings: number;
+      /** @description Paise: what customers pay (gross booking value). */
+      grossValueMinor: number;
+      /** @description Paise: tax in the priced bookings. */
+      taxMinor: number;
+      /** @description Paise: what Flyviman pays operators. */
+      operatorPayableMinor: number;
+      /** @description Paise: Flyviman's net revenue (commission, markup and fees, less discounts, before tax). Can be negative. */
+      platformRevenueMinor: number;
+      /** @description Bookings with no price calculation: in `grossValueMinor` only. */
+      withoutCalculation: number;
+      /**
+       * Format: uuid
+       * @description Null for scheduled airline bookings.
+       */
+      operatorId: string | null;
+      /** @description Trading name, else legal name. */
+      operatorName: string | null;
+    };
+    RevenueReportDto: {
+      period: components["schemas"]["ReportPeriodDto"];
+      filters: components["schemas"]["ReportFiltersDto"];
+      /** @description Bookings confirmed in the period (`confirmedAt`) and still `CONFIRMED`, `SCHEDULED` or `COMPLETED`, one row per currency. */
+      totals: components["schemas"]["RevenueFiguresDto"][];
+      byCategory: components["schemas"]["RevenueCategoryRowDto"][];
+      byOperator: components["schemas"]["RevenueOperatorRowDto"][];
+      /** @description Bookings confirmed in the period and cancelled since: not in the figures. */
+      cancelledAfterConfirmation: number;
+    };
+    PaymentStatusCountDto: {
+      status: components["schemas"]["PaymentStatus"];
+      count: number;
+    };
+    PaymentMethodRowDto: {
+      /** @description As the gateway reports it (`card`, `upi`, …); null if none. */
+      method: string | null;
+      succeeded: number;
+      failed: number;
+    };
+    PaymentFlagCountDto: {
+      reason: components["schemas"]["PaymentReviewReason"];
+      count: number;
+    };
+    RefundStatusCountDto: {
+      status: components["schemas"]["RefundStatus"];
+      count: number;
+    };
+    CurrencyRateDto: {
+      /** @example INR */
+      currency: string;
+      /** @description A share from 0 to 1, rounded to 4 decimals; null when there is nothing to divide by. */
+      rate: number | null;
+    };
+    RefundFiguresDto: {
+      /** @description Refunds started in the period. */
+      count: number;
+      byStatus: components["schemas"]["RefundStatusCountDto"][];
+      /** @description `COMPLETED`. */
+      refunded: components["schemas"]["MoneyTotalDto"][];
+      /** @description `REQUESTED` or `PENDING`. */
+      inProgress: components["schemas"]["MoneyTotalDto"][];
+      /** @description Completed refunds started in the period, per amount collected on payments started in the period. */
+      refundRate: components["schemas"]["CurrencyRateDto"][];
+    };
+    PaymentReportDto: {
+      period: components["schemas"]["ReportPeriodDto"];
+      /** @description Payment attempts started in the period. */
+      attempts: number;
+      byStatus: components["schemas"]["PaymentStatusCountDto"][];
+      /** @description Attempts whose money arrived (`SUCCEEDED`, `REFUND_PENDING`, `PARTIALLY_REFUNDED`, `REFUNDED`). */
+      succeeded: number;
+      failed: number;
+      /** @description Succeeded per finished attempt (succeeded or failed). A share from 0 to 1, rounded to 4 decimals; null when there is nothing to divide by. */
+      successRate: number | null;
+      /** @description The amount of the succeeded attempts. */
+      collected: components["schemas"]["MoneyTotalDto"][];
+      byMethod: components["schemas"]["PaymentMethodRowDto"][];
+      /** @description Attempts flagged for operations to look at. */
+      flagged: components["schemas"]["PaymentFlagCountDto"][];
+      refunds: components["schemas"]["RefundFiguresDto"];
+    };
+    OperatorStatusCountDto: {
+      status: components["schemas"]["OperatorStatus"];
+      count: number;
+    };
+    OperatorPerformanceRowDto: {
+      /** Format: uuid */
+      operatorId: string;
+      /** @description Trading name, else legal name. */
+      operatorName: string;
+      status: components["schemas"]["OperatorStatus"];
+      /** @description Booking requests made to it in the period. */
+      requests: number;
+      /** @description Requests its staff answered (accepted, rejected or quoted). */
+      responded: number;
+      /** @description Responded per request. A share from 0 to 1, rounded to 4 decimals; null when there is nothing to divide by. */
+      responseRate: number | null;
+      /** @description Whole minutes from the request to its first answer. */
+      averageResponseMinutes: number | null;
+      /** @description `OPERATOR_UNAVAILABLE`: the aircraft could not fly although the calendar offered it. */
+      declined: number;
+      /** @description Declined per request, a measure of availability accuracy (lower is better). A share from 0 to 1, rounded to 4 decimals; null when there is nothing to divide by. */
+      declineRate: number | null;
+      expired: number;
+      /** @description `CONFIRMED`, `SCHEDULED` or `COMPLETED`. */
+      confirmed: number;
+      cancelled: number;
+    };
+    OperatorReportDto: {
+      period: components["schemas"]["ReportPeriodDto"];
+      filters: components["schemas"]["ReportFiltersDto"];
+      /** @description Every operator, by status now. */
+      byStatus: components["schemas"]["OperatorStatusCountDto"][];
+      /** @description Operators with requests in the period, most requests first. */
+      operators: components["schemas"]["OperatorPerformanceRowDto"][];
+    };
+    EmptyLegStatusCountDto: {
+      status: components["schemas"]["EmptyLegStatus"];
+      count: number;
+    };
+    EmptyLegReportDto: {
+      period: components["schemas"]["ReportPeriodDto"];
+      filters: components["schemas"]["ReportFiltersDto"];
+      /** @description Offers created in the period. */
+      created: number;
+      /** @description Those offers by status now. */
+      byStatus: components["schemas"]["EmptyLegStatusCountDto"][];
+      /** @description Those offers that were ever published. */
+      published: number;
+      booked: number;
+      withdrawn: number;
+      expired: number;
+      /** @description Customers following those offers. */
+      interests: number;
+      /** @description Booked per published offer. A share from 0 to 1, rounded to 4 decimals; null when there is nothing to divide by. */
+      bookingRate: number | null;
+    };
+    AirAmbulanceStatusCountDto: {
+      status: components["schemas"]["AirAmbulanceStatus"];
+      count: number;
+    };
+    AirAmbulanceReportDto: {
+      period: components["schemas"]["ReportPeriodDto"];
+      /** @description Requests made in the period. */
+      requests: number;
+      /** @description Those requests by status now. */
+      byStatus: components["schemas"]["AirAmbulanceStatusCountDto"][];
+      /** @description Not yet completed, declined or cancelled. */
+      open: number;
+      /** @description Those that were sent a quotation. */
+      quoted: number;
+      /** @description Those that were confirmed by operations. */
+      confirmed: number;
+      completed: number;
+      declined: number;
+      cancelled: number;
+      /** @description Whole minutes from the request to its quotation. */
+      averageMinutesToQuote: number | null;
+      /** @description Whole minutes from the request to its confirmation. */
+      averageMinutesToConfirm: number | null;
+      /** @description Completed per closed request (completed, declined or cancelled). A share from 0 to 1, rounded to 4 decimals; null when there is nothing to divide by. */
+      fulfilmentRate: number | null;
     };
     ResponseMetaDto: {
       requestId: string | null;
@@ -11250,6 +12282,109 @@ export interface operations {
       };
     };
   };
+  OperatorBookingsController_list: {
+    parameters: {
+      query?: {
+        page?: number;
+        pageSize?: number;
+        /** @description Left out: the upcoming trips (`CONFIRMED`, `SCHEDULED`). Any status may be asked for. */
+        status?: components["schemas"]["BookingStatus"];
+        aircraftId?: string;
+        /** @description First departure at or after this time. */
+        departureFrom?: string;
+        /** @description First departure before this time. */
+        departureTo?: string;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["OperatorBookingSummaryDto"][];
+        };
+      };
+    };
+  };
+  OperatorBookingsController_detail: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        reference: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["OperatorBookingDetailDto"];
+        };
+      };
+    };
+  };
+  OperatorBookingsController_changeStatus: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        reference: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["UpdateOperatorBookingStatusDto"];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["OperatorBookingDetailDto"];
+        };
+      };
+    };
+  };
+  OperatorBookingsController_cancel: {
+    parameters: {
+      query?: never;
+      header: {
+        /** @description A UUID, new for each cancellation and reused on retry. */
+        "Idempotency-Key": string;
+      };
+      path: {
+        reference: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["CancelOperatorBookingDto"];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["OperatorBookingDetailDto"];
+        };
+      };
+    };
+  };
   EmptyLegBookingsController_create: {
     parameters: {
       query?: never;
@@ -11343,6 +12478,76 @@ export interface operations {
         };
         content: {
           "application/json": components["schemas"]["AdminBookingDetailDto"];
+        };
+      };
+    };
+  };
+  BookingSelfServiceController_events: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        reference: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["CustomerBookingEventDto"][];
+        };
+      };
+    };
+  };
+  BookingSelfServiceController_replacePassengers: {
+    parameters: {
+      query?: never;
+      header: {
+        /** @description A UUID, new for each change and reused on retry. */
+        "Idempotency-Key": string;
+      };
+      path: {
+        reference: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["ReplacePassengersDto"];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["PassengersReplacedDto"];
+        };
+      };
+    };
+  };
+  BookingSelfServiceController_revalidate: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        reference: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["BookingRevalidationDto"];
         };
       };
     };
@@ -11595,6 +12800,103 @@ export interface operations {
         };
         content: {
           "application/json": components["schemas"]["RefundDueItemDto"][];
+        };
+      };
+    };
+  };
+  AdminSettlementsController_list: {
+    parameters: {
+      query?: {
+        page?: number;
+        pageSize?: number;
+        status?: components["schemas"]["SettlementStatus"];
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["AdminSettlementDto"][];
+        };
+      };
+    };
+  };
+  AdminSettlementsController_change: {
+    parameters: {
+      query?: never;
+      header: {
+        /** @description A UUID, new for each change and reused on retry. */
+        "Idempotency-Key": string;
+      };
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["UpdateSettlementDto"];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["AdminSettlementDto"];
+        };
+      };
+    };
+  };
+  AdminSettlementsController_report: {
+    parameters: {
+      query: {
+        /** @description Start of the period, inclusive. */
+        from: string;
+        /** @description End of the period, exclusive. At most 92 days after `from` (400 otherwise). */
+        to: string;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ReconciliationReportDto"];
+        };
+      };
+    };
+  };
+  OperatorSettlementsController_list: {
+    parameters: {
+      query?: {
+        page?: number;
+        pageSize?: number;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["OperatorSettlementDto"][];
         };
       };
     };
@@ -12057,6 +13359,241 @@ export interface operations {
         };
         content: {
           "application/json": components["schemas"]["AdminEnquiryResponseDto"];
+        };
+      };
+    };
+  };
+  AdminReportsController_overview: {
+    parameters: {
+      query?: {
+        /** @description First day, `YYYY-MM-DD`, in India. Defaults to 29 days before `to`. */
+        from?: string;
+        /** @description Last day, included, `YYYY-MM-DD`, in India. Defaults to today in India. */
+        to?: string;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["OverviewReportDto"];
+        };
+      };
+    };
+  };
+  AdminReportsController_search: {
+    parameters: {
+      query?: {
+        /** @description First day, `YYYY-MM-DD`, in India. Defaults to 29 days before `to`. */
+        from?: string;
+        /** @description Last day, included, `YYYY-MM-DD`, in India. Defaults to today in India. */
+        to?: string;
+        category?: components["schemas"]["ServiceCategory"];
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["SearchReportDto"];
+        };
+      };
+    };
+  };
+  AdminReportsController_bookings: {
+    parameters: {
+      query?: {
+        /** @description First day, `YYYY-MM-DD`, in India. Defaults to 29 days before `to`. */
+        from?: string;
+        /** @description Last day, included, `YYYY-MM-DD`, in India. Defaults to today in India. */
+        to?: string;
+        category?: components["schemas"]["ServiceCategory"];
+        operatorId?: string;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["BookingReportDto"];
+        };
+      };
+    };
+  };
+  AdminReportsController_revenue: {
+    parameters: {
+      query?: {
+        /** @description First day, `YYYY-MM-DD`, in India. Defaults to 29 days before `to`. */
+        from?: string;
+        /** @description Last day, included, `YYYY-MM-DD`, in India. Defaults to today in India. */
+        to?: string;
+        category?: components["schemas"]["ServiceCategory"];
+        operatorId?: string;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["RevenueReportDto"];
+        };
+      };
+    };
+  };
+  AdminReportsController_payments: {
+    parameters: {
+      query?: {
+        /** @description First day, `YYYY-MM-DD`, in India. Defaults to 29 days before `to`. */
+        from?: string;
+        /** @description Last day, included, `YYYY-MM-DD`, in India. Defaults to today in India. */
+        to?: string;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["PaymentReportDto"];
+        };
+      };
+    };
+  };
+  AdminReportsController_operators: {
+    parameters: {
+      query?: {
+        /** @description First day, `YYYY-MM-DD`, in India. Defaults to 29 days before `to`. */
+        from?: string;
+        /** @description Last day, included, `YYYY-MM-DD`, in India. Defaults to today in India. */
+        to?: string;
+        operatorId?: string;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["OperatorReportDto"];
+        };
+      };
+    };
+  };
+  AdminReportsController_emptyLegs: {
+    parameters: {
+      query?: {
+        /** @description First day, `YYYY-MM-DD`, in India. Defaults to 29 days before `to`. */
+        from?: string;
+        /** @description Last day, included, `YYYY-MM-DD`, in India. Defaults to today in India. */
+        to?: string;
+        operatorId?: string;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["EmptyLegReportDto"];
+        };
+      };
+    };
+  };
+  AdminReportsController_airAmbulance: {
+    parameters: {
+      query?: {
+        /** @description First day, `YYYY-MM-DD`, in India. Defaults to 29 days before `to`. */
+        from?: string;
+        /** @description Last day, included, `YYYY-MM-DD`, in India. Defaults to today in India. */
+        to?: string;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["AirAmbulanceReportDto"];
+        };
+      };
+    };
+  };
+  AdminReportsController_export: {
+    parameters: {
+      query?: {
+        /** @description First day, `YYYY-MM-DD`, in India. Defaults to 29 days before `to`. */
+        from?: string;
+        /** @description Last day, included, `YYYY-MM-DD`, in India. Defaults to today in India. */
+        to?: string;
+        category?: components["schemas"]["ServiceCategory"];
+        operatorId?: string;
+      };
+      header?: never;
+      path: {
+        report:
+          | "overview"
+          | "search"
+          | "bookings"
+          | "revenue"
+          | "payments"
+          | "operators"
+          | "empty-legs"
+          | "air-ambulance";
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "text/csv": string;
         };
       };
     };
