@@ -128,6 +128,8 @@ async function next(
   requestHeaders.set(csp.name, csp.value);
   const response = NextResponse.next({ request: { headers: requestHeaders } });
   response.headers.set(csp.name, csp.value);
+  // A page carrying a per-request nonce must never be served from a cache.
+  response.headers.set("Cache-Control", "private, no-store");
   return response;
 }
 

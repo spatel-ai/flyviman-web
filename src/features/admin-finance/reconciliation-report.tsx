@@ -37,6 +37,7 @@ const KIND: Record<string, string> = {
   SETTLEMENT_MISSING: "Settlement missing",
   SETTLEMENT_AMOUNT_MISMATCH: "Settlement does not add up",
   SETTLEMENT_BOOKING_NOT_COMPLETED: "Settlement on an open booking",
+  SETTLEMENT_REFERENCE_REUSED: "Payout reference used twice",
 };
 
 /** A UTC day as `YYYY-MM-DD`. */

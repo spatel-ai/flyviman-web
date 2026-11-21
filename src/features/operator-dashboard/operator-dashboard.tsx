@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { EmptyState } from "@/components/shared/empty-state";
 import { LoadError } from "@/components/shared/load-error";
+import { PriceLabel } from "@/components/shared/price-label";
 import { StatTile } from "@/components/shared/stat-tile";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { Card } from "@/components/ui/card";
@@ -49,8 +50,8 @@ export function OperatorDashboard() {
     );
   }
 
-  const { requests, quotes, trips, fleet, emptyLegs } = data;
-  if (!requests && !quotes && !trips && !fleet && !emptyLegs) {
+  const { requests, quotes, trips, fleet, emptyLegs, settlements } = data;
+  if (!requests && !quotes && !trips && !fleet && !emptyLegs && !settlements) {
     return (
       <EmptyState
         title="Nothing to show here"
@@ -145,6 +146,48 @@ export function OperatorDashboard() {
               emptyLegs.expiringSoon > 0
                 ? `${plural(emptyLegs.expiringSoon, "offer")} expiring within 48 hours`
                 : "Published and bookable"
+            }
+          />
+        ) : null}
+        {settlements ? (
+          <StatTile
+            href="/operator/settlements"
+            label="Settlements due"
+            value={settlements.dueCount}
+            caption={
+              <span className="flex flex-col gap-2">
+                {settlements.amounts
+                  .filter((amount) => amount.dueMinor > 0)
+                  .map((amount) => (
+                    <PriceLabel
+                      key={amount.currency}
+                      amountMinor={amount.dueMinor}
+                      currency={amount.currency}
+                      priceType="CONFIRMED"
+                      variant="compact"
+                      lead="Payable"
+                      className="items-start"
+                    />
+                  ))}
+                <span>
+                  {settlements.paidCount === 0
+                    ? "None paid in the last 30 days"
+                    : `${plural(settlements.paidCount, "settlement")} paid in the last 30 days`}
+                </span>
+                {settlements.amounts
+                  .filter((amount) => amount.paidMinor > 0)
+                  .map((amount) => (
+                    <PriceLabel
+                      key={amount.currency}
+                      amountMinor={amount.paidMinor}
+                      currency={amount.currency}
+                      priceType="CONFIRMED"
+                      variant="compact"
+                      lead="Paid"
+                      className="items-start"
+                    />
+                  ))}
+              </span>
             }
           />
         ) : null}

@@ -820,7 +820,7 @@ export interface paths {
     };
     /**
      * Counts for the operator dashboard
-     * @description Open booking requests, quotes sent and expiring, confirmed trips in the next 14 days, fleet and document status, and live empty legs. Staff get only the sections their capabilities open, counted over the aircraft in their reach; other sections are `null`. Counts only: no passenger or medical data.
+     * @description Open booking requests, quotes sent and expiring, confirmed trips in the next 14 days, fleet and document status, live empty legs, and, for operator administrators only, settlements due and paid in the last 30 days. Staff get only the sections their capabilities open, counted over the aircraft in their reach; other sections are `null`. Counts and settlement sums only: no passenger or medical data.
      */
     get: operations["OperatorDashboardController_get"];
     put?: never;
@@ -3162,7 +3162,7 @@ export interface paths {
     head?: never;
     /**
      * Hold, release or mark a settlement paid
-     * @description `ON_HOLD` from `NOT_DUE` or `DUE`; `DUE` from `ON_HOLD` releases the hold: the record becomes what the rules give now (`DUE` or `NOT_DUE`, see `notDueReason`); `PAID` from `DUE` with the payout’s bank `paymentReference` and the `expectedPayableMinor` shown, only while still due (409 `SETTLEMENT_NOT_DUE`, the reason in `details`) and unchanged (409 `SETTLEMENT_CHANGED`, the current payable in `details`). A `PAID` record never changes again: marking it paid with the same reference returns it, another reference is 409 `SETTLEMENT_ALREADY_PAID`; any other move is 409 `SETTLEMENT_INVALID_TRANSITION`. Audited with the reason. A repeat with the same `Idempotency-Key` and body returns the first answer.
+     * @description `ON_HOLD` from `NOT_DUE` or `DUE`; `DUE` from `ON_HOLD` releases the hold: the record becomes what the rules give now (`DUE` or `NOT_DUE`, see `notDueReason`); `PAID` from `DUE` with the payout’s bank `paymentReference` and the `expectedPayableMinor` shown, only while still due (409 `SETTLEMENT_NOT_DUE`, the reason in `details`) and unchanged (409 `SETTLEMENT_CHANGED`, the current payable in `details`). A `PAID` record never changes again: marking it paid with the same reference returns it, another reference is 409 `SETTLEMENT_ALREADY_PAID`; a reference already on another settlement (ignoring case) is 409 `SETTLEMENT_REFERENCE_USED`; any other move is 409 `SETTLEMENT_INVALID_TRANSITION`. Audited with the reason. A repeat with the same `Idempotency-Key` and body returns the first answer.
      */
     patch: operations["AdminSettlementsController_change"];
     trace?: never;
@@ -4369,6 +4369,22 @@ export interface components {
       /** @description Of those, expiring within 48 hours. */
       expiringSoon: number;
     };
+    DashboardSettlementAmountDto: {
+      /** @example INR */
+      currency: string;
+      /** @description Paise payable on `DUE` settlements. */
+      dueMinor: number;
+      /** @description Paise paid out on settlements paid in the last 30 days. */
+      paidMinor: number;
+    };
+    DashboardSettlementsDto: {
+      /** @description Settlements `DUE`: waiting for the payout. */
+      dueCount: number;
+      /** @description Settlements `PAID` in the last 30 days. */
+      paidCount: number;
+      /** @description The sums, one row per currency (never added across currencies), by currency code; empty when both counts are 0. */
+      amounts: components["schemas"]["DashboardSettlementAmountDto"][];
+    };
     OperatorDashboardResponseDto: {
       status: components["schemas"]["OperatorStatus"];
       requests: components["schemas"]["DashboardRequestsDto"] | null;
@@ -4376,6 +4392,8 @@ export interface components {
       trips: components["schemas"]["DashboardTripsDto"] | null;
       fleet: components["schemas"]["DashboardFleetDto"] | null;
       emptyLegs: components["schemas"]["DashboardEmptyLegsDto"] | null;
+      /** @description Operator administrators only, as `/operator/settlements` is; `null` for staff. */
+      settlements: components["schemas"]["DashboardSettlementsDto"] | null;
     };
     /** @enum {string} */
     StaffStatus: "INVITED" | "ACTIVE" | "SUSPENDED";
@@ -7356,7 +7374,7 @@ export interface components {
       settlementsPaidMinor: number;
     };
     /**
-     * @description `PAYMENT_SUMMARY_MISMATCH` (the booking’s payment status is not what its payments say); `PAYMENT_FLAGGED` (another amount or a second capture at the gateway: check its dashboard); `EXTRA_MONEY_UNREFUNDED` (money paid after closing or twice, not yet refunded); `PAYMENT_STUCK` and `REFUND_STUCK` (no final answer after 24 hours); `KEPT_EXCEEDS_TOTAL`; `SETTLEMENT_MISSING` (a completed booking with money kept and no settlement); `SETTLEMENT_AMOUNT_MISMATCH` (the settlement’s figures do not add up to the money kept now); `SETTLEMENT_BOOKING_NOT_COMPLETED` (a due or paid settlement whose booking is no longer `COMPLETED`).
+     * @description `PAYMENT_SUMMARY_MISMATCH` (the booking’s payment status is not what its payments say); `PAYMENT_FLAGGED` (another amount or a second capture at the gateway: check its dashboard); `EXTRA_MONEY_UNREFUNDED` (money paid after closing or twice, not yet refunded); `PAYMENT_STUCK` and `REFUND_STUCK` (no final answer after 24 hours); `KEPT_EXCEEDS_TOTAL`; `SETTLEMENT_MISSING` (a completed booking with money kept and no settlement); `SETTLEMENT_AMOUNT_MISMATCH` (the settlement’s figures do not add up to the money kept now); `SETTLEMENT_BOOKING_NOT_COMPLETED` (a due or paid settlement whose booking is no longer `COMPLETED`); `SETTLEMENT_REFERENCE_REUSED` (a payout reference, ignoring case, on more than one paid settlement, one of them paid in the period; one row per settlement, the reference in `detail`).
      * @enum {string}
      */
     ReconciliationMismatchKind:
@@ -7368,9 +7386,10 @@ export interface components {
       | "KEPT_EXCEEDS_TOTAL"
       | "SETTLEMENT_MISSING"
       | "SETTLEMENT_AMOUNT_MISMATCH"
-      | "SETTLEMENT_BOOKING_NOT_COMPLETED";
+      | "SETTLEMENT_BOOKING_NOT_COMPLETED"
+      | "SETTLEMENT_REFERENCE_REUSED";
     ReconciliationMismatchDto: {
-      /** @description `PAYMENT_SUMMARY_MISMATCH` (the booking’s payment status is not what its payments say); `PAYMENT_FLAGGED` (another amount or a second capture at the gateway: check its dashboard); `EXTRA_MONEY_UNREFUNDED` (money paid after closing or twice, not yet refunded); `PAYMENT_STUCK` and `REFUND_STUCK` (no final answer after 24 hours); `KEPT_EXCEEDS_TOTAL`; `SETTLEMENT_MISSING` (a completed booking with money kept and no settlement); `SETTLEMENT_AMOUNT_MISMATCH` (the settlement’s figures do not add up to the money kept now); `SETTLEMENT_BOOKING_NOT_COMPLETED` (a due or paid settlement whose booking is no longer `COMPLETED`). */
+      /** @description `PAYMENT_SUMMARY_MISMATCH` (the booking’s payment status is not what its payments say); `PAYMENT_FLAGGED` (another amount or a second capture at the gateway: check its dashboard); `EXTRA_MONEY_UNREFUNDED` (money paid after closing or twice, not yet refunded); `PAYMENT_STUCK` and `REFUND_STUCK` (no final answer after 24 hours); `KEPT_EXCEEDS_TOTAL`; `SETTLEMENT_MISSING` (a completed booking with money kept and no settlement); `SETTLEMENT_AMOUNT_MISMATCH` (the settlement’s figures do not add up to the money kept now); `SETTLEMENT_BOOKING_NOT_COMPLETED` (a due or paid settlement whose booking is no longer `COMPLETED`); `SETTLEMENT_REFERENCE_REUSED` (a payout reference, ignoring case, on more than one paid settlement, one of them paid in the period; one row per settlement, the reference in `detail`). */
       kind: components["schemas"]["ReconciliationMismatchKind"];
       bookingReference: string | null;
       paymentReference: string | null;
