@@ -38,6 +38,13 @@ import {
 } from "@/lib/payments/checkout-machine";
 
 type Booking = Schemas["BookingResponseDto"];
+type Revalidation = Schemas["BookingRevalidationDto"];
+
+/**
+ * The recheck before checkout (rule 3) stopped the payment; the message is
+ * what the customer reads. Nothing was charged.
+ */
+class RecheckFailed extends Error {}
 
 /** Refusals after which what is on screen is out of date. */
 const STALE = new Set([
@@ -244,6 +251,34 @@ function Due({
 
   async function pay() {
     dispatch({ type: "PAY" });
+    // Rule 3: the trip is checked again before any money moves. Creating
+    // the order checks only the amount; availability is checked here.
+    try {
+      const check = (
+        await apiFetch<Revalidation>(
+          `bookings/${encodeURIComponent(booking.reference)}/revalidate`,
+          { method: "POST" },
+        )
+      ).data;
+      if (!check.available) {
+        refresh();
+        throw new RecheckFailed(
+          "This trip can no longer be flown as booked, so nothing was charged. Your trip page shows what happens next.",
+        );
+      }
+      if (
+        check.amountDue?.amountMinor !== amount.amountMinor ||
+        check.amountDue.currency !== amount.currency
+      ) {
+        refresh();
+        throw new RecheckFailed(
+          "The amount due has changed. The page now shows it: check it and pay again.",
+        );
+      }
+    } catch (error) {
+      dispatch({ type: "ORDER_FAILED", error });
+      return;
+    }
     const key = attempt.keyFor({ reference: booking.reference, ...amount });
     try {
       const created = await createPaymentOrder(booking.reference, amount, key);
@@ -371,6 +406,8 @@ function failureMessage(
     case "unavailable":
       return "Payment is not available right now. Nothing was charged. Try again later.";
     default:
-      return messageFor(state.error);
+      return state.error instanceof RecheckFailed
+        ? state.error.message
+        : messageFor(state.error);
   }
 }

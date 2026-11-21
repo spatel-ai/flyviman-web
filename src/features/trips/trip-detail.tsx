@@ -17,8 +17,9 @@ import { categoryLabel, formatDuration } from "@/lib/format/aircraft";
 import { formatDateTime } from "@/lib/format/date";
 import { CancelDialog } from "./cancel-dialog";
 import { ChangeRequests } from "./change-request";
-import { useBooking, useMessages, useQuotes } from "./hooks";
+import { useBooking, useEvents } from "./hooks";
 import { Messages } from "./messages";
+import { canEditPassengers, PassengersDialog } from "./passengers-dialog";
 import { PaymentHistory } from "./payments";
 import { Quotes } from "./quotes";
 import { isInProgress } from "./status";
@@ -62,18 +63,14 @@ export function TripDetail({ reference }: { reference: string }) {
 
 function Loaded({ booking }: { booking: Booking }) {
   const [cancelling, setCancelling] = useState(false);
+  const [editingPassengers, setEditingPassengers] = useState(false);
   const { itinerary } = booking;
   // The API decides what is due now (W4-1); null hides Pay.
   const due = booking.amountDue;
-  const queryState = {
-    quotes: useQuotes(booking.reference),
-    messages: useMessages(booking.reference),
-  };
-  const timeline = buildTimeline(
-    booking,
-    queryState.quotes.data,
-    queryState.messages.data,
-  );
+  // Under the booking's key: whatever refreshes the trip refreshes this.
+  const events = useEvents(booking.reference);
+  const timeline = buildTimeline(events.data ?? []);
+  const editable = canEditPassengers(booking.status);
 
   return (
     <div className="flex flex-col gap-8">
@@ -194,7 +191,7 @@ function Loaded({ booking }: { booking: Booking }) {
         charges={booking.cancellationTerms.charges}
       />
 
-      {booking.passengers.length > 0 || booking.specialRequests ? (
+      {booking.passengers.length > 0 || booking.specialRequests || editable ? (
         <section
           aria-labelledby="passengers-heading"
           className="flex flex-col gap-3"
@@ -202,17 +199,44 @@ function Loaded({ booking }: { booking: Booking }) {
           <h2 id="passengers-heading" className="text-title">
             Passengers
           </h2>
-          <ul className="text-body-sm">
-            {booking.passengers.map((p) => (
-              <li key={`${p.firstName}-${p.lastName}-${p.documentNumberLast4}`}>
-                {p.firstName} {p.lastName}
-              </li>
-            ))}
-          </ul>
+          {booking.passengers.length > 0 ? (
+            <ul className="text-body-sm">
+              {booking.passengers.map((p) => (
+                <li
+                  key={`${p.firstName}-${p.lastName}-${p.documentNumberLast4}`}
+                >
+                  {p.firstName} {p.lastName}
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-body-sm text-muted">
+              No passengers yet. Add who is flying before the trip.
+            </p>
+          )}
           {booking.specialRequests ? (
             <p className="text-body-sm text-muted">
               Special requests: {booking.specialRequests}
             </p>
+          ) : null}
+          {editable ? (
+            <>
+              <Button
+                variant="secondary"
+                className="self-start"
+                onClick={() => setEditingPassengers(true)}
+              >
+                {booking.passengers.length > 0
+                  ? "Change passengers"
+                  : "Add passengers"}
+              </Button>
+              <PassengersDialog
+                reference={booking.reference}
+                limit={itinerary.passengerCount}
+                open={editingPassengers}
+                onOpenChange={setEditingPassengers}
+              />
+            </>
           ) : null}
         </section>
       ) : null}
@@ -226,19 +250,38 @@ function Loaded({ booking }: { booking: Booking }) {
         <h2 id="timeline-heading" className="text-title">
           Timeline
         </h2>
-        <ol className="flex flex-col gap-3">
-          {timeline.map((entry) => (
-            <li key={`${entry.at}-${entry.label}`} className="text-body-sm">
-              <span className="font-medium">{entry.label}</span>
-              <span className="block text-caption text-muted">
-                {formatDateTime(entry.at)}
-              </span>
-              {entry.note ? (
-                <span className="block text-muted">{entry.note}</span>
-              ) : null}
-            </li>
-          ))}
-        </ol>
+        {events.isError ? (
+          <LoadError
+            what="the timeline"
+            error={events.error}
+            onRetry={() => void events.refetch()}
+          />
+        ) : events.isPending ? (
+          <Skeleton className="h-24" />
+        ) : (
+          <ol className="flex flex-col gap-3">
+            {timeline.map((entry) => (
+              <li key={entry.id} className="text-body-sm">
+                <span className="font-medium">{entry.label}</span>
+                <span className="block text-caption text-muted">
+                  {formatDateTime(entry.at)}
+                </span>
+                {entry.price ? (
+                  <PriceLabel
+                    amountMinor={entry.price.amountMinor}
+                    currency={entry.price.currency}
+                    priceType={entry.price.priceType}
+                    variant="compact"
+                    className="items-start"
+                  />
+                ) : null}
+                {entry.note ? (
+                  <span className="block text-muted">{entry.note}</span>
+                ) : null}
+              </li>
+            ))}
+          </ol>
+        )}
       </section>
 
       {isInProgress(booking.status) ? (
