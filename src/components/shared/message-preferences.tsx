@@ -54,13 +54,13 @@ export function MessagePreferences() {
         <div className="mt-2 flex flex-col">
           <Checkbox
             label="Text messages (SMS)"
-            checked={!data.smsOptedOut}
+            checked={!data.data.smsOptedOut}
             disabled={save.isPending}
             onCheckedChange={(on) => save.mutate({ smsOptedOut: on !== true })}
           />
           <Checkbox
             label="WhatsApp"
-            checked={!data.whatsappOptedOut}
+            checked={!data.data.whatsappOptedOut}
             disabled={save.isPending}
             onCheckedChange={(on) =>
               save.mutate({ whatsappOptedOut: on !== true })
