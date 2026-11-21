@@ -63,7 +63,7 @@ export function PassengersDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         title="Who is flying"
-        description="Choose everyone who will fly, the lead passenger first. This replaces the passengers on the trip."
+        description="Choose everyone who will fly. This replaces the passengers on the trip."
       >
         <PassengersBody
           reference={reference}

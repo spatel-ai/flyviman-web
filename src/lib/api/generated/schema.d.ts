@@ -2813,7 +2813,7 @@ export interface paths {
     get?: never;
     /**
      * Replace the booking’s passengers with saved passengers
-     * @description Copies the saved passengers (`passengerIds`, the caller’s own, 404 otherwise) onto the booking as they are now, replacing those it had: at least one, at most the trip’s passenger count (400 `VALIDATION_ERROR`). Only from `REQUESTED` up to `CONFIRMED` and until 24 hours before the first departure: 409 `BOOKING_PASSENGERS_LOCKED` otherwise. Document numbers and assistance notes are stored encrypted; audited with passenger counts only. Answers the booking, document numbers masked. A repeat with the same `Idempotency-Key` and body returns the first answer. Another customer’s booking is 404.
+     * @description Copies the saved passengers (`passengerIds`, the caller’s own, 404 otherwise) onto the booking as they are now, replacing those it had: at least one, at most the trip’s passenger count (400 `VALIDATION_ERROR`). Only from `REQUESTED` up to `CONFIRMED` and until 24 hours before the first departure: 409 `BOOKING_PASSENGERS_LOCKED` otherwise. Document numbers and assistance notes are stored encrypted; audited with passenger counts only. Answers the reference and the passenger count only (`GET /bookings/:reference` has the details). A repeat with the same `Idempotency-Key` and body returns the first answer. Another customer’s booking is 404.
      */
     put: operations["BookingSelfServiceController_replacePassengers"];
     post?: never;
@@ -6509,8 +6509,13 @@ export interface components {
       createdAt: string;
     };
     ReplacePassengersDto: {
-      /** @description Saved passengers (`/me/passengers`), the lead first: at least one and at most the trip’s passenger count. Their details are copied onto the booking as they are now. */
+      /** @description Saved passengers (`/me/passengers`): at least one and at most the trip’s passenger count. Their details are copied onto the booking as they are now. */
       passengerIds: string[];
+    };
+    PassengersReplacedDto: {
+      /** @example FLY-BK-7K2M9Q */
+      reference: string;
+      passengerCount: number;
     };
     /** @enum {string} */
     BookingUnavailableReason:
@@ -11149,7 +11154,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/json": components["schemas"]["BookingResponseDto"];
+          "application/json": components["schemas"]["PassengersReplacedDto"];
         };
       };
     };
