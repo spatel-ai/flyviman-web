@@ -119,8 +119,8 @@ export function OfferEditor({ id }: { id: string }) {
             A customer has requested this offer
           </p>
           <p className="text-body-sm">
-            Its price and departure window are fixed, and it cannot be
-            withdrawn, until you answer the request.{" "}
+            Its price, seats, departure window and conditions are fixed, and it
+            cannot be withdrawn, until you answer the request.{" "}
             <Link
               href="/operator/requests"
               className="text-accent hover:underline"

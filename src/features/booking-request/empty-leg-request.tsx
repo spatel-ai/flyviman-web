@@ -48,6 +48,7 @@ interface Attempt {
   values: EmptyLegRequestOutput;
   expectedTotalMinor: number;
   cancellationTermsVersion: number;
+  offerUpdatedAt: string;
 }
 
 /**
@@ -144,6 +145,7 @@ function RequestForm({
       values,
       expectedTotalMinor,
       cancellationTermsVersion,
+      offerUpdatedAt,
     }: Attempt) => {
       const body: Body = {
         emptyLegId: offer.id,
@@ -151,6 +153,7 @@ function RequestForm({
         expectedTotalMinor,
         currency: "INR",
         cancellationTermsVersion,
+        offerUpdatedAt,
         passengerIds: values.passengerIds,
         ...(values.specialRequests
           ? { specialRequests: values.specialRequests }
@@ -172,7 +175,8 @@ function RequestForm({
         attempt.rotate();
       }
       setLast(sent);
-      setChanged(newEstimateFrom(failure));
+      const estimate = newEstimateFrom(failure);
+      setChanged(estimate);
       setNewTerms(newTermsFrom(failure));
       const message = applyApiError(failure, setFieldError, [
         "passengerCount",
@@ -184,9 +188,14 @@ function RequestForm({
           ? "This empty leg is no longer available: it has ended, been taken or the aircraft is no longer free. Other empty legs may suit you."
           : failure instanceof ApiError && failure.code === "BOOKING_DUPLICATE"
             ? "You have already requested this empty leg. Find it under your trips."
-            : message,
+            : failure instanceof ApiError &&
+                failure.code === "BOOKING_PRICE_CHANGED" &&
+                !estimate
+              ? "The operator has changed this offer since you opened it. Read the seats, window and conditions below again, then send your request."
+              : message,
       );
-      // The offer moved on (taken, changed or ended): show it as it is now.
+      // The offer moved on (taken, changed or ended): show it as it is now,
+      // so the next attempt sends its new `updatedAt`.
       if (failure instanceof ApiError && failure.status === 409) {
         await queryClient.invalidateQueries({
           queryKey: queryKeys.emptyLeg(offer.id),
@@ -213,6 +222,7 @@ function RequestForm({
         values,
         expectedTotalMinor: expected,
         cancellationTermsVersion: version,
+        offerUpdatedAt: offer.updatedAt,
       });
     });
   }
