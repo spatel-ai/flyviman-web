@@ -66,6 +66,11 @@ const MESSAGES: Record<string, string> = {
   CONTENT_UNCHANGED: "Nothing has changed. Edit the title or the text first.",
   BOOKING_PRICE_CHANGED:
     "The price has changed since you looked. Review the new figure before you send the request.",
+  CATEGORY_DISABLED:
+    "This service is not available at the moment. Try another kind of flight, or contact us.",
+  CATEGORY_CONFIG_CHANGED:
+    "This configuration changed since you opened it. The list now shows the latest: open it again to make your change.",
+  CATEGORY_CONFIG_INVALID: "Air ambulance is always booked on request.",
   BOOKING_CATEGORY_DISABLED:
     "Requests for this kind of flight are not open at the moment.",
   BOOKING_DUPLICATE:

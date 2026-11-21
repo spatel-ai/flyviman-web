@@ -61,7 +61,7 @@ src/
                            aircraft/[id], locations, documents, pricing/rules,
                            pricing/calculations, pricing/calculations/[id], enquiries, enquiries/[id],
                            air-ambulance (queue, [reference]), promotions, notifications, empty-legs, audit-logs, content, matching-limits, roles, bookings, bookings/[reference],
-                           change-requests, payments, refunds (Due and History), settlements, reconciliation
+                           change-requests, payments, refunds (Due and History), settlements, reconciliation, category-config
     layout.tsx             root: font, theme script, providers
     globals.css            design tokens
   components/
@@ -92,7 +92,7 @@ src/
                            admin-operators, admin-users, admin-aircraft, admin-locations, admin-documents,
                            admin-pricing, admin-enquiries, admin-air-ambulance, admin-promotions, admin-cancellation-terms,
                            admin-bookings, admin-finance (payments, refunds, settlements, reconciliation), admin-audit, admin-content, admin-empty-legs,
-                           admin-matching-limits, admin-roles, empty-legs, operator-empty-legs, scheduled-search,
+                           admin-matching-limits, admin-roles, admin-category-config, empty-legs, operator-empty-legs, scheduled-search,
                            restrictions, payment (the pay page and receipt))
   lib/
     api/                   apiFetch, ApiError, messages by error code, query keys, generated types
