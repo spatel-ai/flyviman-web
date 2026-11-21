@@ -7612,6 +7612,11 @@ export interface components {
       /** @example FLY-BK-7K2M9Q */
       bookingReference: string;
       reason: string;
+      /**
+       * @description The gateway’s own refund id, to trace the refund in its dashboard (and to settle it in development). Null until the gateway has answered.
+       * @example rfnd_Qk2m9
+       */
+      providerRefundId: string | null;
       /** @description The payment after this refund was recorded. */
       paymentStatus: components["schemas"]["PaymentStatus"];
       /** @description Paise still refundable from the payment after this refund (refunds completed or under way count). */

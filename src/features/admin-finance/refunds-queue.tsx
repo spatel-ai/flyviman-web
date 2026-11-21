@@ -114,6 +114,22 @@ function DueTab() {
   );
 }
 
+/** The gateway's refund id, one click to copy, for tracing it in its dashboard. */
+function GatewayReference({ id }: { id: string | null }) {
+  if (!id) return <span className="text-muted">Not yet issued</span>;
+  return (
+    <button
+      type="button"
+      title="Copy gateway reference"
+      aria-label={`Copy gateway reference ${id}`}
+      className="font-mono text-caption break-all hover:underline"
+      onClick={() => void navigator.clipboard?.writeText(id)}
+    >
+      {id}
+    </button>
+  );
+}
+
 function HistoryTab() {
   const [page, setPage] = useState(1);
   const query = useQuery({
@@ -138,6 +154,7 @@ function HistoryTab() {
         "Status",
         "Payment status",
         "Reason",
+        "Gateway reference",
       ]}
       rowKey={(row) => row.reference}
       cells={(row) => {
@@ -164,6 +181,7 @@ function HistoryTab() {
           <span key="reason" className="line-clamp-2 max-w-xs">
             {row.reason}
           </span>,
+          <GatewayReference key="gateway" id={row.providerRefundId} />,
         ];
       }}
     />
