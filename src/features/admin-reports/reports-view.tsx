@@ -3,7 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState, type FormEvent, type ReactNode } from "react";
+import { useEffect, useState, type FormEvent, type ReactNode } from "react";
 import { LoadError } from "@/components/shared/load-error";
 import { Button } from "@/components/ui/button";
 import { buttonClasses } from "@/components/ui/button-classes";
@@ -163,19 +163,39 @@ function Filters({
   const takes = REPORTS[filter.report].filters;
   const problem = periodError(draft.from, draft.to);
 
+  // The operator list is searched on the server (`q`), so no operator is out
+  // of reach however many there are. The chosen one stays in the options.
+  const [operatorSearch, setOperatorSearch] = useState("");
+  const [searched, setSearched] = useState("");
+  const [chosen, setChosen] = useState<{ id: string; label: string } | null>(
+    null,
+  );
+  useEffect(() => {
+    const timer = setTimeout(() => setSearched(operatorSearch.trim()), 300);
+    return () => clearTimeout(timer);
+  }, [operatorSearch]);
   const operators = useQuery({
-    queryKey: queryKeys.adminOperators({ for: "report-filter" }),
+    queryKey: queryKeys.adminOperators({ for: "report-filter", q: searched }),
     enabled: takes.includes("operatorId"),
     queryFn: async () =>
       (
         await apiFetch<Schemas["AdminOperatorSummaryDto"][]>(
           "admin/operators",
-          {
-            query: { pageSize: 100 },
-          },
+          { query: { pageSize: 100, ...(searched ? { q: searched } : {}) } },
         )
       ).data,
   });
+  const operatorOptions = (operators.data ?? []).map((o) => ({
+    value: o.id,
+    label: o.tradingName ?? o.legalName,
+  }));
+  const chosenOption = draft.operatorId
+    ? (operatorOptions.find((o) => o.value === draft.operatorId) ?? {
+        value: draft.operatorId,
+        label:
+          chosen?.id === draft.operatorId ? chosen.label : "Selected operator",
+      })
+    : null;
 
   function submit(event: FormEvent) {
     event.preventDefault();
@@ -217,21 +237,36 @@ function Filters({
         />
       ) : null}
       {takes.includes("operatorId") ? (
-        <Select
-          label="Operator"
-          options={[
-            { value: ALL, label: "All operators" },
-            ...(operators.data ?? []).map((o) => ({
-              value: o.id,
-              label: o.tradingName ?? o.legalName,
-            })),
-          ]}
-          value={draft.operatorId || ALL}
-          onValueChange={(value) =>
-            setDraft({ ...draft, operatorId: value === ALL ? "" : value })
-          }
-          className="h-10 w-56 max-w-full"
-        />
+        <>
+          <Input
+            label="Find an operator"
+            type="search"
+            value={operatorSearch}
+            onChange={(e) => setOperatorSearch(e.target.value)}
+            maxLength={100}
+            className="h-10 w-56 max-w-full"
+          />
+          <Select
+            label="Operator"
+            options={[
+              { value: ALL, label: "All operators" },
+              ...(chosenOption &&
+              !operatorOptions.some((o) => o.value === chosenOption.value)
+                ? [chosenOption]
+                : []),
+              ...operatorOptions,
+            ]}
+            value={draft.operatorId || ALL}
+            onValueChange={(value) => {
+              const option = operatorOptions.find((o) => o.value === value);
+              setChosen(
+                option ? { id: option.value, label: option.label } : null,
+              );
+              setDraft({ ...draft, operatorId: value === ALL ? "" : value });
+            }}
+            className="h-10 w-56 max-w-full"
+          />
+        </>
       ) : null}
       <div className="self-end">
         <Button type="submit" disabled={problem !== null}>

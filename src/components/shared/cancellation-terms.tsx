@@ -6,6 +6,12 @@ export interface CancellationTermsProps {
     minHoursBeforeDeparture: number;
     chargePercent: number;
   }[];
+  /**
+   * The heading's level. 3 (the default) sits under a section heading or a
+   * dialog title; 2 where the terms are a section of their own under the
+   * page title.
+   */
+  headingLevel?: 2 | 3;
   className?: string;
 }
 
@@ -27,11 +33,13 @@ function rule(charge: CancellationTermsProps["charges"][number]): string {
 export function CancellationTerms({
   summary,
   charges,
+  headingLevel = 3,
   className,
 }: CancellationTermsProps) {
+  const Heading = headingLevel === 2 ? "h2" : "h3";
   return (
     <section aria-label="Cancellation conditions" className={className}>
-      <h3 className="text-title">Cancellation conditions</h3>
+      <Heading className="text-title">Cancellation conditions</Heading>
       <p className="mt-1 text-body-sm text-muted">{summary}</p>
       {charges.length > 0 ? (
         <ul className="mt-2 list-disc pl-5 text-body-sm text-muted">

@@ -193,6 +193,7 @@ function Loaded({ booking }: { booking: Booking }) {
 
       <div id="cancellation-terms">
         <CancellationTerms
+          headingLevel={2}
           summary={booking.cancellationTerms.summary}
           charges={booking.cancellationTerms.charges}
         />

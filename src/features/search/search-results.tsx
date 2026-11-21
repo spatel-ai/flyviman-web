@@ -398,6 +398,12 @@ function ResultCard({
           ) : (
             <p className="text-title">Price on request</p>
           )}
+          {result.price && result.incomplete ? (
+            <p className="text-caption text-muted">
+              Some charges are not included in this estimate. The details list
+              what.
+            </p>
+          ) : null}
           <Link
             href={`/search/${searchId}/${result.resultId}`}
             className={buttonClasses({ size: "sm" })}

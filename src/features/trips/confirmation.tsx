@@ -150,6 +150,7 @@ export function TripConfirmation({ reference }: { reference: string }) {
       ) : null}
 
       <CancellationTerms
+        headingLevel={2}
         summary={b.cancellationTerms.summary}
         charges={b.cancellationTerms.charges}
       />

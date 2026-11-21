@@ -10,11 +10,11 @@ import { useNow } from "@/components/booking/use-now";
 import { CancellationTerms } from "@/components/shared/cancellation-terms";
 import { EmptyState } from "@/components/shared/empty-state";
 import { FormAlert } from "@/components/shared/form-alert";
+import { AddPassengerButton } from "@/components/shared/passenger-dialog";
 import { LoadError } from "@/components/shared/load-error";
 import { PriceLabel } from "@/components/shared/price-label";
 import { RecordNotFound } from "@/components/shared/record-not-found";
 import { Button } from "@/components/ui/button";
-import { buttonClasses } from "@/components/ui/button-classes";
 import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select } from "@/components/ui/select";
@@ -127,6 +127,8 @@ function RequestForm({
   const {
     register,
     control,
+    getValues,
+    setValue,
     handleSubmit,
     setError: setFieldError,
     formState: { errors },
@@ -139,6 +141,12 @@ function RequestForm({
     },
   });
   const count = Number(useWatch({ control, name: "passengerCount" }));
+
+  // A passenger added here is chosen straight away, while there is a seat.
+  function addPassenger(person: Passenger) {
+    const chosen = getValues("passengerIds");
+    if (chosen.length < count) setValue("passengerIds", [...chosen, person.id]);
+  }
 
   const send = useMutation({
     mutationFn: ({
@@ -294,12 +302,8 @@ function RequestForm({
         {people.length === 0 ? (
           <EmptyState
             title="No saved passengers"
-            description="Add the people who will fly to your account, then come back to this request."
-            action={
-              <Link href="/account/passengers" className={buttonClasses({})}>
-                Add a passenger
-              </Link>
-            }
+            description="Add the people who will fly. They are saved to your account too."
+            action={<AddPassengerButton onAdded={addPassenger} />}
           />
         ) : (
           <>
@@ -333,6 +337,7 @@ function RequestForm({
                 {errors.passengerIds.message}
               </p>
             ) : null}
+            <AddPassengerButton variant="secondary" onAdded={addPassenger} />
           </>
         )}
       </fieldset>
@@ -357,6 +362,7 @@ function RequestForm({
 
       {newTerms ? null : (
         <CancellationTerms
+          headingLevel={2}
           summary={offer.cancellationTerms.summary}
           charges={offer.cancellationTerms.tiers}
         />
@@ -366,7 +372,11 @@ function RequestForm({
         <FormAlert message={error} />
         {newTerms ? (
           <Card className="flex flex-col gap-3">
-            <CancellationTerms summary={newTerms.summary} charges={[]} />
+            <CancellationTerms
+              summary={newTerms.summary}
+              charges={[]}
+              headingLevel={2}
+            />
             <Button
               type="button"
               loading={send.isPending}

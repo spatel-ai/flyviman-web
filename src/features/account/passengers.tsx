@@ -15,7 +15,7 @@ import { messageFor } from "@/lib/api/messages";
 import { queryKeys } from "@/lib/api/query-keys";
 import type { Schemas } from "@/lib/api/types";
 import { COUNTRIES } from "@/lib/countries";
-import { PassengerDialog } from "./passenger-dialog";
+import { PassengerDialog } from "@/components/shared/passenger-dialog";
 import { DOCUMENT_TYPES, maskDocumentNumber } from "./schema";
 
 type Passenger = Schemas["PassengerResponseDto"];

@@ -1,6 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { Controller, useForm, useWatch } from "react-hook-form";
 import { FormAlert } from "@/components/shared/form-alert";
@@ -15,6 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { apiFetch } from "@/lib/api/client";
 import { applyApiError } from "@/lib/api/messages";
+import { queryKeys } from "@/lib/api/query-keys";
 import type { Schemas } from "@/lib/api/types";
 import { COUNTRIES } from "@/lib/countries";
 import {
@@ -26,7 +28,7 @@ import {
   toPassengerBody,
   toPassengerValues,
   type PassengerValues,
-} from "./schema";
+} from "./passenger-schema";
 
 type Passenger = Schemas["PassengerResponseDto"];
 
@@ -81,7 +83,12 @@ function PassengerForm({
   return (
     <form
       noValidate
-      onSubmit={(event) => void handleSubmit(onSubmit)(event)}
+      onSubmit={(event) => {
+        // The dialog sits in a portal, whose events bubble to a form around
+        // it (the booking request): saving a passenger must not submit that.
+        event.stopPropagation();
+        void handleSubmit(onSubmit)(event);
+      }}
       className="flex flex-col gap-4"
     >
       <FormAlert message={formError} />
@@ -198,5 +205,44 @@ export function PassengerDialog({
         <PassengerForm passenger={passenger} onSaved={onSaved} />
       </DialogContent>
     </Dialog>
+  );
+}
+
+/**
+ * "Add a passenger" for a page that needs one now (a booking request): saves
+ * through the same dialog as the account page, puts the new passenger in the
+ * saved list, and hands it back so the page can select it.
+ */
+export function AddPassengerButton({
+  onAdded,
+  variant,
+}: {
+  onAdded: (passenger: Passenger) => void;
+  variant?: "primary" | "secondary";
+}) {
+  const queryClient = useQueryClient();
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <Button type="button" variant={variant} onClick={() => setOpen(true)}>
+        Add a passenger
+      </Button>
+      <PassengerDialog
+        open={open}
+        onOpenChange={setOpen}
+        passenger={null}
+        onSaved={(passenger) => {
+          setOpen(false);
+          queryClient.setQueryData<Passenger[]>(
+            queryKeys.passengers,
+            (list) => [...(list ?? []), passenger],
+          );
+          void queryClient.invalidateQueries({
+            queryKey: queryKeys.passengers,
+          });
+          onAdded(passenger);
+        }}
+      />
+    </>
   );
 }

@@ -71,7 +71,7 @@ export function AdminDashboard({ role }: { role: Role }) {
             caption="Requested, with the operator or awaiting clarification"
           />
           <StatTile
-            href="/admin/operators"
+            href="/admin/operators?status=PENDING_REVIEW"
             label="Operators awaiting review"
             value={now.operatorsPendingReview}
           />
