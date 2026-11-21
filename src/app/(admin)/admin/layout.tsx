@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { connection } from "next/server";
 import { Suspense } from "react";
 import {
   AppShell,
@@ -104,7 +105,15 @@ async function AdminShell({ children }: { children: React.ReactNode }) {
   );
 }
 
-export default function AdminLayout({ children }: LayoutProps<"/admin">) {
+/**
+ * The portal is rendered per request, with no prerendered shell, so Next.js
+ * puts the request's Content-Security-Policy nonce (set by `proxy.ts`) on
+ * every script on the page. `instant = false` allows the wait below.
+ */
+export const instant = false;
+
+export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
+  await connection();
   // The shell is not shown until the session and role are confirmed. This
   // guards the shell, not the pages: a layout does not re-run on navigation
   // and does not gate its children. Every page gets its data from the API,

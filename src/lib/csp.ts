@@ -26,11 +26,11 @@ export const CHECKOUT_PAYMENT_PERMISSION = `payment=(self "${RAZORPAY_SCRIPT}" "
  */
 export const CHECKOUT_PAGE = "/account/trips/:reference/pay";
 
-// The nonce branch is unused until W5 renders the portals per request (D-152).
 export interface CspOptions {
   /**
    * Only for a page rendered per request, where Next.js puts this nonce on
-   * every script it renders. No page is today: they are prerendered
+   * every script it renders: the operator and admin portals, whose policy
+   * `proxy.ts` sets (lib/portal-csp.ts). Every other page is prerendered
    * (Cache Components), and a prerendered page's inline scripts (the
    * framework's page data among them) cannot carry one.
    */
@@ -109,7 +109,8 @@ export function contentSecurityPolicy(options: CspOptions): string {
  * The header that carries the policy. CSP_REPORT_ONLY=1 switches it to
  * report-only, for an emergency when the policy blocks something it should
  * not: violations are then logged in the browser console and nothing is
- * blocked. Read when the site is built (`next.config.ts`).
+ * blocked. Read when the site is built (`next.config.ts`), and for the
+ * portals on each request (`proxy.ts`).
  */
 export function cspHeaderName(
   reportOnly = process.env.CSP_REPORT_ONLY === "1",
