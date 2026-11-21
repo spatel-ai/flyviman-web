@@ -1,11 +1,12 @@
 "use client";
 
-import { useQueries } from "@tanstack/react-query";
+import { useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
 import { CalendarDays, ChevronLeft, ChevronRight } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { SEARCH_LANDING } from "@/content/search";
 import { apiFetch } from "@/lib/api/client";
+import { ApiError } from "@/lib/api/errors";
 import { queryKeys } from "@/lib/api/query-keys";
 import type { Schemas } from "@/lib/api/types";
 import {
@@ -102,29 +103,59 @@ export function FareCalendar({
   const ready = readyRoute(route);
   const returning = label === "Return";
 
-  const calendars = useQueries({
-    queries: months.map((month) => {
-      const params = {
-        category:
-          route?.kind === "helicopter" ? "HELICOPTER" : "PRIVATE_CHARTER",
-        originId: route?.originId ?? "",
-        destinationId: route?.destinationId ?? "",
-        month: month.slice(0, 7),
-        passengerCount: route?.passengerCount ?? 0,
-        ...(route?.kind === "charter" && route.aircraftCategory
-          ? { aircraftCategory: route.aircraftCategory }
-          : {}),
-      };
-      return {
-        queryKey: queryKeys.fareCalendar(params),
-        queryFn: () => apiFetch<Calendar>("search/calendar", { query: params }),
-        enabled: open && ready && Boolean(today),
-        // A refused month is not retried: it would only spend the rate limit.
-        retry: false,
-        staleTime: 5 * 60_000,
-      };
-    }),
+  const queryClient = useQueryClient();
+  const category =
+    route?.kind === "helicopter" ? "HELICOPTER" : "PRIVATE_CHARTER";
+  // A switched-off category is a final answer: once one month said so, no
+  // other month is asked (days stay selectable, without estimates).
+  const disabledKey = queryKeys.fareCalendarDisabled(category);
+  const { data: categoryOff } = useQuery({
+    queryKey: disabledKey,
+    queryFn: () => true,
+    enabled: false,
+    staleTime: Infinity,
   });
+
+  const monthQuery = (month: string | undefined, after: boolean) => {
+    const params = {
+      category,
+      originId: route?.originId ?? "",
+      destinationId: route?.destinationId ?? "",
+      month: (month ?? "").slice(0, 7),
+      passengerCount: route?.passengerCount ?? 0,
+      ...(route?.kind === "charter" && route.aircraftCategory
+        ? { aircraftCategory: route.aircraftCategory }
+        : {}),
+    };
+    return {
+      queryKey: queryKeys.fareCalendar(params),
+      queryFn: async () => {
+        try {
+          return await apiFetch<Calendar>("search/calendar", { query: params });
+        } catch (error) {
+          if (error instanceof ApiError && error.code === "CATEGORY_DISABLED")
+            queryClient.setQueryData(disabledKey, true);
+          throw error;
+        }
+      },
+      // The second month waits for the first, so a refusal stops it.
+      enabled:
+        open &&
+        ready &&
+        Boolean(today) &&
+        Boolean(month) &&
+        !categoryOff &&
+        after,
+      // A refused month is not retried: it would only spend the rate limit.
+      retry: false,
+      staleTime: 5 * 60_000,
+    };
+  };
+  const firstCalendar = useQuery(monthQuery(months[0], true));
+  const secondCalendar = useQuery(
+    monthQuery(months[1], firstCalendar.isSuccess || firstCalendar.isError),
+  );
+  const calendars = [firstCalendar, secondCalendar];
 
   return (
     <ResponsivePicker
