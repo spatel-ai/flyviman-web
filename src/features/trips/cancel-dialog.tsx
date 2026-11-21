@@ -68,6 +68,7 @@ function CancelBody({
   const { toast } = useToast();
   const attempt = useAttemptKey();
   const [error, setError] = useState<string | null>(null);
+  const [cancelled, setCancelled] = useState(false);
   const {
     register,
     handleSubmit,
@@ -88,6 +89,8 @@ function CancelBody({
       ).data,
     // Money: always read afresh; the confirm button waits for the read.
     staleTime: 0,
+    // Once cancelled there is nothing to quote (the API answers 409).
+    enabled: !cancelled,
   });
 
   const cancel = useMutation({
@@ -111,6 +114,10 @@ function CancelBody({
     },
     onSuccess: async () => {
       toast({ title: "Trip cancelled", tone: "success" });
+      setCancelled(true);
+      queryClient.removeQueries({
+        queryKey: queryKeys.cancellationQuote(reference),
+      });
       onClose();
       await Promise.all([
         queryClient.invalidateQueries({

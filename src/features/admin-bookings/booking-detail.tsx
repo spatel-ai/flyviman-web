@@ -120,7 +120,11 @@ function Loaded({
     <div className="mt-4 flex flex-col gap-6">
       <div className="flex flex-wrap items-center gap-3">
         <h1 className="text-h2">Booking {booking.reference}</h1>
-        <StatusBadge kind="booking" status={booking.status} />
+        <StatusBadge
+          kind="booking"
+          status={booking.status}
+          quoteOpen={booking.quotes.some((quote) => quote.open)}
+        />
         <StatusBadge kind="payment" status={booking.paymentStatus} />
         <span className="text-body-sm text-muted">
           {categoryName(booking.category)}

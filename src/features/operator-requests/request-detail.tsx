@@ -106,7 +106,11 @@ function Loaded({
     <div className="mt-4 flex flex-col gap-6">
       <div className="flex flex-wrap items-center gap-3">
         <h1 className="text-h2">Request {request.reference}</h1>
-        <StatusBadge kind="booking" status={request.status} />
+        <StatusBadge
+          kind="booking"
+          status={request.status}
+          quoteOpen={request.quote?.open === true}
+        />
       </div>
 
       <Card className="grid gap-4 md:grid-cols-2">
@@ -145,6 +149,7 @@ function Loaded({
                   amountMinor={request.price.amountMinor}
                   currency={request.price.currency}
                   priceType={request.price.priceType}
+                  note="Flyviman's estimate from the customer's search. The operator's quote sets the price."
                 />
               ) : (
                 <span className="font-medium">

@@ -160,14 +160,32 @@ export interface StatusBadgeProps {
    * is shown as it is, in the neutral tone, rather than failing.
    */
   status: string;
+  /**
+   * A booking still `OPERATOR_PENDING` whose quote is out is waiting for the
+   * customer, not the operator. Label only; the status is unchanged.
+   */
+  quoteOpen?: boolean;
   className?: string;
+}
+
+/** The label a booking badge shows. */
+export function bookingStatusLabel(status: string, quoteOpen = false): string {
+  if (status === "OPERATOR_PENDING" && quoteOpen) return "Awaiting customer";
+  return Object.hasOwn(BOOKING, status)
+    ? BOOKING[status as BookingStatus].label
+    : status;
 }
 
 /**
  * Maps a status to its wording and tone. The text carries the meaning; the
  * colour only supports it. Booking and payment status are always two badges.
  */
-export function StatusBadge({ kind, status, className }: StatusBadgeProps) {
+export function StatusBadge({
+  kind,
+  status,
+  quoteOpen,
+  className,
+}: StatusBadgeProps) {
   const known = Object.hasOwn(PRESENTATION[kind], status)
     ? PRESENTATION[kind][status]
     : undefined;
@@ -178,7 +196,9 @@ export function StatusBadge({ kind, status, className }: StatusBadgeProps) {
       data-status={status}
       className={className}
     >
-      {known?.label ?? status}
+      {kind === "booking"
+        ? bookingStatusLabel(status, quoteOpen)
+        : (known?.label ?? status)}
     </Badge>
   );
 }

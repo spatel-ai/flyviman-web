@@ -18,7 +18,7 @@ import { formatDateTime } from "@/lib/format/date";
 import { CancelDialog } from "./cancel-dialog";
 import { ChangeRequests } from "./change-request";
 import { TripDocuments } from "./documents";
-import { useBooking, useEvents } from "./hooks";
+import { useBooking, useEvents, useQuotes } from "./hooks";
 import { Messages } from "./messages";
 import { canEditPassengers, PassengersDialog } from "./passengers-dialog";
 import { PaymentHistory } from "./payments";
@@ -72,6 +72,12 @@ function Loaded({ booking }: { booking: Booking }) {
   const events = useEvents(booking.reference);
   const timeline = buildTimeline(events.data ?? []);
   const editable = canEditPassengers(booking.status);
+  // Same cache as the Quotes section below.
+  const quotes = useQuotes(booking.reference);
+  const quoteOpen = quotes.data?.some((quote) => quote.open) === true;
+  // Once an operator quote exists it is the price; the search estimate drops to a footnote.
+  const estimateSuperseded =
+    booking.price?.priceType === "ESTIMATE" && (quotes.data?.length ?? 0) > 0;
 
   return (
     <div className="flex flex-col gap-8">
@@ -86,7 +92,12 @@ function Loaded({ booking }: { booking: Booking }) {
         {/* Booking status and payment status are never combined. */}
         <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-body-sm text-muted">
           <span className="flex items-center gap-2">
-            Booking <StatusBadge kind="booking" status={booking.status} />
+            Booking{" "}
+            <StatusBadge
+              kind="booking"
+              status={booking.status}
+              quoteOpen={quoteOpen}
+            />
           </span>
           <span className="flex items-center gap-2">
             Payment{" "}
@@ -167,7 +178,21 @@ function Loaded({ booking }: { booking: Booking }) {
         <h2 id="price-heading" className="text-title">
           Price
         </h2>
-        {booking.price ? (
+        {booking.price && estimateSuperseded ? (
+          <div className="flex flex-col gap-1">
+            <p className="text-body-sm text-muted">
+              The operator&apos;s quote below is the price for this trip.
+            </p>
+            <p className="text-caption text-muted">Earlier estimate</p>
+            <PriceLabel
+              variant="compact"
+              className="items-start text-muted"
+              amountMinor={booking.price.amountMinor}
+              currency={booking.price.currency}
+              priceType={booking.price.priceType}
+            />
+          </div>
+        ) : booking.price ? (
           <PriceLabel
             amountMinor={booking.price.amountMinor}
             currency={booking.price.currency}

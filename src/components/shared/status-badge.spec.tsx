@@ -1,6 +1,10 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import { StatusBadge, type StatusKind } from "./status-badge";
+import {
+  bookingStatusLabel,
+  StatusBadge,
+  type StatusKind,
+} from "./status-badge";
 
 describe("StatusBadge", () => {
   it.each<[StatusKind, string, string, string]>([
@@ -89,5 +93,18 @@ describe("StatusBadge", () => {
       "data-status",
       "MAINTENANCE",
     );
+  });
+});
+
+describe("bookingStatusLabel", () => {
+  it("reads waiting for the customer only while a quote is out", () => {
+    expect(bookingStatusLabel("OPERATOR_PENDING", true)).toBe(
+      "Awaiting customer",
+    );
+    expect(bookingStatusLabel("OPERATOR_PENDING", false)).toBe(
+      "Awaiting operator",
+    );
+    expect(bookingStatusLabel("CONFIRMED", true)).toBe("Confirmed");
+    expect(bookingStatusLabel("FUTURE_STATUS", true)).toBe("FUTURE_STATUS");
   });
 });
