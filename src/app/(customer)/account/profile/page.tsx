@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { DeleteAccount } from "@/features/account/delete-account";
 import { ProfileForm } from "@/features/account/profile-form";
 import { PageTransition } from "@/components/motion/page-transition";
 
@@ -9,6 +10,7 @@ export default function Page() {
     <PageTransition>
       <h1 className="mb-6 text-h3">Profile</h1>
       <ProfileForm />
+      <DeleteAccount />
     </PageTransition>
   );
 }

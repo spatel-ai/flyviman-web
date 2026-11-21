@@ -22,6 +22,7 @@ const STATUS_LABELS: Record<UserStatus, string> = {
   ACTIVE: "Active",
   PENDING_VERIFICATION: "Verification pending",
   SUSPENDED: "Suspended",
+  ERASED: "Erased",
 };
 const STATUSES = Object.keys(STATUS_LABELS) as UserStatus[];
 
