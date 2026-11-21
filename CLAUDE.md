@@ -99,7 +99,7 @@ src/
     auth/                  session and server-side API reads (server only), roles
     empty-legs/            empty-leg offer types and formatting, shared by the customer, operator and admin pages
     format/                money, date and time-zone formatting (zoned.ts); aircraft.ts (categoryLabel,
-                           formatDuration)
+                           formatDuration); labels.ts (serviceLabel)
     pricing-rules.ts       pricing rule helpers shared by the admin pricing and matching-limits pages
     env.ts                 validated public environment; serverApiUrl (direct API address for
                            server-side calls when API_PROXY_TARGET is set)
