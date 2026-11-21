@@ -184,6 +184,7 @@ export function AirportPicker({
           <input
             autoFocus
             role="combobox"
+            aria-autocomplete="list"
             aria-expanded="true"
             aria-controls={listId}
             aria-activedescendant={

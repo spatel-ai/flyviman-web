@@ -18,6 +18,12 @@ export interface AppShellProps {
 export function AppShell({ surface, nav, user, children }: AppShellProps) {
   return (
     <div className="flex min-h-screen flex-1 bg-surface text-body-sm">
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-pill focus:bg-accent-fill focus:px-4 focus:py-2 focus:text-body-sm focus:text-accent-foreground"
+      >
+        Skip to content
+      </a>
       <aside className="hidden w-60 shrink-0 flex-col border-r border-border/60 bg-surface-raised md:flex">
         <div className="flex h-14 items-center gap-2 px-5">
           <span className="text-title tracking-tight">Flyviman</span>
@@ -39,7 +45,11 @@ export function AppShell({ surface, nav, user, children }: AppShellProps) {
           </div>
           <UserMenu name={user.name} role={user.role} />
         </header>
-        <main className="mx-auto w-full max-w-wide flex-1 px-4 py-8 md:px-6 lg:px-8">
+        <main
+          id="main-content"
+          tabIndex={-1}
+          className="mx-auto focus:outline-none w-full max-w-wide flex-1 px-4 py-8 md:px-6 lg:px-8"
+        >
           {children}
         </main>
       </div>

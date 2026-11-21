@@ -9,8 +9,14 @@ export default function CustomerLayout({
 }) {
   return (
     <>
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-pill focus:bg-accent-fill focus:px-4 focus:py-2 focus:text-body-sm focus:text-accent-foreground"
+      >
+        Skip to content
+      </a>
       <SiteHeader />
-      <main className="flex-1">{children}</main>
+      <main id="main-content" tabIndex={-1} className="flex-1 focus:outline-none">{children}</main>
       <SiteFooter />
       <SiteTabBar />
     </>
