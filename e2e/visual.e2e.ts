@@ -70,6 +70,12 @@ const SHOTS: Shot[] = [
     path: "/account",
     account: "customer",
     ready: (page) => page.getByRole("heading", { level: 1 }),
+  },
+  {
+    name: "account-profile",
+    path: "/account/profile",
+    account: "customer",
+    ready: (page) => page.getByRole("heading", { level: 1 }),
     // The profile form fills in on the client after the heading appears.
     loaded: (page) =>
       expect(page.getByRole("textbox", { name: "First name" })).toHaveValue(
