@@ -121,6 +121,8 @@ const MESSAGES: Record<string, string> = {
     "This trip has already been paid for. The page has been refreshed.",
   PAYMENT_AMOUNT_MISMATCH:
     "The amount due has changed. The new amount is shown: check it before you pay.",
+  PAYMENT_AMOUNT_OVER_LIMIT:
+    "This amount is above the limit for online payment. Contact Flyviman to pay by bank transfer.",
   PAYMENT_PROVIDER_ERROR:
     "The payment provider did not answer. Nothing was charged. Try again in a moment.",
   PAYMENT_SIGNATURE_INVALID:
@@ -139,6 +141,11 @@ const MESSAGES: Record<string, string> = {
     "A payment for this booking is waiting for the payment gateway's answer. Wait for it, then try again.",
   INTERNAL_ERROR: "Something went wrong on our side. Please try again.",
 };
+
+/** The wording for a code the page knows before any request is refused. */
+export function messageForCode(code: string): string {
+  return MESSAGES[code] ?? "Something went wrong. Please try again.";
+}
 
 /** A message safe to show a person for any thrown value. */
 export function messageFor(error: unknown): string {

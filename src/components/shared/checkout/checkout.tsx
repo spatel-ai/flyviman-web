@@ -10,7 +10,11 @@ import {
   type CheckoutResult,
   type PaymentOrder,
 } from "@/lib/api/payments";
-import { checkoutKind, loadRazorpay } from "@/lib/payments/providers";
+import {
+  checkoutKind,
+  loadRazorpay,
+  razorpayPrefill,
+} from "@/lib/payments/providers";
 
 /** How a checkout ended, whichever gateway ran it. */
 export type CheckoutOutcome =
@@ -136,6 +140,7 @@ function RazorpayCheckout({ order, onOutcome }: CheckoutProps) {
           currency: order.price.currency,
           name: "Flyviman",
           description: `Booking ${order.bookingReference}`,
+          prefill: razorpayPrefill(order.checkout.prefill),
           handler: (response) =>
             onOutcome({
               kind: "succeeded",

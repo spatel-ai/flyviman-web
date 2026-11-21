@@ -18,7 +18,7 @@ import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { apiFetch } from "@/lib/api/client";
 import { ApiError, isNotFoundError } from "@/lib/api/errors";
-import { messageFor } from "@/lib/api/messages";
+import { messageFor, messageForCode } from "@/lib/api/messages";
 import {
   createPaymentOrder,
   verifyPayment,
@@ -45,6 +45,9 @@ type Revalidation = Schemas["BookingRevalidationDto"];
  * what the customer reads. Nothing was charged.
  */
 class RecheckFailed extends Error {}
+
+/** Above the limit for online payment: retrying cannot help (422). */
+const OVER_LIMIT = "PAYMENT_AMOUNT_OVER_LIMIT";
 
 /** Refusals after which what is on screen is out of date. */
 const STALE = new Set([
@@ -323,6 +326,13 @@ function Due({
   }
 
   const busy = state.step === "creating" || state.step === "checkout";
+  // Known before Pay (the API's `overOnlineLimit`) or from the gateway's
+  // own refusal: no Pay, no Try again, another way to pay instead.
+  const overLimit =
+    due.overOnlineLimit ||
+    (state.step === "failed" &&
+      state.error instanceof ApiError &&
+      state.error.code === OVER_LIMIT);
 
   return (
     <>
@@ -362,7 +372,18 @@ function Due({
         charges={booking.cancellationTerms.charges}
       />
 
-      {state.step === "failed" ? (
+      {overLimit ? (
+        <div className="flex flex-col items-start gap-3">
+          <FormAlert message={messageForCode(OVER_LIMIT)} />
+          {/* A full page load: this page's CSP is the payment page's own. */}
+          <a
+            href="/contact"
+            className={buttonClasses({ variant: "secondary" })}
+          >
+            Contact Flyviman
+          </a>
+        </div>
+      ) : state.step === "failed" ? (
         <div className="flex flex-col items-start gap-3">
           <FormAlert message={failureMessage(state)} />
           <Button

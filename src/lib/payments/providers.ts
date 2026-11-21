@@ -48,6 +48,30 @@ export interface RazorpayOptions {
     razorpay_signature: string;
   }): void;
   modal: { ondismiss(): void };
+  prefill?: RazorpayPrefill;
+}
+
+/** Fills Razorpay Checkout's contact form; a field left out is asked for. */
+export interface RazorpayPrefill {
+  name?: string;
+  email?: string;
+  contact?: string;
+}
+
+/**
+ * The customer's own details from the order (`checkout.prefill`), without
+ * the ones not on file: no phone, no contact prefilled.
+ */
+export function razorpayPrefill(
+  prefill:
+    | { name: string | null; email: string | null; contact: string | null }
+    | undefined,
+): RazorpayPrefill {
+  const filled: RazorpayPrefill = {};
+  if (prefill?.name) filled.name = prefill.name;
+  if (prefill?.email) filled.email = prefill.email;
+  if (prefill?.contact) filled.contact = prefill.contact;
+  return filled;
 }
 
 declare global {
