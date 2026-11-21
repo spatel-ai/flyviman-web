@@ -1,5 +1,4 @@
 import { z } from "zod";
-import type { Schemas } from "@/lib/api/types";
 import type { EmptyLegInput, OperatorEmptyLeg } from "@/lib/empty-legs/types";
 import { paiseToRupees, rupeesToPaise } from "@/lib/format/money";
 import { localToUtc, utcToLocal } from "@/lib/format/zoned";
@@ -121,23 +120,6 @@ export function toEmptyLegBody(
     priceMinor: paise(values.price) ?? 0,
     validUntil: localToUtc(values.validDay, values.validTime, zone),
     conditions: values.conditions.trim(),
-  };
-}
-
-/**
- * The body for an offer under a customer's live request (M8-C): its price,
- * seats, departure window and conditions are left out, so the API keeps
- * them as the customer saw them (it refuses a change with 409
- * `EMPTY_LEG_HAS_LIVE_REQUEST`).
- */
-export function withoutCommitted(
-  body: EmptyLegInput,
-): Schemas["UpdateEmptyLegDto"] {
-  return {
-    aircraftId: body.aircraftId,
-    originId: body.originId,
-    destinationId: body.destinationId,
-    validUntil: body.validUntil,
   };
 }
 

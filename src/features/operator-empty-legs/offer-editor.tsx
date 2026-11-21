@@ -90,7 +90,9 @@ export function OfferEditor({ id }: { id: string }) {
     );
   }
   const item = offer.data.data;
-  const editable = item.editable;
+  // Under a customer's live request every term is fixed (M8-C), so the
+  // offer is shown as it stands rather than as a form.
+  const editable = item.editable && !item.hasLiveRequest;
   const zone = item.origin.timeZone ?? origin.data?.data.timeZone;
 
   return (
@@ -119,8 +121,9 @@ export function OfferEditor({ id }: { id: string }) {
             A customer has requested this offer
           </p>
           <p className="text-body-sm">
-            Its price, seats, departure window and conditions are fixed, and it
-            cannot be withdrawn, until you answer the request.{" "}
+            Its aircraft, route, departure window, seats, price, validity and
+            conditions are fixed, and it cannot be withdrawn, until you answer
+            the request.{" "}
             <Link
               href="/operator/requests"
               className="text-accent hover:underline"
@@ -139,8 +142,7 @@ export function OfferEditor({ id }: { id: string }) {
       {editable ? (
         zone ? (
           <OfferForm
-            // A request arriving mid-edit resets the form to the saved terms.
-            key={`${item.id}-${item.status}-${item.hasLiveRequest}`}
+            key={`${item.id}-${item.status}`}
             offer={item}
             initial={fromOffer(item, zone)}
           />

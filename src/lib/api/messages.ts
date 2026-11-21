@@ -37,7 +37,7 @@ const MESSAGES: Record<string, string> = {
   BOOKING_INVALID_TRANSITION:
     "This booking has changed since you opened it, so that action is no longer available. The page has been refreshed.",
   EMPTY_LEG_HAS_LIVE_REQUEST:
-    "A customer has requested this offer. Its price, seats, departure window and conditions are fixed, and it cannot be withdrawn, until you answer the request under Requests.",
+    "A customer has requested this offer. Its aircraft, route, departure window, seats, price, validity and conditions are fixed, and it cannot be withdrawn, until you answer the request under Requests.",
   BOOKING_ESCALATION_CONFLICT:
     "Someone has already changed this booking's escalation. The page has been refreshed.",
   QUOTE_EXPIRED: "This quote has expired. A new one is needed.",
