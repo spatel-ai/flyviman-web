@@ -25,6 +25,7 @@ const BLOCKERS: Record<string, string> = {
   PAYMENT_IN_PROGRESS: "a payment is still being processed",
   REFUND_IN_PROGRESS: "a refund is under way",
   REFUND_DUE: "a refund is still due to the customer",
+  BALANCE_DUE: "a flown trip is not fully paid",
   OPEN_AIR_AMBULANCE: "an air ambulance request is still open",
   RECENT_ACTIVITY:
     "a booking or request changed within the hold period (ERASURE_HOLD_DAYS)",

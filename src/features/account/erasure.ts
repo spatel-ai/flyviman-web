@@ -9,6 +9,8 @@ const BLOCKERS: Record<string, string> = {
   REFUND_IN_PROGRESS:
     "A refund is on its way to you. Wait until it has arrived.",
   REFUND_DUE: "We still owe you a refund. Wait until we have paid it back.",
+  BALANCE_DUE:
+    "A trip you have flown is not fully paid yet. Pay what is left, or contact us.",
   OPEN_AIR_AMBULANCE:
     "You have an air ambulance request that is still open. Withdraw it, or wait until it is closed.",
   RECENT_ACTIVITY:

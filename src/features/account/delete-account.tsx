@@ -37,8 +37,9 @@ const ERASED = [
 
 const KEPT = [
   "Booking references, routes, dates, prices, payments and refunds, without your name: the law requires us to keep financial records.",
-  "The record of the terms and privacy policy you accepted, as proof that you agreed to them.",
-  "Our audit log, which records what happened to your account without your personal details.",
+  "The record of the terms and privacy policy you accepted, with the internet address you accepted them from, as proof that you agreed to them.",
+  "Our audit log, which records what happened to your account and the internet address of each action, without your name or contact details.",
+  "Messages exchanged about a past trip stay in its timeline, encrypted, because the timeline is a record that cannot be edited.",
 ];
 
 /**
@@ -148,8 +149,8 @@ function DeleteAccountSection({ me }: { me: Me }) {
       </div>
       <p className="text-body-sm text-muted">
         An account can be deleted only when nothing on it is still open: no trip
-        or request in progress, no payment being processed and no refund still
-        to reach you.
+        or request in progress, no payment being processed, nothing left to pay
+        for a trip you have flown and no refund still to reach you.
       </p>
 
       {blockers.length > 0 ? (
