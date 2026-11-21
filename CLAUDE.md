@@ -56,7 +56,7 @@ src/
                            compare/home-v1 (the frozen pre-M12 home, noindex and unlinked, until the owner chooses; D-110)
     (auth)/                login, register, verify, forgot-password, reset-password, operator/register
     (operator)/operator/   operator portal: dashboard, onboarding, aircraft (list, new, [id]),
-                           availability (fleet timeline, [aircraftId] calendar), pricing, team, requests (list, [reference]), air-ambulance (list, [reference]), empty-legs (list, new, [id]), notifications
+                           availability (fleet timeline, [aircraftId] calendar), pricing, team, requests (list, [reference]), bookings (list, [reference]), air-ambulance (list, [reference]), empty-legs (list, new, [id]), notifications
     (admin)/admin/         admin portal: dashboard, operators, operators/[id], users, aircraft,
                            aircraft/[id], locations, documents, pricing/rules,
                            pricing/calculations, pricing/calculations/[id], enquiries, enquiries/[id],
@@ -87,7 +87,7 @@ src/
   features/<feature>/      feature UI, hooks, schemas (auth, account, booking-request, trips, home, home-v1 (frozen), about, services, charter,
                            contact, legal, aviation-solutions, aircraft-sales, pilots,
                            search (results, filters, detail), search-landing,
-                           operator-onboarding, operator-aircraft, operator-availability, operator-staff, operator-pricing, operator-requests, operator-air-ambulance, air-ambulance,
+                           operator-onboarding, operator-aircraft, operator-availability, operator-staff, operator-pricing, operator-requests, operator-bookings, operator-air-ambulance, air-ambulance,
                            admin-operators, admin-users, admin-aircraft, admin-locations, admin-documents,
                            admin-pricing, admin-enquiries, admin-air-ambulance, admin-promotions, admin-cancellation-terms,
                            admin-bookings, admin-finance (payments and refunds), admin-audit, admin-content, admin-empty-legs,
