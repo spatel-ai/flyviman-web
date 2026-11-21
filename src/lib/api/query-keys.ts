@@ -52,6 +52,8 @@ export const queryKeys = {
   adminRefunds: (page: number) =>
     ["admin", "refunds", "history", page] as const,
   adminRefundsDue: (page: number) => ["admin", "refunds", "due", page] as const,
+  adminReport: (report: string, filter: object) =>
+    ["admin", "reports", report, filter] as const,
   adminAuditLogs: (filter: object) => ["admin", "audit-logs", filter] as const,
   adminLocations: (filter: object) => ["admin", "locations", filter] as const,
   adminExpiringDocuments: (filter: object) =>
