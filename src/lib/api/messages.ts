@@ -62,7 +62,7 @@ const MESSAGES: Record<string, string> = {
   PROMO_CODE_NOT_APPLICABLE: "This code cannot be used on this trip.",
   PROMO_CODE_LIMIT_REACHED: "This code has reached its limit of uses.",
   CONTENT_VERSION_CONFLICT:
-    "This policy changed since you opened it. It has been reloaded: open it again to see the latest text.",
+    "This text changed since you opened it. It has been reloaded: open it again to see the latest.",
   CONTENT_UNCHANGED: "Nothing has changed. Edit the title or the text first.",
   BOOKING_PRICE_CHANGED:
     "The price has changed since you looked. Review the new figure before you send the request.",
@@ -109,6 +109,8 @@ const MESSAGES: Record<string, string> = {
     "The upload was not found. Choose the file again and retry.",
   PAYMENT_NOT_SUCCEEDED:
     "This payment has not succeeded, so it has no receipt and cannot be refunded.",
+  PAYMENT_FLAG_NOT_OPEN:
+    "This payment has no open flag any more. The list now shows its latest state.",
   PAYMENT_NOT_REFUNDABLE:
     "This payment can no longer be refunded. The list has been refreshed.",
   REFUND_EXCEEDS_REMAINDER:

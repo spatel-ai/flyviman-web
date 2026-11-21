@@ -33,7 +33,7 @@ export function quoteAmountMinor(input: string): number | null {
 }
 
 /** The quote form (`POST /admin/air-ambulance/requests/:reference/quote`). */
-export const quoteSchema = z.object({
+const quoteFields = z.object({
   operatorId: z.string().min(1, "Choose the operator."),
   amount: z.string().refine((value) => quoteAmountMinor(value) !== null, {
     message: "Enter an amount in rupees, up to ₹2 crore.",
@@ -44,6 +44,29 @@ export const quoteSchema = z.object({
     .min(1, "State the service and cancellation conditions.")
     .max(2000, "Keep the conditions under 2,000 characters.")
     .refine((value) => !hasHiddenCharacter(value), {
+      message: "Remove hidden formatting characters from this text.",
+    }),
+});
+
+export const quoteSchema = quoteFields.extend({
+  revisionReason: z
+    .string()
+    .trim()
+    .max(500, "Keep the reason under 500 characters.")
+    .refine((v) => !hasHiddenCharacter(v), {
+      message: "Remove hidden formatting characters from this text.",
+    })
+    .optional(),
+});
+
+/** A re-quote (the request is already QUOTED) also needs a reason. */
+export const requoteSchema = quoteSchema.extend({
+  revisionReason: z
+    .string()
+    .trim()
+    .min(3, "Say why the quote is being replaced.")
+    .max(500, "Keep the reason under 500 characters.")
+    .refine((v) => !hasHiddenCharacter(v), {
       message: "Remove hidden formatting characters from this text.",
     }),
 });

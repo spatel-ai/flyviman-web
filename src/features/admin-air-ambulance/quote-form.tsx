@@ -18,6 +18,7 @@ import type { Schemas } from "@/lib/api/types";
 import {
   quoteAmountMinor,
   quoteSchema,
+  requoteSchema,
   type QuoteOutput,
   type QuoteValues,
 } from "./schema";
@@ -31,9 +32,12 @@ type Operator = Schemas["AirAmbulanceOperatorDto"];
  */
 export function QuoteForm({
   path,
+  revising = false,
   onSent,
 }: {
   path: string;
+  /** True while the request is QUOTED: a replacement needs a reason. */
+  revising?: boolean;
   onSent: (failure?: unknown) => void;
 }) {
   const { toast } = useToast();
@@ -49,8 +53,13 @@ export function QuoteForm({
     setError,
     formState: { errors },
   } = useForm<QuoteValues, unknown, QuoteOutput>({
-    resolver: zodResolver(quoteSchema),
-    defaultValues: { operatorId: "", amount: "", conditions: "" },
+    resolver: zodResolver(revising ? requoteSchema : quoteSchema),
+    defaultValues: {
+      operatorId: "",
+      amount: "",
+      conditions: "",
+      revisionReason: "",
+    },
   });
 
   const send = useMutation({
@@ -62,6 +71,7 @@ export function QuoteForm({
           amountMinor: quoteAmountMinor(values.amount) ?? 0,
           currency: "INR",
           conditions: values.conditions,
+          ...(revising ? { revisionReason: values.revisionReason } : {}),
         } satisfies Schemas["QuoteAirAmbulanceDto"],
       }),
     onSuccess: () => {
@@ -85,9 +95,14 @@ export function QuoteForm({
         setFormError(null);
       } else {
         setFormError(
-          applyApiError(failure, setError, ["operatorId", "conditions"], {
-            amountMinor: "amount",
-          }),
+          applyApiError(
+            failure,
+            setError,
+            ["operatorId", "conditions", "revisionReason"],
+            {
+              amountMinor: "amount",
+            },
+          ),
         );
       }
       onSent(failure);
@@ -154,6 +169,15 @@ export function QuoteForm({
         error={errors.conditions?.message}
         {...register("conditions")}
       />
+      {revising ? (
+        <Textarea
+          label="Reason for the new quote"
+          rows={2}
+          hint="Kept in the request's timeline. No patient details."
+          error={errors.revisionReason?.message}
+          {...register("revisionReason")}
+        />
+      ) : null}
       <div>
         <Button type="submit" variant="secondary" loading={send.isPending}>
           Send quote

@@ -1,11 +1,14 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { EmptyState } from "@/components/shared/empty-state";
 import { LoadError } from "@/components/shared/load-error";
 import { PriceLabel } from "@/components/shared/price-label";
 import { StatusBadge } from "@/components/shared/status-badge";
+import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/ui/dialog";
 import { Select } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -17,7 +20,10 @@ import {
   TableHeaderCell,
   TableRow,
 } from "@/components/ui/table";
-import { listAdminPayments } from "@/lib/api/payments";
+import { useToast } from "@/components/ui/toast";
+import { ApiError } from "@/lib/api/errors";
+import { messageFor } from "@/lib/api/messages";
+import { listAdminPayments, resolvePaymentFlag } from "@/lib/api/payments";
 import { queryKeys } from "@/lib/api/query-keys";
 import { formatDateTime } from "@/lib/format/date";
 import {
@@ -37,12 +43,42 @@ const COLUMNS = [
   "Purpose",
   "Amount",
   "Status",
+  "Review",
 ];
 
 /** Every payment attempt, newest first, filtered by status (finance). */
 export function PaymentsList() {
   const router = useRouter();
   const filter = parsePaymentFilter(useSearchParams());
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+  const [resolving, setResolving] = useState<string | null>(null);
+  const [resolveError, setResolveError] = useState<string | null>(null);
+  const [resolvePending, setResolvePending] = useState(false);
+
+  async function resolve(reason?: string) {
+    if (!resolving || !reason) return;
+    setResolvePending(true);
+    setResolveError(null);
+    try {
+      await resolvePaymentFlag(resolving, reason);
+      toast({ title: "Flag resolved", tone: "success" });
+      setResolving(null);
+    } catch (failure) {
+      if (
+        failure instanceof ApiError &&
+        failure.code === "PAYMENT_FLAG_NOT_OPEN"
+      ) {
+        toast({ title: messageFor(failure), tone: "danger" });
+        setResolving(null);
+      } else {
+        setResolveError(messageFor(failure));
+      }
+    } finally {
+      setResolvePending(false);
+      void queryClient.invalidateQueries({ queryKey: ["admin", "payments"] });
+    }
+  }
   const { data, isPending, isError, error, refetch } = useQuery({
     queryKey: queryKeys.adminPayments(filter),
     queryFn: () =>
@@ -72,6 +108,21 @@ export function PaymentsList() {
           show({ status: status as PaymentStatusFilter, page: 1 })
         }
         className="h-10 w-56 max-w-full"
+      />
+      <ConfirmDialog
+        open={resolving !== null}
+        onOpenChange={(open) => {
+          if (!open) setResolving(null);
+        }}
+        title={`Resolve flag on ${resolving ?? ""}`}
+        description={
+          resolveError ??
+          "Confirm the amount was checked at the gateway and any money owed back was refunded. This moves no money. The reason is kept in the audit record."
+        }
+        confirmLabel="Resolve flag"
+        requireReason
+        loading={resolvePending}
+        onConfirm={(reason) => void resolve(reason)}
       />
       {isError ? (
         <LoadError
@@ -130,6 +181,25 @@ export function PaymentsList() {
                       </TableCell>
                       <TableCell className="whitespace-nowrap">
                         <StatusBadge kind="payment" status={row.status} />
+                      </TableCell>
+                      <TableCell>
+                        {row.reviewReason && row.reviewResolvedAt ? (
+                          <span className="text-body-sm text-muted">
+                            Resolved {formatDateTime(row.reviewResolvedAt)}
+                          </span>
+                        ) : row.reviewReason === "AMOUNT_MISMATCH" ||
+                          row.reviewReason === "DUPLICATE_CAPTURE" ? (
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            onClick={() => {
+                              setResolveError(null);
+                              setResolving(row.reference);
+                            }}
+                          >
+                            Resolve flag
+                          </Button>
+                        ) : null}
                       </TableCell>
                     </TableRow>
                   ))}

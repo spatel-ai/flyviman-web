@@ -29,7 +29,8 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/toast";
 import { apiFetch } from "@/lib/api/client";
-import { applyApiError } from "@/lib/api/messages";
+import { ApiError } from "@/lib/api/errors";
+import { applyApiError, messageFor } from "@/lib/api/messages";
 import { queryKeys } from "@/lib/api/query-keys";
 import type { Schemas } from "@/lib/api/types";
 import { placeholderProblem } from "./placeholders";
@@ -165,6 +166,7 @@ function TemplateForm({
           method: "PUT",
           body: {
             channel: template.channel,
+            baseVersion: template.version,
             subject: hasSubject ? values.subject : null,
             body: values.body,
             isActive: values.isActive,
@@ -177,6 +179,14 @@ function TemplateForm({
     },
     onError: (failure) => {
       setPending(null);
+      if (
+        failure instanceof ApiError &&
+        failure.code === "CONTENT_VERSION_CONFLICT"
+      ) {
+        toast({ title: messageFor(failure), tone: "danger" });
+        onDone();
+        return;
+      }
       setError(
         applyApiError(failure, setFieldError, ["subject", "body", "isActive"]),
       );

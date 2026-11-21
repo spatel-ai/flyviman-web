@@ -137,6 +137,20 @@ export function listAdminPayments(
   });
 }
 
+/** `POST admin/payments/:reference/resolve-flag`: finance settled the flag. */
+export function resolvePaymentFlag(
+  reference: string,
+  reason: string,
+): Promise<ApiResult<AdminPayment>> {
+  return apiFetch<AdminPayment>(
+    `admin/payments/${encodeURIComponent(reference)}/resolve-flag`,
+    {
+      method: "POST",
+      body: { reason } satisfies Schemas["ResolvePaymentFlagDto"],
+    },
+  );
+}
+
 /** `GET admin/refunds/due`: money owed back, oldest first. */
 export function listRefundsDue(
   page: number,

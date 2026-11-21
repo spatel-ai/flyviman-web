@@ -323,7 +323,11 @@ export function AdminRequestDetail({
           <h2 className="text-title">
             {request.status === "QUOTED" ? "Replace the quote" : "Send a quote"}
           </h2>
-          <QuoteForm path={path} onSent={settled} />
+          <QuoteForm
+            path={path}
+            revising={request.status === "QUOTED"}
+            onSent={settled}
+          />
         </Card>
       ) : null}
 
@@ -423,6 +427,12 @@ export function AdminRequestDetail({
                 {formatDateTime(event.at)}
                 {event.actorRole ? `, ${event.actorRole}` : ""}
               </span>
+              {event.payload &&
+              typeof event.payload.revisionReason === "string" ? (
+                <span className="w-full text-muted">
+                  Reason: {event.payload.revisionReason}
+                </span>
+              ) : null}
             </li>
           ))}
         </ol>
