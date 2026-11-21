@@ -1,3 +1,4 @@
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -50,8 +51,13 @@ function order(provider: string): PaymentOrder {
 
 function open(provider: string) {
   const outcomes: CheckoutOutcome[] = [];
+  const client = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
   render(
-    <Checkout order={order(provider)} onOutcome={(o) => outcomes.push(o)} />,
+    <QueryClientProvider client={client}>
+      <Checkout order={order(provider)} onOutcome={(o) => outcomes.push(o)} />
+    </QueryClientProvider>,
   );
   return outcomes;
 }
@@ -108,8 +114,9 @@ describe("Checkout", () => {
     expect(razorpayScripts()).toHaveLength(0);
   });
 
-  it("loads Razorpay's script only for Razorpay", () => {
+  it("loads Razorpay's script only for Razorpay, once the customer's own details are read", async () => {
     open("razorpay");
-    expect(razorpayScripts()).toHaveLength(1);
+    await waitFor(() => expect(razorpayScripts()).toHaveLength(1));
+    expect(calls.map((call) => call.path)).toEqual(["me"]);
   });
 });

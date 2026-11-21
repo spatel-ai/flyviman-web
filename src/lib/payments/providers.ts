@@ -1,3 +1,4 @@
+import type { Me } from "@/lib/api/types";
 import { env } from "@/lib/env";
 import { RAZORPAY_SCRIPT } from "@/lib/csp";
 
@@ -59,18 +60,18 @@ export interface RazorpayPrefill {
 }
 
 /**
- * The customer's own details from the order (`checkout.prefill`), without
- * the ones not on file: no phone, no contact prefilled.
+ * The signed-in customer's own details (`GET /me`), without the ones not on
+ * file: no phone, no contact prefilled. Not from the order, whose answer is
+ * kept for replay and so holds references only (D-128).
  */
-export function razorpayPrefill(
-  prefill:
-    | { name: string | null; email: string | null; contact: string | null }
-    | undefined,
-): RazorpayPrefill {
+export function razorpayPrefill(me: Me | undefined): RazorpayPrefill {
   const filled: RazorpayPrefill = {};
-  if (prefill?.name) filled.name = prefill.name;
-  if (prefill?.email) filled.email = prefill.email;
-  if (prefill?.contact) filled.contact = prefill.contact;
+  const name = me?.profile
+    ? `${me.profile.firstName} ${me.profile.lastName}`.trim()
+    : "";
+  if (name) filled.name = name;
+  if (me?.email) filled.email = me.email;
+  if (me?.phone) filled.contact = me.phone;
   return filled;
 }
 

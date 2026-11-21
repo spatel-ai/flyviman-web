@@ -3085,7 +3085,7 @@ export interface paths {
     put?: never;
     /**
      * Create a gateway order for what the booking owes now
-     * @description For a booking `AWAITING_PAYMENT` with a `CONFIRMED` price and nothing paid: model A and B take the full total (B once the operator has accepted), model C the deposit (the category’s percent, rounded up to the next paisa). After a model C deposit (`paymentStatus` `PARTIALLY_PAID`), the balance: the total less what was paid (purpose `BALANCE`), while the booking is `AWAITING_PAYMENT`, `CONFIRMED` or `SCHEDULED` and before the first departure; once it succeeds the booking is `PAID`. 409 `PAYMENT_NOT_DUE` otherwise (`details` says why), 409 `PAYMENT_ALREADY_PAID`, 409 `PAYMENT_AMOUNT_MISMATCH` when `expectedAmountMinor` is not the amount due (the amount due, currency and purpose are in `details`), 422 `PAYMENT_AMOUNT_OVER_LIMIT` when the amount is above the online payment limit (`PAYMENT_MAX_ORDER_MINOR`, checked before the gateway is asked, or the gateway account’s own per-order maximum; no details), 502 `PAYMENT_PROVIDER_ERROR`. While a payment for the same amount is `INITIATED` or `PENDING` it is returned again instead of a second order. Open the gateway’s checkout with `checkout`; `checkout.prefill` holds the caller’s own name, email and phone (null where not on file) for the checkout form. Never changes the booking’s status. A repeat with the same `Idempotency-Key` and body returns the first answer.
+     * @description For a booking `AWAITING_PAYMENT` with a `CONFIRMED` price and nothing paid: model A and B take the full total (B once the operator has accepted), model C the deposit (the category’s percent, rounded up to the next paisa). After a model C deposit (`paymentStatus` `PARTIALLY_PAID`), the balance: the total less what was paid (purpose `BALANCE`), while the booking is `AWAITING_PAYMENT`, `CONFIRMED` or `SCHEDULED` and before the first departure; once it succeeds the booking is `PAID`. 409 `PAYMENT_NOT_DUE` otherwise (`details` says why), 409 `PAYMENT_ALREADY_PAID`, 409 `PAYMENT_AMOUNT_MISMATCH` when `expectedAmountMinor` is not the amount due (the amount due, currency and purpose are in `details`), 422 `PAYMENT_AMOUNT_OVER_LIMIT` when the amount is above the online payment limit (`PAYMENT_MAX_ORDER_MINOR`, checked before the gateway is asked, or the gateway account’s own per-order maximum; no details), 502 `PAYMENT_PROVIDER_ERROR`. While a payment for the same amount is `INITIATED` or `PENDING` it is returned again instead of a second order. Open the gateway’s checkout with `checkout`, which holds references only (no personal data; the web fills the checkout form from `GET /me`). Never changes the booking’s status. A repeat with the same `Idempotency-Key` and body returns the first answer.
      */
     post: operations["PaymentsController_create"];
     delete?: never;
@@ -7398,12 +7398,6 @@ export interface components {
       /** @example INR */
       currency: string;
     };
-    PaymentPrefillDto: {
-      name: string | null;
-      email: string | null;
-      /** @description The phone on file (E.164); null when there is none. */
-      contact: string | null;
-    };
     PaymentCheckoutDto: {
       /**
        * @description The gateway the checkout is opened with.
@@ -7414,8 +7408,6 @@ export interface components {
       keyId: string;
       /** @example order_mock_000001 */
       orderId: string;
-      /** @description Only in the answer to `POST /bookings/:reference/payments`, to the booking’s owner: their own name, email and phone, to fill the checkout form. */
-      prefill?: components["schemas"]["PaymentPrefillDto"];
     };
     PaymentMethodDto: {
       /**

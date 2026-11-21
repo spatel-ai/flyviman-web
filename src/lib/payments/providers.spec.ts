@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
+import type { Me } from "@/lib/api/types";
 import {
   checkoutKind,
   loadRazorpay,
@@ -41,14 +42,22 @@ describe("loadRazorpay", () => {
 });
 
 describe("razorpayPrefill", () => {
+  const me: Me = {
+    id: "00000000-0000-4000-8000-000000000001",
+    email: "asha@example.com",
+    phone: "+919876543210",
+    role: "CUSTOMER",
+    status: "ACTIVE",
+    profile: {
+      firstName: "Asha",
+      lastName: "Rao",
+      dateOfBirth: null,
+      nationality: null,
+    },
+  };
+
   it("passes the customer's own name, email and phone to the checkout", () => {
-    expect(
-      razorpayPrefill({
-        name: "Asha Rao",
-        email: "asha@example.com",
-        contact: "+919876543210",
-      }),
-    ).toEqual({
+    expect(razorpayPrefill(me)).toEqual({
       name: "Asha Rao",
       email: "asha@example.com",
       contact: "+919876543210",
@@ -56,13 +65,13 @@ describe("razorpayPrefill", () => {
   });
 
   it("leaves out what is not on file: no phone, no contact", () => {
-    expect(
-      razorpayPrefill({
-        name: "Asha Rao",
-        email: "asha@example.com",
-        contact: null,
-      }),
-    ).toEqual({ name: "Asha Rao", email: "asha@example.com" });
+    expect(razorpayPrefill({ ...me, phone: null })).toEqual({
+      name: "Asha Rao",
+      email: "asha@example.com",
+    });
+    expect(razorpayPrefill({ ...me, profile: null, email: null })).toEqual({
+      contact: "+919876543210",
+    });
     expect(razorpayPrefill(undefined)).toEqual({});
   });
 });

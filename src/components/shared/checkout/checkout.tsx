@@ -10,6 +10,7 @@ import {
   type CheckoutResult,
   type PaymentOrder,
 } from "@/lib/api/payments";
+import { useMe } from "@/lib/api/use-me";
 import {
   checkoutKind,
   loadRazorpay,
@@ -123,11 +124,14 @@ function MockCheckout({ order, onOutcome }: CheckoutProps) {
  * Razorpay Checkout, its script loaded only now. Not enabled yet: the API
  * runs the mock gateway only, and the payment page's CSP allowances
  * (lib/csp.ts) are still to be proven against Razorpay's test mode.
+ * Its contact form is filled from the customer's own `GET /me` once that has
+ * answered; if it fails, the checkout opens with nothing filled.
  */
 function RazorpayCheckout({ order, onOutcome }: CheckoutProps) {
+  const me = useMe();
   const opened = useRef(false);
   useEffect(() => {
-    if (opened.current) return;
+    if (opened.current || me.isPending) return;
     opened.current = true;
     loadRazorpay()
       .then(() => {
@@ -140,7 +144,7 @@ function RazorpayCheckout({ order, onOutcome }: CheckoutProps) {
           currency: order.price.currency,
           name: "Flyviman",
           description: `Booking ${order.bookingReference}`,
-          prefill: razorpayPrefill(order.checkout.prefill),
+          prefill: razorpayPrefill(me.data),
           handler: (response) =>
             onOutcome({
               kind: "succeeded",
