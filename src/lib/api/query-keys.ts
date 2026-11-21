@@ -126,6 +126,8 @@ export const queryKeys = {
     ["scheduled-search", searchId, "fare-rules", offerId] as const,
   location: (id: string) => ["locations", "one", id] as const,
   locationByCode: (code: string) => ["locations", "code", code] as const,
+  fareCalendarDisabled: (category: string) =>
+    ["search", "calendar-disabled", category] as const,
   fareCalendar: (params: object) => ["search", "calendar", params] as const,
   fileDownload: (fileId: string) => ["files", fileId, "download"] as const,
   /** Every availability key starts with this, so one invalidation covers all. */
