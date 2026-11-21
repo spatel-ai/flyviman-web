@@ -3368,6 +3368,186 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/admin/reports/overview": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Headline figures for the admin dashboard
+     * @description `from` and `to` are calendar days in India (`YYYY-MM-DD`, both included; IST day boundaries); by default the last 30 days, at most 366 days (400 `VALIDATION_ERROR` otherwise, also for `from` after `to`). `inPeriod` counts what happened in the period; `now` is the current state whatever the period. `finance` (payments taken, refunds due, confirmed booking value, Flyviman's revenue) is for finance and the super administrator only and is omitted for operations.
+     */
+    get: operations["AdminReportsController_overview"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/admin/reports/search": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Search volume and search-to-request conversion
+     * @description `from` and `to` are calendar days in India (`YYYY-MM-DD`, both included; IST day boundaries); by default the last 30 days, at most 366 days (400 `VALIDATION_ERROR` otherwise, also for `from` after `to`). Filter: `category`. Conversion is booking requests made in the period per search, by category; a request is not traced to its search.
+     */
+    get: operations["AdminReportsController_search"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/admin/reports/bookings": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Booking requests, confirmations and cancellations
+     * @description `from` and `to` are calendar days in India (`YYYY-MM-DD`, both included; IST day boundaries); by default the last 30 days, at most 366 days (400 `VALIDATION_ERROR` otherwise, also for `from` after `to`). Filters: `category`, `operatorId`. The requests made in the period, by their current booking status (never the payment status). Each figures block has `finance` (confirmed value, Flyviman's revenue) for finance and the super administrator only; omitted for operations.
+     */
+    get: operations["AdminReportsController_bookings"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/admin/reports/revenue": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Gross booking value, operator payable and Flyviman revenue
+     * @description `from` and `to` are calendar days in India (`YYYY-MM-DD`, both included; IST day boundaries); by default the last 30 days, at most 366 days (400 `VALIDATION_ERROR` otherwise, also for `from` after `to`). Filters: `category`, `operatorId`. Bookings confirmed in the period and still confirmed, scheduled or completed; amounts from each booking's price calculation (the accepted quote's, else the booking's own), per currency.
+     */
+    get: operations["AdminReportsController_revenue"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/admin/reports/payments": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Payment success, failure and refund rates
+     * @description `from` and `to` are calendar days in India (`YYYY-MM-DD`, both included; IST day boundaries); by default the last 30 days, at most 366 days (400 `VALIDATION_ERROR` otherwise, also for `from` after `to`). Payment attempts and refunds started in the period. No card data or gateway references.
+     */
+    get: operations["AdminReportsController_payments"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/admin/reports/operators": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Operator response time, declines and outcomes
+     * @description `from` and `to` are calendar days in India (`YYYY-MM-DD`, both included; IST day boundaries); by default the last 30 days, at most 366 days (400 `VALIDATION_ERROR` otherwise, also for `from` after `to`). Filter: `operatorId`. Booking requests made to each operator in the period; the response time is to the first accept, reject or quote by the operator's staff.
+     */
+    get: operations["AdminReportsController_operators"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/admin/reports/empty-legs": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Empty-leg listing performance and conversion
+     * @description `from` and `to` are calendar days in India (`YYYY-MM-DD`, both included; IST day boundaries); by default the last 30 days, at most 366 days (400 `VALIDATION_ERROR` otherwise, also for `from` after `to`). Filter: `operatorId`. Offers created in the period.
+     */
+    get: operations["AdminReportsController_emptyLegs"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/admin/reports/air-ambulance": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Air ambulance volumes, response time and fulfilment
+     * @description `from` and `to` are calendar days in India (`YYYY-MM-DD`, both included; IST day boundaries); by default the last 30 days, at most 366 days (400 `VALIDATION_ERROR` otherwise, also for `from` after `to`). Requests made in the period. Counts and timings only: never patient, medical or contact data.
+     */
+    get: operations["AdminReportsController_airAmbulance"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/admin/reports/{report}/export": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * A report as CSV
+     * @description The same report, filters and role gate as `GET /admin/reports/:report`: a role the report is not open to gets 403 `FORBIDDEN`, a filter the report does not take 400 `VALIDATION_ERROR`, an unknown report 404. `from` and `to` are calendar days in India (`YYYY-MM-DD`, both included; IST day boundaries); by default the last 30 days, at most 366 days (400 `VALIDATION_ERROR` otherwise, also for `from` after `to`). `text/csv` as an attachment, one figure per row: `section,dimension,metric,currency,value` (money in paise). Finance fields appear only for finance and the super administrator. Text that a spreadsheet would read as a formula is prefixed with `'`.
+     */
+    get: operations["AdminReportsController_export"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -7175,6 +7355,364 @@ export interface components {
       handledAt: string | null;
       /** Format: date-time */
       createdAt: string;
+    };
+    ReportPeriodDto: {
+      /**
+       * Format: date
+       * @example 2026-11-01
+       */
+      from: string;
+      /**
+       * Format: date
+       * @example 2026-11-30
+       */
+      to: string;
+      /** @example Asia/Kolkata */
+      timeZone: string;
+      /**
+       * Format: date-time
+       * @description The start of `from` in India, UTC.
+       */
+      startsAt: string;
+      /**
+       * Format: date-time
+       * @description The start of the day after `to` in India, UTC (excluded).
+       */
+      endsBefore: string;
+    };
+    BookingStatusCountDto: {
+      status: components["schemas"]["BookingStatus"];
+      count: number;
+    };
+    OverviewPeriodFiguresDto: {
+      /** @description Searches made in the period. */
+      searches: number;
+      /** @description Booking requests made in the period. */
+      bookingRequests: number;
+      /** @description The booking requests made in the period, by their current booking status (not the payment status). */
+      bookingsByStatus: components["schemas"]["BookingStatusCountDto"][];
+      /** @description Air ambulance requests made in the period. */
+      airAmbulanceRequests: number;
+    };
+    OverviewCurrentFiguresDto: {
+      /** @description Booking requests waiting on the operator now (`REQUESTED`, `OPERATOR_PENDING`, `CLARIFICATION_REQUESTED`). */
+      openBookingRequests: number;
+      /** @description Operators waiting for review now. */
+      operatorsPendingReview: number;
+      /** @description Air ambulance requests not yet `COMPLETED`, `DECLINED` or `CANCELLED`. */
+      airAmbulanceOpen: number;
+    };
+    MoneyTotalDto: {
+      /** @example INR */
+      currency: string;
+      /** @description Minor units (paise). */
+      amountMinor: number;
+    };
+    CountWithAmountsDto: {
+      count: number;
+      amounts: components["schemas"]["MoneyTotalDto"][];
+    };
+    OverviewFinanceDto: {
+      /** @description In the period: payments whose money arrived (`paidAt`), counted at their full amount even if refunded since. */
+      paymentsTaken: components["schemas"]["CountWithAmountsDto"];
+      /** @description Now: the finance refunds-due queue (`GET /admin/refunds/due`), its rows and the amounts due. */
+      refundsDue: components["schemas"]["CountWithAmountsDto"];
+      /** @description In the period: the total of bookings confirmed (`confirmedAt`) and still `CONFIRMED`, `SCHEDULED` or `COMPLETED`. */
+      confirmedBookingValue: components["schemas"]["MoneyTotalDto"][];
+      /** @description Flyviman's revenue on those bookings (commission, markup and fees, less discounts, before tax), from their price calculations. */
+      platformRevenue: components["schemas"]["MoneyTotalDto"][];
+    };
+    OverviewReportDto: {
+      period: components["schemas"]["ReportPeriodDto"];
+      inPeriod: components["schemas"]["OverviewPeriodFiguresDto"];
+      /** @description Figures as they are now, whatever the period. */
+      now: components["schemas"]["OverviewCurrentFiguresDto"];
+      /** @description Finance and super administrator only; omitted otherwise. */
+      finance?: components["schemas"]["OverviewFinanceDto"];
+    };
+    ReportFiltersDto: {
+      category: components["schemas"]["ServiceCategory"] | null;
+      /** Format: uuid */
+      operatorId: string | null;
+    };
+    SearchFiguresDto: {
+      searches: number;
+      /** @description Searches that offered nothing. */
+      withoutResults: number;
+      /** @description Results offered per search, 1 decimal. */
+      averageResults: number | null;
+      /** @description Whole ms. */
+      averageDurationMs: number | null;
+      /** @description Booking requests made in the period in the same categories. Not traced to the search they came from. */
+      bookingRequests: number;
+      /** @description Booking requests per search. A share from 0 to 1, rounded to 4 decimals; null when there is nothing to divide by. */
+      conversionRate: number | null;
+    };
+    SearchCategoryFiguresDto: {
+      searches: number;
+      /** @description Searches that offered nothing. */
+      withoutResults: number;
+      /** @description Results offered per search, 1 decimal. */
+      averageResults: number | null;
+      /** @description Whole ms. */
+      averageDurationMs: number | null;
+      /** @description Booking requests made in the period in the same categories. Not traced to the search they came from. */
+      bookingRequests: number;
+      /** @description Booking requests per search. A share from 0 to 1, rounded to 4 decimals; null when there is nothing to divide by. */
+      conversionRate: number | null;
+      category: components["schemas"]["ServiceCategory"];
+    };
+    SearchReportDto: {
+      period: components["schemas"]["ReportPeriodDto"];
+      filters: components["schemas"]["ReportFiltersDto"];
+      totals: components["schemas"]["SearchFiguresDto"];
+      byCategory: components["schemas"]["SearchCategoryFiguresDto"][];
+    };
+    BookingFinanceDto: {
+      /** @description The total of the confirmed bookings (`CONFIRMED`, `SCHEDULED`, `COMPLETED`). Estimates of open requests are never added. */
+      confirmedValue: components["schemas"]["MoneyTotalDto"][];
+      /** @description Flyviman's revenue on them (commission, markup and fees, less discounts, before tax). */
+      platformRevenue: components["schemas"]["MoneyTotalDto"][];
+      /** @description Confirmed bookings with no price calculation (for example scheduled fares): in `confirmedValue`, not in `platformRevenue`. */
+      withoutCalculation: number;
+    };
+    BookingFiguresDto: {
+      /** @description Requests made in the period. */
+      requested: number;
+      /** @description Still in progress: `REQUESTED`, `OPERATOR_PENDING`, `CLARIFICATION_REQUESTED`, `PRICE_CONFIRMED`, `AWAITING_PAYMENT`. */
+      open: number;
+      /** @description `CONFIRMED`, `SCHEDULED` or `COMPLETED`. */
+      confirmed: number;
+      /** @description `OPERATOR_UNAVAILABLE` or `QUOTE_DECLINED`. */
+      declined: number;
+      expired: number;
+      cancelled: number;
+      /** @description Confirmed per request. A share from 0 to 1, rounded to 4 decimals; null when there is nothing to divide by. */
+      confirmationRate: number | null;
+      /** @description Finance and super administrator only; omitted otherwise. */
+      finance?: components["schemas"]["BookingFinanceDto"];
+    };
+    BookingCategoryFiguresDto: {
+      /** @description Requests made in the period. */
+      requested: number;
+      /** @description Still in progress: `REQUESTED`, `OPERATOR_PENDING`, `CLARIFICATION_REQUESTED`, `PRICE_CONFIRMED`, `AWAITING_PAYMENT`. */
+      open: number;
+      /** @description `CONFIRMED`, `SCHEDULED` or `COMPLETED`. */
+      confirmed: number;
+      /** @description `OPERATOR_UNAVAILABLE` or `QUOTE_DECLINED`. */
+      declined: number;
+      expired: number;
+      cancelled: number;
+      /** @description Confirmed per request. A share from 0 to 1, rounded to 4 decimals; null when there is nothing to divide by. */
+      confirmationRate: number | null;
+      /** @description Finance and super administrator only; omitted otherwise. */
+      finance?: components["schemas"]["BookingFinanceDto"];
+      category: components["schemas"]["ServiceCategory"];
+    };
+    BookingReportDto: {
+      period: components["schemas"]["ReportPeriodDto"];
+      filters: components["schemas"]["ReportFiltersDto"];
+      /** @description The requests made in the period, by their current booking status. */
+      totals: components["schemas"]["BookingFiguresDto"];
+      byStatus: components["schemas"]["BookingStatusCountDto"][];
+      byCategory: components["schemas"]["BookingCategoryFiguresDto"][];
+    };
+    RevenueFiguresDto: {
+      /** @example INR */
+      currency: string;
+      bookings: number;
+      /** @description Paise: what customers pay (gross booking value). */
+      grossValueMinor: number;
+      /** @description Paise: tax in the priced bookings. */
+      taxMinor: number;
+      /** @description Paise: what Flyviman pays operators. */
+      operatorPayableMinor: number;
+      /** @description Paise: Flyviman's net revenue (commission, markup and fees, less discounts, before tax). Can be negative. */
+      platformRevenueMinor: number;
+      /** @description Bookings with no price calculation: in `grossValueMinor` only. */
+      withoutCalculation: number;
+    };
+    RevenueCategoryRowDto: {
+      /** @example INR */
+      currency: string;
+      bookings: number;
+      /** @description Paise: what customers pay (gross booking value). */
+      grossValueMinor: number;
+      /** @description Paise: tax in the priced bookings. */
+      taxMinor: number;
+      /** @description Paise: what Flyviman pays operators. */
+      operatorPayableMinor: number;
+      /** @description Paise: Flyviman's net revenue (commission, markup and fees, less discounts, before tax). Can be negative. */
+      platformRevenueMinor: number;
+      /** @description Bookings with no price calculation: in `grossValueMinor` only. */
+      withoutCalculation: number;
+      category: components["schemas"]["ServiceCategory"];
+    };
+    RevenueOperatorRowDto: {
+      /** @example INR */
+      currency: string;
+      bookings: number;
+      /** @description Paise: what customers pay (gross booking value). */
+      grossValueMinor: number;
+      /** @description Paise: tax in the priced bookings. */
+      taxMinor: number;
+      /** @description Paise: what Flyviman pays operators. */
+      operatorPayableMinor: number;
+      /** @description Paise: Flyviman's net revenue (commission, markup and fees, less discounts, before tax). Can be negative. */
+      platformRevenueMinor: number;
+      /** @description Bookings with no price calculation: in `grossValueMinor` only. */
+      withoutCalculation: number;
+      /**
+       * Format: uuid
+       * @description Null for scheduled airline bookings.
+       */
+      operatorId: string | null;
+      /** @description Trading name, else legal name. */
+      operatorName: string | null;
+    };
+    RevenueReportDto: {
+      period: components["schemas"]["ReportPeriodDto"];
+      filters: components["schemas"]["ReportFiltersDto"];
+      /** @description Bookings confirmed in the period (`confirmedAt`) and still `CONFIRMED`, `SCHEDULED` or `COMPLETED`, one row per currency. */
+      totals: components["schemas"]["RevenueFiguresDto"][];
+      byCategory: components["schemas"]["RevenueCategoryRowDto"][];
+      byOperator: components["schemas"]["RevenueOperatorRowDto"][];
+      /** @description Bookings confirmed in the period and cancelled since: not in the figures. */
+      cancelledAfterConfirmation: number;
+    };
+    PaymentStatusCountDto: {
+      status: components["schemas"]["PaymentStatus"];
+      count: number;
+    };
+    PaymentMethodRowDto: {
+      /** @description As the gateway reports it (`card`, `upi`, …); null if none. */
+      method: string | null;
+      succeeded: number;
+      failed: number;
+    };
+    PaymentFlagCountDto: {
+      reason: components["schemas"]["PaymentReviewReason"];
+      count: number;
+    };
+    RefundStatusCountDto: {
+      status: components["schemas"]["RefundStatus"];
+      count: number;
+    };
+    CurrencyRateDto: {
+      /** @example INR */
+      currency: string;
+      /** @description A share from 0 to 1, rounded to 4 decimals; null when there is nothing to divide by. */
+      rate: number | null;
+    };
+    RefundFiguresDto: {
+      /** @description Refunds started in the period. */
+      count: number;
+      byStatus: components["schemas"]["RefundStatusCountDto"][];
+      /** @description `COMPLETED`. */
+      refunded: components["schemas"]["MoneyTotalDto"][];
+      /** @description `REQUESTED` or `PENDING`. */
+      inProgress: components["schemas"]["MoneyTotalDto"][];
+      /** @description Completed refunds started in the period, per amount collected on payments started in the period. */
+      refundRate: components["schemas"]["CurrencyRateDto"][];
+    };
+    PaymentReportDto: {
+      period: components["schemas"]["ReportPeriodDto"];
+      /** @description Payment attempts started in the period. */
+      attempts: number;
+      byStatus: components["schemas"]["PaymentStatusCountDto"][];
+      /** @description Attempts whose money arrived (`SUCCEEDED`, `REFUND_PENDING`, `PARTIALLY_REFUNDED`, `REFUNDED`). */
+      succeeded: number;
+      failed: number;
+      /** @description Succeeded per finished attempt (succeeded or failed). A share from 0 to 1, rounded to 4 decimals; null when there is nothing to divide by. */
+      successRate: number | null;
+      /** @description The amount of the succeeded attempts. */
+      collected: components["schemas"]["MoneyTotalDto"][];
+      byMethod: components["schemas"]["PaymentMethodRowDto"][];
+      /** @description Attempts flagged for operations to look at. */
+      flagged: components["schemas"]["PaymentFlagCountDto"][];
+      refunds: components["schemas"]["RefundFiguresDto"];
+    };
+    OperatorStatusCountDto: {
+      status: components["schemas"]["OperatorStatus"];
+      count: number;
+    };
+    OperatorPerformanceRowDto: {
+      /** Format: uuid */
+      operatorId: string;
+      /** @description Trading name, else legal name. */
+      operatorName: string;
+      status: components["schemas"]["OperatorStatus"];
+      /** @description Booking requests made to it in the period. */
+      requests: number;
+      /** @description Requests its staff answered (accepted, rejected or quoted). */
+      responded: number;
+      /** @description Responded per request. A share from 0 to 1, rounded to 4 decimals; null when there is nothing to divide by. */
+      responseRate: number | null;
+      /** @description Whole minutes from the request to its first answer. */
+      averageResponseMinutes: number | null;
+      /** @description `OPERATOR_UNAVAILABLE`: the aircraft could not fly although the calendar offered it. */
+      declined: number;
+      /** @description Declined per request, a measure of availability accuracy (lower is better). A share from 0 to 1, rounded to 4 decimals; null when there is nothing to divide by. */
+      declineRate: number | null;
+      expired: number;
+      /** @description `CONFIRMED`, `SCHEDULED` or `COMPLETED`. */
+      confirmed: number;
+      cancelled: number;
+    };
+    OperatorReportDto: {
+      period: components["schemas"]["ReportPeriodDto"];
+      filters: components["schemas"]["ReportFiltersDto"];
+      /** @description Every operator, by status now. */
+      byStatus: components["schemas"]["OperatorStatusCountDto"][];
+      /** @description Operators with requests in the period, most requests first. */
+      operators: components["schemas"]["OperatorPerformanceRowDto"][];
+    };
+    EmptyLegStatusCountDto: {
+      status: components["schemas"]["EmptyLegStatus"];
+      count: number;
+    };
+    EmptyLegReportDto: {
+      period: components["schemas"]["ReportPeriodDto"];
+      filters: components["schemas"]["ReportFiltersDto"];
+      /** @description Offers created in the period. */
+      created: number;
+      /** @description Those offers by status now. */
+      byStatus: components["schemas"]["EmptyLegStatusCountDto"][];
+      /** @description Those offers that were ever published. */
+      published: number;
+      booked: number;
+      withdrawn: number;
+      expired: number;
+      /** @description Customers following those offers. */
+      interests: number;
+      /** @description Booked per published offer. A share from 0 to 1, rounded to 4 decimals; null when there is nothing to divide by. */
+      bookingRate: number | null;
+    };
+    AirAmbulanceStatusCountDto: {
+      status: components["schemas"]["AirAmbulanceStatus"];
+      count: number;
+    };
+    AirAmbulanceReportDto: {
+      period: components["schemas"]["ReportPeriodDto"];
+      /** @description Requests made in the period. */
+      requests: number;
+      /** @description Those requests by status now. */
+      byStatus: components["schemas"]["AirAmbulanceStatusCountDto"][];
+      /** @description Not yet completed, declined or cancelled. */
+      open: number;
+      /** @description Those that were sent a quotation. */
+      quoted: number;
+      /** @description Those that were confirmed by operations. */
+      confirmed: number;
+      completed: number;
+      declined: number;
+      cancelled: number;
+      /** @description Whole minutes from the request to its quotation. */
+      averageMinutesToQuote: number | null;
+      /** @description Whole minutes from the request to its confirmation. */
+      averageMinutesToConfirm: number | null;
+      /** @description Completed per closed request (completed, declined or cancelled). A share from 0 to 1, rounded to 4 decimals; null when there is nothing to divide by. */
+      fulfilmentRate: number | null;
     };
     ResponseMetaDto: {
       requestId: string | null;
@@ -11782,6 +12320,241 @@ export interface operations {
         };
         content: {
           "application/json": components["schemas"]["AdminEnquiryResponseDto"];
+        };
+      };
+    };
+  };
+  AdminReportsController_overview: {
+    parameters: {
+      query?: {
+        /** @description First day, `YYYY-MM-DD`, in India. Defaults to 29 days before `to`. */
+        from?: string;
+        /** @description Last day, included, `YYYY-MM-DD`, in India. Defaults to today in India. */
+        to?: string;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["OverviewReportDto"];
+        };
+      };
+    };
+  };
+  AdminReportsController_search: {
+    parameters: {
+      query?: {
+        /** @description First day, `YYYY-MM-DD`, in India. Defaults to 29 days before `to`. */
+        from?: string;
+        /** @description Last day, included, `YYYY-MM-DD`, in India. Defaults to today in India. */
+        to?: string;
+        category?: components["schemas"]["ServiceCategory"];
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["SearchReportDto"];
+        };
+      };
+    };
+  };
+  AdminReportsController_bookings: {
+    parameters: {
+      query?: {
+        /** @description First day, `YYYY-MM-DD`, in India. Defaults to 29 days before `to`. */
+        from?: string;
+        /** @description Last day, included, `YYYY-MM-DD`, in India. Defaults to today in India. */
+        to?: string;
+        category?: components["schemas"]["ServiceCategory"];
+        operatorId?: string;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["BookingReportDto"];
+        };
+      };
+    };
+  };
+  AdminReportsController_revenue: {
+    parameters: {
+      query?: {
+        /** @description First day, `YYYY-MM-DD`, in India. Defaults to 29 days before `to`. */
+        from?: string;
+        /** @description Last day, included, `YYYY-MM-DD`, in India. Defaults to today in India. */
+        to?: string;
+        category?: components["schemas"]["ServiceCategory"];
+        operatorId?: string;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["RevenueReportDto"];
+        };
+      };
+    };
+  };
+  AdminReportsController_payments: {
+    parameters: {
+      query?: {
+        /** @description First day, `YYYY-MM-DD`, in India. Defaults to 29 days before `to`. */
+        from?: string;
+        /** @description Last day, included, `YYYY-MM-DD`, in India. Defaults to today in India. */
+        to?: string;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["PaymentReportDto"];
+        };
+      };
+    };
+  };
+  AdminReportsController_operators: {
+    parameters: {
+      query?: {
+        /** @description First day, `YYYY-MM-DD`, in India. Defaults to 29 days before `to`. */
+        from?: string;
+        /** @description Last day, included, `YYYY-MM-DD`, in India. Defaults to today in India. */
+        to?: string;
+        operatorId?: string;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["OperatorReportDto"];
+        };
+      };
+    };
+  };
+  AdminReportsController_emptyLegs: {
+    parameters: {
+      query?: {
+        /** @description First day, `YYYY-MM-DD`, in India. Defaults to 29 days before `to`. */
+        from?: string;
+        /** @description Last day, included, `YYYY-MM-DD`, in India. Defaults to today in India. */
+        to?: string;
+        operatorId?: string;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["EmptyLegReportDto"];
+        };
+      };
+    };
+  };
+  AdminReportsController_airAmbulance: {
+    parameters: {
+      query?: {
+        /** @description First day, `YYYY-MM-DD`, in India. Defaults to 29 days before `to`. */
+        from?: string;
+        /** @description Last day, included, `YYYY-MM-DD`, in India. Defaults to today in India. */
+        to?: string;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["AirAmbulanceReportDto"];
+        };
+      };
+    };
+  };
+  AdminReportsController_export: {
+    parameters: {
+      query?: {
+        /** @description First day, `YYYY-MM-DD`, in India. Defaults to 29 days before `to`. */
+        from?: string;
+        /** @description Last day, included, `YYYY-MM-DD`, in India. Defaults to today in India. */
+        to?: string;
+        category?: components["schemas"]["ServiceCategory"];
+        operatorId?: string;
+      };
+      header?: never;
+      path: {
+        report:
+          | "overview"
+          | "search"
+          | "bookings"
+          | "revenue"
+          | "payments"
+          | "operators"
+          | "empty-legs"
+          | "air-ambulance";
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "text/csv": string;
         };
       };
     };
