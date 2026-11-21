@@ -13,6 +13,7 @@ import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { MOBILITY_OPTIONS } from "@/lib/air-ambulance/labels";
 import { apiFetch } from "@/lib/api/client";
+import { ApiError } from "@/lib/api/errors";
 import { applyApiError } from "@/lib/api/messages";
 import type { Schemas } from "@/lib/api/types";
 import { todayIn } from "@/lib/format/zoned";
@@ -92,7 +93,9 @@ export function RequestForm() {
     } catch (error) {
       setStep("idle");
       setFormError(
-        applyApiError(error, setError, REQUEST_FIELDS, REQUEST_ALIASES),
+        error instanceof ApiError && error.code === "CATEGORY_DISABLED"
+          ? "We are not taking air ambulance requests at the moment. For an immediate emergency, call 112 or your local emergency services now."
+          : applyApiError(error, setError, REQUEST_FIELDS, REQUEST_ALIASES),
       );
       return;
     }

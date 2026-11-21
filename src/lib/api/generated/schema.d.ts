@@ -1576,7 +1576,7 @@ export interface paths {
     };
     /**
      * Listed empty-leg offers
-     * @description Published offers still valid, on an approved, available aircraft with current documents, of an approved operator. Soonest departure first. `from` and `to` are India dates matched against the departure window; `maxPrice` is in paise.
+     * @description Published offers still valid, on an approved, available aircraft with current documents, of an approved operator. Soonest departure first. `from` and `to` are India dates matched against the departure window; `maxPrice` is in paise. Empty while the platform has empty legs switched off.
      */
     get: operations["EmptyLegsController_list"];
     put?: never;
@@ -1596,7 +1596,7 @@ export interface paths {
     };
     /**
      * Empty-leg offer detail
-     * @description 410 `EMPTY_LEG_EXPIRED` or `EMPTY_LEG_WITHDRAWN` for an offer that was listed and has ended; 404 for any other offer that is not listed (including one another customer has requested, until that request ends). `cancellationTerms` are Flyviman’s tiers in force, shown before a booking request (rule 9). `updatedAt` is sent back as `offerUpdatedAt` with a booking request. `interested` tells a signed-in customer whether they follow it; the answer is then `Cache-Control: private, no-store`.
+     * @description 410 `EMPTY_LEG_EXPIRED` or `EMPTY_LEG_WITHDRAWN` for an offer that was listed and has ended; 404 for any other offer that is not listed (including one another customer has requested, until that request ends, and every offer while the platform has empty legs switched off). `cancellationTerms` are Flyviman’s tiers in force, shown before a booking request (rule 9). `updatedAt` is sent back as `offerUpdatedAt` with a booking request. `interested` tells a signed-in customer whether they follow it; the answer is then `Cache-Control: private, no-store`.
      */
     get: operations["EmptyLegsController_detail"];
     put?: never;
@@ -1791,6 +1791,46 @@ export interface paths {
     options?: never;
     head?: never;
     patch?: never;
+    trace?: never;
+  };
+  "/api/v1/admin/category-config": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Service category configuration
+     * @description Platform booking mode, payment model and Model C deposit percent per category and region, by region then category. Super administrators change a row with `PATCH /admin/category-config/:id`.
+     */
+    get: operations["AdminCategoryConfigController_list"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/admin/category-config/{id}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    /**
+     * Change a service category configuration
+     * @description Changes whether a category is offered, its platform booking mode, payment model and Model C deposit percent; fields left out stay as they are. `reason` is required and the change is audited with before and after (`category_config.update`). 409 `CATEGORY_CONFIG_CHANGED` when the row changed since `expectedUpdatedAt` (its current `updatedAt` in `details`); 422 `CATEGORY_CONFIG_INVALID` for air ambulance on `INSTANT` (business rule 7); 404 for an unknown row. A disabled category is hidden from search and takes no new bookings or requests. New bookings use the new booking mode and payment model; bookings already made keep theirs. The deposit percent is read when a payment is due, so a change also applies to model C bookings not yet paid. A change sending the current values writes nothing.
+     */
+    patch: operations["AdminCategoryConfigController_update"];
     trace?: never;
   };
   "/api/v1/operator/pricing": {
@@ -2043,7 +2083,7 @@ export interface paths {
     put?: never;
     /**
      * Search scheduled flights across airline suppliers
-     * @description Suppliers are called in parallel, each with a timeout. One that times out or fails is listed in `providers` and `partial` is true; the others' fares are still returned.
+     * @description Suppliers are called in parallel, each with a timeout. One that times out or fails is listed in `providers` and `partial` is true; the others' fares are still returned. 422 `CATEGORY_DISABLED` while the platform has scheduled flights switched off.
      */
     post: operations["ScheduledSearchController_search"];
     delete?: never;
@@ -2115,7 +2155,10 @@ export interface paths {
     };
     get?: never;
     put?: never;
-    /** Search eligible charter aircraft with estimates */
+    /**
+     * Search eligible charter aircraft with estimates
+     * @description 422 `CATEGORY_DISABLED` while the platform has the category switched off. Empty-leg alternatives are left out while empty legs are switched off.
+     */
     post: operations["SearchController_charter"];
     delete?: never;
     options?: never;
@@ -2132,7 +2175,10 @@ export interface paths {
     };
     get?: never;
     put?: never;
-    /** Search helicopter options with estimates */
+    /**
+     * Search helicopter options with estimates
+     * @description 422 `CATEGORY_DISABLED` while the platform has the category switched off.
+     */
     post: operations["SearchController_helicopter"];
     delete?: never;
     options?: never;
@@ -2147,7 +2193,10 @@ export interface paths {
       path?: never;
       cookie?: never;
     };
-    /** Lowest estimate and aircraft count for each day of a month */
+    /**
+     * Lowest estimate and aircraft count for each day of a month
+     * @description 422 `CATEGORY_DISABLED` while the platform has the category switched off.
+     */
     get: operations["SearchController_calendar"];
     put?: never;
     post?: never;
@@ -2205,26 +2254,6 @@ export interface paths {
      * @description The trip priced again with the code, as a booking with `promoCode` would be: an `ESTIMATE` with the discount as its own line. 422 `PROMO_CODE_INVALID` (unknown or not started), `PROMO_CODE_EXPIRED`, `PROMO_CODE_NOT_APPLICABLE` (another category or route, or priced on request), `PROMO_CODE_LIMIT_REACHED` (overall, or the signed-in customer’s own); 409 `BOOKING_UNAVAILABLE`. On the search rate tier.
      */
     post: operations["SearchController_promoCode"];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  "/api/v1/admin/category-config": {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    /**
-     * Service category configuration
-     * @description Platform booking mode, payment model and Model C deposit percent per category and region, by region then category. Read only until M10.
-     */
-    get: operations["AdminCategoryConfigController_list"];
-    put?: never;
-    post?: never;
     delete?: never;
     options?: never;
     head?: never;
@@ -3302,7 +3331,7 @@ export interface paths {
     put?: never;
     /**
      * Submit an air ambulance request
-     * @description Records the request as `SUBMITTED` with the medical details encrypted; operations take it from there. Both locations must be active (404 `NOT_FOUND`, field in `details`) and different (400 `VALIDATION_ERROR`). The answer holds the reference, status and `emergencyNotice` only. Medical details are never logged or audited. A repeat with the same `Idempotency-Key` and body returns the first answer.
+     * @description Records the request as `SUBMITTED` with the medical details encrypted; operations take it from there. Both locations must be active (404 `NOT_FOUND`, field in `details`) and different (400 `VALIDATION_ERROR`). 422 `CATEGORY_DISABLED` while the platform has air ambulance switched off. The answer holds the reference, status and `emergencyNotice` only. Medical details are never logged or audited. A repeat with the same `Idempotency-Key` and body returns the first answer.
      */
     post: operations["AirAmbulanceController_create"];
     delete?: never;
@@ -5468,6 +5497,51 @@ export interface components {
     EmptyLegReasonDto: {
       reason: string;
     };
+    /**
+     * @description Platform setting. Operators may override it per category; air ambulance is always REQUEST.
+     * @enum {string}
+     */
+    BookingMode: "INSTANT" | "REQUEST";
+    /**
+     * @description Platform setting. Operators may override it per category.
+     * @enum {string}
+     */
+    PaymentModel: "A_INSTANT" | "B_OPERATOR_CONFIRMED" | "C_DEPOSIT";
+    CategoryConfigResponseDto: {
+      /** Format: uuid */
+      id: string;
+      category: components["schemas"]["ServiceCategory"];
+      /** @example IN */
+      region: string;
+      isEnabled: boolean;
+      /** @description Platform setting. Operators may override it per category; air ambulance is always REQUEST. */
+      bookingMode: components["schemas"]["BookingMode"];
+      /** @description Platform setting. Operators may override it per category. */
+      paymentModel: components["schemas"]["PaymentModel"];
+      /**
+       * @description The deposit taken under payment model C, in whole percent of the confirmed total, rounded up to the next paisa.
+       * @example 25
+       */
+      depositPercent: number;
+      /** Format: date-time */
+      updatedAt: string;
+    };
+    UpdateCategoryConfigDto: {
+      /** @description Whether the category is offered. A disabled category is hidden from search and takes no new bookings or requests. */
+      isEnabled?: boolean;
+      /** @description Air ambulance is always REQUEST (422 `CATEGORY_CONFIG_INVALID`). */
+      bookingMode?: components["schemas"]["BookingMode"];
+      paymentModel?: components["schemas"]["PaymentModel"];
+      /** @description The model C deposit, whole percent. Also used when an operator overrides the payment model to C. */
+      depositPercent?: number;
+      /**
+       * Format: date-time
+       * @description The row's `updatedAt` as the editor loaded it. 409 `CATEGORY_CONFIG_CHANGED` if it has changed since.
+       */
+      expectedUpdatedAt: string;
+      /** @description Why the configuration is changed. Audited. */
+      reason: string;
+    };
     OperatorPricingResponseDto: {
       /**
        * @description Minimum billable hours per flight.
@@ -6340,11 +6414,6 @@ export interface components {
       amountMinor: number;
       basis?: string;
     };
-    /**
-     * @description How a booking made from this result is handled: the category's configuration with the operator's override (C2). A booking from an estimate still waits for the operator.
-     * @enum {string}
-     */
-    BookingMode: "INSTANT" | "REQUEST";
     SearchResultDetailDto: {
       /** Format: uuid */
       resultId: string;
@@ -6413,28 +6482,6 @@ export interface components {
       price: components["schemas"]["PromoPriceDto"];
       breakdown: components["schemas"]["PromoLineDto"][];
       assumptions: string[];
-    };
-    /**
-     * @description Platform setting. Operators may override it per category.
-     * @enum {string}
-     */
-    PaymentModel: "A_INSTANT" | "B_OPERATOR_CONFIRMED" | "C_DEPOSIT";
-    CategoryConfigResponseDto: {
-      category: components["schemas"]["ServiceCategory"];
-      /** @example IN */
-      region: string;
-      isEnabled: boolean;
-      /** @description Platform setting. Operators may override it per category; air ambulance is always REQUEST. */
-      bookingMode: components["schemas"]["BookingMode"];
-      /** @description Platform setting. Operators may override it per category. */
-      paymentModel: components["schemas"]["PaymentModel"];
-      /**
-       * @description The deposit taken under payment model C, in whole percent of the confirmed total, rounded up to the next paisa.
-       * @example 25
-       */
-      depositPercent: number;
-      /** Format: date-time */
-      updatedAt: string;
     };
     CreateBookingDto: {
       /**
@@ -11011,6 +11058,50 @@ export interface operations {
       };
     };
   };
+  AdminCategoryConfigController_list: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["CategoryConfigResponseDto"][];
+        };
+      };
+    };
+  };
+  AdminCategoryConfigController_update: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["UpdateCategoryConfigDto"];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["CategoryConfigResponseDto"];
+        };
+      };
+    };
+  };
   OperatorPricingController_getOperator: {
     parameters: {
       query?: never;
@@ -11652,25 +11743,6 @@ export interface operations {
         };
         content: {
           "application/json": components["schemas"]["PromoPreviewResponseDto"];
-        };
-      };
-    };
-  };
-  AdminCategoryConfigController_list: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["CategoryConfigResponseDto"][];
         };
       };
     };
