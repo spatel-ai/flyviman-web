@@ -1846,7 +1846,7 @@ export interface paths {
     head?: never;
     /**
      * Change a service category configuration
-     * @description Changes whether a category is offered, its platform booking mode, payment model and Model C deposit percent; fields left out stay as they are. `reason` is required and the change is audited with before and after (`category_config.update`). 409 `CATEGORY_CONFIG_CHANGED` when the row changed since `expectedUpdatedAt` (its current `updatedAt` in `details`); 422 `CATEGORY_CONFIG_INVALID` for air ambulance on `INSTANT` (business rule 7); 404 for an unknown row. A disabled category is hidden from search and takes no new bookings or requests. New bookings use the new booking mode and payment model; bookings already made keep theirs. The deposit percent is read when a payment is due, so a change also applies to model C bookings not yet paid. A change sending the current values writes nothing.
+     * @description Changes whether a category is offered, its platform booking mode, payment model and Model C deposit percent; fields left out stay as they are. `reason` is required and the change is audited with before and after (`category_config.update`). 409 `CATEGORY_CONFIG_CHANGED` when the row changed since `expectedUpdatedAt` (its current `updatedAt` in `details`); 422 `CATEGORY_CONFIG_INVALID` for air ambulance on `INSTANT` (business rule 7); 404 for an unknown row. A disabled category is hidden from search and takes no new bookings or requests. New bookings use the new booking mode, payment model and deposit percent; each is saved on the booking, so bookings already made keep theirs. A change sending the current values writes nothing.
      */
     patch: operations["AdminCategoryConfigController_update"];
     trace?: never;
@@ -3205,7 +3205,7 @@ export interface paths {
     put?: never;
     /**
      * Resolve a payment flagged AMOUNT_MISMATCH or DUPLICATE_CAPTURE
-     * @description Records that finance settled the flag: the amount was checked at the gateway, and any money owed back was refunded through `POST /admin/payments/:reference/refunds`. Moves no money and changes no status; `reviewReason` stays and `reviewResolvedAt` is set. A resolved flag no longer blocks the customer’s erasure (`PAYMENT_UNDER_REVIEW`). Needs a reason; audited as `payment.flag_resolve`. 409 `PAYMENT_FLAG_NOT_OPEN` when the payment has no such flag or it is already resolved. An unknown reference is 404.
+     * @description Records that finance settled the flag: the amount was checked at the gateway, and any money owed back was refunded through `POST /admin/payments/:reference/refunds`. Moves no money and changes no status; `reviewReason` stays and `reviewResolvedAt` is set. A resolved flag no longer blocks the customer’s erasure (`PAYMENT_UNDER_REVIEW`); a new flag recorded on the payment later clears `reviewResolvedAt` and reopens it. Needs a reason; audited as `payment.flag_resolve`. 409 `PAYMENT_FLAG_NOT_OPEN` when the payment has no such flag or it is already resolved. An unknown reference is 404.
      */
     post: operations["AdminPaymentsController_resolveFlag"];
     delete?: never;
@@ -3589,7 +3589,7 @@ export interface paths {
     put?: never;
     /**
      * Send the customer a quotation
-     * @description From an approved operator (409 `OPERATOR_NOT_APPROVED`; 404 for an unknown operator) with an approved air ambulance aircraft (409 `AIR_AMBULANCE_OPERATOR_NOT_ELIGIBLE`; `GET /admin/air-ambulance/operators` lists them), labelled `QUOTE`. FEASIBILITY_CHECK to QUOTED; while QUOTED it replaces the last quotation and needs `revisionReason` (400 `VALIDATION_ERROR` without it; shown in the request’s `events`, encrypted at rest). 409 `AIR_AMBULANCE_INVALID_TRANSITION` in any other status. Audited with the amount and operator.
+     * @description From an approved operator (409 `OPERATOR_NOT_APPROVED`; 404 for an unknown operator) with an approved air ambulance aircraft (409 `AIR_AMBULANCE_OPERATOR_NOT_ELIGIBLE`; `GET /admin/air-ambulance/operators` lists them), labelled `QUOTE`. FEASIBILITY_CHECK to QUOTED; while QUOTED it replaces the last quotation and needs `revisionReason` (400 `VALIDATION_ERROR` without it; shown in the request’s `events` to its assigned owner and a super administrator only, encrypted at rest). 409 `AIR_AMBULANCE_INVALID_TRANSITION` in any other status. Audited with the amount and operator.
      */
     post: operations["AdminAirAmbulanceController_quote"];
     delete?: never;
@@ -7583,7 +7583,7 @@ export interface components {
       reviewReason: components["schemas"]["PaymentReviewReason"] | null;
       /**
        * Format: date-time
-       * @description When finance resolved an `AMOUNT_MISMATCH` or `DUPLICATE_CAPTURE` flag (`POST /admin/payments/:reference/resolve-flag`). `reviewReason` stays as it was.
+       * @description When finance resolved an `AMOUNT_MISMATCH` or `DUPLICATE_CAPTURE` flag (`POST /admin/payments/:reference/resolve-flag`). `reviewReason` stays as it was. Back to null when a new flag is recorded on the payment (the flag is open again).
        */
       reviewResolvedAt: string | null;
     };
@@ -8015,7 +8015,7 @@ export interface components {
       /** Format: uuid */
       actorId: string | null;
       actorRole: components["schemas"]["Role"] | null;
-      /** @description What the step recorded (`kind`: ASSIGNMENT, FEASIBILITY or QUOTE; a QUOTE that replaced one already sent carries its `revisionReason`). Never medical or contact data. */
+      /** @description What the step recorded (`kind`: ASSIGNMENT, FEASIBILITY or QUOTE; a QUOTE that replaced one already sent carries its `revisionReason`, which only the request’s assigned owner and a super administrator read: for anyone else it is null). Never medical or contact data. */
       payload: Record<string, never> | null;
       /** Format: date-time */
       at: string;
