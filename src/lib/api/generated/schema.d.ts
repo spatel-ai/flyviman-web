@@ -321,6 +321,24 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/me/notification-preferences": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** My SMS and WhatsApp opt-outs */
+    get: operations["MeNotificationPreferencesController_get"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    /** Change my SMS and WhatsApp opt-outs */
+    patch: operations["MeNotificationPreferencesController_update"];
+    trace?: never;
+  };
   "/api/v1/content/policies/{slug}": {
     parameters: {
       query?: never;
@@ -4132,6 +4150,18 @@ export interface components {
       email: string;
       /** @enum {string} */
       role: "OPS" | "FINANCE_ADMIN" | "SUPER_ADMIN";
+    };
+    NotificationPreferencesResponseDto: {
+      /** @description No SMS messages. Non-mandatory messages only: mandatory messages (security codes, urgent air ambulance updates and the like) are always sent, and in-app and email are never turned off. */
+      smsOptedOut: boolean;
+      /** @description No WhatsApp messages. Non-mandatory messages only: mandatory messages (security codes, urgent air ambulance updates and the like) are always sent, and in-app and email are never turned off. */
+      whatsappOptedOut: boolean;
+    };
+    UpdateNotificationPreferencesDto: {
+      /** @description No SMS messages. Non-mandatory messages only: mandatory messages (security codes, urgent air ambulance updates and the like) are always sent, and in-app and email are never turned off. */
+      smsOptedOut?: boolean;
+      /** @description No WhatsApp messages. Non-mandatory messages only: mandatory messages (security codes, urgent air ambulance updates and the like) are always sent, and in-app and email are never turned off. */
+      whatsappOptedOut?: boolean;
     };
     PolicyResponseDto: {
       /** @example terms */
@@ -8976,6 +9006,48 @@ export interface operations {
         };
         content: {
           "application/json": components["schemas"]["AdminUserResponseDto"];
+        };
+      };
+    };
+  };
+  MeNotificationPreferencesController_get: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["NotificationPreferencesResponseDto"];
+        };
+      };
+    };
+  };
+  MeNotificationPreferencesController_update: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["UpdateNotificationPreferencesDto"];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["NotificationPreferencesResponseDto"];
         };
       };
     };
