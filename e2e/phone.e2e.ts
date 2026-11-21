@@ -148,10 +148,21 @@ test.describe("phone layout", () => {
     await expectNotCovered(page.getByRole("button", { name: "Send enquiry" }));
   });
 
-  test("the account pages end clear of the tab bar", async ({ page }) => {
-    await signIn(page, "customer", "/account");
-    await expect(page).toHaveURL(/\/account/);
-    await expectNoSidewaysScroll(page);
-    await expectPageEndClear(page);
-  });
+  for (const address of [
+    "/account",
+    "/account/profile",
+    "/account/notifications",
+  ]) {
+    test(`${address}: the account page ends clear of the tab bar`, async ({
+      page,
+    }) => {
+      await signIn(page, "customer", address);
+      await expect(page).toHaveURL(new RegExp(`${address}$`));
+      // The page grows once its data arrives; measure the finished page.
+      await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+      await page.waitForLoadState("networkidle");
+      await expectNoSidewaysScroll(page);
+      await expectPageEndClear(page);
+    });
+  }
 });

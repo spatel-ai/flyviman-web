@@ -79,7 +79,7 @@ export function EmptyLegRequest({ id }: { id: string }) {
         offer.error.code === "EMPTY_LEG_WITHDRAWN");
     return ended || isNotFoundError(offer.error) ? (
       <RecordNotFound
-        title="This offer is not available"
+        title="Offer not found"
         description="It has ended, been withdrawn or been requested by someone else. Other empty legs may suit you."
         backHref="/empty-legs"
         backLabel="See all empty legs"

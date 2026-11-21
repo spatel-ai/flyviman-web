@@ -9,7 +9,7 @@ export default async function OperatorBookingPage({
 }: PageProps<"/operator/bookings/[reference]">) {
   const { reference } = await params;
   return (
-    <BookingsAccess title="Booking">
+    <BookingsAccess title="Booking" approvedOnly={false}>
       <BookingDetail reference={reference} />
     </BookingsAccess>
   );
