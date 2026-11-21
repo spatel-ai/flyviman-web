@@ -544,7 +544,7 @@ export interface paths {
     get?: never;
     /**
      * Update a notification template
-     * @description The channel is in the body. The text must keep every placeholder the built-in wording uses and add none (400 `VALIDATION_ERROR` otherwise). Audited with the wording before and after.
+     * @description The channel is in the body. The text must keep every placeholder the built-in wording uses and add none (400 `VALIDATION_ERROR` otherwise). Send `baseVersion` (the `version` loaded): 409 `CONTENT_VERSION_CONFLICT` if the template was changed meanwhile; nothing is written. Audited with the wording before and after.
      */
     put: operations["AdminPoliciesController_updateTemplate"];
     post?: never;
@@ -3176,6 +3176,26 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/admin/payments/{reference}/resolve-flag": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Resolve a payment flagged AMOUNT_MISMATCH or DUPLICATE_CAPTURE
+     * @description Records that finance settled the flag: the amount was checked at the gateway, and any money owed back was refunded through `POST /admin/payments/:reference/refunds`. Moves no money and changes no status; `reviewReason` stays and `reviewResolvedAt` is set. A resolved flag no longer blocks the customer’s erasure (`PAYMENT_UNDER_REVIEW`). Needs a reason; audited as `payment.flag_resolve`. 409 `PAYMENT_FLAG_NOT_OPEN` when the payment has no such flag or it is already resolved. An unknown reference is 404.
+     */
+    post: operations["AdminPaymentsController_resolveFlag"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/v1/admin/refunds": {
     parameters: {
       query?: never;
@@ -3551,7 +3571,7 @@ export interface paths {
     put?: never;
     /**
      * Send the customer a quotation
-     * @description From an approved operator (409 `OPERATOR_NOT_APPROVED`; 404 for an unknown operator) with an approved air ambulance aircraft (409 `AIR_AMBULANCE_OPERATOR_NOT_ELIGIBLE`; `GET /admin/air-ambulance/operators` lists them), labelled `QUOTE`. FEASIBILITY_CHECK to QUOTED; while QUOTED it replaces the last quotation. 409 `AIR_AMBULANCE_INVALID_TRANSITION` in any other status. Audited with the amount and operator.
+     * @description From an approved operator (409 `OPERATOR_NOT_APPROVED`; 404 for an unknown operator) with an approved air ambulance aircraft (409 `AIR_AMBULANCE_OPERATOR_NOT_ELIGIBLE`; `GET /admin/air-ambulance/operators` lists them), labelled `QUOTE`. FEASIBILITY_CHECK to QUOTED; while QUOTED it replaces the last quotation and needs `revisionReason` (400 `VALIDATION_ERROR` without it; shown in the request’s `events`, encrypted at rest). 409 `AIR_AMBULANCE_INVALID_TRANSITION` in any other status. Audited with the amount and operator.
      */
     post: operations["AdminAirAmbulanceController_quote"];
     delete?: never;
@@ -3908,7 +3928,7 @@ export interface paths {
     put?: never;
     /**
      * Erase your account and personal data
-     * @description Irreversible. Confirmed with the current password, or with `verificationId` and `code` from `POST /me/erasure/code`. Your name, contact details, password, saved passengers, sign-ins, notifications and the personal details on past bookings and air ambulance requests (passengers, special requests, contacts, medical details and documents) are erased at once. Booking references, amounts, payments and settlements are kept for the legal and financial record, as are the records of the consents you gave (with the address they were given from) and the audit log (with the address of each action). Messages in a booking’s timeline stay, encrypted, because the timeline cannot be edited. Every sign-in ends; the email address or mobile number can be registered again. 409 `USER_ERASURE_BLOCKED` while something is still open, with one `details` entry per reason (`OPEN_BOOKINGS`, `PAYMENT_IN_PROGRESS`, `REFUND_IN_PROGRESS`, `REFUND_DUE`, `PAYMENT_UNDER_REVIEW` (a payment flagged `AMOUNT_MISMATCH` or `DUPLICATE_CAPTURE`), `BALANCE_DUE`, `OPEN_AIR_AMBULANCE`, `RECENT_ACTIVITY`); 401 `AUTH_INVALID_CREDENTIALS` for a wrong password; 400 `AUTH_OTP_INVALID` or `AUTH_OTP_EXPIRED` for a wrong or used code.
+     * @description Irreversible. Confirmed with the current password, or with `verificationId` and `code` from `POST /me/erasure/code`. Your name, contact details, password, saved passengers, sign-ins, notifications and the personal details on past bookings and air ambulance requests (passengers, special requests, contacts, medical details and documents) are erased at once. Booking references, amounts, payments and settlements are kept for the legal and financial record, as are the records of the consents you gave (with the address they were given from) and the audit log (with the address of each action). Messages in a booking’s timeline stay, encrypted, because the timeline cannot be edited. Every sign-in ends; the email address or mobile number can be registered again. 409 `USER_ERASURE_BLOCKED` while something is still open, with one `details` entry per reason (`OPEN_BOOKINGS`, `PAYMENT_IN_PROGRESS`, `REFUND_IN_PROGRESS`, `REFUND_DUE`, `PAYMENT_UNDER_REVIEW` (a payment flagged `AMOUNT_MISMATCH` or `DUPLICATE_CAPTURE`), `BALANCE_DUE`, `OPEN_AIR_AMBULANCE`, `RECENT_ACTIVITY`); 401 `AUTH_INVALID_CREDENTIALS` for a wrong password; 400 `AUTH_OTP_INVALID` or `AUTH_OTP_EXPIRED` for a wrong or used code; 503 `USER_ERASURE_BUSY` when the account was busy (a lock not free within 5 s, or the erasure not done within 30 s): nothing was erased, send it again (a code is used up, so ask for a new one).
      */
     post: operations["MeErasureController_erase"];
     delete?: never;
@@ -3928,7 +3948,7 @@ export interface paths {
     put?: never;
     /**
      * Erase a customer's personal data
-     * @description For an erasure request received another way (email, letter). Customer accounts only. Irreversible; needs a reason and is audited as `user.erase` with counts only. The same data is erased and kept as for `POST /me/erasure`, and the same 409 `USER_ERASURE_BLOCKED` applies. 409 `USER_INVALID_TRANSITION` for an internal staff or operator account, or one already erased.
+     * @description For an erasure request received another way (email, letter). Customer accounts only. Irreversible; needs a reason and is audited as `user.erase` with counts only. The same data is erased and kept as for `POST /me/erasure`, and the same 409 `USER_ERASURE_BLOCKED` applies. 409 `USER_INVALID_TRANSITION` for an internal staff or operator account, or one already erased. 503 `USER_ERASURE_BUSY` when the account was busy: nothing was erased, send it again.
      */
     post: operations["AdminErasureController_erase"];
     delete?: never;
@@ -4199,12 +4219,16 @@ export interface components {
       placeholders: string[];
       /** @description False while no row is stored and the built-in text applies. */
       stored: boolean;
+      /** @description Raised by each change; 0 while the built-in text applies. Send it back as `baseVersion`. */
+      version: number;
     };
     UpdateNotificationTemplateDto: {
       channel: components["schemas"]["NotificationChannel"];
       subject?: string | null;
       body: string;
       isActive: boolean;
+      /** @description The `version` the editor loaded (0 while the built-in text applies). Required. When the template has been changed since, 409 `CONTENT_VERSION_CONFLICT` and nothing is written. */
+      baseVersion: number;
     };
     NotificationResponseDto: {
       /** Format: uuid */
@@ -7527,6 +7551,15 @@ export interface components {
       refunds: components["schemas"]["RefundSummaryDto"][];
       /** @description Set when a verified event needs a person: `BOOKING_CLOSED`, `ALREADY_PAID`, `AMOUNT_MISMATCH`, `DUPLICATE_CAPTURE`. */
       reviewReason: components["schemas"]["PaymentReviewReason"] | null;
+      /**
+       * Format: date-time
+       * @description When finance resolved an `AMOUNT_MISMATCH` or `DUPLICATE_CAPTURE` flag (`POST /admin/payments/:reference/resolve-flag`). `reviewReason` stays as it was.
+       */
+      reviewResolvedAt: string | null;
+    };
+    ResolvePaymentFlagDto: {
+      /** @description How the flag was settled (checked at the gateway, refunded through the refund flow), for the audit trail (rule 6). No personal or card details. */
+      reason: string;
     };
     RefundResponseDto: {
       /** @example FLY-RF-7K2M9Q */
@@ -7952,7 +7985,7 @@ export interface components {
       /** Format: uuid */
       actorId: string | null;
       actorRole: components["schemas"]["Role"] | null;
-      /** @description What the step recorded (`kind`: ASSIGNMENT, FEASIBILITY or QUOTE). Never medical or contact data. */
+      /** @description What the step recorded (`kind`: ASSIGNMENT, FEASIBILITY or QUOTE; a QUOTE that replaced one already sent carries its `revisionReason`). Never medical or contact data. */
       payload: Record<string, never> | null;
       /** Format: date-time */
       at: string;
@@ -8047,6 +8080,8 @@ export interface components {
       currency: "INR";
       /** @description Service and cancellation conditions shown to the customer before accepting (rule 9). No medical details. */
       conditions: string;
+      /** @description Why a quotation already sent is replaced: required while the request is QUOTED (400 `VALIDATION_ERROR` without it), not stored otherwise. Kept encrypted in the timeline entry; the audit record says only that it was a revision. No medical details. */
+      revisionReason?: string;
     };
     AirAmbulanceOperatorDto: {
       /** Format: uuid */
@@ -12914,6 +12949,31 @@ export interface operations {
         };
         content: {
           "application/json": components["schemas"]["AdminPaymentDto"][];
+        };
+      };
+    };
+  };
+  AdminPaymentsController_resolveFlag: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        reference: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["ResolvePaymentFlagDto"];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["AdminPaymentDto"];
         };
       };
     };
