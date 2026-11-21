@@ -111,7 +111,7 @@ const MESSAGES: Record<string, string> = {
   PAYMENT_SIGNATURE_INVALID:
     "We could not confirm this payment with the provider. If money left your account it is safe: your trip will show it once the provider confirms.",
   SETTLEMENT_NOT_DUE:
-    "This settlement is not due: the trip is not completed, a refund is on its way, or the money kept does not cover it. The list has been refreshed.",
+    "This settlement is not due: the trip is not completed or not fully paid, a refund is on its way, or the money kept does not cover it. The list has been refreshed.",
   SETTLEMENT_CHANGED:
     "The amount payable has changed. The list has been refreshed: check it before you mark it paid.",
   SETTLEMENT_ALREADY_PAID:
