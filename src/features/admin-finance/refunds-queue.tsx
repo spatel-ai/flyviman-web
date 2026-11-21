@@ -171,7 +171,7 @@ function HistoryTab() {
 }
 
 /** A paged table with its loading, empty and error states. */
-function Paged<T>({
+export function Paged<T>({
   query,
   page,
   onPageChange,

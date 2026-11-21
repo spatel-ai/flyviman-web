@@ -42,6 +42,7 @@ describe("operatorNav", () => {
       "/operator/empty-legs",
       "/operator/air-ambulance",
       "/operator/pricing",
+      "/operator/settlements",
       "/operator/team",
       "/operator/notifications",
       "/operator/onboarding",

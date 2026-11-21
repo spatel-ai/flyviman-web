@@ -48,10 +48,18 @@ export const queryKeys = {
   adminRefunds: (page: number) =>
     ["admin", "refunds", "history", page] as const,
   adminRefundsDue: (page: number) => ["admin", "refunds", "due", page] as const,
+  /** Every settlement key starts with ["admin", "settlements"]. */
+  adminSettlementsAll: ["admin", "settlements"] as const,
+  adminSettlements: (filter: object) =>
+    ["admin", "settlements", filter] as const,
+  adminReconciliation: (period: object) =>
+    ["admin", "reconciliation", period] as const,
   adminAuditLogs: (filter: object) => ["admin", "audit-logs", filter] as const,
   adminLocations: (filter: object) => ["admin", "locations", filter] as const,
   adminExpiringDocuments: (filter: object) =>
     ["admin", "documents", "expiring", filter] as const,
+  operatorSettlements: (page: number) =>
+    ["operator", "settlements", page] as const,
   operatorAircraft: ["operator", "aircraft"] as const,
   operatorAircraftDetail: (id: string) => ["operator", "aircraft", id] as const,
   /** Every aircraft in reach, for pickers (under the operatorAircraft prefix). */

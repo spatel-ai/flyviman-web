@@ -54,6 +54,7 @@ const NOTIFICATIONS = {
   label: "Notifications",
 };
 const PRICING = { href: "/operator/pricing", label: "Pricing" };
+const SETTLEMENTS = { href: "/operator/settlements", label: "Settlements" };
 const APPLICATION = {
   href: "/operator/onboarding",
   label: "Company and documents",
@@ -63,8 +64,9 @@ const APPLICATION = {
  * The portal's navigation. Until the organisation is approved, only its
  * application is offered. A suspended operator keeps the fleet so it can
  * still ground an aircraft (D-058). Staff see only what their permissions
- * cover, and never the company, documents, team or air ambulance missions
- * (medical details: approved operators' administrators only, W4-6).
+ * cover, and never the company, documents, team, settlements or air
+ * ambulance missions (medical details: approved operators' administrators
+ * only, W4-6).
  */
 export function operatorNav(
   status: OperatorStatus,
@@ -82,11 +84,20 @@ export function operatorNav(
           EMPTY_LEGS,
           AIR_AMBULANCE,
           PRICING,
+          SETTLEMENTS,
           TEAM,
           NOTIFICATIONS,
           APPLICATION,
         ]
-      : [FLEET, AVAILABILITY, PRICING, TEAM, NOTIFICATIONS, APPLICATION];
+      : [
+          FLEET,
+          AVAILABILITY,
+          PRICING,
+          SETTLEMENTS,
+          TEAM,
+          NOTIFICATIONS,
+          APPLICATION,
+        ];
   }
   if (!live) return [];
   return [
