@@ -248,7 +248,10 @@ test("charter, from the customer's request to the refund: one booking in every r
       .getByRole("dialog", { name: "Mark this trip scheduled?" })
       .getByRole("button", { name: "Mark scheduled" })
       .click();
-    await expect(operator.getByText("Trip marked scheduled")).toBeVisible();
+    // The timeline notification repeats the words (D-194); the toast is the one with the text itself.
+    await expect(
+      operator.getByText("Trip marked scheduled", { exact: true }),
+    ).toBeVisible();
   });
 
   await test.step("customer: cancels, the charge is shown before confirming", async () => {

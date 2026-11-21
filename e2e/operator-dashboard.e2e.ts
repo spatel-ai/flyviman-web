@@ -65,6 +65,8 @@ test("staff see no Settlements tile", async ({ page, browser }) => {
     .getByRole("textbox", { name: "Repeat the new password" })
     .fill(PASSWORD);
   await staff.getByRole("button", { name: "Set password" }).click();
+  // Sign in only once the password is saved, or the sign-in can race it.
+  await expect(staff.getByText(/Your password has been set\./)).toBeVisible();
   await signIn(staff, { email, password: PASSWORD });
   await expect(staff).toHaveURL(/\/operator$/);
 

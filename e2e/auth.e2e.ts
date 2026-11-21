@@ -401,7 +401,14 @@ test.describe("the admin shell", () => {
   });
 
   test("the theme can be forced and is remembered", async ({ page }) => {
-    await page.getByRole("button", { name: "Account menu" }).click();
+    // A click before the page is interactive is lost; retry opening the menu.
+    await expect(async () => {
+      if (!(await page.getByRole("radio", { name: "Dark" }).isVisible()))
+        await page.getByRole("button", { name: "Account menu" }).click();
+      await expect(page.getByRole("radio", { name: "Dark" })).toBeVisible({
+        timeout: 2000,
+      });
+    }).toPass();
     await page.getByRole("radio", { name: "Dark" }).click();
     await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
     const dark = await page.evaluate(
