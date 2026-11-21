@@ -226,7 +226,21 @@ test("finance refunds a paid trip the customer cancelled, from Due to History", 
   const finance = await asStaff(browser, "finance");
   const admin = finance.page.getByRole("main");
   await finance.page.goto("/admin/refunds");
-  await admin.getByRole("button", { name: `Refund ${reference}` }).click();
+  // Due is oldest first and paged, so on a shared database this refund can
+  // sit on a later page. The pager shows once a page has loaded; walk forward
+  // until the refund's button is on it.
+  const pager = admin.getByRole("navigation", { name: "Pagination" });
+  const refundButton = admin.getByRole("button", {
+    name: `Refund ${reference}`,
+  });
+  await expect(pager).toBeVisible();
+  while (!(await refundButton.isVisible())) {
+    const next = pager.getByRole("button", { name: "Next" });
+    await expect(next).toBeEnabled();
+    await next.click();
+    await expect(pager).toBeVisible();
+  }
+  await refundButton.click();
   const dialog = finance.page.getByRole("dialog", {
     name: `Refund ${reference}`,
   });
