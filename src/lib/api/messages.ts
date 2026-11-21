@@ -112,6 +112,14 @@ const MESSAGES: Record<string, string> = {
     "The payment provider did not answer. Nothing was charged. Try again in a moment.",
   PAYMENT_SIGNATURE_INVALID:
     "We could not confirm this payment with the provider. If money left your account it is safe: your trip will show it once the provider confirms.",
+  SETTLEMENT_NOT_DUE:
+    "This settlement is not due: the trip is not completed or not fully paid, a refund is on its way, or the money kept does not cover it. The list has been refreshed.",
+  SETTLEMENT_CHANGED:
+    "The amount payable has changed. The list has been refreshed: check it before you mark it paid.",
+  SETTLEMENT_ALREADY_PAID:
+    "This settlement was already marked paid with another reference. The list has been refreshed.",
+  SETTLEMENT_INVALID_TRANSITION:
+    "This settlement has changed and can no longer move that way. The list has been refreshed.",
   BOOKING_PAYMENT_IN_PROGRESS:
     "A payment for this booking is waiting for the payment gateway's answer. Wait for it, then try again.",
   INTERNAL_ERROR: "Something went wrong on our side. Please try again.",

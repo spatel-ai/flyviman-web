@@ -3127,6 +3127,86 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/admin/settlements": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Operator settlements, newest first
+     * @description One per completed booking with money kept, created by a job every 5 minutes: `payableMinor` = money kept − `commissionMinor` − `taxMinor`, from the price calculation of the price booked. `DUE` once the booking is `COMPLETED` and its price was paid in full, no refund is on its way and the figures add up to the money kept; otherwise `NOT_DUE`, with `notDueReason`. A refund after the trip comes out of the payable; one larger than the payable leaves it `NOT_DUE` (“Refund exceeds payable — finance to resolve.”). Filter by `status`.
+     */
+    get: operations["AdminSettlementsController_list"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/admin/settlements/{id}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    /**
+     * Hold, release or mark a settlement paid
+     * @description `ON_HOLD` from `NOT_DUE` or `DUE`; `DUE` from `ON_HOLD` releases the hold: the record becomes what the rules give now (`DUE` or `NOT_DUE`, see `notDueReason`); `PAID` from `DUE` with the payout’s bank `paymentReference` and the `expectedPayableMinor` shown, only while still due (409 `SETTLEMENT_NOT_DUE`, the reason in `details`) and unchanged (409 `SETTLEMENT_CHANGED`, the current payable in `details`). A `PAID` record never changes again: marking it paid with the same reference returns it, another reference is 409 `SETTLEMENT_ALREADY_PAID`; any other move is 409 `SETTLEMENT_INVALID_TRANSITION`. Audited with the reason. A repeat with the same `Idempotency-Key` and body returns the first answer.
+     */
+    patch: operations["AdminSettlementsController_change"];
+    trace?: never;
+  };
+  "/api/v1/admin/reconciliation": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Reconciliation report for a period
+     * @description Per currency: payments whose money arrived (by `paidAt`), refunds started (by `createdAt`, completed and still open), bookings with a payment created in the period and the money kept on them now, settlements created (by `createdAt`) and paid out (by `paidAt`). Then the mismatches, checked as they are now, on every booking with a payment, refund or settlement in the period or completed in it. Reads Flyviman’s own record only; it does not ask the gateway. The period is at most 92 days (400 `VALIDATION_ERROR`).
+     */
+    get: operations["AdminSettlementsController_report"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/operator/settlements": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Own settlement records, newest first
+     * @description What Flyviman owes the caller’s organisation per completed booking: the money kept, the commission and tax deducted, the payable, its status and, once paid, the bank reference of the payout.
+     */
+    get: operations["OperatorSettlementsController_list"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/v1/air-ambulance/requests": {
     parameters: {
       query?: never;
@@ -7196,6 +7276,147 @@ export interface components {
        * @description When it became due: the cancellation, or the payment.
        */
       since: string;
+    };
+    /** @enum {string} */
+    SettlementStatus: "NOT_DUE" | "DUE" | "PAID" | "ON_HOLD";
+    AdminSettlementDto: {
+      /** Format: uuid */
+      id: string;
+      /** @example FLY-BK-7K2M9Q */
+      bookingReference: string;
+      bookingStatus: components["schemas"]["BookingStatus"];
+      /** Format: uuid */
+      operatorId: string;
+      operatorName: string;
+      /** @description Paise owed to the operator: the money kept towards the booking less commission and tax. */
+      payableMinor: number;
+      /** @description Paise: Flyviman’s revenue on the price (commission, markup and service fee, less its discount). */
+      commissionMinor: number;
+      /** @description Paise of tax collected on the price. */
+      taxMinor: number;
+      /** @description Paise kept towards the booking now (credited less refunds). Payable + commission + tax equals it when the record is consistent. */
+      keptMinor: number;
+      /** @example INR */
+      currency: string;
+      /** @description `NOT_DUE` (the trip is not flown or not paid in full, a refund is on its way or the money kept does not cover the figures), `DUE`, `ON_HOLD` (held by finance) or `PAID` (paid out by hand; never changes again). */
+      status: components["schemas"]["SettlementStatus"];
+      /**
+       * @description For `NOT_DUE` and `ON_HOLD`: why it is not due by the rules now (the trip not completed, the price not paid in full, a refund on its way, a refund larger than the payable, more kept than the price); null when due, and for `DUE` and `PAID`.
+       * @example Refund exceeds payable — finance to resolve.
+       */
+      notDueReason: string | null;
+      /** Format: date-time */
+      paidAt: string | null;
+      /** @description The bank transfer reference of the payout. */
+      paymentReference: string | null;
+      /** Format: date-time */
+      createdAt: string;
+      /** Format: date-time */
+      updatedAt: string;
+    };
+    UpdateSettlementDto: {
+      /**
+       * @description `ON_HOLD` from `NOT_DUE` or `DUE`; `DUE` from `ON_HOLD` releases the hold (the record becomes what the rules give now: `DUE` or `NOT_DUE`); `PAID` from `DUE`.
+       * @enum {string}
+       */
+      status: "DUE" | "PAID" | "ON_HOLD";
+      /** @description Why, for the audit trail (rule 6). No personal or bank account details. */
+      reason: string;
+      /** @description Required for `PAID`: the bank transfer reference of the payout (letters, digits, spaces, `-`, `_`, `/`, `.`). */
+      paymentReference?: string;
+      /** @description Required for `PAID`: the payable finance paid out, as shown. Another amount than the record’s is 409 `SETTLEMENT_CHANGED`. */
+      expectedPayableMinor?: number;
+    };
+    ReconciliationTotalsDto: {
+      /** @example INR */
+      currency: string;
+      /** @description Payments whose money arrived (`SUCCEEDED` or later), by `paidAt` in the period. */
+      paymentsCount: number;
+      /** @description Paise: their amounts. */
+      paymentsInMinor: number;
+      /** @description Paise of those that were not towards a booking (paid after it closed, or paid twice): owed back. */
+      extraMoneyMinor: number;
+      /** @description Paise of refunds started in the period that completed. */
+      refundsCompletedMinor: number;
+      /** @description Paise of refunds started in the period still on their way (`REQUESTED`, `PENDING`). */
+      refundsOpenMinor: number;
+      /** @description Bookings with a payment created in the period whose money arrived. */
+      bookingsCount: number;
+      /** @description Paise kept towards those bookings now: credited less refunds (extra money left out). */
+      bookingsKeptMinor: number;
+      /** @description Settlements created in the period. */
+      settlementsCount: number;
+      /** @description Paise payable to operators on them. */
+      settlementsPayableMinor: number;
+      /** @description Paise of commission on them. */
+      settlementsCommissionMinor: number;
+      /** @description Paise of tax on them. */
+      settlementsTaxMinor: number;
+      /** @description Paise paid out to operators, by `paidAt` in the period. */
+      settlementsPaidMinor: number;
+    };
+    /**
+     * @description `PAYMENT_SUMMARY_MISMATCH` (the booking’s payment status is not what its payments say); `PAYMENT_FLAGGED` (another amount or a second capture at the gateway: check its dashboard); `EXTRA_MONEY_UNREFUNDED` (money paid after closing or twice, not yet refunded); `PAYMENT_STUCK` and `REFUND_STUCK` (no final answer after 24 hours); `KEPT_EXCEEDS_TOTAL`; `SETTLEMENT_MISSING` (a completed booking with money kept and no settlement); `SETTLEMENT_AMOUNT_MISMATCH` (the settlement’s figures do not add up to the money kept now); `SETTLEMENT_BOOKING_NOT_COMPLETED` (a due or paid settlement whose booking is no longer `COMPLETED`).
+     * @enum {string}
+     */
+    ReconciliationMismatchKind:
+      | "PAYMENT_SUMMARY_MISMATCH"
+      | "PAYMENT_FLAGGED"
+      | "EXTRA_MONEY_UNREFUNDED"
+      | "PAYMENT_STUCK"
+      | "REFUND_STUCK"
+      | "KEPT_EXCEEDS_TOTAL"
+      | "SETTLEMENT_MISSING"
+      | "SETTLEMENT_AMOUNT_MISMATCH"
+      | "SETTLEMENT_BOOKING_NOT_COMPLETED";
+    ReconciliationMismatchDto: {
+      /** @description `PAYMENT_SUMMARY_MISMATCH` (the booking’s payment status is not what its payments say); `PAYMENT_FLAGGED` (another amount or a second capture at the gateway: check its dashboard); `EXTRA_MONEY_UNREFUNDED` (money paid after closing or twice, not yet refunded); `PAYMENT_STUCK` and `REFUND_STUCK` (no final answer after 24 hours); `KEPT_EXCEEDS_TOTAL`; `SETTLEMENT_MISSING` (a completed booking with money kept and no settlement); `SETTLEMENT_AMOUNT_MISMATCH` (the settlement’s figures do not add up to the money kept now); `SETTLEMENT_BOOKING_NOT_COMPLETED` (a due or paid settlement whose booking is no longer `COMPLETED`). */
+      kind: components["schemas"]["ReconciliationMismatchKind"];
+      bookingReference: string | null;
+      paymentReference: string | null;
+      refundReference: string | null;
+      /** Format: uuid */
+      settlementId: string | null;
+      /** @description What is wrong, for finance. */
+      detail: string;
+      /** @description Paise at stake, when there is one amount. */
+      amountMinor: number | null;
+      currency: string | null;
+    };
+    ReconciliationReportDto: {
+      /** Format: date-time */
+      from: string;
+      /** Format: date-time */
+      to: string;
+      /** Format: date-time */
+      generatedAt: string;
+      totals: components["schemas"]["ReconciliationTotalsDto"][];
+      /** @description At most 200, bookings first by reference. */
+      mismatches: components["schemas"]["ReconciliationMismatchDto"][];
+      /** @description Mismatches found, including any not listed. */
+      mismatchTotal: number;
+    };
+    OperatorSettlementDto: {
+      /** Format: uuid */
+      id: string;
+      /** @example FLY-BK-7K2M9Q */
+      bookingReference: string;
+      /** @description Paise Flyviman kept from the customer for the booking now (paid less refunds). */
+      keptMinor: number;
+      /** @description Paise of Flyviman’s commission deducted. */
+      commissionMinor: number;
+      /** @description Paise of tax deducted (collected by Flyviman). */
+      taxMinor: number;
+      /** @description Paise owed to the operator. */
+      payableMinor: number;
+      /** @example INR */
+      currency: string;
+      status: components["schemas"]["SettlementStatus"];
+      /** Format: date-time */
+      paidAt: string | null;
+      paymentReference: string | null;
+      /** Format: date-time */
+      createdAt: string;
     };
     /** @enum {string} */
     PatientMobility: "AMBULATORY" | "ASSISTED" | "NON_AMBULATORY";
@@ -12304,6 +12525,103 @@ export interface operations {
         };
         content: {
           "application/json": components["schemas"]["RefundDueItemDto"][];
+        };
+      };
+    };
+  };
+  AdminSettlementsController_list: {
+    parameters: {
+      query?: {
+        page?: number;
+        pageSize?: number;
+        status?: components["schemas"]["SettlementStatus"];
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["AdminSettlementDto"][];
+        };
+      };
+    };
+  };
+  AdminSettlementsController_change: {
+    parameters: {
+      query?: never;
+      header: {
+        /** @description A UUID, new for each change and reused on retry. */
+        "Idempotency-Key": string;
+      };
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["UpdateSettlementDto"];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["AdminSettlementDto"];
+        };
+      };
+    };
+  };
+  AdminSettlementsController_report: {
+    parameters: {
+      query: {
+        /** @description Start of the period, inclusive. */
+        from: string;
+        /** @description End of the period, exclusive. At most 92 days after `from` (400 otherwise). */
+        to: string;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ReconciliationReportDto"];
+        };
+      };
+    };
+  };
+  OperatorSettlementsController_list: {
+    parameters: {
+      query?: {
+        page?: number;
+        pageSize?: number;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["OperatorSettlementDto"][];
         };
       };
     };

@@ -172,3 +172,69 @@ export async function startRefund(
     })
   ).data;
 }
+
+// ---------------------------------------------------------------------------
+// Operator settlements and reconciliation (W4-2, SETTLEMENT_MODE=manual).
+// ---------------------------------------------------------------------------
+
+export type AdminSettlement = Schemas["AdminSettlementDto"];
+export type OperatorSettlement = Schemas["OperatorSettlementDto"];
+export type SettlementChange = Schemas["UpdateSettlementDto"];
+export type ReconciliationReport = Schemas["ReconciliationReportDto"];
+export type ReconciliationMismatch = Schemas["ReconciliationMismatchDto"];
+
+/** `GET admin/settlements`, paged, newest first. */
+export function listSettlements(
+  filter: PaymentFilter,
+): Promise<ApiResult<AdminSettlement[]>> {
+  return apiFetch<AdminSettlement[]>("admin/settlements", {
+    query: {
+      status: filter.status,
+      page: filter.page,
+      pageSize: filter.pageSize,
+    },
+  });
+}
+
+/**
+ * `PATCH admin/settlements/:id` with an Idempotency-Key: hold, release or
+ * mark paid (with the payout's bank reference). Audited with the reason.
+ */
+export async function updateSettlement(
+  id: string,
+  input: SettlementChange,
+  key: string,
+): Promise<AdminSettlement> {
+  return (
+    await apiFetch<AdminSettlement>(
+      `admin/settlements/${encodeURIComponent(id)}`,
+      {
+        method: "PATCH",
+        headers: { "Idempotency-Key": key },
+        body: input,
+      },
+    )
+  ).data;
+}
+
+/** `GET admin/reconciliation` for a period (`to` exclusive, at most 92 days). */
+export async function getReconciliation(period: {
+  from: string;
+  to: string;
+}): Promise<ReconciliationReport> {
+  return (
+    await apiFetch<ReconciliationReport>("admin/reconciliation", {
+      query: period,
+    })
+  ).data;
+}
+
+/** `GET operator/settlements`: the caller's organisation's own records. */
+export function listOperatorSettlements(
+  page: number,
+  pageSize: number,
+): Promise<ApiResult<OperatorSettlement[]>> {
+  return apiFetch<OperatorSettlement[]>("operator/settlements", {
+    query: { page, pageSize },
+  });
+}
