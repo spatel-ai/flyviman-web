@@ -2684,7 +2684,7 @@ export interface paths {
     put?: never;
     /**
      * Accept a quote
-     * @description The quote becomes `ACCEPTED` with its price `CONFIRMED`, and the booking `PRICE_CONFIRMED` at the quoted price and at once `AWAITING_PAYMENT`, on the quote’s cancellation conditions (shown before you commit). The aircraft is checked again first (409 `BOOKING_UNAVAILABLE`). 409 `QUOTE_EXPIRED` past `validUntil`; 409 `QUOTE_INVALID_TRANSITION` for a quote already answered or replaced by a revision; 409 `BOOKING_INVALID_TRANSITION` when the booking is not waiting for this answer. A repeat with the same `Idempotency-Key` returns the first answer.
+     * @description The quote becomes `ACCEPTED` with its price `CONFIRMED`, and the booking `PRICE_CONFIRMED` at the quoted price and at once `AWAITING_PAYMENT`, on the quote’s cancellation conditions (shown before you commit). The aircraft is checked again first (409 `BOOKING_UNAVAILABLE`). 409 `QUOTE_EXPIRED` past `validUntil`; 409 `QUOTE_INVALID_TRANSITION` for a quote already answered or replaced by a revision; 409 `BOOKING_INVALID_TRANSITION` when the booking is not waiting for this answer. Answers references, status and time only (`GET /quotes/:reference` has the details). A repeat with the same `Idempotency-Key` returns the first answer.
      */
     post: operations["CustomerQuotesController_accept"];
     delete?: never;
@@ -2761,7 +2761,7 @@ export interface paths {
     put?: never;
     /**
      * Accept the request at its proposed price
-     * @description Moves `OPERATOR_PENDING` to `PRICE_CONFIRMED` and at once on to `AWAITING_PAYMENT` (every payment model asks for payment then): the price becomes `CONFIRMED` on the terms the customer was shown, and your acceptance is recorded. Checks first that your company and the aircraft are still approved (409 `OPERATOR_NOT_APPROVED`, `AIRCRAFT_NOT_APPROVED`) and the held time still free and ahead (409 `BOOKING_UNAVAILABLE`); the hold is kept another 48 hours (`BOOKING_HOLD_HOURS`). 409 `BOOKING_INVALID_TRANSITION` from another status, for a request priced on request (send a quote) or while a quote waits for the customer. A repeat with the same `Idempotency-Key` returns the first answer. Audited; the customer is notified.
+     * @description Moves `OPERATOR_PENDING` to `PRICE_CONFIRMED` and at once on to `AWAITING_PAYMENT` (every payment model asks for payment then): the price becomes `CONFIRMED` on the terms the customer was shown, and your acceptance is recorded. Checks first that your company and the aircraft are still approved (409 `OPERATOR_NOT_APPROVED`, `AIRCRAFT_NOT_APPROVED`) and the held time still free and ahead (409 `BOOKING_UNAVAILABLE`); the hold is kept another 48 hours (`BOOKING_HOLD_HOURS`). 409 `BOOKING_INVALID_TRANSITION` from another status, for a request priced on request (send a quote) or while a quote waits for the customer. Answers the reference, status and time only (`GET /operator/booking-requests/:reference` has the details). A repeat with the same `Idempotency-Key` returns the first answer. Audited; the customer is notified.
      */
     post: operations["OperatorBookingRequestsController_accept"];
     delete?: never;
@@ -2921,7 +2921,7 @@ export interface paths {
     put?: never;
     /**
      * Cancel a booking you cannot fly, with a reason
-     * @description From any status before `COMPLETED`. Moves the booking to `CANCELLED` at once, releases the aircraft’s hold, closes any open quote and change request, and records a completed cancellation with no charge: everything the customer paid is recorded as due back, for Flyviman finance to refund (nothing is refunded here). The reason is kept for you and Flyviman, stored encrypted; the customer is told the booking was cancelled. 409 `BOOKING_NOT_CANCELLABLE` once completed or closed; 409 `BOOKING_PAYMENT_IN_PROGRESS` while a payment waits for the gateway’s final answer. Audited. A repeat with the same `Idempotency-Key` and body returns the first answer.
+     * @description From any status before `COMPLETED`. Moves the booking to `CANCELLED` at once, releases the aircraft’s hold, closes any open quote and change request, and records a completed cancellation with no charge: everything the customer paid is recorded as due back, for Flyviman finance to refund (nothing is refunded here). The reason is kept for you and Flyviman, stored encrypted; the customer is told the booking was cancelled. 409 `BOOKING_NOT_CANCELLABLE` once completed or closed; 409 `BOOKING_PAYMENT_IN_PROGRESS` while a payment waits for the gateway’s final answer. Audited. Answers references, statuses and times only (`GET /operator/bookings/:reference` has the details). A repeat with the same `Idempotency-Key` and body returns the first answer.
      */
     post: operations["OperatorBookingsController_cancel"];
     delete?: never;
@@ -7093,6 +7093,15 @@ export interface components {
     BookingMessageInputDto: {
       message: string;
     };
+    QuoteAcceptedDto: {
+      /** @example FLY-QT-7K2M9Q */
+      reference: string;
+      /** @example FLY-BK-7K2M9Q */
+      bookingReference: string;
+      status: components["schemas"]["QuoteStatus"];
+      /** Format: date-time */
+      updatedAt: string;
+    };
     BookingRequestAircraftDto: {
       /** Format: uuid */
       id: string;
@@ -7184,6 +7193,13 @@ export interface components {
       /** @description Change and cancellation requests, newest first; answer an open one (`REQUESTED`) with `POST /operator/change-requests/:id/decide`. */
       changeRequests: components["schemas"]["ChangeRequestResponseDto"][];
     };
+    BookingRequestAcceptedDto: {
+      /** @example FLY-BK-7K2M9Q */
+      reference: string;
+      status: components["schemas"]["BookingStatus"];
+      /** Format: date-time */
+      updatedAt: string;
+    };
     RejectBookingRequestDto: {
       /** @description Why the request cannot be taken. Kept with the booking for the operator and Flyviman; the customer is told the request was not accepted. */
       reason: string;
@@ -7267,6 +7283,16 @@ export interface components {
     CancelOperatorBookingDto: {
       /** @description Why you cannot fly it. Kept for you and Flyviman (stored encrypted); the customer is told the booking was cancelled. */
       reason: string;
+    };
+    OperatorBookingCancelledDto: {
+      /** @example FLY-BK-7K2M9Q */
+      reference: string;
+      status: components["schemas"]["BookingStatus"];
+      paymentStatus: components["schemas"]["BookingPaymentStatus"];
+      /** Format: date-time */
+      cancelledAt: string;
+      /** Format: date-time */
+      updatedAt: string;
     };
     CreateEmptyLegBookingDto: {
       /**
@@ -12390,7 +12416,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/json": components["schemas"]["QuoteResponseDto"];
+          "application/json": components["schemas"]["QuoteAcceptedDto"];
         };
       };
     };
@@ -12481,7 +12507,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/json": components["schemas"]["OperatorBookingRequestDetailDto"];
+          "application/json": components["schemas"]["BookingRequestAcceptedDto"];
         };
       };
     };
@@ -12684,7 +12710,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/json": components["schemas"]["OperatorBookingDetailDto"];
+          "application/json": components["schemas"]["OperatorBookingCancelledDto"];
         };
       };
     };
