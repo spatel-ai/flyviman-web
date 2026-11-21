@@ -139,7 +139,8 @@ export function OfferEditor({ id }: { id: string }) {
       {editable ? (
         zone ? (
           <OfferForm
-            key={`${item.id}-${item.status}`}
+            // A request arriving mid-edit resets the form to the saved terms.
+            key={`${item.id}-${item.status}-${item.hasLiveRequest}`}
             offer={item}
             initial={fromOffer(item, zone)}
           />
