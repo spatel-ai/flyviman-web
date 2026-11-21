@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { MessagePreferences } from "@/components/shared/message-preferences";
 import { Notifications } from "@/features/account/notifications";
 
 export const metadata: Metadata = { title: "Notifications" };
@@ -11,6 +12,7 @@ export default function NotificationsPage() {
         Updates about your work, with a link to the request or booking.
       </p>
       <div className="mt-6">
+        <MessagePreferences />
         <Notifications />
       </div>
     </>

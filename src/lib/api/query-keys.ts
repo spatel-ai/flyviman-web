@@ -24,6 +24,7 @@ export const queryKeys = {
     ["bookings", reference, "cancellation-quote"] as const,
   passengers: ["me", "passengers"] as const,
   notificationsAll: ["me", "notifications"] as const,
+  notificationPreferences: ["me", "notification-preferences"] as const,
   notifications: (page: number) => ["me", "notifications", page] as const,
   policy: (slug: string) => ["policy", slug] as const,
   operatorProfile: ["operator", "profile"] as const,
