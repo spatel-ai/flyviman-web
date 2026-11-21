@@ -1,3 +1,5 @@
+import { linesNotInSummary } from "@/lib/cancellation-tiers";
+
 export interface CancellationTermsProps {
   /** The conditions in words, as shown before the customer commits. */
   summary: string;
@@ -15,16 +17,6 @@ export interface CancellationTermsProps {
   className?: string;
 }
 
-function rule(charge: CancellationTermsProps["charges"][number]): string {
-  const percent =
-    charge.chargePercent === 0
-      ? "no charge"
-      : `${charge.chargePercent}% of the price`;
-  return charge.minHoursBeforeDeparture > 0
-    ? `${charge.minHoursBeforeDeparture} hours or more before departure: ${percent}`
-    : `Any later cancellation: ${percent}`;
-}
-
 /**
  * Cancellation conditions (business rule 9), shown before a request is sent
  * or a quote is accepted. The one place that draws them, so a change to the
@@ -37,14 +29,17 @@ export function CancellationTerms({
   className,
 }: CancellationTermsProps) {
   const Heading = headingLevel === 2 ? "h2" : "h3";
+  // The saved summary is the wording the customer agreed to (rule 9); the
+  // tiers are listed only when it does not already say them.
+  const lines = linesNotInSummary(summary, charges);
   return (
     <section aria-label="Cancellation conditions" className={className}>
       <Heading className="text-title">Cancellation conditions</Heading>
       <p className="mt-1 text-body-sm text-muted">{summary}</p>
-      {charges.length > 0 ? (
+      {lines.length > 0 ? (
         <ul className="mt-2 list-disc pl-5 text-body-sm text-muted">
-          {charges.map((charge) => (
-            <li key={charge.minHoursBeforeDeparture}>{rule(charge)}</li>
+          {lines.map((line) => (
+            <li key={line}>{line}</li>
           ))}
         </ul>
       ) : null}

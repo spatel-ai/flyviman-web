@@ -38,3 +38,17 @@ export function tierLines(tiers: readonly CancellationTier[]): string[] {
       `${noticeLabel(tiers, index)}: ${tier.chargePercent}% of the price`,
   );
 }
+
+/**
+ * The tier lines to list under a saved summary: none when the summary already
+ * words every tier (the API writes the tiers into it, `tiersSummary`), so a
+ * booking's terms are never shown twice in two wordings; otherwise every line,
+ * in the same wording as the API.
+ */
+export function linesNotInSummary(
+  summary: string,
+  tiers: readonly CancellationTier[],
+): string[] {
+  const lines = tierLines(tiers);
+  return lines.every((line) => summary.includes(line)) ? [] : lines;
+}

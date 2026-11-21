@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { noticeLabel, tierLines } from "./cancellation-tiers";
+import {
+  linesNotInSummary,
+  noticeLabel,
+  tierLines,
+} from "./cancellation-tiers";
 
 const STARTING = [
   { minHoursBeforeDeparture: 72, chargePercent: 10 },
@@ -29,5 +33,20 @@ describe("tierLines", () => {
         1,
       ),
     ).toBe("Under 1 hour before departure, or a no-show");
+  });
+});
+
+describe("linesNotInSummary", () => {
+  const summary = `Flyviman's cancellation terms, the same for every operator. ${tierLines(STARTING).join(". ")}. A charge is taken only from a confirmed price.`;
+
+  it("lists nothing when the saved summary already words every tier", () => {
+    expect(linesNotInSummary(summary, STARTING)).toEqual([]);
+    expect(linesNotInSummary("Any summary", [])).toEqual([]);
+  });
+
+  it("lists every tier, in the API's wording, when the summary does not", () => {
+    expect(linesNotInSummary("Operator terms apply.", STARTING)).toEqual(
+      tierLines(STARTING),
+    );
   });
 });
