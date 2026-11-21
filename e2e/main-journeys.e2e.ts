@@ -335,6 +335,12 @@ test("empty leg: posted by the operator, requested with terms shown, gone from t
 
   await test.step("operator: posts an offer in the browser; operations approve it", async () => {
     await operator.goto("/operator/empty-legs/new");
+    // The streamed server copy of the form is still in the document, hidden,
+    // until the page hydrates; the submit button is enabled only after (D-095).
+    await expect(
+      operator.getByRole("button", { name: "Save draft" }),
+    ).toBeEnabled();
+    const form = operator.locator("form").filter({ visible: true });
     await operator.getByRole("combobox", { name: "Aircraft" }).click();
     await operator
       .getByRole("option", { name: new RegExp(registration) })
@@ -355,16 +361,16 @@ test("empty leg: posted by the operator, requested with terms shown, gone from t
     const from = inIndia(6, 10);
     const to = inIndia(6, 18);
     const valid = inIndia(5, 18);
-    await operator.getByLabel("Earliest departure, day").fill(from.day);
-    await operator.getByLabel("Earliest departure, time").fill(from.time);
-    await operator.getByLabel("Latest departure, day").fill(to.day);
-    await operator.getByLabel("Latest departure, time").fill(to.time);
-    await operator.getByLabel("Seats available").fill("5");
+    await form.getByLabel("Earliest departure, day").fill(from.day);
+    await form.getByLabel("Earliest departure, time").fill(from.time);
+    await form.getByLabel("Latest departure, day").fill(to.day);
+    await form.getByLabel("Latest departure, time").fill(to.time);
+    await form.getByLabel("Seats available").fill("5");
     // An odd price, so the customer's filtered list holds only this offer.
-    await operator.getByLabel("Price (₹)").fill("1,23,000");
-    await operator.getByLabel("Offer valid until, day").fill(valid.day);
-    await operator.getByLabel("Offer valid until, time").fill(valid.time);
-    await operator.getByLabel("Conditions").fill(CONDITIONS);
+    await form.getByLabel("Price (₹)").fill("1,23,000");
+    await form.getByLabel("Offer valid until, day").fill(valid.day);
+    await form.getByLabel("Offer valid until, time").fill(valid.time);
+    await form.getByLabel("Conditions").fill(CONDITIONS);
     await operator.getByRole("button", { name: "Save draft" }).click();
     await expect(operator).toHaveURL(/\/operator\/empty-legs\/[0-9a-f-]{36}$/);
     id = operator.url().split("/").pop()!;

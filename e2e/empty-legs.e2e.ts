@@ -123,6 +123,10 @@ test("an operator adds an offer, operations approve it, customers see it, the op
 
   // Draft, through the form (times are the departure airport's own).
   await page.goto("/operator/empty-legs/new");
+  // The streamed server copy of the form is still in the document, hidden,
+  // until the page hydrates; the submit button is enabled only after (D-095).
+  await expect(page.getByRole("button", { name: "Save draft" })).toBeEnabled();
+  const form = page.locator("form").filter({ visible: true });
   await page.getByRole("combobox", { name: "Aircraft" }).click();
   await page.getByRole("option", { name: new RegExp(registration) }).click();
   await page
@@ -141,15 +145,15 @@ test("an operator adds an offer, operations approve it, customers see it, the op
   const from = inIndia(6, 10);
   const to = inIndia(6, 18);
   const valid = inIndia(5, 18);
-  await page.getByLabel("Earliest departure, day").fill(from.day);
-  await page.getByLabel("Earliest departure, time").fill(from.time);
-  await page.getByLabel("Latest departure, day").fill(to.day);
-  await page.getByLabel("Latest departure, time").fill(to.time);
-  await page.getByLabel("Seats available").fill("5");
-  await page.getByLabel("Price (₹)").fill("1,85,000");
-  await page.getByLabel("Offer valid until, day").fill(valid.day);
-  await page.getByLabel("Offer valid until, time").fill(valid.time);
-  await page.getByLabel("Conditions").fill(CONDITIONS);
+  await form.getByLabel("Earliest departure, day").fill(from.day);
+  await form.getByLabel("Earliest departure, time").fill(from.time);
+  await form.getByLabel("Latest departure, day").fill(to.day);
+  await form.getByLabel("Latest departure, time").fill(to.time);
+  await form.getByLabel("Seats available").fill("5");
+  await form.getByLabel("Price (₹)").fill("1,85,000");
+  await form.getByLabel("Offer valid until, day").fill(valid.day);
+  await form.getByLabel("Offer valid until, time").fill(valid.time);
+  await form.getByLabel("Conditions").fill(CONDITIONS);
   await page.getByRole("button", { name: "Save draft" }).click();
   await expect(page).toHaveURL(/\/operator\/empty-legs\/[0-9a-f-]{36}$/);
   const id = page.url().split("/").pop()!;
