@@ -40,7 +40,12 @@ test("an operator sees a request with its special requests, accepts it and adds 
 
   await page.getByRole("button", { name: "Accept", exact: true }).click();
   await page.getByRole("button", { name: "Accept request" }).click();
-  await expect(main.getByText("Price confirmed").first()).toBeVisible();
+  // Accepting at the proposed price confirms it and waits for the customer's
+  // payment (D-211): the status says so, and the price is labelled confirmed.
+  await expect(
+    main.getByText("Awaiting payment", { exact: true }).first(),
+  ).toBeVisible();
+  await expect(main.getByText("Confirmed price").first()).toBeVisible();
   await expect(
     page.getByRole("button", { name: "Accept", exact: true }),
   ).toHaveCount(0);

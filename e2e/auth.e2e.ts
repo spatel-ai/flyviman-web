@@ -307,7 +307,13 @@ test("an idle customer is renewed when following a link into their account", asy
   await expect(page).toHaveURL("/");
   await context.clearCookies({ name: "access_token" });
 
+  // The phone's Account tab opens the Overview; the desktop menu's Profile
+  // item opens the profile (D-190).
+  let landing = "/account/profile";
+  let heading = "Profile";
   if (info.project.name === "mobile") {
+    landing = "/account";
+    heading = "Overview";
     await page
       .getByRole("navigation", { name: "Primary" })
       .getByRole("link", { name: "Account" })
@@ -321,9 +327,9 @@ test("an idle customer is renewed when following a link into their account", asy
     }).toPass();
     await profile.click();
   }
-  await expect(page).toHaveURL("/account");
+  await expect(page).toHaveURL(landing);
   await expect(
-    page.getByRole("heading", { level: 1, name: "Profile" }),
+    page.getByRole("heading", { level: 1, name: heading }),
   ).toBeVisible();
   await expect
     .poll(async () =>
@@ -332,7 +338,7 @@ test("an idle customer is renewed when following a link into their account", asy
       ),
     )
     .toBe(true);
-  await expect(page).toHaveURL("/account");
+  await expect(page).toHaveURL(landing);
 });
 
 test("every page is sent with headers that stop it being framed or sniffed", async ({

@@ -126,8 +126,15 @@ test("a customer accepts the operator's quote after reading its conditions", asy
 
   await sendQuote(operator, reference);
   await page.reload();
-  await expect(main.getByText("Quote", { exact: true })).toBeVisible();
-  await expect(main.getByText(/Valid until/)).toBeVisible();
+  // The quote label also appears with the earlier estimate (D-211): scope
+  // it to the quotes section. The terms are drawn once on the page and the
+  // quote card links to them (D-213); they stay visible before accepting.
+  const quotes = main.getByRole("region", { name: "Quotes" });
+  await expect(quotes.getByText("Quote", { exact: true })).toBeVisible();
+  await expect(quotes.getByText(/Valid until/)).toBeVisible();
+  await expect(
+    quotes.getByRole("link", { name: "the trip's cancellation conditions" }),
+  ).toBeVisible();
   await expect(
     main.getByText(/72 hours or more before departure/).first(),
   ).toBeVisible();

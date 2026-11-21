@@ -141,7 +141,7 @@ test.describe("customer registration", () => {
 test.describe("customer account", () => {
   test("a customer updates their profile", async ({ page }) => {
     await register(page, uniqueEmail("customer"));
-    await page.goto("/account");
+    await page.goto("/account/profile");
     await expect(
       page.getByRole("heading", { level: 1, name: "Profile" }),
     ).toBeVisible();
@@ -237,7 +237,7 @@ test.describe("customer account", () => {
     context,
   }) => {
     await register(page, uniqueEmail("customer"));
-    await page.goto("/account");
+    await page.goto("/account/profile");
     await expect(page.getByRole("textbox", { name: "First name" })).toHaveValue(
       "Asha",
     );
