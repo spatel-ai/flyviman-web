@@ -62,6 +62,12 @@ export const queryKeys = {
   operatorRequestsAll: ["operator", "requests"] as const,
   operatorRequest: (reference: string) =>
     ["operator", "requests", "one", reference] as const,
+  /** Every operator booking key starts with ["operator", "bookings"]. */
+  operatorBookings: (filter: object) =>
+    ["operator", "bookings", "list", filter] as const,
+  operatorBookingsAll: ["operator", "bookings"] as const,
+  operatorBooking: (reference: string) =>
+    ["operator", "bookings", "one", reference] as const,
   operatorStaff: ["operator", "staff"] as const,
   operatorPricing: ["operator", "pricing"] as const,
   operatorRestrictions: ["operator", "restrictions"] as const,
