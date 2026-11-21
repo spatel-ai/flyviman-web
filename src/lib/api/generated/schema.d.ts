@@ -811,6 +811,26 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/operator/dashboard": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Counts for the operator dashboard
+     * @description Open booking requests, quotes sent and expiring, confirmed trips in the next 14 days, fleet and document status, and live empty legs. Staff get only the sections their capabilities open, counted over the aircraft in their reach; other sections are `null`. Counts only: no passenger or medical data.
+     */
+    get: operations["OperatorDashboardController_get"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/v1/operator/staff": {
     parameters: {
       query?: never;
@@ -3889,6 +3909,74 @@ export interface components {
       /** Format: date */
       expiresAt?: string | null;
     };
+    DashboardRequestsDto: {
+      /** @description Booking requests waiting in the inbox (`OPERATOR_PENDING`, `CLARIFICATION_REQUESTED`). */
+      open: number;
+    };
+    DashboardQuotesDto: {
+      /** @description Quotes sent and not yet answered or expired. */
+      sent: number;
+      /** @description Of those, valid for less than 48 hours more. */
+      expiringSoon: number;
+    };
+    /** @enum {string} */
+    BookingStatus:
+      | "REQUESTED"
+      | "OPERATOR_PENDING"
+      | "CLARIFICATION_REQUESTED"
+      | "PRICE_CONFIRMED"
+      | "AWAITING_PAYMENT"
+      | "CONFIRMED"
+      | "SCHEDULED"
+      | "COMPLETED"
+      | "OPERATOR_UNAVAILABLE"
+      | "QUOTE_DECLINED"
+      | "EXPIRED"
+      | "CANCELLED";
+    /** @enum {string} */
+    BookingPaymentStatus:
+      "UNPAID" | "PARTIALLY_PAID" | "PAID" | "REFUND_PENDING" | "REFUNDED";
+    DashboardTripDto: {
+      reference: string;
+      status: components["schemas"]["BookingStatus"];
+      paymentStatus: components["schemas"]["BookingPaymentStatus"];
+      originName: string;
+      destinationName: string;
+      /** @description ISO 8601 UTC. */
+      departureAt: string;
+    };
+    DashboardTripsDto: {
+      /** @description Confirmed trips departing in the next 14 days. */
+      upcomingCount: number;
+      /** @description The next five, soonest first. No passenger data. */
+      upcoming: components["schemas"]["DashboardTripDto"][];
+    };
+    DashboardFleetDto: {
+      approved: number;
+      pendingReview: number;
+      /** @description Draft, rejected or suspended listings. */
+      other: number;
+      /** @description Aircraft documents waiting for verification. */
+      documentsPending: number;
+      /** @description Aircraft documents (not rejected) expiring within 30 days. */
+      documentsExpiring: number;
+      /** @description Aircraft documents (not rejected) past expiry. */
+      documentsExpired: number;
+    };
+    DashboardEmptyLegsDto: {
+      /** @description Published and not yet expired. */
+      live: number;
+      /** @description Of those, expiring within 48 hours. */
+      expiringSoon: number;
+    };
+    OperatorDashboardResponseDto: {
+      status: components["schemas"]["OperatorStatus"];
+      requests: components["schemas"]["DashboardRequestsDto"] | null;
+      quotes: components["schemas"]["DashboardQuotesDto"] | null;
+      trips: components["schemas"]["DashboardTripsDto"] | null;
+      fleet: components["schemas"]["DashboardFleetDto"] | null;
+      emptyLegs: components["schemas"]["DashboardEmptyLegsDto"] | null;
+    };
     /** @enum {string} */
     StaffStatus: "INVITED" | "ACTIVE" | "SUSPENDED";
     /**
@@ -5805,23 +5893,6 @@ export interface components {
       /** @description A promotion code, already previewed with `POST /search/:searchId/results/:resultId/promo-code`; `expectedTotalMinor` is then the price with the code. Checked again, with the caps, as the booking is made: 422 `PROMO_CODE_INVALID`, `PROMO_CODE_EXPIRED`, `PROMO_CODE_NOT_APPLICABLE` (also for a result priced on request) or `PROMO_CODE_LIMIT_REACHED`, and nothing is booked. One use of the code per booking. */
       promoCode?: string;
     };
-    /** @enum {string} */
-    BookingStatus:
-      | "REQUESTED"
-      | "OPERATOR_PENDING"
-      | "CLARIFICATION_REQUESTED"
-      | "PRICE_CONFIRMED"
-      | "AWAITING_PAYMENT"
-      | "CONFIRMED"
-      | "SCHEDULED"
-      | "COMPLETED"
-      | "OPERATOR_UNAVAILABLE"
-      | "QUOTE_DECLINED"
-      | "EXPIRED"
-      | "CANCELLED";
-    /** @enum {string} */
-    BookingPaymentStatus:
-      "UNPAID" | "PARTIALLY_PAID" | "PAID" | "REFUND_PENDING" | "REFUNDED";
     BookingPriceDto: {
       priceType: components["schemas"]["PriceType"];
       /** @description Paise. */
@@ -8220,6 +8291,25 @@ export interface operations {
           [name: string]: unknown;
         };
         content?: never;
+      };
+    };
+  };
+  OperatorDashboardController_get: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["OperatorDashboardResponseDto"];
+        };
       };
     };
   };
