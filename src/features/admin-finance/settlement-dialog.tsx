@@ -113,7 +113,7 @@ function SettlementForm({
           }
         : { status: values.status, reason: values.reason };
     try {
-      await updateSettlement(
+      const updated = await updateSettlement(
         settlement.id,
         input,
         attempt.keyFor({ id: settlement.id, ...input }),
@@ -125,8 +125,12 @@ function SettlementForm({
             ? "Settlement marked paid"
             : values.status === "ON_HOLD"
               ? "Settlement on hold"
-              : "Hold released",
-        description: settlement.bookingReference,
+              : updated.status === "DUE"
+                ? "Hold released: now due"
+                : "Hold released: not due yet",
+        description: updated.notDueReason
+          ? `${settlement.bookingReference}. ${updated.notDueReason}`
+          : settlement.bookingReference,
         tone: "success",
       });
       void queryClient.invalidateQueries({

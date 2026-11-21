@@ -2,7 +2,11 @@ import { z } from "zod";
 import { REASON_MIN_LENGTH } from "@/components/ui/dialog";
 import { REASON_MAX_LENGTH } from "./refund-schema";
 
-/** What finance may do with a settlement in each status (the API's moves). */
+/**
+ * What finance may do with a settlement in each status (the API's moves).
+ * Releasing a hold sends `DUE`; the record then becomes what the rules give
+ * now, `DUE` or `NOT_DUE`.
+ */
 export const SETTLEMENT_ACTIONS: Record<
   string,
   { value: "DUE" | "PAID" | "ON_HOLD"; label: string }[]

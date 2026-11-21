@@ -29,7 +29,16 @@ const STATUS: Record<string, { label: string; tone: Tone }> = {
   PAID: { label: "Paid", tone: "success" },
 };
 
-const COLUMNS = ["Created", "Booking", "Payable to you", "Status", "Payout"];
+const COLUMNS = [
+  "Created",
+  "Booking",
+  "Kept by Flyviman",
+  "Commission",
+  "Tax",
+  "Payable to you",
+  "Status",
+  "Payout",
+];
 
 /** What Flyviman owes the organisation per completed booking, newest first. */
 export function OperatorSettlementsList() {
@@ -90,6 +99,21 @@ export function OperatorSettlementsList() {
                     <TableCell className="whitespace-nowrap">
                       {row.bookingReference}
                     </TableCell>
+                    {[row.keptMinor, row.commissionMinor, row.taxMinor].map(
+                      (amount, index) => (
+                        <TableCell
+                          key={COLUMNS[index + 2]}
+                          className="whitespace-nowrap"
+                        >
+                          <PriceLabel
+                            amountMinor={amount}
+                            currency={row.currency}
+                            priceType="CONFIRMED"
+                            variant="compact"
+                          />
+                        </TableCell>
+                      ),
+                    )}
                     <TableCell className="whitespace-nowrap">
                       <PriceLabel
                         amountMinor={row.payableMinor}

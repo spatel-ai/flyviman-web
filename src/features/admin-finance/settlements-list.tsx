@@ -83,6 +83,7 @@ export function SettlementsList() {
           "Created",
           "Booking",
           "Operator",
+          "Kept",
           "Payable",
           "Commission",
           "Tax",
@@ -101,6 +102,7 @@ export function SettlementsList() {
               <StatusBadge kind="booking" status={row.bookingStatus} />
             </span>,
             row.operatorName,
+            <Money key="kept" amount={row.keptMinor} currency={row.currency} />,
             <Money
               key="payable"
               amount={row.payableMinor}
@@ -112,9 +114,16 @@ export function SettlementsList() {
               currency={row.currency}
             />,
             <Money key="tax" amount={row.taxMinor} currency={row.currency} />,
-            <Badge key="status" tone={badge?.tone ?? "neutral"}>
-              {badge?.label ?? row.status}
-            </Badge>,
+            <span key="status" className="flex flex-col items-start gap-1">
+              <Badge tone={badge?.tone ?? "neutral"}>
+                {badge?.label ?? row.status}
+              </Badge>
+              {row.notDueReason ? (
+                <span className="max-w-xs whitespace-normal text-body-sm text-muted">
+                  {row.notDueReason}
+                </span>
+              ) : null}
+            </span>,
             row.paidAt ? (
               <span key="payout" className="flex flex-col">
                 {row.paymentReference}

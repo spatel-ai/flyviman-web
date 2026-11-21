@@ -2976,7 +2976,7 @@ export interface paths {
     };
     /**
      * Operator settlements, newest first
-     * @description One per completed booking with money kept, created by a job every 5 minutes: `payableMinor` = money kept − `commissionMinor` − `taxMinor`, from the price calculation of the price booked. `DUE` once the booking is `COMPLETED` and its price was paid in full, no refund is on its way and the figures add up to the money kept; otherwise `NOT_DUE`. Filter by `status`.
+     * @description One per completed booking with money kept, created by a job every 5 minutes: `payableMinor` = money kept − `commissionMinor` − `taxMinor`, from the price calculation of the price booked. `DUE` once the booking is `COMPLETED` and its price was paid in full, no refund is on its way and the figures add up to the money kept; otherwise `NOT_DUE`, with `notDueReason`. A refund after the trip comes out of the payable; one larger than the payable leaves it `NOT_DUE` (“Refund exceeds payable — finance to resolve.”). Filter by `status`.
      */
     get: operations["AdminSettlementsController_list"];
     put?: never;
@@ -3002,7 +3002,7 @@ export interface paths {
     head?: never;
     /**
      * Hold, release or mark a settlement paid
-     * @description `ON_HOLD` from `NOT_DUE` or `DUE`; `DUE` from `ON_HOLD`, only when the booking is due now (409 `SETTLEMENT_NOT_DUE`); `PAID` from `DUE` with the payout’s bank `paymentReference` and the `expectedPayableMinor` shown, only while still due (409 `SETTLEMENT_NOT_DUE`) and unchanged (409 `SETTLEMENT_CHANGED`, the current payable in `details`). A `PAID` record never changes again: marking it paid with the same reference returns it, another reference is 409 `SETTLEMENT_ALREADY_PAID`; any other move is 409 `SETTLEMENT_INVALID_TRANSITION`. Audited with the reason. A repeat with the same `Idempotency-Key` and body returns the first answer.
+     * @description `ON_HOLD` from `NOT_DUE` or `DUE`; `DUE` from `ON_HOLD` releases the hold: the record becomes what the rules give now (`DUE` or `NOT_DUE`, see `notDueReason`); `PAID` from `DUE` with the payout’s bank `paymentReference` and the `expectedPayableMinor` shown, only while still due (409 `SETTLEMENT_NOT_DUE`, the reason in `details`) and unchanged (409 `SETTLEMENT_CHANGED`, the current payable in `details`). A `PAID` record never changes again: marking it paid with the same reference returns it, another reference is 409 `SETTLEMENT_ALREADY_PAID`; any other move is 409 `SETTLEMENT_INVALID_TRANSITION`. Audited with the reason. A repeat with the same `Idempotency-Key` and body returns the first answer.
      */
     patch: operations["AdminSettlementsController_change"];
     trace?: never;
@@ -3036,7 +3036,7 @@ export interface paths {
     };
     /**
      * Own settlement records, newest first
-     * @description What Flyviman owes the caller’s organisation per completed booking, its status and, once paid, the bank reference of the payout.
+     * @description What Flyviman owes the caller’s organisation per completed booking: the money kept, the commission and tax deducted, the payable, its status and, once paid, the bank reference of the payout.
      */
     get: operations["OperatorSettlementsController_list"];
     put?: never;
@@ -6770,10 +6770,17 @@ export interface components {
       commissionMinor: number;
       /** @description Paise of tax collected on the price. */
       taxMinor: number;
+      /** @description Paise kept towards the booking now (credited less refunds). Payable + commission + tax equals it when the record is consistent. */
+      keptMinor: number;
       /** @example INR */
       currency: string;
       /** @description `NOT_DUE` (the trip is not flown or not paid in full, a refund is on its way or the money kept does not cover the figures), `DUE`, `ON_HOLD` (held by finance) or `PAID` (paid out by hand; never changes again). */
       status: components["schemas"]["SettlementStatus"];
+      /**
+       * @description For `NOT_DUE` and `ON_HOLD`: why it is not due by the rules now (the trip not completed, the price not paid in full, a refund on its way, a refund larger than the payable, more kept than the price); null when due, and for `DUE` and `PAID`.
+       * @example Refund exceeds payable — finance to resolve.
+       */
+      notDueReason: string | null;
       /** Format: date-time */
       paidAt: string | null;
       /** @description The bank transfer reference of the payout. */
@@ -6785,7 +6792,7 @@ export interface components {
     };
     UpdateSettlementDto: {
       /**
-       * @description `ON_HOLD` from `NOT_DUE` or `DUE`; `DUE` from `ON_HOLD` (releases a hold, only when the booking is due); `PAID` from `DUE`.
+       * @description `ON_HOLD` from `NOT_DUE` or `DUE`; `DUE` from `ON_HOLD` releases the hold (the record becomes what the rules give now: `DUE` or `NOT_DUE`); `PAID` from `DUE`.
        * @enum {string}
        */
       status: "DUE" | "PAID" | "ON_HOLD";
@@ -6870,6 +6877,12 @@ export interface components {
       id: string;
       /** @example FLY-BK-7K2M9Q */
       bookingReference: string;
+      /** @description Paise Flyviman kept from the customer for the booking now (paid less refunds). */
+      keptMinor: number;
+      /** @description Paise of Flyviman’s commission deducted. */
+      commissionMinor: number;
+      /** @description Paise of tax deducted (collected by Flyviman). */
+      taxMinor: number;
       /** @description Paise owed to the operator. */
       payableMinor: number;
       /** @example INR */
