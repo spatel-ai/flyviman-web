@@ -2883,6 +2883,66 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/bookings/{reference}/events": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * The booking’s timeline as the customer sees it, oldest first
+     * @description Status changes, quotes sent (with the quoted total as a `QUOTE`), payment status changes, the operator’s questions and the customer’s answers (the words are in `GET /bookings/:reference/messages`), change requests with their details and the answers with their notes. Never internal notes, the operator’s reasons, override reasons or who did it beyond `YOU`, `OPERATOR`, `FLYVIMAN` or `SYSTEM`. Another customer’s booking is 404.
+     */
+    get: operations["BookingSelfServiceController_events"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/bookings/{reference}/passengers": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    /**
+     * Replace the booking’s passengers with saved passengers
+     * @description Copies the saved passengers (`passengerIds`, the caller’s own, 404 otherwise) onto the booking as they are now, replacing those it had: at least one, at most the trip’s passenger count (400 `VALIDATION_ERROR`). Only from `REQUESTED` up to `CONFIRMED` and until 24 hours before the first departure: 409 `BOOKING_PASSENGERS_LOCKED` otherwise. Document numbers and assistance notes are stored encrypted; audited with passenger counts only. The booking’s operator, if any, is told (`booking.passengers_changed`, in-app and email, the count only). Answers the reference and the passenger count only (`GET /bookings/:reference` has the details). A repeat with the same `Idempotency-Key` and body returns the first answer. Another customer’s booking is 404.
+     */
+    put: operations["BookingSelfServiceController_replacePassengers"];
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/bookings/{reference}/revalidate": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Check the booking again before paying (rule 3)
+     * @description Whether the trip can still be flown as booked (the trip ahead, the operator and aircraft approved and in service, the held time free), with the same check the confirmation rule makes; `reason` when not (`CLOSED` for a booking completed, cancelled or otherwise ended). Answers the labelled price, `priceExpired` for an estimate past its validity, and `amountDue` (null when the trip is not available). A `CONFIRMED` price is never repriced. Nothing is written. Another customer’s booking is 404.
+     */
+    post: operations["BookingSelfServiceController_revalidate"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/v1/bookings/{reference}/payments": {
     parameters: {
       query?: never;
@@ -6805,6 +6865,74 @@ export interface components {
     CancelOperatorBookingDto: {
       /** @description Why you cannot fly it. Kept for you and Flyviman (stored encrypted); the customer is told the booking was cancelled. */
       reason: string;
+    };
+    /** @enum {string} */
+    CustomerEventKind:
+      | "STATUS_CHANGED"
+      | "QUOTE_SENT"
+      | "PAYMENT_UPDATED"
+      | "QUESTION_ASKED"
+      | "QUESTION_ANSWERED"
+      | "CHANGE_REQUESTED"
+      | "CHANGE_REQUEST_ANSWERED";
+    /** @enum {string} */
+    BookingEventActor: "YOU" | "OPERATOR" | "FLYVIMAN" | "SYSTEM";
+    CustomerBookingEventDto: {
+      /** Format: uuid */
+      id: string;
+      kind: components["schemas"]["CustomerEventKind"];
+      by: components["schemas"]["BookingEventActor"];
+      /** @description `STATUS_CHANGED` only; null for the request being made. */
+      fromStatus: components["schemas"]["BookingStatus"] | null;
+      /** @description `STATUS_CHANGED` only. */
+      toStatus: components["schemas"]["BookingStatus"] | null;
+      /** @description `QUOTE_SENT` only: the quoted total (`QUOTE`). */
+      price: components["schemas"]["BookingPriceDto"] | null;
+      /** @example FLY-QT-7K2M9Q */
+      quoteReference: string | null;
+      /** @description `PAYMENT_UPDATED` only: the payment status it moved to. */
+      paymentStatus: components["schemas"]["BookingPaymentStatus"] | null;
+      /**
+       * Format: uuid
+       * @description The change request, for `CHANGE_REQUEST*` entries.
+       */
+      changeRequestId: string | null;
+      /** @description `CHANGE_REQUEST_ANSWERED` only. */
+      decision: components["schemas"]["ChangeRequestStatus"] | null;
+      /** @description The note written for the customer with a change request’s answer. */
+      note: string | null;
+      /** Format: date-time */
+      createdAt: string;
+    };
+    ReplacePassengersDto: {
+      /** @description Saved passengers (`/me/passengers`): at least one and at most the trip’s passenger count. Their details are copied onto the booking as they are now. */
+      passengerIds: string[];
+    };
+    PassengersReplacedDto: {
+      /** @example FLY-BK-7K2M9Q */
+      reference: string;
+      passengerCount: number;
+    };
+    /** @enum {string} */
+    BookingUnavailableReason:
+      | "CLOSED"
+      | "DEPARTED"
+      | "OPERATOR_NOT_APPROVED"
+      | "AIRCRAFT_NOT_AVAILABLE"
+      | "TIME_TAKEN"
+      | "UNAVAILABLE";
+    BookingRevalidationDto: {
+      /** @description Whether the trip can still be flown as booked: the trip ahead, the operator and aircraft approved and in service, the held time free. */
+      available: boolean;
+      reason: components["schemas"]["BookingUnavailableReason"] | null;
+      /** @description The booking’s price, labelled. A `CONFIRMED` price is fixed once agreed and never repriced; null for a request priced on request. */
+      price: components["schemas"]["BookingPriceDto"] | null;
+      /** @description True for an `ESTIMATE` past its `validUntil`: the operator’s answer prices the trip again. Always false for a `CONFIRMED` price. */
+      priceExpired: boolean;
+      /** @description What the booking owes now, by the rule payment creation applies; null when nothing is due or the trip is not available. */
+      amountDue: components["schemas"]["BookingAmountDueDto"] | null;
+      /** Format: date-time */
+      checkedAt: string;
     };
     PaymentPriceDto: {
       /** @description Only a confirmed price is ever charged (rule 1). */
@@ -11854,6 +11982,76 @@ export interface operations {
         };
         content: {
           "application/json": components["schemas"]["OperatorBookingDetailDto"];
+        };
+      };
+    };
+  };
+  BookingSelfServiceController_events: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        reference: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["CustomerBookingEventDto"][];
+        };
+      };
+    };
+  };
+  BookingSelfServiceController_replacePassengers: {
+    parameters: {
+      query?: never;
+      header: {
+        /** @description A UUID, new for each change and reused on retry. */
+        "Idempotency-Key": string;
+      };
+      path: {
+        reference: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["ReplacePassengersDto"];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["PassengersReplacedDto"];
+        };
+      };
+    };
+  };
+  BookingSelfServiceController_revalidate: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        reference: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["BookingRevalidationDto"];
         };
       };
     };

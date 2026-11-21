@@ -70,6 +70,8 @@ const MESSAGES: Record<string, string> = {
     "This trip can no longer be cancelled. It may already be closed.",
   BOOKING_CANCELLATION_CHANGED:
     "The cancellation charge has changed. The new figures are shown: check them and confirm again.",
+  BOOKING_PASSENGERS_LOCKED:
+    "The passengers on this trip can no longer be changed. Ask for a change instead.",
   CHANGE_REQUEST_OPEN:
     "You already have a change request waiting for an answer.",
   CHANGE_REQUEST_NOT_ALLOWED:
