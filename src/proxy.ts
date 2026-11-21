@@ -6,6 +6,7 @@ import {
   visitorAddressHeaders,
 } from "@/lib/client-address";
 import { apiProxyTarget, serverApiUrl } from "@/lib/env";
+import { isPortalPage, portalCsp } from "@/lib/portal-csp";
 
 const ACCESS = "access_token";
 const REFRESH = "refresh_token";
@@ -108,6 +109,29 @@ async function proxyApi(request: NextRequest): Promise<NextResponse> {
 }
 
 /**
+ * Lets the request through to its page. A portal page also gets a fresh
+ * nonce-based Content-Security-Policy, on the request (Next.js reads the
+ * nonce from it and puts it on the scripts it renders) and on the response
+ * (lib/portal-csp.ts). `headers` are the request's, when changed here.
+ */
+async function next(
+  request: NextRequest,
+  headers?: Headers,
+): Promise<NextResponse> {
+  if (!isPortalPage(request.nextUrl.pathname)) {
+    return headers
+      ? NextResponse.next({ request: { headers } })
+      : NextResponse.next();
+  }
+  const csp = await portalCsp();
+  const requestHeaders = headers ?? new Headers(request.headers);
+  requestHeaders.set(csp.name, csp.value);
+  const response = NextResponse.next({ request: { headers: requestHeaders } });
+  response.headers.set(csp.name, csp.value);
+  return response;
+}
+
+/**
  * First line of route protection for the portals and the signed-in customer
  * pages. It is an optimistic check only: it looks for a session cookie and
  * never verifies it. A visitor with none is sent to sign-in before anything
@@ -132,7 +156,7 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
   const access = request.cookies.get(ACCESS)?.value;
   const refresh = request.cookies.get(REFRESH)?.value;
 
-  if (isFresh(access)) return NextResponse.next();
+  if (isFresh(access)) return next(request);
   if (!refresh) return toLogin(request);
 
   let rotated: Response;
@@ -148,13 +172,13 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
     });
   } catch {
     // The API is unreachable: let the page render and show its own error.
-    return NextResponse.next();
+    return next(request);
   }
   // The session is over (or this request lost a refresh race): sign in.
   if (rotated.status === 401) return toLogin(request);
   // Rate limited or failing: not a reason to treat the user as signed out.
   // Let the page render; its layout and the API decide.
-  if (!rotated.ok) return NextResponse.next();
+  if (!rotated.ok) return next(request);
 
   // Hand the new cookies to the browser, and to this request so the page
   // being rendered already sees the new session. Values are passed through
@@ -173,7 +197,7 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
     [...jar].map(([name, value]) => `${name}=${value}`).join("; "),
   );
 
-  const response = NextResponse.next({ request: { headers } });
+  const response = await next(request, headers);
   for (const cookie of setCookies) {
     response.headers.append("set-cookie", cookie);
   }
