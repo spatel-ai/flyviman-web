@@ -84,6 +84,7 @@ describe("options", () => {
       "Active",
       "Verification pending",
       "Suspended",
+      "Erased",
     ]);
   });
 });

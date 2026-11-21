@@ -29,6 +29,7 @@ import { ROLE_LABELS } from "@/lib/auth/roles";
 import { formatDateTime } from "@/lib/format/date";
 import { AddStaffDialog } from "./add-staff-dialog";
 import { ChangeRoleDialog } from "./change-role-dialog";
+import { canErase, eraseErrorMessage } from "./erase";
 import {
   isFiltered,
   PAGE_SIZE,
@@ -89,6 +90,7 @@ export function UsersList() {
   } | null>(null);
   const [problem, setProblem] = useState<string | null>(null);
   const [roleTarget, setRoleTarget] = useState<AdminUser | null>(null);
+  const [eraseTarget, setEraseTarget] = useState<AdminUser | null>(null);
 
   const { data, isPending, isError, error, refetch } = useQuery({
     queryKey: queryKeys.adminUsers(filter),
@@ -118,6 +120,24 @@ export function UsersList() {
     onError: (failure) => {
       setTarget(null);
       setProblem(statusErrorMessage(failure));
+      void queryClient.invalidateQueries({ queryKey: USER_QUERIES });
+    },
+  });
+
+  const erase = useMutation({
+    mutationFn: ({ user, reason }: { user: AdminUser; reason: string }) =>
+      apiFetch<Schemas["UserErasedResponseDto"]>(
+        `admin/users/${user.id}/erase`,
+        { method: "POST", body: { reason } },
+      ),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: USER_QUERIES });
+      setEraseTarget(null);
+      toast({ title: "Personal data erased", tone: "success" });
+    },
+    onError: (failure) => {
+      setEraseTarget(null);
+      setProblem(eraseErrorMessage(failure));
       void queryClient.invalidateQueries({ queryKey: USER_QUERIES });
     },
   });
@@ -290,6 +310,19 @@ export function UsersList() {
                                     Change role
                                   </Button>
                                 ) : null}
+                                {canErase(user, viewer) ? (
+                                  <Button
+                                    variant="secondary"
+                                    className="h-10"
+                                    aria-label={`Erase personal data of ${who}`}
+                                    onClick={() => {
+                                      setProblem(null);
+                                      setEraseTarget(user);
+                                    }}
+                                  >
+                                    Erase personal data
+                                  </Button>
+                                ) : null}
                               </div>
                             </TableCell>
                           ) : null}
@@ -314,6 +347,24 @@ export function UsersList() {
         <ChangeRoleDialog
           user={roleTarget}
           onClose={() => setRoleTarget(null)}
+        />
+      ) : null}
+
+      {eraseTarget ? (
+        <ConfirmDialog
+          open
+          onOpenChange={(next) => {
+            if (!next && !erase.isPending) setEraseTarget(null);
+          }}
+          title="Erase this customer's personal data?"
+          description={`${eraseTarget.email ?? eraseTarget.phone ?? "This customer"}: name, contact details, password, saved passengers, and the personal details on past bookings and air ambulance requests are erased now, and every sign-in ends. Booking references, amounts and payments are kept. This cannot be undone, and is refused while anything is still open. In the reason, say how the request arrived; never write the person's name or contact details, because the reason is kept in the audit log.`}
+          confirmLabel="Erase personal data"
+          destructive
+          requireReason
+          loading={erase.isPending}
+          onConfirm={(reason) =>
+            erase.mutate({ user: eraseTarget, reason: reason ?? "" })
+          }
         />
       ) : null}
 

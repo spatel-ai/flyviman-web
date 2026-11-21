@@ -25,6 +25,8 @@ const MESSAGES: Record<string, string> = {
   FORBIDDEN: "You do not have access to this.",
   USER_LAST_SUPER_ADMIN:
     "This is the last active super administrator. Give another account that role first.",
+  USER_ERASURE_BLOCKED:
+    "This account cannot be erased yet, because something on it is still open.",
   LOCATION_CODE_IN_USE: "Another location already has this code.",
   OPERATOR_NOT_APPROVED:
     "Your organisation must be approved by Flyviman before you can change this.",

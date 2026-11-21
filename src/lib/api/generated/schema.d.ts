@@ -3848,6 +3848,66 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/me/erasure/code": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Send a code to confirm erasing your account
+     * @description For accounts without a password (registered with a mobile number), or as an alternative to it. The code goes to the mobile number, or to the email address when there is none. Send the answer’s `verificationId` with the code to `POST /me/erasure`. The code works only there: `POST /auth/otp/verify` refuses it, and `POST /me/erasure` refuses a sign-in code.
+     */
+    post: operations["MeErasureController_sendCode"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/me/erasure": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Erase your account and personal data
+     * @description Irreversible. Confirmed with the current password, or with `verificationId` and `code` from `POST /me/erasure/code`. Your name, contact details, password, saved passengers, sign-ins, notifications and the personal details on past bookings and air ambulance requests (passengers, special requests, contacts, medical details and documents) are erased at once. Booking references, amounts, payments and settlements are kept for the legal and financial record, as are the records of the consents you gave (with the address they were given from) and the audit log (with the address of each action). Messages in a booking’s timeline stay, encrypted, because the timeline cannot be edited. Every sign-in ends; the email address or mobile number can be registered again. 409 `USER_ERASURE_BLOCKED` while something is still open, with one `details` entry per reason (`OPEN_BOOKINGS`, `PAYMENT_IN_PROGRESS`, `REFUND_IN_PROGRESS`, `REFUND_DUE`, `BALANCE_DUE`, `OPEN_AIR_AMBULANCE`, `RECENT_ACTIVITY`); 401 `AUTH_INVALID_CREDENTIALS` for a wrong password; 400 `AUTH_OTP_INVALID` or `AUTH_OTP_EXPIRED` for a wrong or used code.
+     */
+    post: operations["MeErasureController_erase"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/admin/users/{id}/erase": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Erase a customer's personal data
+     * @description For an erasure request received another way (email, letter). Customer accounts only. Irreversible; needs a reason and is audited as `user.erase` with counts only. The same data is erased and kept as for `POST /me/erasure`, and the same 409 `USER_ERASURE_BLOCKED` applies. 409 `USER_INVALID_TRANSITION` for an internal staff or operator account, or one already erased.
+     */
+    post: operations["AdminErasureController_erase"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -3921,7 +3981,7 @@ export interface components {
       | "FINANCE_ADMIN"
       | "SUPER_ADMIN";
     /** @enum {string} */
-    UserStatus: "PENDING_VERIFICATION" | "ACTIVE" | "SUSPENDED";
+    UserStatus: "PENDING_VERIFICATION" | "ACTIVE" | "SUSPENDED" | "ERASED";
     UserResponseDto: {
       /** Format: uuid */
       id: string;
@@ -8418,6 +8478,26 @@ export interface components {
       averageMinutesToConfirm: number | null;
       /** @description Completed per closed request (completed, declined or cancelled). A share from 0 to 1, rounded to 4 decimals; null when there is nothing to divide by. */
       fulfilmentRate: number | null;
+    };
+    EraseMyAccountDto: {
+      /** @description The current password. Send this, or verificationId and code. */
+      password?: string;
+      /** @description From `POST /me/erasure/code`. */
+      verificationId?: string;
+      /** @example 123456 */
+      code?: string;
+    };
+    EraseUserDto: {
+      /** @description Why the personal data is being erased, for example how the request arrived. Audited and kept: never include the person’s name or contact details. */
+      reason: string;
+    };
+    UserErasedResponseDto: {
+      /** Format: uuid */
+      id: string;
+      /** @enum {string} */
+      status: "ERASED";
+      /** Format: date-time */
+      erasedAt: string;
     };
     ResponseMetaDto: {
       requestId: string | null;
@@ -13629,6 +13709,71 @@ export interface operations {
         };
         content: {
           "text/csv": string;
+        };
+      };
+    };
+  };
+  MeErasureController_sendCode: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      202: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["VerificationSentResponseDto"];
+        };
+      };
+    };
+  };
+  MeErasureController_erase: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["EraseMyAccountDto"];
+      };
+    };
+    responses: {
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  AdminErasureController_erase: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["EraseUserDto"];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["UserErasedResponseDto"];
         };
       };
     };

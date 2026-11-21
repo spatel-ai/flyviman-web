@@ -53,7 +53,8 @@ export type AircraftListingStatus = OperatorStatus;
 export type AircraftAvailabilityStatus =
   "AVAILABLE" | "UNAVAILABLE" | "MAINTENANCE";
 
-export type UserStatus = "PENDING_VERIFICATION" | "ACTIVE" | "SUSPENDED";
+export type UserStatus =
+  "PENDING_VERIFICATION" | "ACTIVE" | "SUSPENDED" | "ERASED";
 
 /** An operator's staff member, as the team page shows them. */
 export type StaffStatus = "INVITED" | "ACTIVE" | "SUSPENDED";
@@ -122,6 +123,7 @@ const USER: Record<UserStatus, Presentation> = {
   PENDING_VERIFICATION: { label: "Verification pending", tone: "warning" },
   ACTIVE: { label: "Active", tone: "success" },
   SUSPENDED: { label: "Suspended", tone: "danger" },
+  ERASED: { label: "Erased", tone: "neutral" },
 };
 
 const STAFF: Record<StaffStatus, Presentation> = {
