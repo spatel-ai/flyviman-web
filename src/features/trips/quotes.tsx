@@ -1,6 +1,7 @@
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import Link from "next/link";
 import { useState } from "react";
 import { CancellationTerms } from "@/components/shared/cancellation-terms";
 import { FormAlert } from "@/components/shared/form-alert";
@@ -129,10 +130,18 @@ function QuoteCard({ quote, reference }: { quote: Quote; reference: string }) {
             : (CLOSED_WORDS[quote.status] ?? quote.status)}
         </p>
       )}
-      <CancellationTerms
-        summary={quote.conditions.summary}
-        charges={quote.conditions.charges}
-      />
+      {/* The quote carries the booking's own terms (D-172), drawn once on the
+          page in the terms section; the accept dialog repeats them (rule 9). */}
+      <p className="text-body-sm text-muted">
+        Cancellation:{" "}
+        <Link
+          href="#cancellation-terms"
+          className="text-accent hover:underline"
+        >
+          the trip&apos;s cancellation conditions
+        </Link>{" "}
+        apply.
+      </p>
       {quote.conditions.inclusions.length > 0 ? (
         <p className="text-body-sm text-muted">
           Included: {quote.conditions.inclusions.join(", ")}
