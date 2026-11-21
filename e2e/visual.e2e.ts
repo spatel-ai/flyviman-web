@@ -1,13 +1,22 @@
 import { expect, test, type Page } from "@playwright/test";
-import { signIn, type AccountName } from "./support/api";
+import {
+  API_URL,
+  PASSWORD,
+  latestCode,
+  signIn,
+  uniqueEmail,
+  type AccountName,
+} from "./support/api";
 
 /**
  * Visual baseline: a screenshot of each main page, compared on every run so
  * a change in layout is seen. An intended change updates the baseline in the
  * same commit: `npm run test:e2e -- visual --update-snapshots`.
  *
- * Only pages whose content is fixed by the seed are covered; lists that other
- * tests add to would differ from run to run. Baselines are specific to the
+ * Pages must not depend on what other tests add to the database. Public pages
+ * are static. The account overview opens as a customer created for the shot
+ * (no trips, so the same on any database). Dashboards show live figures: their
+ * tile values and the dated heading are masked. Baselines are specific to the
  * operating system that produced them.
  */
 
@@ -15,13 +24,50 @@ interface Shot {
   name: string;
   path: string;
   account?: AccountName;
+  /** Sign in as a customer registered for this shot, with nothing booked. */
+  freshCustomer?: boolean;
   /** Only the light baseline is kept. */
   lightOnly?: boolean;
+  /** Answers an API call with fixed figures, so live numbers never differ. */
+  stub?: { url: string; data: unknown };
   /** Visible once the page has its data. */
   ready: (page: Page) => ReturnType<Page["getByRole"]>;
   /** Extra wait for data that loads after the first paint. */
   loaded?: (page: Page) => Promise<void>;
 }
+
+const ADMIN_OVERVIEW = {
+  period: {
+    from: "2026-01-01",
+    to: "2026-01-30",
+    timeZone: "Asia/Kolkata",
+    startsAt: "2025-12-31T18:30:00.000Z",
+    endsBefore: "2026-01-30T18:30:00.000Z",
+  },
+  inPeriod: {
+    searches: 120,
+    bookingRequests: 18,
+    bookingsByStatus: [],
+    airAmbulanceRequests: 2,
+  },
+  now: {
+    openBookingRequests: 5,
+    operatorsPendingReview: 3,
+    airAmbulanceOpen: 1,
+  },
+  finance: {
+    paymentsTaken: {
+      count: 7,
+      amounts: [{ currency: "INR", amountMinor: 12500000 }],
+    },
+    refundsDue: {
+      count: 1,
+      amounts: [{ currency: "INR", amountMinor: 250000 }],
+    },
+    confirmedBookingValue: [{ currency: "INR", amountMinor: 10000000 }],
+    platformRevenue: [{ currency: "INR", amountMinor: 800000 }],
+  },
+};
 
 const SHOTS: Shot[] = [
   {
@@ -68,7 +114,7 @@ const SHOTS: Shot[] = [
   {
     name: "account",
     path: "/account",
-    account: "customer",
+    freshCustomer: true,
     ready: (page) => page.getByRole("heading", { level: 1 }),
   },
   {
@@ -92,9 +138,38 @@ const SHOTS: Shot[] = [
     name: "admin",
     path: "/admin",
     account: "superAdmin",
+    stub: { url: "**/admin/reports/overview*", data: ADMIN_OVERVIEW },
     ready: (page) => page.getByRole("heading", { level: 1 }),
   },
 ];
+
+/** Live figures: dashboard tile values and the dated period heading. */
+function masks(page: Page) {
+  return [
+    page.locator("[data-stat-value]"),
+    page.getByRole("heading", { level: 2, name: / to \d/ }),
+  ];
+}
+
+/** A newly registered, verified and signed-in customer with no bookings. */
+async function freshCustomer(page: Page) {
+  const email = uniqueEmail("visual");
+  const register = await page.request.post(`${API_URL}auth/register`, {
+    data: {
+      firstName: "Asha",
+      lastName: "Rao",
+      email,
+      password: PASSWORD,
+      acceptTerms: true,
+    },
+  });
+  expect(register.status()).toBe(202);
+  const { verificationId } = (await register.json()).data;
+  const verified = await page.request.post(`${API_URL}auth/email/verify`, {
+    data: { verificationId, code: await latestCode(page.request, email) },
+  });
+  expect(verified.status()).toBe(200);
+}
 
 for (const scheme of ["light", "dark"] as const) {
   test.describe(`visual baseline, ${scheme}`, () => {
@@ -106,7 +181,18 @@ for (const scheme of ["light", "dark"] as const) {
           localStorage.setItem("flyviman-theme", value);
         }, scheme);
         await page.emulateMedia({ reducedMotion: "reduce" });
-        if (shot.account) {
+        if (shot.stub) {
+          await page.route(shot.stub.url, (route) =>
+            route.fulfill({
+              json: { data: shot.stub!.data, meta: { requestId: null } },
+            }),
+          );
+        }
+        if (shot.freshCustomer) {
+          // Verifying the address signs the new customer in.
+          await freshCustomer(page);
+          await page.goto(shot.path);
+        } else if (shot.account) {
           await signIn(page, shot.account, shot.path);
           await page.waitForURL((url) => !url.pathname.startsWith("/login"));
         } else {
@@ -144,6 +230,7 @@ for (const scheme of ["light", "dark"] as const) {
           fullPage: true,
           animations: "disabled",
           maxDiffPixelRatio: 0.01,
+          mask: masks(page),
         });
       });
     }
