@@ -38,9 +38,11 @@ function Field({ label, value }: { label: string; value: string | null }) {
 function Restricted() {
   return (
     <p className="rounded-md bg-surface p-4 text-body-sm text-muted">
-      <span className="font-medium text-foreground">Restricted.</span> The
-      contents of pricing changes are visible to finance and super
-      administrators only.
+      <span className="font-medium text-foreground">
+        Hidden: finance record.
+      </span>{" "}
+      The contents of pricing, payment, refund and settlement changes are
+      visible to finance and super administrators only.
     </p>
   );
 }

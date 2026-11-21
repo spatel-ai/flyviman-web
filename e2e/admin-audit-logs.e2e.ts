@@ -70,7 +70,7 @@ test("finance reads a pricing change; operations sees it as restricted", async (
     const diff = sheet.getByTestId("audit-diff");
     await expect(diff.getByText("config.percent")).toBeVisible();
     await expect(diff.getByText("Added").first()).toBeVisible();
-    await expect(sheet.getByText("Restricted.")).toHaveCount(0);
+    await expect(sheet.getByText("Hidden: finance record.")).toHaveCount(0);
     await page.keyboard.press("Escape");
     await expect(sheet).toHaveCount(0);
 
@@ -93,7 +93,7 @@ test("finance reads a pricing change; operations sees it as restricted", async (
     await ops.goto(`/admin/audit-logs?entityId=${ruleId}`);
     await ops.getByRole("button", { name: /View pricing_rule.create/ }).click();
     const opsSheet = ops.getByRole("dialog", { name: "Audit record" });
-    await expect(opsSheet.getByText("Restricted.").first()).toBeVisible();
+    await expect(opsSheet.getByText("Hidden: finance record.").first()).toBeVisible();
     await expect(opsSheet.getByText("Audit viewer check")).toHaveCount(0);
     await expect(opsSheet.getByTestId("audit-diff")).toHaveCount(0);
     await ops.context().close();
