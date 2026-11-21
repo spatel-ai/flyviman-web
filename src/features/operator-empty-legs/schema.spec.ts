@@ -5,6 +5,7 @@ import {
   emptyLegSchema,
   fromOffer,
   toEmptyLegBody,
+  withoutCommitted,
   type EmptyLegValues,
 } from "./schema";
 
@@ -80,6 +81,18 @@ describe("toEmptyLegBody", () => {
     expect(fromOffer(offer, "Asia/Kolkata")).toEqual({
       ...GOOD,
       price: "200000",
+    });
+  });
+});
+
+describe("withoutCommitted", () => {
+  it("leaves out the terms a live request fixes", () => {
+    const body = withoutCommitted(toEmptyLegBody(GOOD, "Asia/Kolkata"));
+    expect(body).toEqual({
+      aircraftId: "a1",
+      originId: "o1",
+      destinationId: "d1",
+      validUntil: "2026-11-30T06:30:00.000Z",
     });
   });
 });

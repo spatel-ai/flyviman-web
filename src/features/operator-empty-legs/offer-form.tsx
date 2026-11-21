@@ -26,6 +26,7 @@ import {
   EMPTY_VALUES,
   emptyLegSchema,
   toEmptyLegBody,
+  withoutCommitted,
   type EmptyLegValues,
 } from "./schema";
 
@@ -44,7 +45,9 @@ const FIELDS = [
 /**
  * Creates an offer, or edits one that is still a draft or was sent back.
  * Times are the departure airport's local time. Only approved aircraft are
- * offered (business rule 4); the API checks again.
+ * offered (business rule 4); the API checks again. While a customer's
+ * request for the offer is live, its committed terms (price, seats, window,
+ * conditions) are read-only and left out of the request.
  */
 export function OfferForm({
   offer,
@@ -58,6 +61,15 @@ export function OfferForm({
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const [formError, setFormError] = useState<string | null>(null);
+  // What the customer asked for stays as they saw it until it is answered.
+  const committed = offer?.hasLiveRequest === true;
+  const fixed = committed
+    ? {
+        readOnly: true,
+        hint: "Fixed until you answer the customer's request.",
+        className: "read-only:text-muted",
+      }
+    : {};
   const {
     register,
     control,
@@ -85,7 +97,9 @@ export function OfferForm({
   const zone = origin.data?.data.timeZone;
 
   const save = useMutation({
-    mutationFn: (body: ReturnType<typeof toEmptyLegBody>) =>
+    mutationFn: (
+      body: ReturnType<typeof toEmptyLegBody | typeof withoutCommitted>,
+    ) =>
       offer
         ? apiFetch<OperatorEmptyLeg>(
             `operator/empty-legs/${encodeURIComponent(offer.id)}`,
@@ -141,7 +155,8 @@ export function OfferForm({
             });
             return;
           }
-          save.mutate(toEmptyLegBody(values, zone));
+          const body = toEmptyLegBody(values, zone);
+          save.mutate(committed ? withoutCommitted(body) : body);
         })(event)
       }
       className="flex max-w-reading flex-col gap-5"
@@ -209,24 +224,28 @@ export function OfferForm({
           label="Earliest departure, day"
           type="date"
           error={errors.fromDay?.message}
+          {...fixed}
           {...register("fromDay")}
         />
         <Input
           label="Earliest departure, time"
           type="time"
           error={errors.fromTime?.message}
+          {...fixed}
           {...register("fromTime")}
         />
         <Input
           label="Latest departure, day"
           type="date"
           error={errors.toDay?.message}
+          {...fixed}
           {...register("toDay")}
         />
         <Input
           label="Latest departure, time"
           type="time"
           error={errors.toTime?.message}
+          {...fixed}
           {...register("toTime")}
         />
       </div>
@@ -234,6 +253,7 @@ export function OfferForm({
         label="Seats available"
         inputMode="numeric"
         error={errors.seatsAvailable?.message}
+        {...fixed}
         {...register("seatsAvailable")}
       />
       <Input
@@ -241,6 +261,7 @@ export function OfferForm({
         hint="For the whole offer, in rupees."
         inputMode="decimal"
         error={errors.price?.message}
+        {...fixed}
         {...register("price")}
       />
       <div className="grid gap-4 sm:grid-cols-2">
@@ -261,6 +282,7 @@ export function OfferForm({
         label="Conditions"
         hint="Shown to customers before they ask about the flight: changes, cancellation, baggage."
         error={errors.conditions?.message}
+        {...fixed}
         {...register("conditions")}
       />
       <div>
