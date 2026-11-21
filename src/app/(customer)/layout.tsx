@@ -16,7 +16,13 @@ export default function CustomerLayout({
         Skip to content
       </a>
       <SiteHeader />
-      <main id="main-content" tabIndex={-1} className="flex-1 focus:outline-none">{children}</main>
+      <main
+        id="main-content"
+        tabIndex={-1}
+        className="flex-1 focus:outline-none"
+      >
+        {children}
+      </main>
       <SiteFooter />
       <SiteTabBar />
     </>

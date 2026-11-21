@@ -76,7 +76,9 @@ export function PaymentsList() {
       }
     } finally {
       setResolvePending(false);
-      void queryClient.invalidateQueries({ queryKey: queryKeys.adminPaymentsAll });
+      void queryClient.invalidateQueries({
+        queryKey: queryKeys.adminPaymentsAll,
+      });
     }
   }
   const { data, isPending, isError, error, refetch } = useQuery({

@@ -93,7 +93,9 @@ test("finance reads a pricing change; operations sees it as restricted", async (
     await ops.goto(`/admin/audit-logs?entityId=${ruleId}`);
     await ops.getByRole("button", { name: /View pricing_rule.create/ }).click();
     const opsSheet = ops.getByRole("dialog", { name: "Audit record" });
-    await expect(opsSheet.getByText("Hidden: finance record.").first()).toBeVisible();
+    await expect(
+      opsSheet.getByText("Hidden: finance record.").first(),
+    ).toBeVisible();
     await expect(opsSheet.getByText("Audit viewer check")).toHaveCount(0);
     await expect(opsSheet.getByTestId("audit-diff")).toHaveCount(0);
     await ops.context().close();
