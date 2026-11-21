@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { BellRing } from "lucide-react";
 import Link from "next/link";
 import { useNow } from "@/components/booking/use-now";
+import { CancellationTerms } from "@/components/shared/cancellation-terms";
 import { StickyActionBar } from "@/components/layout/sticky-action-bar";
 import { LoadError } from "@/components/shared/load-error";
 import { PriceLabel } from "@/components/shared/price-label";
@@ -29,9 +30,11 @@ import {
 import type { EmptyLegDetail as Detail } from "@/lib/empty-legs/types";
 
 /**
- * One empty-leg offer. Its conditions come before the request (business
- * rule 9). Until booking exists the request is an enquiry with the offer in
- * the message; nothing is booked or charged.
+ * One empty-leg offer. Its conditions and Flyviman's cancellation terms come
+ * before the request (business rule 9). "Request this empty leg" opens the
+ * request page (`/book/empty-leg/[id]`); nothing is booked or charged until
+ * the operator confirms. Once the departure window has begun the offer can
+ * only be asked about, as an enquiry.
  */
 export function EmptyLegDetail({ id }: { id: string }) {
   const now = useNow();
@@ -72,6 +75,20 @@ export function EmptyLegDetail({ id }: { id: string }) {
   // Only a published offer can be asked about; the API's status says so, and
   // validity passing while the page is open is caught here (rules 1 and 4).
   const open = item.status === "PUBLISHED" && !(now > 0 && isLapsed(item, now));
+  // The API refuses a request once the window has begun; an enquiry still works.
+  const requestable =
+    open && !(now > 0 && new Date(item.departureFrom).getTime() <= now);
+  const action = requestable
+    ? {
+        href: `/book/empty-leg/${encodeURIComponent(item.id)}`,
+        label: "Request this empty leg",
+        note: "This sends a request. Nothing is booked or charged. The operator confirms the flight and the price first.",
+      }
+    : {
+        href: enquiryHref(item),
+        label: "Ask about this flight",
+        note: "This sends an enquiry. Nothing is booked or charged. The operator confirms seats and the price first.",
+      };
 
   return (
     <div className="flex flex-col gap-8">
@@ -119,11 +136,13 @@ export function EmptyLegDetail({ id }: { id: string }) {
             </p>
             <p className="text-body-sm text-muted">
               Flights depend on the operator&apos;s plans and can change or be
-              withdrawn before a booking is confirmed. Cancellation and refund
-              terms are confirmed in writing by the operator before you commit
-              to anything.
+              withdrawn before a booking is confirmed.
             </p>
           </section>
+          <CancellationTerms
+            summary={item.cancellationTerms.summary}
+            charges={item.cancellationTerms.tiers}
+          />
         </div>
 
         <aside
@@ -133,18 +152,15 @@ export function EmptyLegDetail({ id }: { id: string }) {
           {open ? (
             <>
               <Link
-                href={enquiryHref(item)}
+                href={action.href}
                 className={buttonClasses({
                   size: "lg",
                   className: "max-md:hidden",
                 })}
               >
-                Ask about this flight
+                {action.label}
               </Link>
-              <p className="text-caption text-muted">
-                This sends an enquiry. Nothing is booked or charged. The
-                operator confirms seats and the price first.
-              </p>
+              <p className="text-caption text-muted">{action.note}</p>
             </>
           ) : null}
           <InterestToggle offer={item} />
@@ -152,7 +168,7 @@ export function EmptyLegDetail({ id }: { id: string }) {
       </div>
 
       {open ? (
-        <StickyActionBar label="Ask about this flight">
+        <StickyActionBar label={action.label}>
           <div className="flex items-center justify-between gap-3">
             <PriceLabel
               amountMinor={item.price.amountMinor}
@@ -161,8 +177,8 @@ export function EmptyLegDetail({ id }: { id: string }) {
               validUntil={item.validUntil}
               variant="compact"
             />
-            <Link href={enquiryHref(item)} className={buttonClasses({})}>
-              Ask about this flight
+            <Link href={action.href} className={buttonClasses({})}>
+              {action.label}
             </Link>
           </div>
           <p className="mt-2 line-clamp-2 text-caption text-muted">

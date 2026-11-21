@@ -16,6 +16,8 @@ export const queryKeys = {
     ["payments", reference, "receipt"] as const,
   bookingPayments: (reference: string) =>
     ["bookings", reference, "payments"] as const,
+  bookingDocuments: (reference: string) =>
+    ["bookings", reference, "documents"] as const,
   cancellationQuote: (reference: string) =>
     ["bookings", reference, "cancellation-quote"] as const,
   passengers: ["me", "passengers"] as const,

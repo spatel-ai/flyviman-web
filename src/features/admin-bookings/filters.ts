@@ -12,6 +12,8 @@ export interface BookingFilter {
   /** A day, "2026-11-20", or "". */
   from: string;
   to: string;
+  /** Only bookings operations have escalated. */
+  escalated: boolean;
   page: number;
 }
 
@@ -25,6 +27,7 @@ export const DEFAULT_FILTER: BookingFilter = {
   category: "ALL",
   from: "",
   to: "",
+  escalated: false,
   page: 1,
 };
 
@@ -103,6 +106,10 @@ export const PAYMENT_OPTIONS = [
     label: PAYMENT_LABELS[value],
   })),
 ];
+export const ESCALATION_OPTIONS = [
+  { value: "ALL", label: "Any" },
+  { value: "ESCALATED", label: "Escalated only" },
+];
 export const CATEGORY_OPTIONS = [
   { value: "ALL", label: "Any category" },
   ...CATEGORIES.map((value) => ({ value, label: CATEGORY_LABELS[value] })),
@@ -133,6 +140,7 @@ export function parseBookingFilter(params: {
     category: CATEGORIES.find((known) => known === category) ?? "ALL",
     from: parseDay(params.get("from")),
     to: parseDay(params.get("to")),
+    escalated: params.get("escalated") === "1",
     page: parsePage(params.get("page")),
   };
 }
@@ -147,6 +155,7 @@ export function serialiseBookingFilter(filter: BookingFilter): string {
   if (filter.category !== "ALL") params.set("category", filter.category);
   if (filter.from) params.set("from", filter.from);
   if (filter.to) params.set("to", filter.to);
+  if (filter.escalated) params.set("escalated", "1");
   if (filter.page > 1) params.set("page", String(filter.page));
   return params.toString();
 }
@@ -170,6 +179,7 @@ export function bookingListQuery(
     category: filter.category === "ALL" ? undefined : filter.category,
     from: filter.from ? startOfDay(filter.from) : undefined,
     to: filter.to ? startOfDay(filter.to, 1) : undefined,
+    escalated: filter.escalated ? "true" : undefined,
     page: filter.page,
     pageSize: PAGE_SIZE,
   };
@@ -182,6 +192,7 @@ export function isFiltered(filter: BookingFilter): boolean {
     filter.paymentStatus !== "ALL" ||
     filter.category !== "ALL" ||
     filter.from !== "" ||
-    filter.to !== ""
+    filter.to !== "" ||
+    filter.escalated
   );
 }
