@@ -119,7 +119,7 @@ const MESSAGES: Record<string, string> = {
   SETTLEMENT_ALREADY_PAID:
     "This settlement was already marked paid with another reference. The list has been refreshed.",
   SETTLEMENT_REFERENCE_USED:
-    "This bank transfer reference is already recorded on another settlement. Check the reference and enter the one for this payout.",
+    "This bank transfer reference is already recorded on another operator’s settlement. Check the reference and enter the one for this payout.",
   SETTLEMENT_INVALID_TRANSITION:
     "This settlement has changed and can no longer move that way. The list has been refreshed.",
   BOOKING_PAYMENT_IN_PROGRESS:
