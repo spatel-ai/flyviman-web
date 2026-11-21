@@ -5918,6 +5918,7 @@ export interface components {
       priceType: components["schemas"]["PriceType"];
       /** Format: date-time */
       validUntil: string;
+      /** @description Warnings the caller may see: commission and revenue warnings count for finance and super administrators only. */
       warningCount: number;
       /** Format: date-time */
       createdAt: string;
@@ -5962,6 +5963,7 @@ export interface components {
       priceType: components["schemas"]["PriceType"];
       /** Format: date-time */
       validUntil: string;
+      /** @description Warnings the caller may see: commission and revenue warnings count for finance and super administrators only. */
       warningCount: number;
       /** Format: date-time */
       createdAt: string;
@@ -5978,6 +5980,7 @@ export interface components {
       appliedRules: components["schemas"]["AppliedRuleDto"][];
       assumptions: string[];
       exclusions: string[];
+      /** @description Commission and revenue warnings are for finance and super administrators only; operations see the others. */
       warnings: string[];
       /** Format: date-time */
       availabilityCheckedAt: string;
