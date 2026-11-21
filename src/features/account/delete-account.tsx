@@ -63,6 +63,9 @@ function DeleteAccountSection({ me }: { me: Me }) {
   const [problem, setProblem] = useState<string | null>(null);
   const [blockers, setBlockers] = useState<string[]>([]);
   const [fieldError, setFieldError] = useState<string | null>(null);
+  // Changed once the account is gone, so the confirmation form is mounted
+  // again, empty: the password is not kept in this page's memory.
+  const [formKey, setFormKey] = useState(0);
   // Accounts registered with an email address have a password; those
   // registered with a mobile number confirm with a code instead.
   const withPassword = Boolean(me.email);
@@ -106,6 +109,8 @@ function DeleteAccountSection({ me }: { me: Me }) {
       }
       return;
     }
+    setPending(null);
+    setFormKey((key) => key + 1);
     // The account and every sign-in are gone; clear this browser's cookies.
     await apiFetch<null>("auth/logout", { method: "POST" }).catch(
       () => undefined,
@@ -169,9 +174,13 @@ function DeleteAccountSection({ me }: { me: Me }) {
       <FormAlert message={problem} />
 
       {withPassword ? (
-        <PasswordConfirm onReady={ready} serverError={fieldError} />
+        <PasswordConfirm
+          key={formKey}
+          onReady={ready}
+          serverError={fieldError}
+        />
       ) : (
-        <CodeConfirm onReady={ready} serverError={fieldError} />
+        <CodeConfirm key={formKey} onReady={ready} serverError={fieldError} />
       )}
 
       {pending ? (
