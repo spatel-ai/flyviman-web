@@ -2,6 +2,10 @@ import type { Metadata } from "next";
 import dynamic from "next/dynamic";
 import { Suspense } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { AdministratorOnly } from "@/features/operator-staff/administrator-only";
+import type { Schemas } from "@/lib/api/types";
+import { serverGet } from "@/lib/auth/server-api";
+import { can } from "@/lib/operator-access";
 
 export const metadata: Metadata = { title: "Availability" };
 
@@ -14,7 +18,14 @@ const FleetTimeline = dynamic(
   { loading: () => <Skeleton className="mt-6 h-96" /> },
 );
 
-export default function OperatorAvailabilityPage() {
+export default async function OperatorAvailabilityPage() {
+  const { data: operator } =
+    await serverGet<Schemas["OperatorMeResponseDto"]>("operator/me");
+  // The timeline needs "manage availability", as the API does; staff see
+  // only the aircraft assigned to them.
+  if (!can(operator.access, "MANAGE_AVAILABILITY")) {
+    return <AdministratorOnly title="Availability" />;
+  }
   return (
     <>
       <h1 className="text-h2">Availability</h1>
