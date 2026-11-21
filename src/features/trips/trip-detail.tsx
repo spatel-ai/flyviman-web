@@ -233,6 +233,7 @@ function Loaded({ booking }: { booking: Booking }) {
               <PassengersDialog
                 reference={booking.reference}
                 limit={itinerary.passengerCount}
+                current={booking.passengers}
                 open={editingPassengers}
                 onOpenChange={setEditingPassengers}
               />

@@ -25,9 +25,11 @@ import { applyApiError } from "@/lib/api/messages";
 import { queryKeys } from "@/lib/api/query-keys";
 import type { Schemas } from "@/lib/api/types";
 import { useAttemptKey } from "@/lib/idempotency";
+import { matchSavedPassengers } from "./passenger-match";
 import { passengersSchema, type PassengersValues } from "./schema";
 
 type Passenger = Schemas["PassengerResponseDto"];
+type OnBooking = Schemas["BookingPassengerDto"];
 
 /**
  * Statuses in which the API takes a new passenger list (requested up to
@@ -51,11 +53,14 @@ export function canEditPassengers(status: string): boolean {
 export function PassengersDialog({
   reference,
   limit,
+  current,
   open,
   onOpenChange,
 }: {
   reference: string;
   limit: number;
+  /** The passengers on the booking now, ticked when they can be matched. */
+  current: readonly OnBooking[];
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
@@ -68,6 +73,7 @@ export function PassengersDialog({
         <PassengersBody
           reference={reference}
           limit={limit}
+          current={current}
           onClose={() => onOpenChange(false)}
         />
       </DialogContent>
@@ -79,10 +85,12 @@ export function PassengersDialog({
 function PassengersBody({
   reference,
   limit,
+  current,
   onClose,
 }: {
   reference: string;
   limit: number;
+  current: readonly OnBooking[];
   onClose: () => void;
 }) {
   const people = useQuery({
@@ -123,6 +131,7 @@ function PassengersBody({
     <PassengersForm
       reference={reference}
       limit={limit}
+      current={current}
       people={people.data}
       onClose={onClose}
     />
@@ -132,11 +141,13 @@ function PassengersBody({
 function PassengersForm({
   reference,
   limit,
+  current,
   people,
   onClose,
 }: {
   reference: string;
   limit: number;
+  current: readonly OnBooking[];
   people: Passenger[];
   onClose: () => void;
 }) {
@@ -144,6 +155,7 @@ function PassengersForm({
   const { toast } = useToast();
   const attempt = useAttemptKey();
   const [error, setError] = useState<string | null>(null);
+  const matched = matchSavedPassengers(current, people);
   const {
     control,
     handleSubmit,
@@ -151,7 +163,7 @@ function PassengersForm({
     formState: { errors },
   } = useForm<PassengersValues>({
     resolver: zodResolver(passengersSchema(limit)),
-    defaultValues: { passengerIds: [] },
+    defaultValues: { passengerIds: matched.ids.slice(0, limit) },
   });
 
   const save = useMutation({
@@ -195,6 +207,13 @@ function PassengersForm({
       }}
     >
       <FormAlert message={error} />
+      {matched.unmatched > 0 ? (
+        <p className="text-body-sm text-muted">
+          {matched.ids.length === 0
+            ? "The passengers on this trip could not be matched to your saved passengers, so none are ticked. Choose everyone who is flying."
+            : `${matched.unmatched} of the passengers on this trip could not be matched to your saved passengers. Tick them if they are flying.`}
+        </p>
+      ) : null}
       <fieldset className="flex flex-col gap-3">
         <legend className="text-body-sm text-muted">
           Choose the lead passenger and up to {limit - 1} more.
