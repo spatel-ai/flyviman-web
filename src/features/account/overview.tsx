@@ -106,7 +106,7 @@ export function AccountOverview() {
     );
   }
 
-  const now = Date.now();
+  const now = trips.dataUpdatedAt;
   const inProgress = trips.data;
   const awaitingPayment = inProgress.filter(
     (trip) => trip.status === "AWAITING_PAYMENT",
