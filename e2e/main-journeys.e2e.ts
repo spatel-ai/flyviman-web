@@ -271,8 +271,7 @@ test("charter, from the customer's request to the refund: one booking in every r
   const finance = await asStaff(browser, "finance");
   await test.step("finance: sees the refund under Due and issues it with a reason", async () => {
     await finance.page.goto("/admin/refunds");
-    const row = finance.page.getByRole("row", { name: new RegExp(reference) });
-    await expect(row.first()).toBeVisible();
+    await findDueRefund(finance.page, reference);
     await finance.page
       .getByRole("button", { name: `Refund ${reference}` })
       .click();
@@ -301,6 +300,23 @@ test("charter, from the customer's request to the refund: one booking in every r
   await operator.close();
   await page.close();
 });
+
+// Due is oldest first and paged, so on a shared database the row can sit on a
+// later page: walk forward (bounded) until it shows.
+async function findDueRefund(page: Page, reference: string) {
+  const pager = page
+    .getByRole("main")
+    .getByRole("navigation", { name: "Pagination" });
+  const refund = page.getByRole("button", { name: `Refund ${reference}` });
+  await expect(pager).toBeVisible();
+  for (let i = 0; i < 50 && !(await refund.isVisible()); i++) {
+    const next = pager.getByRole("button", { name: "Next" });
+    await expect(next).toBeEnabled();
+    await next.click();
+    await expect(pager).toBeVisible();
+  }
+  await expect(refund).toBeVisible();
+}
 
 async function locationId(page: Page, code: string) {
   const response = await page.request.get(`${API_URL}locations`, {
