@@ -10,7 +10,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { isNotFoundError } from "@/lib/api/errors";
 import { getReceipt } from "@/lib/api/payments";
 import { queryKeys } from "@/lib/api/query-keys";
-import { categoryLabel } from "@/lib/format/aircraft";
+import { serviceLabel } from "@/lib/format/labels";
 import { formatDateTime } from "@/lib/format/date";
 
 const PURPOSE: Record<string, string> = {
@@ -65,7 +65,7 @@ export function Receipt({
     ["Receipt number", r.receiptNumber],
     ["Issued", formatDateTime(r.issuedAt)],
     ["Booking", r.bookingReference],
-    ["Service", categoryLabel(r.category)],
+    ["Service", serviceLabel(r.category)],
     ["Payment", PURPOSE[r.purpose] ?? r.purpose],
     ["Method", r.method.label],
     ["Paid", r.paidAt ? formatDateTime(r.paidAt) : "—"],

@@ -28,6 +28,7 @@ import {
 } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/toast";
+import { channelLabel } from "@/lib/format/labels";
 import { apiFetch } from "@/lib/api/client";
 import { ApiError } from "@/lib/api/errors";
 import { applyApiError, messageFor } from "@/lib/api/messages";
@@ -79,7 +80,7 @@ export function TemplatesTab({ canEdit }: { canEdit: boolean }) {
                 <TableCell className="whitespace-nowrap">
                   {template.key}
                 </TableCell>
-                <TableCell>{template.channel}</TableCell>
+                <TableCell>{channelLabel(template.channel)}</TableCell>
                 <TableCell>
                   {template.stored ? (
                     <Badge tone="info">Edited</Badge>
@@ -93,7 +94,7 @@ export function TemplatesTab({ canEdit }: { canEdit: boolean }) {
                     <Button
                       variant="secondary"
                       className="h-9"
-                      aria-label={`Edit ${template.key} ${template.channel}`}
+                      aria-label={`Edit ${template.key} ${channelLabel(template.channel)}`}
                       onClick={() => setEditing(template)}
                     >
                       Edit
@@ -113,7 +114,9 @@ export function TemplatesTab({ canEdit }: { canEdit: boolean }) {
         <DialogContent
           title="Edit template"
           description={
-            editing ? `${editing.key} over ${editing.channel}` : undefined
+            editing
+              ? `${editing.key} over ${channelLabel(editing.channel)}`
+              : undefined
           }
           className="max-h-[90vh] overflow-y-auto sm:max-w-lg"
         >
@@ -270,7 +273,7 @@ function TemplateForm({
         open={pending !== null}
         onOpenChange={(open) => !open && !save.isPending && setPending(null)}
         title="Publish this wording?"
-        description={`Messages sent over ${template.channel} for ${template.key} use this wording from now on.`}
+        description={`Messages sent over ${channelLabel(template.channel)} for ${template.key} use this wording from now on.`}
         confirmLabel="Publish"
         loading={save.isPending}
         onConfirm={() => pending && save.mutate(pending)}
