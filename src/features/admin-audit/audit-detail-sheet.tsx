@@ -1,5 +1,6 @@
 "use client";
 
+import { roleLabel } from "@/lib/format/labels";
 import { Badge } from "@/components/ui/badge";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import type { Schemas } from "@/lib/api/types";
@@ -71,7 +72,10 @@ export function AuditDetailSheet({
         >
           <dl className="grid grid-cols-2 gap-4">
             <Field label="When" value={formatDateTime(log.createdAt)} />
-            <Field label="Actor role" value={log.actorRole ?? "System"} />
+            <Field
+              label="Actor role"
+              value={log.actorRole ? roleLabel(log.actorRole) : "System"}
+            />
             <Field label="Actor ID" value={log.actorId} />
             <Field label="Entity" value={log.entityType} />
             <Field label="Entity ID" value={log.entityId} />

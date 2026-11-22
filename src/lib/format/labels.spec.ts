@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { channelLabel, serviceLabel } from "./labels";
+import { channelLabel, roleLabel, serviceLabel } from "./labels";
 
 describe("serviceLabel", () => {
   it("names services and reads an unknown one as words", () => {
@@ -14,5 +14,14 @@ describe("channelLabel", () => {
     expect(channelLabel("EMAIL")).toBe("Email");
     expect(channelLabel("SMS")).toBe("SMS");
     expect(channelLabel("WHATSAPP_BUSINESS")).toBe("Whatsapp business");
+  });
+});
+
+describe("roleLabel", () => {
+  it("names roles and reads an unknown one as words", () => {
+    expect(roleLabel("OPERATOR_ADMIN")).toBe("Operator administrator");
+    expect(roleLabel("SUPER_ADMIN")).toBe("Super administrator");
+    expect(roleLabel("OPS")).toBe("Operations");
+    expect(roleLabel("NEW_ROLE")).toBe("New role");
   });
 });

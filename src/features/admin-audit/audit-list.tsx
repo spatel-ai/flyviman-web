@@ -1,5 +1,6 @@
 "use client";
 
+import { roleLabel } from "@/lib/format/labels";
 import { useQuery } from "@tanstack/react-query";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, type FormEvent } from "react";
@@ -186,7 +187,7 @@ export function AuditList() {
                         </TableCell>
                         <TableCell className="whitespace-nowrap">
                           {row.actorRole ? (
-                            <Badge>{row.actorRole}</Badge>
+                            <Badge>{roleLabel(row.actorRole)}</Badge>
                           ) : (
                             <span className="text-muted">System</span>
                           )}

@@ -1,4 +1,5 @@
 import type { Schemas } from "@/lib/api/types";
+import { ROLE_LABELS } from "@/lib/auth/roles";
 
 const SERVICES: Record<Schemas["ServiceCategory"], string> = {
   SCHEDULED_AIRLINE: "Scheduled airline",
@@ -29,4 +30,11 @@ const CHANNELS: Record<string, string> = { EMAIL: "Email", SMS: "SMS" };
 /** Name of a notification channel; a new value reads as words. */
 export function channelLabel(channel: string): string {
   return Object.hasOwn(CHANNELS, channel) ? CHANNELS[channel] : words(channel);
+}
+
+/** Name of a user role, as on the admin Users screen; a new value reads as words. */
+export function roleLabel(role: string): string {
+  return Object.hasOwn(ROLE_LABELS, role)
+    ? ROLE_LABELS[role as keyof typeof ROLE_LABELS]
+    : words(role);
 }

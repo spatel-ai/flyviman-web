@@ -1,5 +1,6 @@
 "use client";
 
+import { roleLabel } from "@/lib/format/labels";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { useState } from "react";
@@ -425,7 +426,7 @@ export function AdminRequestDetail({
               <span className="font-medium">{eventLabel(event)}</span>
               <span className="text-muted">
                 {formatDateTime(event.at)}
-                {event.actorRole ? `, ${event.actorRole}` : ""}
+                {event.actorRole ? `, ${roleLabel(event.actorRole)}` : ""}
               </span>
               {event.payload &&
               typeof event.payload.revisionReason === "string" ? (

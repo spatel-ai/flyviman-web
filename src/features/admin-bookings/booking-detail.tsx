@@ -1,5 +1,6 @@
 "use client";
 
+import { roleLabel } from "@/lib/format/labels";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { useState } from "react";
@@ -342,7 +343,7 @@ function Loaded({
               </p>
               <p className="text-caption text-muted">
                 {formatDateTime(event.createdAt)}
-                {event.actorRole ? ` · ${event.actorRole}` : ""}
+                {event.actorRole ? ` · ${roleLabel(event.actorRole)}` : ""}
               </p>
               {event.overrideReason ? (
                 <p className="mt-1">Reason: {event.overrideReason}</p>
