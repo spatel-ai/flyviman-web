@@ -684,11 +684,17 @@ body {
  * overline and lead give way, so Search stays above the tab bar.
  */
 @media (max-width: 639.98px) {
+  /* Tall enough for the text, so a long lead never runs under the card
+     (W1-031); the text block sets the height from its own content. */
   .search-hero {
-    height: 15rem;
+    height: auto;
+    min-height: 15rem;
   }
 
   .search-hero-text {
+    height: auto;
+    min-height: 15rem;
+    padding-top: 1.5rem;
     padding-bottom: 3.5rem;
   }
 
@@ -699,10 +705,11 @@ body {
 
 @media (max-width: 639.98px) and (max-height: 700px) {
   .search-hero {
-    height: 12rem;
+    min-height: 12rem;
   }
 
   .search-hero-text {
+    min-height: 12rem;
     padding-bottom: 2.5rem;
   }
 
