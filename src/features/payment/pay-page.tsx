@@ -367,7 +367,10 @@ function Due({
             The full price of the trip is paid now.
           </p>
         )}
-        <PayDeadline holdExpiresAt={booking.holdExpiresAt} />
+        <PayDeadline
+          holdExpiresAt={booking.holdExpiresAt}
+          status={booking.status}
+        />
       </Card>
 
       <CancellationTerms

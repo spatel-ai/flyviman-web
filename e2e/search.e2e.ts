@@ -378,6 +378,19 @@ test("the Empty legs tab leads to the empty-leg offers", async ({ page }) => {
   ).toHaveAttribute("href", "/empty-legs");
 });
 
+test("choosing the Scheduled tab changes the page headline", async ({
+  page,
+}) => {
+  await page.goto("/search");
+  await expect(page.locator("#search-hero")).not.toHaveText(
+    "Compare airline flights",
+  );
+  await page.getByRole("tab", { name: /Scheduled/ }).click();
+  await expect(page.locator("#search-hero")).toHaveText(
+    "Compare airline flights",
+  );
+});
+
 test("air ambulance is a request, never a search, with the emergency notice", async ({
   page,
 }) => {

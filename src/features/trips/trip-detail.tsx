@@ -126,7 +126,10 @@ function Loaded({ booking }: { booking: Booking }) {
               This trip takes a deposit now and the balance later.
             </p>
           ) : null}
-          <PayDeadline holdExpiresAt={booking.holdExpiresAt} />
+          <PayDeadline
+            holdExpiresAt={booking.holdExpiresAt}
+            status={booking.status}
+          />
           {/* A full page load: only the payment page's policy allows the
               payment provider (lib/csp.ts). */}
           <a
