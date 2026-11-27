@@ -3,10 +3,15 @@ import { Suspense } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TripConfirmation } from "@/features/trips/confirmation";
 
-export const metadata: Metadata = {
-  title: "Booking confirmation",
-  robots: { index: false },
-};
+export async function generateMetadata({
+  params,
+}: PageProps<"/account/trips/[reference]/itinerary">): Promise<Metadata> {
+  const { reference } = await params;
+  return {
+    title: `Booking confirmation ${reference}`,
+    robots: { index: false },
+  };
+}
 
 async function Content({
   params,

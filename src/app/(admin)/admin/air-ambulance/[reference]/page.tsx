@@ -6,7 +6,14 @@ import { AdminRequestDetail } from "@/features/admin-air-ambulance/request-detai
 import { isAirAmbulanceReference } from "@/lib/air-ambulance/labels";
 import { getSession } from "@/lib/auth/session";
 
-export const metadata: Metadata = { title: "Air ambulance request" };
+export async function generateMetadata({
+  params,
+}: PageProps<"/admin/air-ambulance/[reference]">): Promise<Metadata> {
+  const { reference } = await params;
+  return {
+    title: `Air ambulance request ${reference}`,
+  };
+}
 
 async function DetailForViewer({ reference }: { reference: string }) {
   const session = await getSession();

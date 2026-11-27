@@ -11,7 +11,12 @@ import { serverGet } from "@/lib/auth/server-api";
 import { requireRole } from "@/lib/auth/session";
 import { operatorNav } from "@/lib/operator-access";
 
-export const metadata: Metadata = { title: "Operator portal" };
+export const metadata: Metadata = {
+  title: {
+    default: "Operator",
+    template: "%s · Operator · Flyviman",
+  },
+};
 
 const OPERATOR: Role[] = ["OPERATOR_ADMIN", "OPERATOR_STAFF"];
 

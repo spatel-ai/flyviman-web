@@ -1,7 +1,13 @@
+import type { Metadata } from "next";
 import { Suspense } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AdminDashboard } from "@/features/admin-reports/dashboard";
 import { getSession } from "@/lib/auth/session";
+
+export const metadata: Metadata = {
+  // The layout's title template does not apply to the page of its own segment.
+  title: { absolute: "Dashboard · Admin · Flyviman" },
+};
 
 export default function AdminDashboardPage() {
   return (

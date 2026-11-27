@@ -2,7 +2,14 @@ import type { Metadata } from "next";
 import { RequestDetail } from "@/features/operator-requests/request-detail";
 import { RequestsAccess } from "@/features/operator-requests/requests-access";
 
-export const metadata: Metadata = { title: "Request" };
+export async function generateMetadata({
+  params,
+}: PageProps<"/operator/requests/[reference]">): Promise<Metadata> {
+  const { reference } = await params;
+  return {
+    title: `Request ${reference}`,
+  };
+}
 
 export default async function OperatorRequestPage({
   params,

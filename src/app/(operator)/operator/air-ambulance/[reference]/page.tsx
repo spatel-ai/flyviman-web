@@ -6,7 +6,14 @@ import { isAirAmbulanceReference } from "@/lib/air-ambulance/labels";
 import type { Schemas } from "@/lib/api/types";
 import { serverGet } from "@/lib/auth/server-api";
 
-export const metadata: Metadata = { title: "Air ambulance mission" };
+export async function generateMetadata({
+  params,
+}: PageProps<"/operator/air-ambulance/[reference]">): Promise<Metadata> {
+  const { reference } = await params;
+  return {
+    title: `Air ambulance mission ${reference}`,
+  };
+}
 
 export default async function OperatorAirAmbulanceMissionPage({
   params,

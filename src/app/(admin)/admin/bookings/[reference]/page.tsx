@@ -5,7 +5,14 @@ import { BookingDetail } from "@/features/admin-bookings/booking-detail";
 import { canActOnBookings } from "@/features/admin-bookings/status";
 import { getSession } from "@/lib/auth/session";
 
-export const metadata: Metadata = { title: "Booking" };
+export async function generateMetadata({
+  params,
+}: PageProps<"/admin/bookings/[reference]">): Promise<Metadata> {
+  const { reference } = await params;
+  return {
+    title: `Booking ${reference}`,
+  };
+}
 
 export default async function AdminBookingPage({
   params,

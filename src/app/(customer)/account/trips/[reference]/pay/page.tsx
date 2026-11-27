@@ -4,7 +4,15 @@ import { PageTransition } from "@/components/motion/page-transition";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PayPage } from "@/features/payment/pay-page";
 
-export const metadata: Metadata = { title: "Pay", robots: { index: false } };
+export async function generateMetadata({
+  params,
+}: PageProps<"/account/trips/[reference]/pay">): Promise<Metadata> {
+  const { reference } = await params;
+  return {
+    title: `Pay ${reference}`,
+    robots: { index: false },
+  };
+}
 
 async function Pay({
   params,

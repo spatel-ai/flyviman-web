@@ -4,7 +4,15 @@ import { PageTransition } from "@/components/motion/page-transition";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TripDetail } from "@/features/trips/trip-detail";
 
-export const metadata: Metadata = { title: "Trip", robots: { index: false } };
+export async function generateMetadata({
+  params,
+}: PageProps<"/account/trips/[reference]">): Promise<Metadata> {
+  const { reference } = await params;
+  return {
+    title: `Trip ${reference}`,
+    robots: { index: false },
+  };
+}
 
 async function Detail({
   params,
