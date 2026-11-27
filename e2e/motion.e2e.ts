@@ -671,6 +671,20 @@ test.describe("home page hero", () => {
     expect(frames).toHaveLength(0);
   });
 
+  test("under reduced motion the poster on screen is fetched at once, at high priority", async ({
+    page,
+  }) => {
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await page.goto("/");
+    // The last frame is the still; a phone shows the first as its band.
+    const shown = page.locator(
+      phoneStill(page) ? ".hero-poster--first" : ".hero-poster--last",
+    );
+    await expect(shown).toBeVisible();
+    await expect(shown).not.toHaveAttribute("loading", "lazy");
+    await expect(shown).toHaveAttribute("fetchpriority", "high");
+  });
+
   test("on a data-saver connection it is a still, and no frame is fetched", async ({
     page,
   }) => {

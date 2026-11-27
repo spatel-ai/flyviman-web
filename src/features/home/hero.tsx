@@ -24,7 +24,12 @@ import {
   tooSlow,
   type FrameStore,
 } from "./hero-frames";
-import { FILM_SCREEN, HERO_SCRIPT, REDUCED_MOTION } from "./hero-script";
+import {
+  FILM_SCREEN,
+  HERO_SCRIPT,
+  REDUCED_MOTION,
+  STILL_POSTER_SCRIPT,
+} from "./hero-script";
 import { segment, useScrollProgress } from "./use-scroll-progress";
 
 /**
@@ -133,6 +138,13 @@ export function Hero() {
     // render would collapse the track and put it back.
     root.toggleAttribute("data-hero-film", wantsFilm());
     root.toggleAttribute("data-hero-too-slow", tooSlowHere);
+    // A client navigation does not run STILL_POSTER_SCRIPT: the same here.
+    const last =
+      track.current?.querySelector<HTMLImageElement>(".hero-poster--last");
+    if (last && getComputedStyle(last).display !== "none") {
+      last.fetchPriority = "high";
+      last.loading = "eager";
+    }
     return () => {
       // Leaving the home page leaves no trace on the others.
       for (const name of ["live", "film", "gave-up", "too-slow"]) {
@@ -329,8 +341,17 @@ export function Hero() {
             // when it is shown (a lazy image that is not displayed is not
             // requested).
             loading="lazy"
+            // STILL_POSTER_SCRIPT makes it eager where it is shown.
+            suppressHydrationWarning
             className="hero-poster hero-poster--last"
             onError={() => setPosterFailed(true)}
+          />
+          <script
+            type={
+              typeof window === "undefined" ? "text/javascript" : "text/plain"
+            }
+            suppressHydrationWarning
+            dangerouslySetInnerHTML={{ __html: STILL_POSTER_SCRIPT }}
           />
           <canvas ref={canvas} className="hero-canvas" />
         </div>
