@@ -24,7 +24,7 @@ export default async function OperatorPricingPage() {
         page in the fleet. Customers see estimates built from these; you confirm
         the final price on each request.
       </p>
-      <OperatorPricingForm />
+      <OperatorPricingForm suspended={operator.status === "SUSPENDED"} />
       <OperatorRestrictions />
     </>
   );

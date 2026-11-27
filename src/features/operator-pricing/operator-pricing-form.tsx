@@ -46,7 +46,12 @@ const MINIMUM_PER = [
  * aircraft sets its own. Each save is a new version, kept for audit
  * (business rule 6); estimates already shown keep the values they used.
  */
-export function OperatorPricingForm() {
+export function OperatorPricingForm({
+  suspended,
+}: {
+  /** A suspended organisation reads its pricing; the API refuses changes. */
+  suspended: boolean;
+}) {
   const pricing = useQuery({
     queryKey: queryKeys.operatorPricing,
     queryFn: () => apiFetch<Pricing>("operator/pricing"),
@@ -66,10 +71,21 @@ export function OperatorPricingForm() {
       />
     );
   }
-  return <Editor initial={fromOperatorPricing(pricing.data.data)} />;
+  return (
+    <Editor
+      initial={fromOperatorPricing(pricing.data.data)}
+      suspended={suspended}
+    />
+  );
 }
 
-function Editor({ initial }: { initial: OperatorPricingValues }) {
+function Editor({
+  initial,
+  suspended,
+}: {
+  initial: OperatorPricingValues;
+  suspended: boolean;
+}) {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const [formError, setFormError] = useState<string | null>(null);
@@ -250,10 +266,20 @@ function Editor({ initial }: { initial: OperatorPricingValues }) {
           {...register("otherChargeLabel")}
         />
       </Card>
-      <div>
-        <Button type="submit" loading={save.isPending} disabled={!isDirty}>
+      <div className="flex flex-wrap items-center gap-4">
+        <Button
+          type="submit"
+          loading={save.isPending}
+          disabled={!isDirty || suspended}
+          aria-describedby={suspended ? "pricing-suspended" : undefined}
+        >
           Save pricing
         </Button>
+        {suspended && (
+          <p id="pricing-suspended" className="text-body-sm text-muted">
+            Pricing cannot be changed while your organisation is suspended.
+          </p>
+        )}
       </div>
     </form>
   );
