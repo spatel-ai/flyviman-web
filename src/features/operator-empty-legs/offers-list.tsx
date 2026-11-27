@@ -17,7 +17,8 @@ import { apiFetch } from "@/lib/api/client";
 import { isForbiddenError } from "@/lib/api/errors";
 import { messageFor } from "@/lib/api/messages";
 import { queryKeys } from "@/lib/api/query-keys";
-import { useOperatorApproved } from "@/lib/operator";
+import { useOperatorAccess, useOperatorApproved } from "@/lib/operator";
+import { can } from "@/lib/operator-access";
 import { sortOffers } from "@/lib/sort/departure-order";
 
 const PAGE_SIZE = 20;
@@ -27,6 +28,7 @@ export function OfferList() {
   const params = useSearchParams();
   const page = Math.max(1, Number(params.get("page")) || 1);
   const approved = useOperatorApproved();
+  const access = useOperatorAccess();
   const offers = useQuery({
     queryKey: [...queryKeys.operatorEmptyLegs, "list", page] as const,
     queryFn: () =>
@@ -47,19 +49,20 @@ export function OfferList() {
   // The API orders by departure across pages. The status grouping is still
   // done here, so it covers the fetched page only.
   const rows = sortOffers(offers.data.data);
+  const addOffer =
+    approved && can(access, "MANAGE_EMPTY_LEGS") ? (
+      <Link href="/operator/empty-legs/new" className={buttonClasses({})}>
+        Add an offer
+      </Link>
+    ) : null;
   return (
     <div className="mt-6 flex flex-col gap-4">
-      {approved ? (
-        <div>
-          <Link href="/operator/empty-legs/new" className={buttonClasses({})}>
-            Add an offer
-          </Link>
-        </div>
-      ) : null}
+      {addOffer && rows.length > 0 ? <div>{addOffer}</div> : null}
       {rows.length === 0 ? (
         <EmptyState
           title="No empty legs yet"
           description="Add a flight that would otherwise fly empty. It is shown to customers once operations approve it."
+          action={addOffer}
         />
       ) : (
         <>

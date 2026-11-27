@@ -57,7 +57,10 @@ export function AdminDashboard({ role }: { role: Role }) {
     <div className="mt-6 flex flex-col gap-8">
       <section className="flex flex-col gap-3">
         <h2 className="text-title">Right now</h2>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {/* Four tiles with finance figures, three without: never one alone. */}
+        <div
+          className={`grid gap-4 sm:grid-cols-2 ${finance ? "lg:grid-cols-4" : "lg:grid-cols-3"}`}
+        >
           <StatTile
             href="/admin/bookings"
             label="Awaiting operator"

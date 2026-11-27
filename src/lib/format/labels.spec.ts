@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { channelLabel, roleLabel, serviceLabel } from "./labels";
+import { channelLabel, roleLabel, serviceLabel, words } from "./labels";
 
 describe("serviceLabel", () => {
   it("names services and reads an unknown one as words", () => {
@@ -23,5 +23,12 @@ describe("roleLabel", () => {
     expect(roleLabel("SUPER_ADMIN")).toBe("Super administrator");
     expect(roleLabel("OPS")).toBe("Operations");
     expect(roleLabel("NEW_ROLE")).toBe("New role");
+  });
+});
+
+describe("words", () => {
+  it("reads a constant as a sentence", () => {
+    expect(words("AMOUNT_MISMATCH")).toBe("Amount mismatch");
+    expect(words("OPERATOR_PENDING")).toBe("Operator pending");
   });
 });

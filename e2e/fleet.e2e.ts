@@ -249,3 +249,23 @@ test("a page address that is not an aircraft id is not found", async ({
     /not found|cannot be found|doesn.t exist/i,
   );
 });
+
+test("empty operator lists say what will appear and offer the one action the role may take (W2-010)", async ({
+  page,
+  browser,
+}) => {
+  test.slow();
+  await approvedOperator(page, browser);
+
+  await page.goto("/operator/aircraft");
+  await expect(page.getByText("No aircraft yet")).toBeVisible();
+  await expect(
+    page.getByRole("main").getByRole("link", { name: "Add an aircraft" }),
+  ).toHaveCount(1);
+
+  await page.goto("/operator/empty-legs");
+  await expect(page.getByText("No empty legs yet")).toBeVisible();
+  await expect(
+    page.getByRole("main").getByRole("link", { name: "Add an offer" }),
+  ).toHaveCount(1);
+});

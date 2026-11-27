@@ -255,7 +255,10 @@ export function UsersList() {
                       return (
                         <TableRow key={user.id}>
                           <TableCell>
-                            <p className="font-medium">
+                            <p
+                              className="max-w-72 truncate font-medium"
+                              title={user.email ?? user.phone ?? undefined}
+                            >
                               {user.email ?? user.phone ?? "No contact details"}
                             </p>
                             {user.email && user.phone ? (
