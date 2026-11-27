@@ -212,11 +212,16 @@ export function TeamList({ approved }: { approved: boolean }) {
     </p>
   );
 
+  // With nobody on the team the invitation is the empty state's action.
+  const empty = !isError && !isPending && staff.length === 0;
+
   return (
     <div className="mt-6 flex flex-col gap-6">
-      <div className="flex flex-wrap items-center justify-end gap-3">
-        {invite}
-      </div>
+      {empty ? null : (
+        <div className="flex flex-wrap items-center justify-end gap-3">
+          {invite}
+        </div>
+      )}
 
       {problem ? (
         <p role="alert" className="text-body-sm text-danger">
@@ -230,10 +235,11 @@ export function TeamList({ approved }: { approved: boolean }) {
           error={error}
           onRetry={() => void refetch()}
         />
-      ) : !isPending && staff.length === 0 ? (
+      ) : empty ? (
         <EmptyState
           title="No staff yet"
           description="Invite the people who look after your aircraft and their availability."
+          action={invite}
         />
       ) : (
         <div aria-busy={isPending || undefined}>

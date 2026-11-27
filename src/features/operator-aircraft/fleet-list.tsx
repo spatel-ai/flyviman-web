@@ -38,6 +38,12 @@ export function FleetList() {
   }
 
   const aircraft = fleet.data.data;
+  const addAircraft =
+    admin && approved ? (
+      <Link href="/operator/aircraft/new" className={buttonClasses({})}>
+        Add an aircraft
+      </Link>
+    ) : null;
   return (
     <div className="mt-6 flex flex-col gap-4">
       {/* Administrator notices only once the role is known (no flash for staff). */}
@@ -46,12 +52,8 @@ export function FleetList() {
           Your organisation is not approved at the moment, so you cannot add
           aircraft. You can still take an aircraft out of service.
         </p>
-      ) : approved ? (
-        <div>
-          <Link href="/operator/aircraft/new" className={buttonClasses({})}>
-            Add an aircraft
-          </Link>
-        </div>
+      ) : approved && aircraft.length > 0 ? (
+        <div>{addAircraft}</div>
       ) : null}
       {aircraft.length === 0 ? (
         !access ? null : !admin ? (
@@ -63,6 +65,7 @@ export function FleetList() {
           <EmptyState
             title="No aircraft yet"
             description="Add your first aircraft, then submit it for review."
+            action={addAircraft}
           />
         )
       ) : (
