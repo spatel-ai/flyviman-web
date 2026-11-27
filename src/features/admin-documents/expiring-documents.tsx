@@ -88,7 +88,7 @@ export function ExpiringDocuments() {
           </TabsList>
         </Tabs>
         <Select
-          label="Expiring within"
+          label="Expired or expiring within"
           options={[...WINDOWS]}
           value={String(filter.withinDays)}
           onValueChange={(value) =>

@@ -131,3 +131,15 @@ test("a customer is refused the audit log", async ({ page }) => {
     page.getByRole("navigation", { name: "Admin navigation" }),
   ).toHaveCount(0);
 });
+
+test("the filters have visible labels and placeholders that read as examples", async ({
+  page,
+}) => {
+  await signIn(page, "finance", "/admin/audit-logs");
+  for (const name of ["Action", "Entity type", "Entity ID", "Actor ID"]) {
+    const box = page.getByRole("textbox", { name });
+    await expect(box).toBeVisible();
+    await expect(box).toHaveAttribute("placeholder", /^e\.g\. /);
+    await expect(box).toHaveValue("");
+  }
+});

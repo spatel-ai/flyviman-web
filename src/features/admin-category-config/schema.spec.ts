@@ -4,6 +4,7 @@ import {
   bookingModeOptions,
   categoryConfigSchema,
   changeBody,
+  depositText,
   formDefaults,
   isDisabling,
   type CategoryConfig,
@@ -98,5 +99,13 @@ describe("options and labels", () => {
         bookingMode: "LATER" as CategoryConfig["bookingMode"],
       }).bookingMode,
     ).toBe("");
+  });
+});
+
+describe("depositText", () => {
+  it("shows a percentage only under model C", () => {
+    expect(depositText("C_DEPOSIT", 25)).toBe("25%");
+    expect(depositText("A_INSTANT", 25)).toBe("Not used");
+    expect(depositText("B_OPERATOR_CONFIRMED", 25)).toBe("Not used");
   });
 });

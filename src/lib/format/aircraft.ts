@@ -3,6 +3,7 @@ export const AIRCRAFT_DOCUMENT_LABELS: Record<string, string> = {
   REGISTRATION: "Certificate of registration",
   AIRWORTHINESS: "Certificate of airworthiness",
   INSURANCE: "Insurance",
+  OTHER: "Other",
 };
 
 const FIELD_LABELS: Record<string, string> = {

@@ -15,7 +15,7 @@ export const DEFAULT_STATUS: StatusFilter = "PENDING_REVIEW";
 
 /** The status tabs, in the order a reviewer works through them. */
 export const STATUS_TABS: { value: StatusFilter; label: string }[] = [
-  { value: "PENDING_REVIEW", label: "Waiting for review" },
+  { value: "PENDING_REVIEW", label: "Under review" },
   { value: "APPROVED", label: "Approved" },
   { value: "REJECTED", label: "Not approved" },
   { value: "SUSPENDED", label: "Suspended" },
@@ -24,7 +24,7 @@ export const STATUS_TABS: { value: StatusFilter; label: string }[] = [
 ];
 
 const EMPTY_TITLES: Record<StatusFilter, string> = {
-  PENDING_REVIEW: "No operators waiting for review",
+  PENDING_REVIEW: "No operators under review",
   APPROVED: "No approved operators",
   REJECTED: "No operators that were not approved",
   SUSPENDED: "No suspended operators",

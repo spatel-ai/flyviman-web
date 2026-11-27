@@ -6,6 +6,7 @@ import { Sheet, SheetContent } from "@/components/ui/sheet";
 import type { Schemas } from "@/lib/api/types";
 import { formatDateTime } from "@/lib/format/date";
 import { diffJson, showValue, type ChangeKind } from "./diff";
+import { entityTypeLabel } from "./labels";
 import { isRestricted } from "./restricted";
 
 export type AuditLog = Schemas["AuditLogResponseDto"];
@@ -77,7 +78,7 @@ export function AuditDetailSheet({
               value={log.actorRole ? roleLabel(log.actorRole) : "System"}
             />
             <Field label="Actor ID" value={log.actorId} />
-            <Field label="Entity" value={log.entityType} />
+            <Field label="Entity" value={entityTypeLabel(log.entityType)} />
             <Field label="Entity ID" value={log.entityId} />
             <Field label="IP address" value={log.ipAddress} />
             <Field label="Request ID" value={log.requestId} />

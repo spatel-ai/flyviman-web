@@ -41,6 +41,7 @@ import {
   categoryConfigSchema,
   categoryLabel,
   changeBody,
+  depositText,
   DEPOSIT_MAX,
   formDefaults,
   isDisabling,
@@ -146,7 +147,7 @@ export function CategoryConfigView({ canEdit }: { canEdit: boolean }) {
                         {paymentModelLabel(row.paymentModel)}
                       </TableCell>
                       <TableCell className="tabular-nums">
-                        {row.depositPercent}%
+                        {depositText(row.paymentModel, row.depositPercent)}
                       </TableCell>
                       <TableCell>{formatDateTime(row.updatedAt)}</TableCell>
                       <TableCell>

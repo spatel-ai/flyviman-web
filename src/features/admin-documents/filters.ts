@@ -6,9 +6,9 @@ export const KINDS = [
 export type KindFilter = (typeof KINDS)[number]["value"];
 
 export const WINDOWS = [
-  { value: "7", label: "Next 7 days" },
-  { value: "30", label: "Next 30 days" },
-  { value: "90", label: "Next 90 days" },
+  { value: "7", label: "7 days" },
+  { value: "30", label: "30 days" },
+  { value: "90", label: "90 days" },
 ] as const;
 
 export interface ExpiringFilter {
