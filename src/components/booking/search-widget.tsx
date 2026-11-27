@@ -171,6 +171,7 @@ export function SearchWidget({
 
   return (
     <div
+      data-picker-scope=""
       className={cn(
         "rounded-xl bg-surface-raised shadow-lg",
         "w-full sm:max-lg:mx-auto sm:max-lg:max-w-180",

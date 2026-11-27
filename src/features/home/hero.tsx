@@ -9,6 +9,10 @@ import {
   useSyncExternalStore,
   type CSSProperties,
 } from "react";
+import {
+  PickerSettleProvider,
+  type PickerSettle,
+} from "@/components/booking/responsive-picker";
 import { SearchWidget } from "@/components/booking/search-widget";
 import { IMAGES } from "@/content/image-credits";
 import { HERO, type HeroSequence, type HeroSet } from "./hero-config";
@@ -156,6 +160,10 @@ export function Hero() {
   const draw = () =>
     paint(view.current, canvas.current?.getContext("2d"), track.current);
 
+  // Pickers open in the card hear when it fades out again.
+  const [hidden] = useState(() => new Set<() => void>());
+  const pressed = useRef(false);
+
   const { snap, end } = useScrollProgress(track, {
     settleMs: film ? HERO.settleMs : 0,
     hold: stage,
@@ -166,12 +174,14 @@ export function Hero() {
         easeOut(segment(progress, timeline.card)).toFixed(3),
       );
       if (shown !== state.shown && card.current) {
+        const hiding = state.shown > 0.5;
         state.shown = shown;
         stage.current?.style.setProperty("--hero-card", String(shown));
         card.current.style.opacity = shown.toFixed(3);
         card.current.style.transform = `translate3d(0, ${((1 - shown) * timeline.cardRise).toFixed(2)}px, 0)`;
         // An unseen card takes no clicks; it stays in the tab order.
         card.current.style.pointerEvents = shown > 0.5 ? "auto" : "none";
+        if (hiding && shown <= 0.5) for (const call of [...hidden]) call();
       }
       state.progress = progress;
       draw();
@@ -276,9 +286,27 @@ export function Hero() {
     return () => observer.disconnect();
   }, [set]);
 
-  /** A keyboard reaches the card before the film has shown it. */
+  const settle: PickerSettle = {
+    settle: () => {
+      if (!film) return { slack: 0, rise: 0 };
+      const shown = Math.max(0, view.current.shown);
+      return {
+        slack: Math.max(0, end() - window.scrollY),
+        rise: (1 - shown) * timeline.cardRise,
+      };
+    },
+    onHide: (callback) => {
+      hidden.add(callback);
+      return () => void hidden.delete(callback);
+    },
+  };
+
+  /**
+   * A keyboard reaches the card before the film has shown it. A pointer
+   * focuses the tile too, but the picker glides the page itself.
+   */
   function showCard() {
-    if (!film) return;
+    if (!film || pressed.current) return;
     const top = end();
     if (window.scrollY >= top - 1) return;
     snap();
@@ -363,8 +391,18 @@ export function Hero() {
           >
             {HERO.text.headline.join(" ")}
           </h1>
-          <div ref={card} className="hero-card" onFocusCapture={showCard}>
-            <SearchWidget initial={{ service: "charter" }} />
+          <div
+            ref={card}
+            className="hero-card"
+            onFocusCapture={showCard}
+            onPointerDownCapture={() => {
+              pressed.current = true;
+              setTimeout(() => (pressed.current = false), 100);
+            }}
+          >
+            <PickerSettleProvider value={settle}>
+              <SearchWidget initial={{ service: "charter" }} />
+            </PickerSettleProvider>
           </div>
         </div>
       </div>
