@@ -197,7 +197,7 @@ export function RequestDetail({
           {request.status === "QUOTED" ? (
             <div className="flex flex-wrap gap-3">
               <Button onClick={() => setAction("accept")}>Accept quote</Button>
-              <Button variant="secondary" onClick={() => setAction("decline")}>
+              <Button variant="danger" onClick={() => setAction("decline")}>
                 Decline
               </Button>
             </div>

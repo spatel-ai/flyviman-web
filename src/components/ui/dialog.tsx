@@ -36,9 +36,13 @@ export function Dialog({
   open: openProp,
   defaultOpen = false,
   onOpenChange,
+  confirmDiscard = true,
   children,
   ...props
-}: ComponentProps<typeof DialogPrimitive.Root>) {
+}: ComponentProps<typeof DialogPrimitive.Root> & {
+  /** False closes without "Discard changes?", for a one-field confirm. */
+  confirmDiscard?: boolean;
+}) {
   const [innerOpen, setInnerOpen] = useState(defaultOpen);
   const open = openProp ?? innerOpen;
   const [dirty, setDirty] = useState(false);
@@ -65,7 +69,9 @@ export function Dialog({
   };
 
   const guard: Guard = {
-    markDirty: () => setDirty(true),
+    markDirty: () => {
+      if (confirmDiscard) setDirty(true);
+    },
     asking,
     keepEditing: () => setAsking(false),
     discard: () => {
@@ -255,7 +261,7 @@ export function ConfirmDialog({
   ...body
 }: ConfirmDialogProps) {
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={onOpenChange} confirmDiscard={false}>
       <DialogContent title={title} description={description}>
         <ConfirmDialogBody {...body} />
       </DialogContent>

@@ -333,6 +333,9 @@ describe("OperatorDetail", () => {
     const user = setup();
 
     await user.click(await screen.findByRole("button", { name: /^Verify / }));
+    await user.click(
+      await screen.findByRole("button", { name: "Verify document" }),
+    );
 
     expect(await screen.findByText("Document verified")).toBeInTheDocument();
     expect(api).toHaveBeenCalledWith("admin/documents/doc-1/verify", {

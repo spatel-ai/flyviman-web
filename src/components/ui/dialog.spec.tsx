@@ -169,7 +169,7 @@ describe("ConfirmDialog", () => {
     expect(onConfirm).not.toHaveBeenCalled();
   });
 
-  it("cancels without confirming and starts with an empty reason next time", async () => {
+  it("cancels without confirming or asking to discard, and starts with an empty reason next time", async () => {
     const user = userEvent.setup();
     const onConfirm = vi.fn();
     render(<ConfirmExample onConfirm={onConfirm} requireReason />);
@@ -177,13 +177,25 @@ describe("ConfirmDialog", () => {
     await user.click(screen.getByRole("button", { name: "Suspend" }));
     await user.type(screen.getByLabelText("Reason"), "Wrong operator");
     await user.click(screen.getByRole("button", { name: "Cancel" }));
-    await user.click(screen.getByRole("button", { name: "Discard" }));
 
+    expect(screen.queryByText("Discard changes?")).not.toBeInTheDocument();
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     expect(onConfirm).not.toHaveBeenCalled();
 
     await user.click(screen.getByRole("button", { name: "Suspend" }));
     expect(screen.getByLabelText("Reason")).toHaveValue("");
+  });
+
+  it("closes on Escape with a reason typed, without asking to discard", async () => {
+    const user = userEvent.setup();
+    render(<ConfirmExample onConfirm={vi.fn()} requireReason />);
+
+    await user.click(screen.getByRole("button", { name: "Suspend" }));
+    await user.type(screen.getByLabelText("Reason"), "Wrong operator");
+    await user.keyboard("{Escape}");
+
+    expect(screen.queryByText("Discard changes?")).not.toBeInTheDocument();
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 
   it("blocks a repeat confirmation while loading", async () => {
