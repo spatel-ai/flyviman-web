@@ -1,7 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 import { randomUUID } from "node:crypto";
 import { API_URL, signIn, uniqueEmail } from "./support/api";
-import { asStaff, csrf } from "./support/operators";
+import { approvedOperator, asStaff, csrf } from "./support/operators";
 import { requestedTrip } from "./support/requests";
 import { completedPaidBooking, settlementFor } from "./support/paid-booking";
 
@@ -255,5 +255,50 @@ test("portal list tables fit at common desktop widths", async ({
   await sweep(page, "admin", ADMIN);
   await sweep(operatorPage, "operator", OPERATOR);
   await sweep(paidOperator, "operator", OPERATOR);
+  expect(failures).toEqual([]);
+});
+
+test("operator settlements fit with the largest amounts real data holds", async ({
+  page,
+  browser,
+}) => {
+  test.setTimeout(300_000);
+  await approvedOperator(page, browser);
+  // Amounts as long as production ones (up to INR 16,30,69,512.70), served
+  // through a stubbed list; no product code carries them.
+  const amounts = [30_240_000, 1_630_695_127, 163_069_512_70, 12_345_678_90];
+  await page.route("**/operator/settlements?*", async (route) => {
+    await route.fulfill({
+      json: {
+        data: amounts.map((n, i) => ({
+          id: `stub-${i}`,
+          bookingReference: `FLY-STUB${i}-LONGREF`,
+          keptMinor: n,
+          commissionMinor: n,
+          taxMinor: n,
+          payableMinor: n,
+          currency: "INR",
+          status: i % 2 ? "PAID" : "NOT_DUE",
+          paidAt: i % 2 ? new Date().toISOString() : null,
+          paymentReference: i % 2 ? "UTR-0123456789ABCDEF" : null,
+          createdAt: new Date().toISOString(),
+        })),
+        meta: { page: 1, pageSize: 20, total: amounts.length },
+      },
+    });
+  });
+  const failures: string[] = [];
+  for (const width of WIDTHS) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto("/operator/settlements");
+    await expect(page.getByRole("main").locator("tbody tr")).toHaveCount(
+      amounts.length,
+    );
+    for (const fit of await measureTables(page)) {
+      const line = `operator/settlements (large amounts) @${width}: overflow ${fit.overflow}, tallest row ${fit.tallestRow}px`;
+      console.log(line);
+      if (fit.overflow > 1 || fit.tallestRow > MAX_ROW) failures.push(line);
+    }
+  }
   expect(failures).toEqual([]);
 });

@@ -49,8 +49,8 @@ const NUMERIC = [
   "Commission",
   "Tax",
 ];
-/** Below 2xl, Commission and Tax share one stacked "Deductions" column. */
-const WIDE_ONLY = ["Commission", "Tax", "Created"];
+/** Below 2xl, Commission and Tax share one stacked "Deductions" column and the status sits under the booking. */
+const WIDE_ONLY = ["Status", "Commission", "Tax", "Created"];
 
 /** What Flyviman owes the organisation per completed booking, newest first. */
 export function OperatorSettlementsList() {
@@ -93,7 +93,7 @@ export function OperatorSettlementsList() {
                   column === COLUMNS[0] && "left-0 z-20",
                   WIDE_ONLY.includes(column) && "hidden 2xl:table-cell",
                   column === "Deductions" && "2xl:hidden",
-                  NUMERIC.includes(column) && "px-2",
+                  "px-2",
                 )}
               >
                 {column}
@@ -116,8 +116,13 @@ export function OperatorSettlementsList() {
                 const status = STATUS[row.status];
                 return (
                   <TableRow key={row.id}>
-                    <TableCell className="sticky left-0 z-[5] bg-background whitespace-nowrap">
+                    <TableCell className="sticky left-0 z-[5] bg-background px-2 whitespace-nowrap">
                       {row.bookingReference}
+                      <span className="mt-1 block 2xl:hidden">
+                        <Badge tone={status?.tone ?? "neutral"}>
+                          {status?.label ?? row.status}
+                        </Badge>
+                      </span>
                     </TableCell>
                     <TableCell className="px-2 text-right whitespace-nowrap">
                       <MoneyAmount
@@ -125,7 +130,7 @@ export function OperatorSettlementsList() {
                         currency={row.currency}
                       />
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="hidden px-2 2xl:table-cell">
                       <Badge tone={status?.tone ?? "neutral"}>
                         {status?.label ?? row.status}
                       </Badge>
@@ -137,7 +142,7 @@ export function OperatorSettlementsList() {
                       />
                     </TableCell>
                     <TableCell className="px-2 text-right whitespace-nowrap 2xl:hidden">
-                      <span className="grid grid-cols-[auto_auto] items-baseline justify-end gap-x-2">
+                      <span className="grid grid-cols-[auto_auto] items-baseline justify-end gap-x-1.5">
                         <span className="text-caption text-muted">
                           Commission
                         </span>
@@ -165,15 +170,15 @@ export function OperatorSettlementsList() {
                         </TableCell>
                       ),
                     )}
-                    <TableCell className="hidden whitespace-nowrap 2xl:table-cell">
+                    <TableCell className="hidden px-2 whitespace-nowrap 2xl:table-cell">
                       {formatDateTime(row.createdAt)}
                     </TableCell>
-                    <TableCell className="whitespace-nowrap">
+                    <TableCell className="px-2 whitespace-nowrap">
                       {row.paidAt ? (
-                        <span className="flex max-w-28 flex-col">
+                        <span className="flex flex-col">
                           <span
                             title={row.paymentReference ?? undefined}
-                            className="truncate"
+                            className="max-w-28 truncate"
                           >
                             {row.paymentReference}
                           </span>
