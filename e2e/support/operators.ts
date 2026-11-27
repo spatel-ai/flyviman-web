@@ -8,6 +8,7 @@ import {
   unique,
   uniqueEmail,
 } from "./api";
+import { setDate } from "./pickers";
 
 /** A minimal PDF the storage mock accepts. */
 export const PDF = Buffer.from("%PDF-1.7\n1 0 obj\n<<>>\nendobj\n%%EOF\n");
@@ -46,7 +47,7 @@ export async function addDocument(page: Page, type: string, fileName: string) {
     mimeType: "application/pdf",
     buffer: PDF,
   });
-  await page.getByLabel("Expiry date (optional)").fill("2030-12-31");
+  await setDate(page, "Expiry date (optional)", "2030-12-31");
   await page.getByRole("button", { name: "Add document" }).click();
   await expect(
     page.getByRole("list", { name: "Documents" }).getByText(fileName),

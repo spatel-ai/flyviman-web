@@ -2,6 +2,7 @@ import { expect, test, type Page } from "@playwright/test";
 import { expectNoSidewaysScroll, signIn } from "./support/api";
 import { axeViolations } from "./support/axe";
 import { approvedAircraft, asStaff, PDF } from "./support/operators";
+import { setDate, setTime } from "./support/pickers";
 
 /**
  * Air ambulance (M11, W4-6): the request page with its emergency notice,
@@ -104,8 +105,8 @@ test("a request goes from the customer through operations to the operator, confi
   await form
     .getByRole("textbox", { name: "Collection address (optional)" })
     .fill(PICKUP);
-  await form.getByLabel("Preferred date").fill("2030-01-15");
-  await form.getByLabel("Preferred time (India time)").fill("09:30");
+  await setDate(form, "Preferred date", "2030-01-15");
+  await setTime(form, "Preferred time (India time)", "09:30");
   await form
     .getByRole("textbox", { name: "Patient's condition" })
     .fill(CONDITION);

@@ -1,6 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 import { expectNoSidewaysScroll } from "./support/api";
 import { approvedAircraft } from "./support/operators";
+import { setTime } from "./support/pickers";
 
 /** A calendar day in India, `days` from today. */
 function istDay(days: number): string {
@@ -45,8 +46,8 @@ async function addEntry(
     await dialog.getByRole("combobox", { name: "Type" }).click();
     await page.getByRole("option", { name: entry.type, exact: true }).click();
   }
-  await dialog.getByLabel("Start time (IST)").fill(entry.start);
-  await dialog.getByLabel("End time (IST)").fill(entry.end);
+  await setTime(dialog, "Start time (IST)", entry.start);
+  await setTime(dialog, "End time (IST)", entry.end);
   await dialog.getByRole("button", { name: "Add", exact: true }).click();
   await expect(dialog).toHaveCount(0);
 }

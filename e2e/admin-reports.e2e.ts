@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
 import { signIn } from "./support/api";
 import { completedPaidBooking } from "./support/paid-booking";
+import { setDate } from "./support/pickers";
 
 /**
  * Admin dashboard and reports (M10, D-189 onwards): what each role sees,
@@ -34,15 +35,15 @@ test("the period refuses From after To, applies a valid one and downloads a CSV"
   const apply = main.getByRole("button", { name: "Apply" });
   await expect(main.getByRole("link", { name: "Download CSV" })).toBeVisible();
 
-  await main.getByRole("textbox", { name: "From" }).fill("2026-11-10");
-  await main.getByRole("textbox", { name: "To" }).fill("2026-11-01");
+  await setDate(main, "From", "2026-11-10");
+  await setDate(main, "To", "2026-11-01");
   await expect(
     main.getByText("The start date must not be after the end date."),
   ).toBeVisible();
   await expect(apply).toBeDisabled();
 
-  await main.getByRole("textbox", { name: "To" }).fill("2026-11-10");
-  await main.getByRole("textbox", { name: "From" }).fill("2026-11-01");
+  await setDate(main, "To", "2026-11-10");
+  await setDate(main, "From", "2026-11-01");
   await expect(apply).toBeEnabled();
   await apply.click();
   await expect(page).toHaveURL(/from=2026-11-01/);

@@ -6,6 +6,7 @@ import {
   PASSWORD,
   uniqueEmail,
 } from "./support/api";
+import { setDate, expectDate } from "./support/pickers";
 
 /** Registers a new customer through the pages and lands on the home page. */
 async function register(page: Page, email: string) {
@@ -150,7 +151,7 @@ test.describe("customer account", () => {
       "Asha",
     );
     await page.getByRole("textbox", { name: "Last name" }).fill("Menon");
-    await page.getByLabel("Date of birth").fill("1990-04-12");
+    await setDate(page, "Date of birth", "1990-04-12");
     await page.getByRole("button", { name: "Save profile" }).click();
     await expect(
       page.getByText("Profile saved", { exact: true }).first(),
@@ -160,7 +161,7 @@ test.describe("customer account", () => {
     await expect(page.getByRole("textbox", { name: "Last name" })).toHaveValue(
       "Menon",
     );
-    await expect(page.getByLabel("Date of birth")).toHaveValue("1990-04-12");
+    await expectDate(page, "Date of birth", "1990-04-12");
   });
 
   test("a customer saves, edits and removes a passenger, using the keyboard in the dialog", async ({

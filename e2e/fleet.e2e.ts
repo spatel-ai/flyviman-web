@@ -3,6 +3,7 @@ import { expect, test, type Page } from "@playwright/test";
 import { expectNoSidewaysScroll, signIn } from "./support/api";
 import { approvedOperator, asStaff, PDF } from "./support/operators";
 import { openNav } from "./support/nav";
+import { setDate, expectDate } from "./support/pickers";
 
 /** The listing's status badge beside the page heading. */
 function listingStatus(page: Page) {
@@ -12,7 +13,7 @@ function listingStatus(page: Page) {
 async function addAircraftDocument(page: Page, type: string, file: string) {
   await page.getByRole("combobox", { name: "Document type" }).click();
   await page.getByRole("option", { name: type, exact: true }).click();
-  await page.getByLabel("Expiry date").fill("2030-12-31");
+  await setDate(page, "Expiry date", "2030-12-31");
   await page.getByLabel("File").setInputFiles({
     name: file,
     mimeType: "application/pdf",
@@ -24,7 +25,7 @@ async function addAircraftDocument(page: Page, type: string, file: string) {
   ).toBeVisible();
   // The upload succeeded, so no error is shown and the form is cleared.
   await expect(page.getByRole("main").getByRole("alert")).toHaveCount(0);
-  await expect(page.getByLabel("Expiry date")).toHaveValue("");
+  await expectDate(page, "Expiry date", "");
 }
 
 test("an operator lists an aircraft and operations reject, then approve it", async ({
@@ -69,6 +70,18 @@ test("an operator lists an aircraft and operations reject, then approve it", asy
   await expect(
     page.getByText("Insurance (current, not expired)", { exact: true }),
   ).toBeVisible();
+  // Chrome's own required check refuses a missing expiry date and says so
+  // at the field, whose button takes the focus.
+  await page.getByRole("combobox", { name: "Document type" }).click();
+  await page
+    .getByRole("option", { name: "Certificate of registration", exact: true })
+    .click();
+  await page.getByRole("button", { name: "Add document" }).click();
+  await expect(page.getByText("Choose a date.")).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Expiry date", exact: true }),
+  ).toBeFocused();
+  await expect(page.getByText(/registration\.pdf/)).toHaveCount(0);
   await addAircraftDocument(
     page,
     "Certificate of registration",
