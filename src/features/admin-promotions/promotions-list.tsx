@@ -214,7 +214,7 @@ export function PromotionsList() {
                         <TableCell>
                           {promotion.endable ? (
                             <Button
-                              variant="ghost"
+                              variant="danger"
                               className="h-10"
                               onClick={() => setEnding(promotion)}
                               aria-label={`End promotion ${promotion.code}`}

@@ -166,7 +166,7 @@ export function EmptyLegsQueue() {
                         Approve
                       </Button>
                       <Button
-                        variant="secondary"
+                        variant="danger"
                         disabled={decide.isPending}
                         onClick={() => setRejecting(item)}
                       >

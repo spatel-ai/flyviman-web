@@ -283,7 +283,11 @@ export function UsersList() {
                               <div className="flex flex-wrap gap-2">
                                 {action ? (
                                   <Button
-                                    variant="secondary"
+                                    variant={
+                                      ROW_ACTIONS[action].destructive
+                                        ? "danger"
+                                        : "secondary"
+                                    }
                                     className="h-10"
                                     aria-label={`${ROW_ACTIONS[action].label} ${who}`}
                                     onClick={() => {
@@ -309,7 +313,7 @@ export function UsersList() {
                                 ) : null}
                                 {canErase(user, viewer) ? (
                                   <Button
-                                    variant="secondary"
+                                    variant="danger"
                                     className="h-10"
                                     aria-label={`Erase personal data of ${who}`}
                                     onClick={() => {

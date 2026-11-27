@@ -154,7 +154,7 @@ export function AircraftPhotos({
                 </span>
                 {canRemove ? (
                   <Button
-                    variant="ghost"
+                    variant="danger"
                     size="sm"
                     className="h-7 px-2"
                     onClick={() => setRemoving(item)}

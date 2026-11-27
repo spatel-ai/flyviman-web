@@ -125,7 +125,7 @@ export function Passengers() {
                         Edit
                       </Button>
                       <Button
-                        variant="ghost"
+                        variant="danger"
                         size="sm"
                         aria-label={`Remove ${fullName}`}
                         onClick={() => {

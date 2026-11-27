@@ -148,7 +148,7 @@ export function ItemsTab({ path, noun, titleLabel, bodyLabel }: Props) {
                       {item.publishedAt ? "Unpublish" : "Publish"}
                     </Button>
                     <Button
-                      variant="secondary"
+                      variant="danger"
                       className="h-9"
                       aria-label={`Delete ${item.title}`}
                       onClick={() => setDeleting(item)}

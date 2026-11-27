@@ -82,7 +82,7 @@ export function ChangeRequests({
                   Approve
                 </Button>
                 <Button
-                  variant="secondary"
+                  variant="danger"
                   className="h-11"
                   onClick={() => setDeciding({ request, decision: "REJECTED" })}
                 >

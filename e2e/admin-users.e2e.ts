@@ -94,3 +94,30 @@ test("operations staff can search users but are offered no way to suspend them",
   await expect(status).toBeVisible();
   await expect(status).toHaveCSS("white-space", "nowrap");
 });
+
+test("a dialog returns focus to its button and asks before discarding typed data", async ({
+  page,
+}) => {
+  await signIn(page, "superAdmin", "/admin/users");
+  const opener = page.getByRole("button", { name: "Add staff account" });
+  await opener.click();
+  const dialog = page.getByRole("dialog", { name: "Add staff account" });
+
+  await page.keyboard.press("Escape");
+  await expect(dialog).toBeHidden();
+  await expect(opener).toBeFocused();
+
+  await opener.click();
+  await dialog.getByRole("textbox", { name: "Email" }).fill("draft@x.test");
+  await page.keyboard.press("Escape");
+  await expect(dialog.getByText("Discard changes?")).toBeVisible();
+  await dialog.getByRole("button", { name: "Keep editing" }).click();
+  await expect(dialog.getByRole("textbox", { name: "Email" })).toHaveValue(
+    "draft@x.test",
+  );
+
+  await page.keyboard.press("Escape");
+  await dialog.getByRole("button", { name: "Discard" }).click();
+  await expect(dialog).toBeHidden();
+  await expect(opener).toBeFocused();
+});

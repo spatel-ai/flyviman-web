@@ -278,7 +278,7 @@ export function AdminRequestDetail({
           {canAct ? (
             <>
               <Button
-                variant="secondary"
+                variant="danger"
                 disabled={move.isPending}
                 onClick={() => choose("DECLINED")}
               >

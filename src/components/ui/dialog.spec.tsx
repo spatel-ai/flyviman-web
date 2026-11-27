@@ -177,6 +177,7 @@ describe("ConfirmDialog", () => {
     await user.click(screen.getByRole("button", { name: "Suspend" }));
     await user.type(screen.getByLabelText("Reason"), "Wrong operator");
     await user.click(screen.getByRole("button", { name: "Cancel" }));
+    await user.click(screen.getByRole("button", { name: "Discard" }));
 
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     expect(onConfirm).not.toHaveBeenCalled();
@@ -194,5 +195,95 @@ describe("ConfirmDialog", () => {
     const confirm = screen.getByRole("button", { name: "Suspend operator" });
     expect(confirm).toBeDisabled();
     expect(confirm).toHaveAttribute("aria-busy", "true");
+  });
+});
+
+function ControlledExample() {
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <Button onClick={() => setOpen(true)}>Open controlled</Button>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent title="Controlled">
+          <input aria-label="Code" />
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button variant="secondary">Cancel</Button>
+            </DialogClose>
+            <Button onClick={() => setOpen(false)}>Save</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+}
+
+describe("Dialog opened from the caller's own state", () => {
+  it("returns focus to the button that opened it after Escape", async () => {
+    const user = userEvent.setup();
+    render(<ControlledExample />);
+    const opener = screen.getByRole("button", { name: "Open controlled" });
+
+    await user.click(opener);
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+    await user.keyboard("{Escape}");
+
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(opener).toHaveFocus();
+  });
+
+  it("returns focus after Cancel and after a save", async () => {
+    const user = userEvent.setup();
+    render(<ControlledExample />);
+    const opener = screen.getByRole("button", { name: "Open controlled" });
+
+    await user.click(opener);
+    await user.click(screen.getByRole("button", { name: "Cancel" }));
+    expect(opener).toHaveFocus();
+
+    await user.click(opener);
+    await user.click(screen.getByRole("button", { name: "Save" }));
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(opener).toHaveFocus();
+  });
+});
+
+describe("Dialog with unsaved changes", () => {
+  it("closes at once when nothing was entered", async () => {
+    const user = userEvent.setup();
+    render(<ControlledExample />);
+    await user.click(screen.getByRole("button", { name: "Open controlled" }));
+    await user.keyboard("{Escape}");
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
+  it("asks before closing on Escape and Cancel, and keeps the entry", async () => {
+    const user = userEvent.setup();
+    render(<ControlledExample />);
+    await user.click(screen.getByRole("button", { name: "Open controlled" }));
+    await user.type(screen.getByLabelText("Code"), "SUMMER");
+
+    await user.keyboard("{Escape}");
+    expect(screen.getByText("Discard changes?")).toBeInTheDocument();
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Keep editing" }));
+    expect(screen.queryByText("Discard changes?")).not.toBeInTheDocument();
+    expect(screen.getByLabelText("Code")).toHaveValue("SUMMER");
+
+    await user.click(screen.getByRole("button", { name: "Cancel" }));
+    expect(screen.getByText("Discard changes?")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Discard" }));
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
+  it("closes without asking when the caller closes it after a save", async () => {
+    const user = userEvent.setup();
+    render(<ControlledExample />);
+    await user.click(screen.getByRole("button", { name: "Open controlled" }));
+    await user.type(screen.getByLabelText("Code"), "SUMMER");
+    await user.click(screen.getByRole("button", { name: "Save" }));
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(screen.queryByText("Discard changes?")).not.toBeInTheDocument();
   });
 });

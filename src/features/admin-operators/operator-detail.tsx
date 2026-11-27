@@ -209,7 +209,13 @@ function DecisionActions({
           {actions.map((action) => (
             <Button
               key={action}
-              variant={ACTIONS[action].primary ? "primary" : "secondary"}
+              variant={
+                ACTIONS[action].primary
+                  ? "primary"
+                  : ACTIONS[action].destructive
+                    ? "danger"
+                    : "secondary"
+              }
               className="h-10"
               disabled={action === "approve" && blocker !== null}
               onClick={() => {
@@ -475,7 +481,7 @@ function Documents({
                 ) : null}
                 {canDecide && document.verificationStatus !== "REJECTED" ? (
                   <Button
-                    variant="secondary"
+                    variant="danger"
                     className="h-10"
                     aria-label={`Reject ${named}`}
                     disabled={busy}

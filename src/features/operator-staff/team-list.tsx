@@ -308,7 +308,11 @@ export function TeamList({ approved }: { approved: boolean }) {
                             {rowActions(member, approved).map((action) => (
                               <Button
                                 key={action}
-                                variant="secondary"
+                                variant={
+                                  ACTIONS[action].destructive
+                                    ? "danger"
+                                    : "secondary"
+                                }
                                 className="h-10"
                                 aria-label={`${ACTIONS[action].label} ${who}`}
                                 onClick={() => {

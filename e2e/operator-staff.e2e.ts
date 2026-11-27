@@ -136,3 +136,27 @@ test("an operator invites a staff member, who manages only the aircraft assigned
   await expect(staff).toHaveURL(/\/login/);
   await context.close();
 });
+
+test("the invitation dialog returns focus to its button and asks before discarding", async ({
+  page,
+  browser,
+}) => {
+  test.slow();
+  await approvedAircraft(page, browser);
+  await page.goto("/operator/team");
+  const opener = page.getByRole("button", { name: "Invite a staff member" });
+  await opener.click();
+  const dialog = page.getByRole("dialog", { name: "Invite a staff member" });
+
+  await page.keyboard.press("Escape");
+  await expect(dialog).toBeHidden();
+  await expect(opener).toBeFocused();
+
+  await opener.click();
+  await dialog.getByRole("textbox", { name: "Email" }).fill("draft@x.test");
+  await page.keyboard.press("Escape");
+  await expect(dialog.getByText("Discard changes?")).toBeVisible();
+  await dialog.getByRole("button", { name: "Discard" }).click();
+  await expect(dialog).toBeHidden();
+  await expect(opener).toBeFocused();
+});

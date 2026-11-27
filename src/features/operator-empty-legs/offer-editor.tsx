@@ -182,7 +182,7 @@ export function OfferEditor({ id }: { id: string }) {
           </Button>
         ) : null}
         {item.withdrawable ? (
-          <Button variant="secondary" onClick={() => setConfirmWithdraw(true)}>
+          <Button variant="danger" onClick={() => setConfirmWithdraw(true)}>
             Withdraw
           </Button>
         ) : null}

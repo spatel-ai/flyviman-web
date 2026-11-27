@@ -105,7 +105,7 @@ export function RequestActions({
           Ask a question
         </Button>
         <Button
-          variant="secondary"
+          variant="danger"
           className="h-11"
           onClick={() => show("reject")}
         >
