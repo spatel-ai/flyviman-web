@@ -244,13 +244,13 @@ export function PickerField({
         modal
         initialFocus={initialFocus}
         trigger={
+          // aria-invalid as on Select's trigger: the field's value is refused.
+          // eslint-disable-next-line jsx-a11y/role-supports-aria-props
           <button
             ref={button}
             id={buttonId}
             type="button"
             disabled={disabled}
-            // As on Select's trigger: the field's value is refused.
-            // eslint-disable-next-line jsx-a11y/role-supports-aria-props
             aria-invalid={shownError ? true : undefined}
             aria-describedby={[valueId, message ? messageId : null]
               .filter(Boolean)
