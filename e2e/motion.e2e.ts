@@ -393,6 +393,111 @@ test.describe("home page hero", () => {
       expect(Math.abs(gap)).toBeLessThanOrEqual(1);
     });
 
+    /**
+     * Clicking a field glides the page (ease in and out) only as far as the
+     * picker needs, and the picker opens under its field.
+     */
+    test.describe("the airport picker's glide", () => {
+      test.skip(({ isMobile }) => isMobile, "Desktop project only");
+      const from = (page: Page) => page.getByRole("button", { name: /^From:/ });
+      const box = (page: Page) =>
+        page.getByRole("combobox", { name: "Search from airports" });
+      const headerBottom = (page: Page) =>
+        page.evaluate(
+          () =>
+            document
+              .querySelector("header.site-header")!
+              .getBoundingClientRect().bottom,
+        );
+
+      test("the page glides, the card stays whole and the picker opens under its field", async ({
+        page,
+      }) => {
+        await page.setViewportSize({ width: 1280, height: 720 });
+        await page.goto("/");
+        await expect(canvas(page)).toHaveAttribute("data-frame", "0");
+        await scrollHero(page, 0.85);
+        await expect(card(page)).toHaveCSS("pointer-events", "auto");
+        const start = await page.evaluate(() => window.scrollY);
+        await page.evaluate(() => {
+          const seen: number[] = [];
+          (window as unknown as { seen: number[] }).seen = seen;
+          const tick = () => {
+            seen.push(window.scrollY);
+            requestAnimationFrame(tick);
+          };
+          requestAnimationFrame(tick);
+        });
+        await from(page).click();
+        await expect(box(page)).toBeVisible();
+        await page.waitForTimeout(300);
+        const seen = await page.evaluate(
+          () => (window as unknown as { seen: number[] }).seen,
+        );
+        const end = seen[seen.length - 1];
+        const total = Math.abs(end - start);
+        expect(total).toBeGreaterThan(20);
+        const moving = seen.filter((y) => y !== start && y !== end);
+        expect(new Set(moving).size).toBeGreaterThan(5);
+        let widest = 0;
+        for (let i = 1; i < seen.length; i++) {
+          widest = Math.max(widest, Math.abs(seen[i] - seen[i - 1]));
+        }
+        expect(widest).toBeLessThanOrEqual(total / 3 + 1);
+        const scopeTop = await page
+          .locator("[data-picker-scope]")
+          .evaluate((el) => el.getBoundingClientRect().top);
+        expect(scopeTop).toBeGreaterThanOrEqual(await headerBottom(page));
+        const tileTop = await from(page).evaluate(
+          (el) => el.getBoundingClientRect().top,
+        );
+        expect(tileTop).toBeLessThan(720 / 2);
+      });
+
+      test("scrolling back up with the picker open takes it away with the card", async ({
+        page,
+      }) => {
+        await page.setViewportSize({ width: 1280, height: 720 });
+        await page.goto("/");
+        await expect(canvas(page)).toHaveAttribute("data-frame", "0");
+        await scrollHero(page, 0.85);
+        await expect(card(page)).toHaveCSS("pointer-events", "auto");
+        await from(page).click();
+        await expect(box(page)).toBeVisible();
+        await page.mouse.move(640, 5);
+        for (let i = 0; i < 12; i++) {
+          await page.mouse.wheel(0, -200);
+          await page.waitForTimeout(60);
+        }
+        await expect(card(page)).toHaveCSS("pointer-events", "none");
+        await expect(box(page)).toBeHidden();
+      });
+
+      test("reduced motion opens it in one step", async ({ page }) => {
+        await page.emulateMedia({ reducedMotion: "reduce" });
+        await page.setViewportSize({ width: 1280, height: 720 });
+        await page.goto("/");
+        // Where the tile is on screen but the picker would not fit below it
+        // (so Playwright does not scroll before it clicks).
+        await page.evaluate(() => {
+          const top = document
+            .querySelector("[data-picker-scope]")!
+            .getBoundingClientRect().top;
+          window.scrollBy({ top: top - 420 });
+        });
+        await from(page).click();
+        await expect(box(page)).toBeVisible();
+        const scopeTop = await page
+          .locator("[data-picker-scope]")
+          .evaluate((el) => el.getBoundingClientRect().top);
+        expect(scopeTop).toBeGreaterThanOrEqual(await headerBottom(page));
+        const tileTop = await from(page).evaluate(
+          (el) => el.getBoundingClientRect().top,
+        );
+        expect(tileTop).toBeLessThan(720 / 2);
+      });
+    });
+
     test("arriving by a link from another page starts the film too", async ({
       page,
     }) => {
