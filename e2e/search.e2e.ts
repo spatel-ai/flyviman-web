@@ -425,16 +425,23 @@ test("a charter search shows empty legs on the route, each with a labelled price
     ).data[0].id as string;
   const [goa, mumbai] = [await location("GOI"), await location("BOM")];
   const at = (days: number, hour: number) => inDays(days, hour).toISOString();
+  // The strip shows the five nearest offers, exact route first, then by how
+  // far the window is from the search. Earlier runs leave Goa to Mumbai
+  // offers on day 10 too, so each run gets a one-minute window of its own
+  // (a different minute of 00:00 to 10:00 UTC, clear of the 12:00 to 14:00
+  // windows older runs used) and searches inside it: only this offer is
+  // zero away, so it always comes first.
+  const from = inDays(10, 0);
+  from.setUTCMinutes(Math.floor(Date.now() / 60_000) % 600);
+  const to = new Date(from.getTime() + 60_000);
   const created = await operator.request.post(`${API_URL}operator/empty-legs`, {
     headers: await csrf(operator),
     data: {
       aircraftId,
       originId: goa,
       destinationId: mumbai,
-      // A window of its own on day 10, more than the search window from the
-      // day 6 and 7 offers other tests leave, so they never crowd it out.
-      departureFrom: at(10, 12),
-      departureTo: at(10, 14),
+      departureFrom: from.toISOString(),
+      departureTo: to.toISOString(),
       seatsAvailable: 6,
       priceMinor: 18_500_000,
       validUntil: at(5, 12),
@@ -461,7 +468,7 @@ test("a charter search shows empty legs on the route, each with a labelled price
     data: {
       originId: goa,
       destinationId: mumbai,
-      departureAt: at(10, 13),
+      departureAt: new Date(from.getTime() + 30_000).toISOString(),
       passengerCount: 3,
     },
   });
