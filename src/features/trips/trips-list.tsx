@@ -29,10 +29,15 @@ export function TripsList() {
     queryKey: queryKeys.trips(view, page),
     queryFn: async () => {
       const { data, meta } = await apiFetch<Trip[]>("me/bookings", {
-        query: { view, page, pageSize: PAGE_SIZE },
+        query: {
+          view,
+          page,
+          pageSize: PAGE_SIZE,
+          sort: view === "upcoming" ? "departure_asc" : "departure_desc",
+        },
       });
-      // The API pages by creation time and has no sort option, so this orders
-      // the fetched page only (departure: soonest first, past: newest first).
+      // The API orders across pages (soonest first, past: latest first); the
+      // sort here is a second pass over the page.
       return {
         items: sortByDeparture(
           data,

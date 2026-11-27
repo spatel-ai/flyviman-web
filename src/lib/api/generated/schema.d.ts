@@ -1656,7 +1656,7 @@ export interface paths {
       path?: never;
       cookie?: never;
     };
-    /** List own offers, newest first */
+    /** List own offers, newest first or by departure */
     get: operations["OperatorEmptyLegsController_list"];
     put?: never;
     /**
@@ -10989,6 +10989,8 @@ export interface operations {
         page?: number;
         pageSize?: number;
         status?: components["schemas"]["EmptyLegStatus"];
+        /** @description `created_desc`: newest first (the default). `departure_asc` / `departure_desc`: by the first departure, soonest or latest first, across all pages; rows with no departure time come last. Ties are broken by id, so paging is stable. */
+        sort?: "created_desc" | "departure_asc" | "departure_desc";
       };
       header?: never;
       path?: never;
@@ -12042,6 +12044,8 @@ export interface operations {
       query?: {
         page?: number;
         pageSize?: number;
+        /** @description `created_desc`: newest first (the default). `departure_asc` / `departure_desc`: by the first departure, soonest or latest first, across all pages; rows with no departure time come last. Ties are broken by id, so paging is stable. */
+        sort?: "created_desc" | "departure_asc" | "departure_desc";
         /** @description `upcoming`: bookings still in progress (requested up to scheduled). `past`: completed, cancelled, expired, declined or unavailable. Decided by status, not by the departure time. */
         view?: "upcoming" | "past";
       };
@@ -12452,6 +12456,8 @@ export interface operations {
       query?: {
         page?: number;
         pageSize?: number;
+        /** @description `created_desc`: newest first (the default). `departure_asc` / `departure_desc`: by the first departure, soonest or latest first, across all pages; rows with no departure time come last. Ties are broken by id, so paging is stable. */
+        sort?: "created_desc" | "departure_asc" | "departure_desc";
         /** @description Left out: the requests waiting for you (`OPERATOR_PENDING`, `CLARIFICATION_REQUESTED`). */
         status?: components["schemas"]["BookingStatus"];
         aircraftId?: string;
@@ -12622,6 +12628,8 @@ export interface operations {
       query?: {
         page?: number;
         pageSize?: number;
+        /** @description `created_desc`: newest first (the default). `departure_asc` / `departure_desc`: by the first departure, soonest or latest first, across all pages; rows with no departure time come last. Ties are broken by id, so paging is stable. */
+        sort?: "created_desc" | "departure_asc" | "departure_desc";
         /** @description Left out: the upcoming trips (`CONFIRMED`, `SCHEDULED`). Any status may be asked for. */
         status?: components["schemas"]["BookingStatus"];
         aircraftId?: string;

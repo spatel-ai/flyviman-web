@@ -74,12 +74,18 @@ function startOfDay(day: string, plusDays = 0): string {
 }
 
 /** The query for `GET operator/bookings`. `to` includes the whole last day. */
+/** Finished trips read latest first, the rest soonest first. */
+export function finishedStatus(filter: BookingFilter): boolean {
+  return filter.status === "COMPLETED" || filter.status === "CANCELLED";
+}
+
 export function listQuery(filter: BookingFilter) {
   return {
     status: filter.status === "upcoming" ? undefined : filter.status,
     aircraftId: filter.aircraftId || undefined,
     departureFrom: filter.from ? startOfDay(filter.from) : undefined,
     departureTo: filter.to ? startOfDay(filter.to, 1) : undefined,
+    sort: finishedStatus(filter) ? "departure_desc" : "departure_asc",
     page: filter.page,
     pageSize: PAGE_SIZE,
   };

@@ -20,11 +20,16 @@ function useMinuteClock(): number {
  */
 export function PayDeadline({
   holdExpiresAt,
+  status,
 }: {
   holdExpiresAt: string | null | undefined;
+  /** Only an `AWAITING_PAYMENT` booking has a pay-by time: a balance due on a
+   * confirmed booking is held until the trip ends. */
+  status: string;
 }) {
   const now = useMinuteClock();
-  const deadline = payDeadline(holdExpiresAt, now);
+  const deadline =
+    status === "AWAITING_PAYMENT" ? payDeadline(holdExpiresAt, now) : null;
   if (!deadline) return null;
   return (
     <div className="flex flex-col gap-1" data-testid="pay-deadline">

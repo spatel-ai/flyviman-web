@@ -22,6 +22,7 @@ import {
   type BookingFilter,
   DEFAULT_FILTER,
   isFiltered,
+  finishedStatus,
   listQuery,
   PAGE_SIZE,
   parseFilter,
@@ -55,14 +56,11 @@ export function BookingsList() {
     );
   }
 
-  // The API pages by creation time and has no sort option: this orders the
-  // fetched page only. Finished trips read newest first, the rest soonest first.
+  // The API orders across pages (`sort` in `listQuery`); this is a second pass.
   const rows = sortByDeparture(
     data?.data ?? [],
     (row) => row.legs[0]?.departureAt,
-    filter.status === "COMPLETED" || filter.status === "CANCELLED"
-      ? "latest"
-      : "soonest",
+    finishedStatus(filter) ? "latest" : "soonest",
   );
   const filtered = isFiltered(filter);
 

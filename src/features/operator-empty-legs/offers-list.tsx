@@ -29,7 +29,7 @@ export function OfferList() {
     queryKey: [...queryKeys.operatorEmptyLegs, "list", page] as const,
     queryFn: () =>
       apiFetch<OperatorEmptyLeg[]>("operator/empty-legs", {
-        query: { page, pageSize: PAGE_SIZE },
+        query: { page, pageSize: PAGE_SIZE, sort: "departure_asc" },
       }),
   });
 
@@ -41,7 +41,8 @@ export function OfferList() {
       </p>
     );
   }
-  // Orders the fetched page only: the API has no sort option.
+  // The API orders by departure across pages. The status grouping is still
+  // done here, so it covers the fetched page only.
   const rows = sortOffers(offers.data.data);
   return (
     <div className="mt-6 flex flex-col gap-4">

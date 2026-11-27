@@ -58,8 +58,7 @@ export function RequestsList() {
     );
   }
 
-  // The API pages by creation time and has no sort option: this orders the
-  // fetched page only, soonest departure first.
+  // The API orders across pages (`sort` in `listQuery`); this is a second pass.
   const rows = sortByDeparture(
     data?.data ?? [],
     (row) => row.legs[0]?.departureAt,

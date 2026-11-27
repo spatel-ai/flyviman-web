@@ -51,6 +51,7 @@ export function listQuery(filter: RequestFilter) {
   return {
     status: filter.tab === "waiting" ? undefined : filter.tab,
     aircraftId: filter.aircraftId || undefined,
+    sort: "departure_asc",
     page: filter.page,
     pageSize: PAGE_SIZE,
   };
@@ -124,9 +125,10 @@ export function showsHold(request: Pick<Detail, "status">): boolean {
  * API's own price type (never a type of our choosing). `note` undefined
  * keeps the price type's standard note.
  */
-export function requestPriceCopy(
-  request: Pick<Detail, "status" | "price">,
-): { name: string; note?: string } {
+export function requestPriceCopy(request: Pick<Detail, "status" | "price">): {
+  name: string;
+  note?: string;
+} {
   const type = request.price?.priceType;
   if (type === "CONFIRMED") {
     return { name: "Agreed price", note: "The price agreed for this trip." };

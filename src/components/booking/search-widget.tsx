@@ -88,8 +88,11 @@ const TRIP_TYPES: { value: TripType; label: string }[] = [
 export function SearchWidget({
   initial = {},
   compact = false,
+  onServiceChange,
 }: {
   initial?: WidgetInitial;
+  /** Told when the visitor picks another service tab. */
+  onServiceChange?: (service: Service) => void;
   /** Tighter spacing, for the results page. */
   compact?: boolean;
 }) {
@@ -143,6 +146,7 @@ export function SearchWidget({
 
   function chooseService(next: Service) {
     setService(next);
+    onServiceChange?.(next);
     if (next === "charter" || next === "helicopter") setValue("kind", next);
   }
 

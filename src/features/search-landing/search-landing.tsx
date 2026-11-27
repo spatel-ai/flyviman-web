@@ -51,11 +51,15 @@ export function SearchLanding() {
   const [initial, setInitial] = useState<WidgetInitial>(() =>
     initialFrom(params),
   );
+  const [selected, setSelected] = useState<Service>(
+    () => initial.service ?? "charter",
+  );
   const [version, setVersion] = useState(0);
   const widget = useRef<HTMLDivElement>(null);
 
   function prefill(next: WidgetInitial) {
     setInitial(next);
+    setSelected(next.service ?? "charter");
     setVersion((value) => value + 1);
     widget.current?.scrollIntoView({ block: "start", behavior: "smooth" });
   }
@@ -63,7 +67,7 @@ export function SearchLanding() {
   const { popularRoutes, aircraft } = SEARCH_LANDING;
   // Scheduled flights are not private charter: own headline, and no charter
   // estimates in the popular routes (W1-005).
-  const scheduled = initial.service === "flights";
+  const scheduled = selected === "flights";
   const hero = scheduled ? SEARCH_LANDING.scheduledHero : SEARCH_LANDING.hero;
 
   return (
@@ -106,7 +110,11 @@ export function SearchLanding() {
           ref={widget}
           className="search-hero-card relative mx-auto -mt-28 w-full max-w-wide scroll-mt-24 px-4 md:px-6"
         >
-          <SearchWidget key={version} initial={initial} />
+          <SearchWidget
+            key={version}
+            initial={initial}
+            onServiceChange={setSelected}
+          />
         </div>
       </section>
 
