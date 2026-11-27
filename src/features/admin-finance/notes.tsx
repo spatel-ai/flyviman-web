@@ -1,9 +1,12 @@
+import { LockedState } from "@/components/shared/locked-state";
+
 /** For operations, decided from the session before anything loads. */
 export function FinanceOnly() {
   return (
-    <p className="mt-6 max-w-reading text-body text-muted">
-      Payments and refunds are managed by finance. Ask a finance administrator
-      if something here needs attention.
-    </p>
+    <LockedState
+      heading="Managed by finance"
+      reason="Payments and refunds are managed by finance. Ask a finance administrator if something here needs attention."
+      next={{ href: "/admin", label: "Back to dashboard" }}
+    />
   );
 }

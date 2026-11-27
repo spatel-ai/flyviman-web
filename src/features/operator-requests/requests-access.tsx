@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { Card } from "@/components/ui/card";
+import { LockedState } from "@/components/shared/locked-state";
 import type { Schemas } from "@/lib/api/types";
 import { serverGet } from "@/lib/auth/server-api";
 import { can, isOperatorAdmin } from "@/lib/operator-access";
@@ -26,20 +26,22 @@ export async function RequestsAccess({
   if (allowed && (!approvedOnly || operator.status === "APPROVED"))
     return <>{children}</>;
   return (
-    <>
-      <h1 className="text-h2">{title}</h1>
-      <Card variant="raised" className="mt-6">
-        <h2 className="text-title">
-          {allowed
-            ? "Available once you are approved"
-            : "Not part of your access"}
-        </h2>
-        <p className="mt-2 text-muted">
-          {allowed
-            ? "Requests for your aircraft appear here once Flyviman has approved your organisation."
-            : "Your administrator can give you the Manage bookings permission."}
-        </p>
-      </Card>
-    </>
+    <LockedState
+      title={title}
+      heading={
+        allowed ? "Available once you are approved" : "Not part of your access"
+      }
+      reason={
+        allowed
+          ? "Requests for your aircraft appear here once Flyviman has approved your organisation."
+          : "Your administrator can give you the Manage bookings permission."
+      }
+      next={allowedNext(allowed)}
+    />
   );
 }
+
+const allowedNext = (allowed: boolean) =>
+  allowed
+    ? { href: "/operator/onboarding", label: "Company and documents" }
+    : { href: "/operator", label: "Back to dashboard" };

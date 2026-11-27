@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { EmptyState } from "@/components/shared/empty-state";
+import { ForbiddenState } from "@/components/shared/locked-state";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/dialog";
@@ -21,7 +22,7 @@ import {
 } from "@/components/ui/table";
 import { useToast } from "@/components/ui/toast";
 import { apiFetch } from "@/lib/api/client";
-import { ApiError } from "@/lib/api/errors";
+import { ApiError, isForbiddenError } from "@/lib/api/errors";
 import { messageFor } from "@/lib/api/messages";
 import { queryKeys } from "@/lib/api/query-keys";
 import type { Schemas } from "@/lib/api/types";
@@ -150,6 +151,9 @@ export function UsersList() {
   const users = data?.data ?? [];
   const columns = manages ? [...COLUMNS, "Actions"] : COLUMNS;
   const presentation = target ? ROW_ACTIONS[target.action] : null;
+
+  // The API refused this role: say so, with no filters and no Retry.
+  if (isError && isForbiddenError(error)) return <ForbiddenState />;
 
   return (
     <div className="mt-6 flex flex-col gap-6">

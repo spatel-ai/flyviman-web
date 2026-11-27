@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { EmptyState } from "@/components/shared/empty-state";
+import { ForbiddenState } from "@/components/shared/locked-state";
 import { PriceLabel } from "@/components/shared/price-label";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { buttonClasses } from "@/components/ui/button-classes";
@@ -13,6 +14,7 @@ import { Pagination } from "@/components/ui/table";
 import { routeLabel, windowLabel } from "@/lib/empty-legs/format";
 import type { OperatorEmptyLeg } from "@/lib/empty-legs/types";
 import { apiFetch } from "@/lib/api/client";
+import { isForbiddenError } from "@/lib/api/errors";
 import { messageFor } from "@/lib/api/messages";
 import { queryKeys } from "@/lib/api/query-keys";
 import { useOperatorApproved } from "@/lib/operator";
@@ -34,6 +36,7 @@ export function OfferList() {
 
   if (offers.isPending) return <Skeleton className="mt-6 h-40" />;
   if (offers.isError) {
+    if (isForbiddenError(offers.error)) return <ForbiddenState />;
     return (
       <p className="mt-6 text-danger" role="alert">
         {messageFor(offers.error)}

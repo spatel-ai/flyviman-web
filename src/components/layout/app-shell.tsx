@@ -1,6 +1,7 @@
 import type { Role } from "@/lib/api/types";
 import { MobileNav } from "./mobile-nav";
 import { NavLinks, type NavItem } from "./nav-links";
+import { SidebarScroll } from "./sidebar-scroll";
 import { UserMenu } from "./user-menu";
 
 export type { NavItem };
@@ -24,17 +25,14 @@ export function AppShell({ surface, nav, user, children }: AppShellProps) {
       >
         Skip to content
       </a>
-      <aside className="sticky top-0 hidden h-screen w-60 shrink-0 flex-col self-start overflow-y-auto border-r border-border/60 bg-surface-raised md:flex">
+      <aside className="sticky top-0 hidden h-screen w-60 shrink-0 flex-col self-start overflow-hidden border-r border-border/60 bg-surface-raised md:flex">
         <div className="flex h-14 shrink-0 items-center gap-2 px-5">
           <span className="text-title tracking-tight">Flyviman</span>
           <span className="text-caption text-muted">{surface}</span>
         </div>
-        <nav
-          aria-label={`${surface} navigation`}
-          className="flex-1 px-3 pb-6 pt-2"
-        >
+        <SidebarScroll label={`${surface} navigation`}>
           <NavLinks items={nav} />
-        </nav>
+        </SidebarScroll>
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">

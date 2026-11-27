@@ -25,11 +25,21 @@ export function sectionsOf(
   return sections;
 }
 
-/** Longest matching item wins, so "/admin" is not active on "/admin/users". */
+/**
+ * Longest matching item wins, so "/admin/operators" is active on
+ * "/admin/operators/123". A portal's home ("/admin", "/operator") is every
+ * page's prefix, so it matches only itself: on a page the user's navigation
+ * does not list (a refused page), nothing is marked rather than "Dashboard".
+ */
 export function activeHref(pathname: string, items: NavItem[]): string | null {
   const matches = items
     .map((item) => item.href)
-    .filter((href) => pathname === href || pathname.startsWith(`${href}/`));
+    .filter(
+      (href) =>
+        pathname === href ||
+        (href.split("/").filter(Boolean).length > 1 &&
+          pathname.startsWith(`${href}/`)),
+    );
   return matches.sort((a, b) => b.length - a.length)[0] ?? null;
 }
 

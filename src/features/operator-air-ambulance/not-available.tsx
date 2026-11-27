@@ -1,4 +1,4 @@
-import { Card } from "@/components/ui/card";
+import { LockedState } from "@/components/shared/locked-state";
 
 /**
  * For operator staff, and for an organisation that is not approved: the
@@ -7,18 +7,19 @@ import { Card } from "@/components/ui/card";
  */
 export function MissionsNotAvailable({ staff }: { staff: boolean }) {
   return (
-    <>
-      <h1 className="text-h2">Air ambulance</h1>
-      <Card variant="raised" className="mt-6">
-        <h2 className="text-title">
-          {staff ? "For your administrator" : "Available once approved"}
-        </h2>
-        <p className="mt-2 text-muted">
-          {staff
-            ? "Air ambulance missions hold medical details, so only your organisation's administrator sees them."
-            : "Air ambulance missions are shown to administrators of an approved operator."}
-        </p>
-      </Card>
-    </>
+    <LockedState
+      title="Air ambulance"
+      heading={staff ? "For your administrator" : "Available once approved"}
+      reason={
+        staff
+          ? "Air ambulance missions hold medical details, so only your organisation's administrator sees them."
+          : "Air ambulance missions are shown to administrators of an approved operator."
+      }
+      next={
+        staff
+          ? { href: "/operator", label: "Back to dashboard" }
+          : { href: "/operator/onboarding", label: "Company and documents" }
+      }
+    />
   );
 }

@@ -34,3 +34,15 @@ export function isNotFoundError(error: unknown): boolean {
       error.code === "VALIDATION_ERROR")
   );
 }
+
+/**
+ * The API refused this user (403): their role or access does not cover it.
+ * Retrying cannot help, so a page shows the locked-state card, not an error
+ * with a Retry button.
+ */
+export function isForbiddenError(error: unknown): boolean {
+  return (
+    error instanceof ApiError &&
+    (error.status === 403 || error.code === "FORBIDDEN")
+  );
+}

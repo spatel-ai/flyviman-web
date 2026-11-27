@@ -2,7 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
-import { useState } from "react";
+import { useId, useState } from "react";
 import { EmptyState } from "@/components/shared/empty-state";
 import { ExpiryBadge } from "@/components/shared/expiry-badge";
 import { RecordNotFound } from "@/components/shared/record-not-found";
@@ -167,6 +167,7 @@ function DecisionActions({
 }) {
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const blockerId = useId();
   const [open, setOpen] = useState<OperatorAction | null>(null);
   const [problem, setProblem] = useState<string | null>(null);
 
@@ -205,25 +206,34 @@ function DecisionActions({
   return (
     <div className="flex max-w-full flex-col gap-3 sm:items-end">
       {actions.length > 0 ? (
-        <div className="flex flex-wrap gap-2">
-          {actions.map((action) => (
-            <Button
-              key={action}
-              variant={ACTIONS[action].primary ? "primary" : "secondary"}
-              className="h-10"
-              disabled={action === "approve" && blocker !== null}
-              onClick={() => {
-                setProblem(null);
-                setOpen(action);
-              }}
-            >
-              {ACTIONS[action].label}
-            </Button>
-          ))}
+        <div className="flex flex-col gap-1.5 sm:items-end">
+          <div className="flex flex-wrap gap-2">
+            {actions.map((action) => (
+              <Button
+                key={action}
+                variant={ACTIONS[action].primary ? "primary" : "secondary"}
+                className="h-10"
+                disabled={action === "approve" && blocker !== null}
+                aria-describedby={
+                  action === "approve" && blocker !== null
+                    ? blockerId
+                    : undefined
+                }
+                onClick={() => {
+                  setProblem(null);
+                  setOpen(action);
+                }}
+              >
+                {ACTIONS[action].label}
+              </Button>
+            ))}
+          </div>
+          {actions.includes("approve") && blocker ? (
+            <p id={blockerId} className="text-body-sm text-muted sm:text-right">
+              {blocker}
+            </p>
+          ) : null}
         </div>
-      ) : null}
-      {actions.includes("approve") && blocker ? (
-        <p className="text-body-sm text-muted sm:text-right">{blocker}</p>
       ) : null}
       {problem ? (
         <p role="alert" className="text-body-sm text-danger">

@@ -17,6 +17,25 @@ describe("activeHref", () => {
     expect(activeHref("/admin/operators/123", ITEMS)).toBe("/admin/operators");
   });
 
+  it("marks nothing on a page the navigation does not list, not the dashboard", () => {
+    expect(activeHref("/admin/payments", ITEMS)).toBeNull();
+    expect(
+      activeHref("/operator/empty-legs/new", [
+        { href: "/operator", label: "Dashboard" },
+        { href: "/operator/aircraft", label: "Fleet" },
+      ]),
+    ).toBeNull();
+  });
+
+  it("marks the nearest listed section for a page inside it", () => {
+    expect(
+      activeHref("/operator/aircraft/new", [
+        { href: "/operator", label: "Dashboard" },
+        { href: "/operator/aircraft", label: "Fleet" },
+      ]),
+    ).toBe("/operator/aircraft");
+  });
+
   it("does not match a path that merely starts with the same letters", () => {
     expect(activeHref("/administrator", ITEMS)).toBeNull();
   });

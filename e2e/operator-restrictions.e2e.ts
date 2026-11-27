@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
-import { approvedAircraft } from "./support/operators";
+import { uniqueEmail } from "./support/api";
+import { approvedAircraft, registerOperator } from "./support/operators";
 
 /** Operator and aircraft restrictions (M5 slice 4a). */
 
@@ -75,4 +76,36 @@ test("an operator administrator restricts the whole organisation", async ({
   await setRestrictions(section, page);
   await page.reload();
   await expect(section.getByLabel("Notice (hours)")).toHaveValue("2");
+});
+
+test("an operator that is not approved sees the locked card, not a form that can only fail", async ({
+  page,
+  isMobile,
+}) => {
+  test.skip(isMobile, "The navigation is a sheet on phones");
+  await registerOperator(page, "Locked Wings Pvt Ltd", uniqueEmail("locked"));
+  for (const path of [
+    "/operator/aircraft/new",
+    "/operator/empty-legs/new",
+    "/operator/pricing",
+    "/operator/availability",
+    "/operator/team",
+  ]) {
+    await page.goto(path);
+    const main = page.getByRole("main");
+    await expect(
+      main.getByRole("heading", { name: "Available once you are approved" }),
+      path,
+    ).toBeVisible();
+    await expect(
+      main.getByRole("link", { name: "Company and documents" }),
+    ).toBeVisible();
+    await expect(main.getByRole("form")).toHaveCount(0);
+    await expect(main.getByRole("button", { name: "Save" })).toHaveCount(0);
+    await expect(
+      page
+        .getByRole("navigation", { name: "Operator navigation" })
+        .locator('[aria-current="page"]'),
+    ).toHaveCount(0);
+  }
 });
