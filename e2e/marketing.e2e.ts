@@ -341,7 +341,7 @@ test("the header fits a 320 px wide phone", async ({ page }) => {
       document.documentElement.clientWidth,
   );
   expect(overflow).toBeLessThanOrEqual(0);
-  await expect(page.getByRole("button", { name: "More" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Menu" })).toBeVisible();
   await expect(
     page
       .getByRole("navigation", { name: "Primary" })
