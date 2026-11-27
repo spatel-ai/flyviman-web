@@ -64,7 +64,7 @@ export function PilotsPage() {
                       priceType="ESTIMATE"
                       note={courses.feeNote}
                     />
-                    <div className="mt-auto">
+                    <div className="-ml-5 mt-auto">
                       <EnquiryLink
                         topic="PILOT_TRAINING"
                         label={`${courses.action}: ${course.name.toLowerCase()}`}

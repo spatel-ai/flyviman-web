@@ -7,7 +7,7 @@
  */
 export const PILOTS = {
   hero: {
-    overline: "FlyViman aviation",
+    overline: "Flyviman aviation",
     title: "For pilots",
     lead: "Job assistance, pilot courses and regulatory trainings, for pilots starting out and those already flying.",
     image: "cockpitNight",

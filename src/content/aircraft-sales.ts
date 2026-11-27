@@ -24,11 +24,11 @@ export const AIRCRAFT_SALES = {
   hero: {
     overline: "Sales & purchase",
     title: "Aircraft and helicopters for sale",
-    lead: "Business jets and helicopters offered through FlyViman. Ask about any of them and our team will come back to you with the details.",
+    lead: "Business jets and helicopters offered through Flyviman. Ask about any of them and our team will come back to you with the details.",
     image: "charterJetDusk",
   },
   categories: [
-    { id: "AIRCRAFT", title: "Aircrafts for sale" },
+    { id: "AIRCRAFT", title: "Aircraft for sale" },
     { id: "HELICOPTER", title: "Helicopters for sale" },
   ],
   action: "Enquire now",

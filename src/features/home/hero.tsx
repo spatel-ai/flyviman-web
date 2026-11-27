@@ -13,6 +13,8 @@ import { SearchWidget } from "@/components/booking/search-widget";
 import { IMAGES } from "@/content/image-credits";
 import { HERO, type HeroSequence, type HeroSet } from "./hero-config";
 import {
+  afterIdle,
+  afterIntent,
   coverRect,
   drawFrame,
   smoothingAfter,
@@ -232,6 +234,8 @@ export function Hero() {
           sequence,
           frames: loadFrames({
             ...HERO.loading,
+            startAfter: afterIdle(),
+            bulkAfter: afterIntent(),
             decodeAhead: sequence.decodeAhead,
             decodeBehind: sequence.decodeBehind,
             count: sequence.count,
@@ -310,6 +314,7 @@ export function Hero() {
             // largest paint. Fetched for still visitors too: the server
             // cannot know who they are.
             preload
+            fetchPriority="high"
             className="hero-poster hero-poster--first"
             onError={() => setPosterFailed(true)}
           />
@@ -319,8 +324,11 @@ export function Hero() {
             alt=""
             fill
             unoptimized
-            // The still hero, on screen at once for those who see it.
-            loading="eager"
+            // The still hero, for those who do not get the film: the style
+            // sheet hides it where the film plays, so it is fetched only
+            // when it is shown (a lazy image that is not displayed is not
+            // requested).
+            loading="lazy"
             className="hero-poster hero-poster--last"
             onError={() => setPosterFailed(true)}
           />

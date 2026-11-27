@@ -367,3 +367,76 @@ test("on a phone the menu button is 'Menu' and its sheet has Search and the char
     sheet.getByRole("link", { name: "Request a charter" }),
   ).toHaveAttribute("href", "/search?service=charter");
 });
+
+test.describe("aircraft sales and charter cards (W1-032, W1-033, W1-034)", () => {
+  test("headings, brand spelling and missing data on /aircraft-sales", async ({
+    page,
+  }) => {
+    await page.goto("/aircraft-sales");
+
+    await expect(
+      page.getByRole("heading", { level: 2, name: "Aircraft for sale" }),
+    ).toBeVisible();
+    await expect(page.getByText(/Aircrafts for sale/)).toHaveCount(0);
+    await expect(page.getByText(/FlyViman/)).toHaveCount(0);
+    // A zero total time is a missing figure, never shown as a fact.
+    await expect(page.getByText(/^0 hrs$/)).toHaveCount(0);
+    await expect(
+      page.getByText("Total time: Not stated").first(),
+    ).toBeVisible();
+    // Every card has the same rows.
+    const cards = page.locator("main li:has(h3)");
+    const count = await cards.count();
+    expect(count).toBeGreaterThan(0);
+    for (let i = 0; i < count; i += 1) {
+      await expect(cards.nth(i).getByText(/^SN/)).toHaveCount(1);
+    }
+  });
+
+  test("the helicopters are paged, twelve at a time", async ({ page }) => {
+    await page.goto("/aircraft-sales");
+    const helicopters = page.locator(
+      'section[aria-labelledby="sales-HELICOPTER"]',
+    );
+    await expect(helicopters.locator("h3")).toHaveCount(12);
+    await expect(helicopters.getByText(/^Showing 12 of \d+$/)).toBeVisible();
+
+    await helicopters.getByRole("button", { name: "Show more" }).click();
+    await expect(helicopters.locator("h3")).toHaveCount(24);
+    await helicopters.getByRole("button", { name: "Show more" }).click();
+    await expect(helicopters.locator("h3")).not.toHaveCount(24);
+    await expect(
+      helicopters.getByRole("button", { name: "Show more" }),
+    ).toHaveCount(0);
+  });
+
+  test("a stated total time is shown on the detail page, a zero is not", async ({
+    page,
+  }) => {
+    await page.goto("/aircraft-sales/gulfstream-g550");
+    await expect(page.getByText("5236 hrs")).toBeVisible();
+  });
+
+  test("in-card links line up with the card text, and charter cards have distinct photos", async ({
+    page,
+  }) => {
+    await page.goto("/charter");
+    const card = page.locator("main li:has(h3)", { hasText: "Group charter" });
+    const title = await card.getByRole("heading").boundingBox();
+    // The link's label, not its padded button, starts at the text's edge.
+    const link = await card
+      .getByRole("link", { name: /Send an enquiry/ })
+      .boundingBox();
+    expect(Math.abs(link!.x + 20 - title!.x)).toBeLessThanOrEqual(1.5);
+
+    const sources = await page
+      .locator("main ul li img")
+      .evaluateAll((imgs) =>
+        imgs.map((img) =>
+          new URL((img as HTMLImageElement).src).searchParams.get("url"),
+        ),
+      );
+    expect(sources).toHaveLength(8);
+    expect(new Set(sources).size).toBe(8);
+  });
+});
