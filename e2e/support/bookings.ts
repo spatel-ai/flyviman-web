@@ -102,13 +102,13 @@ async function locationId(page: Page, q: string) {
 }
 
 /** Mumbai to Goa in four days for two; returns this aircraft's result. */
-export async function searchFor(page: Page, aircraftId: string) {
+export async function searchFor(page: Page, aircraftId: string, days = 4) {
   const response = await page.request.post(`${API_URL}search/charter`, {
     headers: await csrf(page),
     data: {
       originId: await locationId(page, "BOM"),
       destinationId: await locationId(page, "GOI"),
-      departureAt: inDays(4).toISOString(),
+      departureAt: inDays(days).toISOString(),
       passengerCount: 2,
     },
   });

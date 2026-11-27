@@ -16,6 +16,7 @@ import { apiFetch } from "@/lib/api/client";
 import { messageFor } from "@/lib/api/messages";
 import { queryKeys } from "@/lib/api/query-keys";
 import { useOperatorApproved } from "@/lib/operator";
+import { sortOffers } from "@/lib/sort/departure-order";
 
 const PAGE_SIZE = 20;
 
@@ -40,7 +41,8 @@ export function OfferList() {
       </p>
     );
   }
-  const rows = offers.data.data;
+  // Orders the fetched page only: the API has no sort option.
+  const rows = sortOffers(offers.data.data);
   return (
     <div className="mt-6 flex flex-col gap-4">
       {approved ? (

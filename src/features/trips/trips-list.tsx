@@ -15,6 +15,7 @@ import { apiFetch } from "@/lib/api/client";
 import { queryKeys } from "@/lib/api/query-keys";
 import type { Schemas } from "@/lib/api/types";
 import { formatDateTime } from "@/lib/format/date";
+import { sortByDeparture } from "@/lib/sort/departure-order";
 
 type Trip = Schemas["TripSummaryDto"];
 type View = "upcoming" | "past";
@@ -30,7 +31,16 @@ export function TripsList() {
       const { data, meta } = await apiFetch<Trip[]>("me/bookings", {
         query: { view, page, pageSize: PAGE_SIZE },
       });
-      return { items: data, total: meta.total ?? data.length };
+      // The API pages by creation time and has no sort option, so this orders
+      // the fetched page only (departure: soonest first, past: newest first).
+      return {
+        items: sortByDeparture(
+          data,
+          (trip) => trip.departureAt,
+          view === "upcoming" ? "soonest" : "latest",
+        ),
+        total: meta.total ?? data.length,
+      };
     },
   });
 
@@ -44,7 +54,7 @@ export function TripsList() {
     >
       <TabsList aria-label="Trips">
         <TabsTrigger value="upcoming">Upcoming</TabsTrigger>
-        <TabsTrigger value="past">Past</TabsTrigger>
+        <TabsTrigger value="past">Past and closed</TabsTrigger>
       </TabsList>
       <TabsContent value={view} className="mt-6 flex flex-col gap-4">
         {trips.isPending ? (
