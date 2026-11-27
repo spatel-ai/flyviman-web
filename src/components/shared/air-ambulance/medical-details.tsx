@@ -15,9 +15,18 @@ function yesNo(value: boolean): string {
   return value ? "Yes" : "No";
 }
 
-function Row({ label, value }: { label: string; value: string | null }) {
+function Row({
+  label,
+  value,
+  wide,
+}: {
+  label: string;
+  value: string | null;
+  /** Spans both columns; a `dl` may hold only `div`s of `dt`/`dd`, so no wrapper. */
+  wide?: boolean;
+}) {
   return (
-    <div>
+    <div className={wide ? "sm:col-span-2" : undefined}>
       <dt className="text-body-sm text-muted">{label}</dt>
       <dd className="break-words whitespace-pre-wrap">
         {value ?? <span className="text-muted">Not given</span>}
@@ -55,18 +64,14 @@ export function MedicalDetails({ medical }: { medical: Medical }) {
   return (
     <div className="flex flex-col gap-6">
       <dl className="grid gap-4 sm:grid-cols-2">
-        <div className="sm:col-span-2">
-          <Row label="Condition" value={medical.patientCondition} />
-        </div>
+        <Row wide label="Condition" value={medical.patientCondition} />
         <Row label="Mobility" value={mobilityLabel(medical.mobility)} />
         <Row label="Stretcher" value={yesNo(medical.stretcherRequired)} />
         <Row label="Oxygen" value={yesNo(medical.oxygenRequired)} />
         <Row label="Medical staff" value={medical.medicalStaffRequired} />
         <Row label="Equipment" value={medical.equipmentRequired} />
         <Row label="Specialised care" value={medical.specialisedCare} />
-        <div className="sm:col-span-2">
-          <Row label="Notes" value={medical.notes} />
-        </div>
+        <Row wide label="Notes" value={medical.notes} />
       </dl>
       <section aria-labelledby="medical-documents-heading">
         <h3 id="medical-documents-heading" className="text-body font-medium">

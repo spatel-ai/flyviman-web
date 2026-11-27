@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { expect, test, type BrowserContext } from "@playwright/test";
 import { API_URL, expectNoSidewaysScroll, signIn } from "./support/api";
+import { axeViolations, waitForAnimations } from "./support/axe";
 
 /** Banner and questions the content team published, shown to visitors. */
 
@@ -86,4 +87,18 @@ test("a published question shows on the services page after the written ones", a
   } finally {
     await admin(context, `admin/content/faqs/${faq.id}`, { method: "DELETE" });
   }
+});
+
+test("links in running text are underlined, not set apart by colour alone", async ({
+  page,
+}) => {
+  for (const path of ["/legal/image-credits", "/register"]) {
+    await page.goto(path);
+    await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+    await waitForAnimations(page);
+    expect(await axeViolations(page, ["link-in-text-block"]), path).toEqual([]);
+  }
+  await page.goto("/legal/image-credits");
+  const link = page.locator("main p a").first();
+  await expect(link).toHaveCSS("text-decoration-line", "underline");
 });

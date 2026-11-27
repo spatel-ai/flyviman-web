@@ -7,6 +7,7 @@ import {
   signIn,
   uniqueEmail,
 } from "./support/api";
+import { axeViolations, waitForAnimations } from "./support/axe";
 import { csrf } from "./support/operators";
 
 /** Opens the admin navigation (a sheet on phones) and returns it. */
@@ -203,4 +204,15 @@ test("the admin sidebar fades at the bottom while more links are below, and at t
   await expect(top).toHaveCSS("opacity", "1");
   await expect(bottom).toHaveCSS("opacity", "0");
   await expect(page.getByText("Flyviman").first()).toBeInViewport();
+});
+
+test("the roles page links inside its text are underlined", async ({
+  page,
+}) => {
+  await signIn(page, "superAdmin", "/admin/roles");
+  await expect(
+    page.getByRole("heading", { level: 1, name: "Roles and permissions" }),
+  ).toBeVisible();
+  await waitForAnimations(page);
+  expect(await axeViolations(page, ["link-in-text-block"])).toEqual([]);
 });
