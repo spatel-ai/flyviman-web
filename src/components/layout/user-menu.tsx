@@ -8,6 +8,8 @@ import {
   useTheme,
   type Theme,
 } from "@/components/theme/theme-switch";
+import { UnreadBadge } from "@/components/shared/unread-badge";
+import { unreadLabel, useUnreadCount } from "@/lib/api/notifications";
 import { useSignOut } from "@/features/auth/use-sign-out";
 import type { Role } from "@/lib/api/types";
 import { ROLE_LABELS } from "@/lib/auth/roles";
@@ -26,6 +28,7 @@ const ITEM =
 export function UserMenu({ name, role, links = [] }: UserMenuProps) {
   const { signOut, pending } = useSignOut();
   const theme = useTheme();
+  const unread = useUnreadCount();
   const initial = name.replace(/^\+/, "").charAt(0).toUpperCase() || "?";
 
   return (
@@ -33,10 +36,16 @@ export function UserMenu({ name, role, links = [] }: UserMenuProps) {
     // focusable controls stay in the tab order (axe aria-hidden-focus).
     <DropdownMenu.Root modal={false}>
       <DropdownMenu.Trigger
-        aria-label="Account menu"
-        className="flex size-9 items-center justify-center rounded-full bg-accent/10 text-body-sm font-semibold text-accent transition-colors duration-150 ease-standard hover:bg-accent/20"
+        aria-label={unreadLabel("Account menu", unread)}
+        className="relative flex size-9 items-center justify-center rounded-full bg-accent/10 text-body-sm font-semibold text-accent transition-colors duration-150 ease-standard hover:bg-accent/20"
       >
         <span aria-hidden="true">{initial}</span>
+        {unread > 0 ? (
+          <span
+            aria-hidden="true"
+            className="absolute -top-0.5 -right-0.5 size-2.5 rounded-full border-2 border-surface-raised bg-accent-fill"
+          />
+        ) : null}
       </DropdownMenu.Trigger>
       <DropdownMenu.Portal>
         <DropdownMenu.Content
@@ -51,7 +60,19 @@ export function UserMenu({ name, role, links = [] }: UserMenuProps) {
           <DropdownMenu.Separator className="my-1 h-px bg-border/60" />
           {links.map((link) => (
             <DropdownMenu.Item key={link.href} asChild className={ITEM}>
-              <Link href={link.href}>{link.label}</Link>
+              <Link
+                href={link.href}
+                aria-label={
+                  link.href.endsWith("/notifications")
+                    ? unreadLabel(link.label, unread)
+                    : undefined
+                }
+              >
+                {link.label}
+                {link.href.endsWith("/notifications") ? (
+                  <UnreadBadge unread={unread} />
+                ) : null}
+              </Link>
             </DropdownMenu.Item>
           ))}
           <DropdownMenu.Separator className="my-1 h-px bg-border/60" />

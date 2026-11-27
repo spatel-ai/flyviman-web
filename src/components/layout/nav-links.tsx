@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useId } from "react";
+import { UnreadBadge } from "@/components/shared/unread-badge";
+import { unreadLabel, useUnreadCount } from "@/lib/api/notifications";
 import { cn } from "@/lib/utils";
 
 export interface NavItem {
@@ -52,6 +54,7 @@ export function NavLinks({
   onNavigate?: () => void;
 }) {
   const active = activeHref(usePathname(), items);
+  const unread = useUnreadCount();
   const headingId = useId();
   const sections = sectionsOf(items);
   // One heading above one list says nothing: show them only to tell groups apart.
@@ -81,6 +84,11 @@ export function NavLinks({
                     <Link
                       href={item.href}
                       aria-current={current ? "page" : undefined}
+                      aria-label={
+                        item.href.endsWith("/notifications")
+                          ? unreadLabel(item.label, unread)
+                          : undefined
+                      }
                       onClick={onNavigate}
                       className={cn(
                         "flex h-9 items-center rounded-sm px-3 font-medium transition duration-150 ease-standard active:scale-97 motion-reduce:active:scale-100",
@@ -90,6 +98,9 @@ export function NavLinks({
                       )}
                     >
                       {item.label}
+                      {item.href.endsWith("/notifications") ? (
+                        <UnreadBadge unread={unread} />
+                      ) : null}
                     </Link>
                   </li>
                 );

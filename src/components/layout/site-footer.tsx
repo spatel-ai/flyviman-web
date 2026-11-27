@@ -30,7 +30,7 @@ const CONTACT_LINK = `${LINK} inline-flex min-h-11 items-center`;
 export function SiteFooter() {
   // On phones the tab bar covers the foot of the page, so it is padded.
   return (
-    <footer className="site-footer border-t border-border/60 bg-surface max-md:pb-[calc(3.5rem+env(safe-area-inset-bottom))]">
+    <footer className="site-footer print:hidden border-t border-border/60 bg-surface max-md:pb-[calc(3.5rem+env(safe-area-inset-bottom))]">
       <div className="mx-auto flex max-w-wide flex-col gap-8 px-4 py-10 md:px-6 lg:px-8">
         <div className="flex flex-col gap-8 md:flex-row md:items-end md:justify-between">
           {/* Decorative: the header already names the site. Not shown on

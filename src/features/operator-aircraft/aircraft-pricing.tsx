@@ -3,12 +3,13 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { Controller, useFieldArray, useForm } from "react-hook-form";
+import { Controller, useFieldArray, useForm, useWatch } from "react-hook-form";
 import { FormAlert } from "@/components/shared/form-alert";
 import { LoadError } from "@/components/shared/load-error";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
+import { hintWithTyped } from "@/lib/format/money";
 import { LocationField } from "@/components/shared/location-field";
 import { Select } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -104,6 +105,10 @@ function Editor({
     defaultValues: fromAircraftPricing(initial),
   });
   const routes = useFieldArray({ control, name: "routes" });
+  const [hourlyRate, sectorRate] = useWatch({
+    control,
+    name: ["hourlyRate", "sectorRate"],
+  });
   const missingPrice =
     model === "HOURLY"
       ? initial.hourlyRateMinor == null
@@ -155,7 +160,10 @@ function Editor({
       {model === "HOURLY" ? (
         <Input
           label="Hourly rate (₹)"
-          hint="Leave empty to price this aircraft on request."
+          hint={hintWithTyped(
+            "Leave empty to price this aircraft on request.",
+            hourlyRate,
+          )}
           inputMode="decimal"
           error={errors.hourlyRate?.message}
           {...register("hourlyRate")}
@@ -164,7 +172,10 @@ function Editor({
       {model === "SECTOR" ? (
         <Input
           label="Price per flight (₹)"
-          hint="One price for each flight of the customer. Leave empty to price this aircraft on request."
+          hint={hintWithTyped(
+            "One price for each flight of the customer. Leave empty to price this aircraft on request.",
+            sectorRate,
+          )}
           inputMode="decimal"
           error={errors.sectorRate?.message}
           {...register("sectorRate")}

@@ -164,7 +164,7 @@ export function toPromotionBody(
 export function describeOffer(promotion: Promotion): string {
   return promotion.kind === "PERCENT"
     ? `${promotion.percent ?? 0}% off`
-    : `${formatMoney(promotion.amountMinor ?? 0, promotion.currency)} off`;
+    : `${formatMoney(promotion.amountMinor ?? 0, promotion.currency, { dropZeroDecimals: true })} off`;
 }
 
 const CATEGORY_NAMES: Record<string, string> = {

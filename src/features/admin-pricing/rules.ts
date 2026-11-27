@@ -283,7 +283,9 @@ export function describeConfig(
     case "TAX":
       return `${String(config.name ?? "Tax")} ${num(config, "percent") ?? "?"}%`;
     case "MIN_CHARGE":
-      return formatMoney(num(config, "amountMinor") ?? 0, "INR");
+      return formatMoney(num(config, "amountMinor") ?? 0, "INR", {
+        dropZeroDecimals: true,
+      });
     case "ROUTING_FACTOR":
       return `× ${num(config, "factor") ?? "?"}`;
     case "TIME_ALLOWANCE":
@@ -295,7 +297,7 @@ export function describeConfig(
     case "MARKUP":
       return `${num(config, "percent") ?? "?"}% of the operator's price`;
     case "SERVICE_FEE":
-      return `${formatMoney(num(config, "amountMinor") ?? 0, "INR")} per trip`;
+      return `${formatMoney(num(config, "amountMinor") ?? 0, "INR", { dropZeroDecimals: true })} per trip`;
     case "DISCOUNT":
       return `${String(config.name ?? "Discount")} ${num(config, "percent") ?? "?"}% off`;
     case "POSITIONING":
@@ -303,10 +305,12 @@ export function describeConfig(
         num(config, "freeWithinKm") ?? 0
       } km`;
     case "HOURLY_RATE":
-      return `${formatMoney(num(config, "amountMinor") ?? 0, "INR")} an hour`;
+      return `${formatMoney(num(config, "amountMinor") ?? 0, "INR", { dropZeroDecimals: true })} an hour`;
     case "LANDING":
     case "HANDLING":
-      return formatMoney(num(config, "amountMinor") ?? 0, "INR");
+      return formatMoney(num(config, "amountMinor") ?? 0, "INR", {
+        dropZeroDecimals: true,
+      });
     default:
       return JSON.stringify(config);
   }

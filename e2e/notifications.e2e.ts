@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { newCustomer } from "./support/bookings";
 import { requestedTrip } from "./support/requests";
 
 /**
@@ -40,4 +41,37 @@ test("an old air ambulance notification link redirects to the customer's request
   expect(response.headers()["location"]).toBe(
     "/account/air-ambulance/FLY-AA-TEST01",
   );
+});
+
+test("a customer sees the unread count, and marks everything read at once", async ({
+  browser,
+}) => {
+  const { page } = await newCustomer(browser);
+  await page.goto("/account/notifications");
+
+  // The welcome message is unread: the entry and the menu carry the count.
+  const tab = page
+    .getByRole("navigation", { name: "Account" })
+    .getByRole("link", { name: "Notifications, 1 unread" });
+  await expect(tab).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Account menu, 1 unread" }),
+  ).toBeVisible();
+
+  await page.getByRole("button", { name: "Mark all as read" }).click();
+  await expect(
+    page
+      .getByRole("navigation", { name: "Account" })
+      .getByRole("link", { name: "Notifications", exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Mark all as read" }),
+  ).toHaveCount(0);
+
+  // The account menu also offers Trips and Air ambulance.
+  await page.getByRole("button", { name: "Account menu" }).click();
+  await expect(page.getByRole("menuitem", { name: "Trips" })).toBeVisible();
+  await expect(
+    page.getByRole("menuitem", { name: "Air ambulance" }),
+  ).toBeVisible();
 });

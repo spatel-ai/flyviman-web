@@ -589,6 +589,43 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/me/notifications/unread-count": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** How many in-app notifications are unread */
+    get: operations["MeNotificationsController_unreadCount"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/me/notifications/read-all": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Mark all of the caller’s notifications as read
+     * @description Only the caller’s own. Idempotent: a second call marks none. Answers how many were marked.
+     */
+    post: operations["MeNotificationsController_readAll"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/v1/me/notifications/{id}/read": {
     parameters: {
       query?: never;
@@ -4276,6 +4313,17 @@ export interface components {
       readAt: string | null;
       /** Format: date-time */
       createdAt: string;
+    };
+    UnreadCountDto: {
+      /** @example 3 */
+      unread: number;
+    };
+    MarkedReadDto: {
+      /**
+       * @description How many were marked read.
+       * @example 3
+       */
+      marked: number;
     };
     ProfileResponseDto: {
       firstName: string;
@@ -9430,6 +9478,44 @@ export interface operations {
         };
         content: {
           "application/json": components["schemas"]["NotificationResponseDto"][];
+        };
+      };
+    };
+  };
+  MeNotificationsController_unreadCount: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["UnreadCountDto"];
+        };
+      };
+    };
+  };
+  MeNotificationsController_readAll: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["MarkedReadDto"];
         };
       };
     };

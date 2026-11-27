@@ -18,7 +18,9 @@ describe("PriceLabel", () => {
     );
 
     expect(screen.getByText(label)).toBeInTheDocument();
-    expect(screen.getByText("₹5,21,796")).toBeInTheDocument();
+    expect(
+      screen.getByText(priceType === "ESTIMATE" ? "₹5,21,796" : "₹5,21,796.00"),
+    ).toBeInTheDocument();
   });
 
   it("tells the customer an estimate is not final", () => {

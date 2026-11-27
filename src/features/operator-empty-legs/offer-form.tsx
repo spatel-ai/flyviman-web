@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Controller, useForm, useWatch } from "react-hook-form";
 import { FormAlert } from "@/components/shared/form-alert";
+import { hintWithTyped } from "@/lib/format/money";
 import { LocationField } from "@/components/shared/location-field";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -77,6 +78,7 @@ export function OfferForm({
   // The API lists only approved aircraft within the caller's reach.
   const approved = fleet.data?.data ?? [];
   const originId = useWatch({ control, name: "originId" });
+  const price = useWatch({ control, name: "price" });
   const origin = useQuery({
     queryKey: queryKeys.location(originId),
     queryFn: () =>
@@ -240,7 +242,7 @@ export function OfferForm({
       />
       <Input
         label="Price (₹)"
-        hint="For the whole offer, in rupees."
+        hint={hintWithTyped("For the whole offer, in rupees.", price)}
         inputMode="decimal"
         error={errors.price?.message}
         {...register("price")}

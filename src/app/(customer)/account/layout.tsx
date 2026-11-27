@@ -18,8 +18,8 @@ async function CustomersOnly({ children }: { children: React.ReactNode }) {
 export default function AccountLayout({ children }: LayoutProps<"/account">) {
   return (
     <div className="mx-auto w-full max-w-content px-4 py-8 md:px-6 md:py-12">
-      <p className="text-h2">Your account</p>
-      <div className="mt-6 mb-8">
+      <p className="text-h2 print:hidden">Your account</p>
+      <div className="mt-6 mb-8 print:hidden">
         {/* It reads the address, which a page with a dynamic segment
             (/account/air-ambulance/[reference]) knows only at request time. */}
         <Suspense fallback={<Skeleton className="h-11" />}>

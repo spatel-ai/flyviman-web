@@ -8,11 +8,16 @@ import { formatMoney } from "@/lib/format/money";
 export function MoneyAmount({
   amountMinor,
   currency,
+  dropZeroDecimals,
 }: {
   amountMinor: number;
   currency: string;
+  /** Only for a configured rate; a paid or refunded amount stays exact. */
+  dropZeroDecimals?: boolean;
 }) {
   return (
-    <span className="tabular-nums">{formatMoney(amountMinor, currency)}</span>
+    <span className="tabular-nums">
+      {formatMoney(amountMinor, currency, { dropZeroDecimals })}
+    </span>
   );
 }

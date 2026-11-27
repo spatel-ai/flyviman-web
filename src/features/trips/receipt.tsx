@@ -73,19 +73,23 @@ export function Receipt({
 
   return (
     <article className="flex max-w-reading flex-col gap-6">
-      <div className="flex flex-wrap items-center justify-between gap-3 print:hidden">
-        <Link
-          href={tripHref}
-          className="text-body-sm text-accent hover:underline"
-        >
-          Back to trip {bookingReference}
-        </Link>
-        <Button variant="secondary" onClick={() => window.print()}>
-          Print
-        </Button>
-      </div>
+      <Link
+        href={tripHref}
+        className="text-body-sm text-accent hover:underline print:hidden"
+      >
+        Back to trip {bookingReference}
+      </Link>
       <header className="flex flex-col gap-1">
-        <h1 className="text-h3">Payment receipt</h1>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h1 className="text-h3">Payment receipt</h1>
+          <Button
+            variant="secondary"
+            className="print:hidden"
+            onClick={() => window.print()}
+          >
+            Print
+          </Button>
+        </div>
         <p className="text-body-sm text-muted">{r.issuer.name}</p>
         {r.issuer.address ? (
           <p className="text-body-sm text-muted">{r.issuer.address}</p>
