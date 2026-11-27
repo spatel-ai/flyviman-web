@@ -259,6 +259,23 @@ test("unknown pages answer 404", async ({ page }) => {
   expect(response?.status()).toBe(404);
 });
 
+/**
+ * Waits until no finite animation or transition is running (colour fades on
+ * nav links, reveals), so axe measures the settled colours. Endless ones,
+ * such as a hero's slow drift, are left out: they never finish.
+ */
+async function waitForAnimations(page: import("@playwright/test").Page) {
+  await page.waitForFunction(() =>
+    document
+      .getAnimations()
+      .every(
+        (animation) =>
+          animation.playState !== "running" ||
+          animation.effect?.getComputedTiming().endTime === Infinity,
+      ),
+  );
+}
+
 /** Runs axe on the page as it is now and returns the failing rules. */
 async function axeViolations(
   page: import("@playwright/test").Page,
@@ -339,10 +356,20 @@ test.describe("accessibility (axe)", () => {
       await signIn(page, "superAdmin", "/admin/operators");
       await expect(page).toHaveURL(/\/admin\/operators$/);
       await expect(page.getByRole("tab").first()).toBeVisible();
+      // The list has loaded: no skeleton rows, and a row or the empty state.
+      await expect(page.locator("main [aria-busy]")).toHaveCount(0);
+      await expect(
+        page
+          .locator("main tbody tr a")
+          .or(page.getByText(/^No (.+ )?(operators|applications)/))
+          .first(),
+      ).toBeVisible();
+      await waitForAnimations(page);
       expect(await axeViolations(page, ["color-contrast"])).toEqual([]);
 
       await page.goto("/");
       await expect(page.getByRole("tab", { selected: true })).toBeVisible();
+      await waitForAnimations(page);
       expect(await axeViolations(page, ["color-contrast"])).toEqual([]);
     });
   }
