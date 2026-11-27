@@ -16,6 +16,7 @@ import {
   TableHead,
   TableHeaderCell,
   TableRow,
+  TruncatedCell,
 } from "@/components/ui/table";
 import { apiFetch } from "@/lib/api/client";
 import { queryKeys } from "@/lib/api/query-keys";
@@ -197,14 +198,20 @@ function RouteTable({
           <TableBody>
             {shown.map((route) => (
               <TableRow key={`${route.method} ${route.path}`}>
-                <TableCell className="whitespace-nowrap">
+                <TruncatedCell
+                  className="max-w-96 whitespace-nowrap"
+                  title={`${route.method} ${route.path}`}
+                >
                   <span className="font-medium">{route.method}</span>{" "}
                   <code className="text-caption">{route.path}</code>
-                </TableCell>
-                <TableCell>
+                </TruncatedCell>
+                <TruncatedCell
+                  className="w-1/3 max-w-0 min-w-40 whitespace-nowrap"
+                  title={route.summary ?? "—"}
+                >
                   {route.summary ?? <span className="text-muted">—</span>}
-                </TableCell>
-                <TableCell>
+                </TruncatedCell>
+                <TableCell className="w-[45%] min-w-72 py-2">
                   <div className="flex flex-wrap gap-1">
                     {route.public ? (
                       <Badge tone="success">Anyone</Badge>

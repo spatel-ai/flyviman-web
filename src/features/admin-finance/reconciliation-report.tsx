@@ -17,6 +17,7 @@ import {
   TableHead,
   TableHeaderCell,
   TableRow,
+  TruncatedCell,
 } from "@/components/ui/table";
 import {
   getReconciliation,
@@ -222,9 +223,12 @@ function ReportView({ report }: { report: Report }) {
                   <TableCell className="whitespace-nowrap">
                     {row.bookingReference ?? "—"}
                   </TableCell>
-                  <TableCell className="whitespace-nowrap">
+                  <TruncatedCell
+                    className="max-w-44 whitespace-nowrap"
+                    title={row.refundReference ?? row.paymentReference ?? "—"}
+                  >
                     {row.refundReference ?? row.paymentReference ?? "—"}
-                  </TableCell>
+                  </TruncatedCell>
                   <TableCell className="text-right whitespace-nowrap">
                     {row.amountMinor !== null && row.currency ? (
                       <MoneyAmount
@@ -235,9 +239,12 @@ function ReportView({ report }: { report: Report }) {
                       "—"
                     )}
                   </TableCell>
-                  <TableCell>
-                    <span className="max-w-reading">{row.detail}</span>
-                  </TableCell>
+                  <TruncatedCell
+                    className="w-full max-w-0 min-w-40"
+                    title={row.detail}
+                  >
+                    {row.detail}
+                  </TruncatedCell>
                 </TableRow>
               ))}
             </TableBody>

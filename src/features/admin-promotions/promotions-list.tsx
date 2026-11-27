@@ -17,6 +17,8 @@ import {
   TableHead,
   TableHeaderCell,
   TableRow,
+  TruncatedCell,
+  TruncatedText,
 } from "@/components/ui/table";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/components/ui/toast";
@@ -182,19 +184,33 @@ export function PromotionsList() {
                     ))
                   : promotions.map((promotion) => (
                       <TableRow key={promotion.id}>
-                        <TableCell>
-                          <span className="font-medium tabular-nums">
+                        <TableCell className="w-[45%] max-w-0 min-w-32">
+                          <TruncatedText
+                            title={promotion.code}
+                            className="font-medium tabular-nums"
+                          >
                             {promotion.code}
-                          </span>
-                          <span className="block text-caption text-muted">
+                          </TruncatedText>
+                          <TruncatedText
+                            title={promotion.name}
+                            className="text-caption text-muted"
+                          >
                             {promotion.name}
-                          </span>
+                          </TruncatedText>
                         </TableCell>
-                        <TableCell className="tabular-nums">
+                        <TruncatedCell
+                          className="max-w-44 whitespace-nowrap tabular-nums"
+                          title={describeOffer(promotion)}
+                        >
                           {describeOffer(promotion)}
-                        </TableCell>
-                        <TableCell>{describeScope(promotion)}</TableCell>
-                        <TableCell className="text-body-sm">
+                        </TruncatedCell>
+                        <TruncatedCell
+                          className="w-[30%] max-w-0 min-w-28 whitespace-nowrap"
+                          title={describeScope(promotion)}
+                        >
+                          {describeScope(promotion)}
+                        </TruncatedCell>
+                        <TableCell className="text-body-sm whitespace-nowrap">
                           {formatDateTime(promotion.startsAt)}
                           <span className="block text-muted">
                             to{" "}
@@ -203,7 +219,7 @@ export function PromotionsList() {
                             )}
                           </span>
                         </TableCell>
-                        <TableCell className="tabular-nums">
+                        <TableCell className="tabular-nums whitespace-nowrap">
                           {describeUses(promotion)}
                         </TableCell>
                         <TableCell>

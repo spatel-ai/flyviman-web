@@ -29,7 +29,6 @@ import { apiFetch } from "@/lib/api/client";
 import { queryKeys } from "@/lib/api/query-keys";
 import type { Schemas } from "@/lib/api/types";
 import { formatDateTime } from "@/lib/format/date";
-import { routeLabel } from "@/lib/format/place";
 import {
   bookingListQuery,
   CATEGORY_OPTIONS,
@@ -254,11 +253,10 @@ export function BookingsList() {
                             ) : null}
                           </TableCell>
                           <TableCell className="w-[55%] max-w-0 min-w-32">
-                            <TruncatedText
-                              title={`${row.originName} to ${row.destinationName}`}
-                            >
-                              {routeLabel(row.originName, row.destinationName)}
-                            </TruncatedText>
+                            <RouteText
+                              origin={row.originName}
+                              destination={row.destinationName}
+                            />
                             <TruncatedText
                               title={row.operator?.name ?? "No operator yet"}
                               className="text-caption text-muted"

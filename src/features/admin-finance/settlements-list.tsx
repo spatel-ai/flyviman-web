@@ -102,7 +102,7 @@ export function SettlementsList() {
               {row.notDueReason ? (
                 <span
                   title={row.notDueReason}
-                  className="block max-w-48 truncate text-body-sm text-muted"
+                  className="block max-w-32 truncate text-body-sm text-muted"
                 >
                   {row.notDueReason}
                 </span>
@@ -130,7 +130,7 @@ export function SettlementsList() {
             />,
             formatDateTime(row.createdAt),
             row.paidAt ? (
-              <span key="payout" className="flex max-w-32 flex-col">
+              <span key="payout" className="flex max-w-28 flex-col">
                 <span
                   title={row.paymentReference ?? undefined}
                   className="truncate"

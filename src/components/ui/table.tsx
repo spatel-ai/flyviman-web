@@ -11,6 +11,7 @@ import {
   ThHTMLAttributes,
 } from "react";
 import { Button } from "@/components/ui/button";
+import { shortPlaceName } from "@/lib/format/place";
 import { cn } from "@/lib/utils";
 
 export interface TableProps extends TableHTMLAttributes<HTMLTableElement> {
@@ -254,6 +255,42 @@ export function TruncatedText({
   return (
     <span title={title} className={cn("block truncate", className)}>
       {children}
+    </span>
+  );
+}
+
+/**
+ * A route on one line with both ends always visible: each end is cut with an
+ * ellipsis on its own, the arrow stays. An airport name loses its trailing
+ * "International Airport" (`shortPlaceName`). The full "A to B" is the
+ * `title` and the accessible name. The parent must be able to shrink
+ * (a table cell with `max-w-0`, or a `min-w-0` flex child).
+ */
+export function RouteText({
+  origin,
+  destination,
+  className,
+}: {
+  origin: string;
+  destination: string;
+  className?: string;
+}) {
+  const full = `${origin} to ${destination}`;
+  return (
+    <span
+      title={full}
+      className={cn("flex min-w-0 items-baseline gap-1", className)}
+    >
+      <span className="sr-only">{full}</span>
+      <span aria-hidden="true" className="min-w-0 flex-[0_1_auto] truncate">
+        {shortPlaceName(origin)}
+      </span>
+      <span aria-hidden="true" className="shrink-0 text-muted">
+        →
+      </span>
+      <span aria-hidden="true" className="min-w-0 flex-[0_1_auto] truncate">
+        {shortPlaceName(destination)}
+      </span>
     </span>
   );
 }

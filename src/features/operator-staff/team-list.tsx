@@ -20,6 +20,7 @@ import {
   TableHead,
   TableHeaderCell,
   TableRow,
+  TruncatedCell,
 } from "@/components/ui/table";
 import { useToast } from "@/components/ui/toast";
 import { apiFetch } from "@/lib/api/client";
@@ -107,6 +108,12 @@ export function rowActions(
         ? ["remove"]
         : ["reinstate", "remove"];
   }
+}
+
+function capabilitiesText(member: StaffMember): string {
+  return member.capabilities
+    .map((capability) => CAPABILITY_LABELS[capability])
+    .join(", ");
 }
 
 function aircraftSummary(member: StaffMember): string {
@@ -271,17 +278,24 @@ export function TeamList({ approved }: { approved: boolean }) {
                     const who = member.email ?? "This staff member";
                     return (
                       <TableRow key={member.id}>
-                        <TableCell className="font-medium">
+                        <TruncatedCell
+                          className="w-1/2 max-w-0 min-w-40 font-medium"
+                          title={member.email ?? "No email"}
+                        >
                           {member.email ?? "No email"}
-                        </TableCell>
-                        <TableCell>
-                          {member.capabilities
-                            .map((capability) => CAPABILITY_LABELS[capability])
-                            .join(", ")}
-                        </TableCell>
-                        <TableCell className="whitespace-nowrap">
+                        </TruncatedCell>
+                        <TruncatedCell
+                          className="w-1/2 max-w-0 min-w-32 whitespace-nowrap"
+                          title={capabilitiesText(member)}
+                        >
+                          {capabilitiesText(member)}
+                        </TruncatedCell>
+                        <TruncatedCell
+                          className="max-w-40 whitespace-nowrap"
+                          title={aircraftSummary(member)}
+                        >
                           {aircraftSummary(member)}
-                        </TableCell>
+                        </TruncatedCell>
                         <TableCell className="whitespace-nowrap">
                           <StatusBadge kind="staff" status={member.status} />
                           {member.status === "SUSPENDED" &&
@@ -299,10 +313,10 @@ export function TeamList({ approved }: { approved: boolean }) {
                           )}
                         </TableCell>
                         <TableCell>
-                          <div className="flex flex-wrap gap-2">
+                          <div className="flex gap-2">
                             <Button
                               variant="secondary"
-                              className="h-10"
+                              className="h-10 whitespace-nowrap"
                               aria-label={`Edit access for ${who}`}
                               onClick={() => {
                                 setProblem(null);
@@ -319,7 +333,7 @@ export function TeamList({ approved }: { approved: boolean }) {
                                     ? "danger"
                                     : "secondary"
                                 }
-                                className="h-10"
+                                className="h-10 whitespace-nowrap"
                                 aria-label={`${ACTIONS[action].label} ${who}`}
                                 onClick={() => {
                                   setProblem(null);

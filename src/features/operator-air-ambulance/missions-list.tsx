@@ -97,9 +97,11 @@ export function MissionsList() {
               <TableCell className="whitespace-nowrap">
                 <AirAmbulanceStatusBadge status={row.status} />
               </TableCell>
-              <TableCell>
-                {row.originName ?? "Unknown"} to{" "}
-                {row.destinationName ?? "unknown"}
+              <TableCell className="w-full max-w-0 min-w-40">
+                <RouteText
+                  origin={row.originName ?? "Unknown"}
+                  destination={row.destinationName ?? "unknown"}
+                />
               </TableCell>
               <TableCell className="whitespace-nowrap">
                 {formatDateTime(row.preferredAt)}

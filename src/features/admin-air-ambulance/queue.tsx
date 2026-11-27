@@ -17,6 +17,7 @@ import {
   TableHead,
   TableHeaderCell,
   TableRow,
+  RouteText,
 } from "@/components/ui/table";
 import { apiFetch } from "@/lib/api/client";
 import { queryKeys } from "@/lib/api/query-keys";
@@ -163,9 +164,11 @@ export function Queue({ viewerId }: { viewerId: string }) {
                             {row.reference}
                           </Link>
                         </TableCell>
-                        <TableCell className="min-w-56">
-                          {row.originName ?? "Unknown"} to{" "}
-                          {row.destinationName ?? "unknown"}
+                        <TableCell className="w-full max-w-0 min-w-40">
+                          <RouteText
+                            origin={row.originName ?? "Unknown"}
+                            destination={row.destinationName ?? "unknown"}
+                          />
                         </TableCell>
                         <TableCell className="whitespace-nowrap">
                           {formatDateTime(row.preferredAt)}

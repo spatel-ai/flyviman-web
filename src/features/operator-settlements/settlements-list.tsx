@@ -82,6 +82,8 @@ export function OperatorSettlementsList() {
                 className={cn(
                   NUMERIC.includes(column) && "text-right",
                   column === COLUMNS[0] && "left-0 z-20",
+                  column === "Created" && "hidden 2xl:table-cell",
+                  NUMERIC.includes(column) && "px-2",
                 )}
               >
                 {column}
@@ -107,7 +109,7 @@ export function OperatorSettlementsList() {
                     <TableCell className="sticky left-0 z-[5] bg-background whitespace-nowrap">
                       {row.bookingReference}
                     </TableCell>
-                    <TableCell className="text-right whitespace-nowrap">
+                    <TableCell className="px-2 text-right whitespace-nowrap">
                       <MoneyAmount
                         amountMinor={row.payableMinor}
                         currency={row.currency}
@@ -122,7 +124,7 @@ export function OperatorSettlementsList() {
                       (amount, index) => (
                         <TableCell
                           key={COLUMNS[index + 3]}
-                          className="text-right whitespace-nowrap"
+                          className="px-2 text-right whitespace-nowrap"
                         >
                           <MoneyAmount
                             amountMinor={amount}
@@ -131,13 +133,18 @@ export function OperatorSettlementsList() {
                         </TableCell>
                       ),
                     )}
-                    <TableCell className="whitespace-nowrap">
+                    <TableCell className="hidden whitespace-nowrap 2xl:table-cell">
                       {formatDateTime(row.createdAt)}
                     </TableCell>
                     <TableCell className="whitespace-nowrap">
                       {row.paidAt ? (
-                        <span className="flex flex-col">
-                          {row.paymentReference}
+                        <span className="flex max-w-28 flex-col">
+                          <span
+                            title={row.paymentReference ?? undefined}
+                            className="truncate"
+                          >
+                            {row.paymentReference}
+                          </span>
                           <span className="text-body-sm text-muted">
                             {formatDateTime(row.paidAt)}
                           </span>
