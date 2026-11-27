@@ -48,7 +48,8 @@ export function AccountNav() {
       nav.removeEventListener("scroll", update);
       window.removeEventListener("resize", update);
     };
-  }, [pathname]);
+    // The unread badge arrives later and widens a tab: measure again then.
+  }, [pathname, unread]);
 
   return (
     <div className="relative">

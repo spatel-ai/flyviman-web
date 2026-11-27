@@ -138,9 +138,12 @@ test("charter, from the customer's request to the refund: one booking in every r
     await expect(page).toHaveURL(/\/book\//);
     await page.getByRole("checkbox", { name: "Kavya Ramaswamy" }).check();
     await page.getByRole("button", { name: "Send request" }).click();
-    await expect(page).toHaveURL(/\/account\/trips\/FLY-BK-[A-Z0-9]+$/, {
-      timeout: 45_000,
-    });
+    await expect(page).toHaveURL(
+      /\/account\/trips\/FLY-BK-[A-Z0-9]+\?sent=1$/,
+      {
+        timeout: 45_000,
+      },
+    );
     reference = /FLY-BK-[A-Z0-9]+/.exec(page.url())![0];
     await expect(
       page.getByRole("heading", { level: 1, name: new RegExp(reference) }),
@@ -447,9 +450,12 @@ test("empty leg: posted by the operator, requested with terms shown, gone from t
     expect(terms!.y).toBeLessThan((await send.boundingBox())!.y);
     await customer.getByRole("checkbox", { name: "Kavya Ramaswamy" }).check();
     await send.click();
-    await expect(customer).toHaveURL(/\/account\/trips\/FLY-BK-[A-Z0-9]+$/, {
-      timeout: 45_000,
-    });
+    await expect(customer).toHaveURL(
+      /\/account\/trips\/FLY-BK-[A-Z0-9]+\?sent=1$/,
+      {
+        timeout: 45_000,
+      },
+    );
     await expect(
       customer.getByText(/Awaiting operator/i).first(),
     ).toBeVisible();
