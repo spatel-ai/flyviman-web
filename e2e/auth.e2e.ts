@@ -77,7 +77,7 @@ test.describe("signing in", () => {
     await signIn(page, "superAdmin", "/admin");
 
     await expect(page).toHaveURL("/admin");
-    await expect(page).toHaveTitle("Admin portal · Flyviman");
+    await expect(page).toHaveTitle("Dashboard · Admin · Flyviman");
     await expect(
       page.getByRole("heading", { level: 1, name: "Dashboard" }),
     ).toBeVisible();

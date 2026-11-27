@@ -108,8 +108,10 @@ test("the deposit is shown only for categories paid by deposit", async ({
   page,
 }) => {
   await signIn(page, "superAdmin", "/admin/category-config");
-  const rows = page.getByRole("main").locator("tbody tr");
-  await expect(rows.first()).toBeVisible();
+  const main = page.getByRole("main");
+  const rows = main.locator("tbody tr");
+  // The loaded rows, not the loading placeholders.
+  await expect(main.getByText("Helicopter")).toBeVisible();
   for (const row of await rows.all()) {
     const cells = row.getByRole("cell");
     const payment = (await cells.nth(4).innerText()).trim();
