@@ -112,6 +112,8 @@ test("portal list tables fit at common desktop widths", async ({
     priced: true,
     withPassenger: true,
     changeRequest: "Please move the departure two hours later, and add a stop",
+    // Nine digits before the decimals: real amounts are longer than test ones.
+    hourlyRateMinor: 4_000_000_000,
   });
 
   // Long values on the pages that only show the problem with data.
@@ -212,6 +214,29 @@ test("portal list tables fit at common desktop widths", async ({
             cards.some((c) => c.overflow > 1 || c.height > MAX_CARD) &&
             (await measureTables(p)).length === 0
           )
+            failures.push(line);
+        }
+        if (surface === "admin" && path === "bookings" && width === 1280) {
+          const geo = await p.evaluate(() => {
+            const table = document.querySelector<HTMLTableElement>(
+              'main table[aria-label="Bookings"]',
+            );
+            const box = table?.parentElement?.getBoundingClientRect();
+            const cells = [
+              ...(table?.querySelectorAll<HTMLElement>(
+                "tbody tr:first-child td",
+              ) ?? []),
+            ];
+            return {
+              boxRight: box?.right ?? 0,
+              tripWidth: cells[1]?.getBoundingClientRect().width ?? 0,
+              priceRight: cells.at(-1)?.getBoundingClientRect().right ?? 0,
+            };
+          });
+          const line = `admin/bookings @1280 trip ${Math.round(geo.tripWidth)}px, price right ${Math.round(geo.priceRight)} of ${Math.round(geo.boxRight)}`;
+          results.push(line);
+          console.log(line);
+          if (geo.tripWidth < 280 || geo.priceRight > geo.boxRight)
             failures.push(line);
         }
         for (const fit of await measureTables(p)) {

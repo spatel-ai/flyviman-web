@@ -24,8 +24,11 @@ export async function requestedTrip(
     specialRequests,
     withPassenger = false,
     changeRequest,
+    hourlyRateMinor = 18_000_000,
   }: {
     priced: boolean;
+    /** The aircraft's hourly rate; a test may set a very large one. */
+    hourlyRateMinor?: number;
     specialRequests?: string;
     /** Saves "Kavya Ramaswamy" and puts her on the booking. */
     withPassenger?: boolean;
@@ -53,7 +56,7 @@ export async function requestedTrip(
       {
         headers,
         data: {
-          hourlyRateMinor: 18_000_000,
+          hourlyRateMinor,
           taxInclusive: false,
           commissionInclusive: false,
           minBillableHours: null,
@@ -142,7 +145,7 @@ export async function requestedTrip(
       ...(passengerIds ? { passengerIds } : {}),
     },
   });
-  expect(booking.status()).toBe(201);
+  expect(booking.status(), await booking.text()).toBe(201);
   const reference = (await booking.json()).data.reference as string;
   if (changeRequest) {
     const change = await customer.post(

@@ -36,12 +36,21 @@ const COLUMNS = [
   "Payable to you",
   "Status",
   "Kept by Flyviman",
+  "Deductions",
   "Commission",
   "Tax",
   "Created",
   "Payout",
 ];
-const NUMERIC = ["Payable to you", "Kept by Flyviman", "Commission", "Tax"];
+const NUMERIC = [
+  "Payable to you",
+  "Kept by Flyviman",
+  "Deductions",
+  "Commission",
+  "Tax",
+];
+/** Below 2xl, Commission and Tax share one stacked "Deductions" column. */
+const WIDE_ONLY = ["Commission", "Tax", "Created"];
 
 /** What Flyviman owes the organisation per completed booking, newest first. */
 export function OperatorSettlementsList() {
@@ -82,7 +91,8 @@ export function OperatorSettlementsList() {
                 className={cn(
                   NUMERIC.includes(column) && "text-right",
                   column === COLUMNS[0] && "left-0 z-20",
-                  column === "Created" && "hidden 2xl:table-cell",
+                  WIDE_ONLY.includes(column) && "hidden 2xl:table-cell",
+                  column === "Deductions" && "2xl:hidden",
                   NUMERIC.includes(column) && "px-2",
                 )}
               >
@@ -120,11 +130,33 @@ export function OperatorSettlementsList() {
                         {status?.label ?? row.status}
                       </Badge>
                     </TableCell>
-                    {[row.keptMinor, row.commissionMinor, row.taxMinor].map(
+                    <TableCell className="px-2 text-right whitespace-nowrap">
+                      <MoneyAmount
+                        amountMinor={row.keptMinor}
+                        currency={row.currency}
+                      />
+                    </TableCell>
+                    <TableCell className="px-2 text-right whitespace-nowrap 2xl:hidden">
+                      <span className="grid grid-cols-[auto_auto] items-baseline justify-end gap-x-2">
+                        <span className="text-caption text-muted">
+                          Commission
+                        </span>
+                        <MoneyAmount
+                          amountMinor={row.commissionMinor}
+                          currency={row.currency}
+                        />
+                        <span className="text-caption text-muted">Tax</span>
+                        <MoneyAmount
+                          amountMinor={row.taxMinor}
+                          currency={row.currency}
+                        />
+                      </span>
+                    </TableCell>
+                    {[row.commissionMinor, row.taxMinor].map(
                       (amount, index) => (
                         <TableCell
-                          key={COLUMNS[index + 3]}
-                          className="px-2 text-right whitespace-nowrap"
+                          key={COLUMNS[index + 4]}
+                          className="hidden px-2 text-right whitespace-nowrap 2xl:table-cell"
                         >
                           <MoneyAmount
                             amountMinor={amount}

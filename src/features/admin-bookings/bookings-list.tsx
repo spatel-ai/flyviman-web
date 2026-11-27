@@ -224,9 +224,13 @@ export function BookingsList() {
                             className={
                               column === "Price"
                                 ? "text-right"
-                                : column === "Departs" || column === "Payment"
-                                  ? "px-2"
-                                  : undefined
+                                : column === "Customer"
+                                  ? "hidden 2xl:table-cell"
+                                  : column === "Payment"
+                                    ? "hidden px-2 2xl:table-cell"
+                                    : column === "Departs"
+                                      ? "px-2"
+                                      : undefined
                             }
                           >
                             {column}
@@ -253,7 +257,7 @@ export function BookingsList() {
                               </Badge>
                             ) : null}
                           </TableCell>
-                          <TableCell className="w-[60%] max-w-0 min-w-32">
+                          <TableCell className="w-full max-w-0 min-w-64">
                             <RouteText
                               origin={row.originName}
                               destination={row.destinationName}
@@ -269,7 +273,7 @@ export function BookingsList() {
                             {formatDateTime(row.departureAt)}
                           </TableCell>
                           <TruncatedCell
-                            className="w-[40%] max-w-0 min-w-20"
+                            className="hidden w-[40%] max-w-0 min-w-20 2xl:table-cell"
                             title={
                               row.customer.email ?? row.customer.phone ?? "-"
                             }
@@ -277,9 +281,17 @@ export function BookingsList() {
                             {row.customer.email ?? row.customer.phone ?? "-"}
                           </TruncatedCell>
                           <TableCell className="whitespace-nowrap">
-                            <StatusBadge kind="booking" status={row.status} />
+                            <div className="flex flex-col items-start gap-1">
+                              <StatusBadge kind="booking" status={row.status} />
+                              <span className="2xl:hidden">
+                                <StatusBadge
+                                  kind="payment"
+                                  status={row.paymentStatus}
+                                />
+                              </span>
+                            </div>
                           </TableCell>
-                          <TableCell className="whitespace-nowrap px-2">
+                          <TableCell className="hidden whitespace-nowrap px-2 2xl:table-cell">
                             <StatusBadge
                               kind="payment"
                               status={row.paymentStatus}

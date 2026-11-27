@@ -136,7 +136,16 @@ export function Queue({ viewerId }: { viewerId: string }) {
               <TableHead>
                 <TableRow>
                   {COLUMNS.map((column) => (
-                    <TableHeaderCell key={column}>{column}</TableHeaderCell>
+                    <TableHeaderCell
+                      key={column}
+                      className={
+                        column === "Received"
+                          ? "hidden 2xl:table-cell"
+                          : undefined
+                      }
+                    >
+                      {column}
+                    </TableHeaderCell>
                   ))}
                 </TableRow>
               </TableHead>
@@ -145,7 +154,14 @@ export function Queue({ viewerId }: { viewerId: string }) {
                   ? [0, 1, 2, 3].map((row) => (
                       <TableRow key={row}>
                         {COLUMNS.map((column) => (
-                          <TableCell key={column}>
+                          <TableCell
+                            key={column}
+                            className={
+                              column === "Received"
+                                ? "hidden 2xl:table-cell"
+                                : undefined
+                            }
+                          >
                             <Skeleton className="h-5 w-24" />
                           </TableCell>
                         ))}
@@ -153,7 +169,7 @@ export function Queue({ viewerId }: { viewerId: string }) {
                     ))
                   : rows.map((row) => (
                       <TableRow key={row.reference}>
-                        <TableCell className="whitespace-nowrap">
+                        <TableCell className="hidden whitespace-nowrap 2xl:table-cell">
                           {formatDateTime(row.createdAt)}
                         </TableCell>
                         <TableCell className="whitespace-nowrap">
@@ -164,7 +180,7 @@ export function Queue({ viewerId }: { viewerId: string }) {
                             {row.reference}
                           </Link>
                         </TableCell>
-                        <TableCell className="w-full max-w-0 min-w-28">
+                        <TableCell className="w-full max-w-0 min-w-56">
                           <RouteText
                             origin={row.originName ?? "Unknown"}
                             destination={row.destinationName ?? "unknown"}
@@ -173,7 +189,7 @@ export function Queue({ viewerId }: { viewerId: string }) {
                         <TableCell className="whitespace-nowrap">
                           {formatDateTime(row.preferredAt)}
                         </TableCell>
-                        <TableCell className="whitespace-nowrap">
+                        <TableCell>
                           <AirAmbulanceStatusBadge status={row.status} />
                         </TableCell>
                         <TableCell className="whitespace-nowrap">
