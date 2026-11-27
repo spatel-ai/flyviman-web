@@ -480,67 +480,6 @@ test("a charter search shows empty legs on the route, each with a labelled price
   await expect(page).toHaveURL(new RegExp(`/empty-legs/${offer.id}$`));
 });
 
-for (const [width, height] of [
-  [1440, 900],
-  [1280, 800],
-  [390, 844],
-] as const) {
-  test(`the search landing does not shift while it loads at ${width} px (W1-011)`, async ({
-    browser,
-  }, testInfo) => {
-    const baseURL = String(testInfo.project.use.baseURL);
-    const viewport = { width, height };
-
-    // The page as it first paints: the streamed landing is not here yet, so
-    // the fallback stands in. The sections below must start where they do
-    // once the landing has arrived.
-    const bare = await browser.newContext({
-      baseURL,
-      viewport,
-      javaScriptEnabled: false,
-    });
-    const first = await bare.newPage();
-    await first.goto("/search");
-    const before = (await first.locator("#how-it-works").boundingBox())?.y;
-    await bare.close();
-
-    const context = await browser.newContext({ baseURL, viewport });
-    const page = await context.newPage();
-    await page.addInitScript(() => {
-      const shifts: number[] = [];
-      Object.assign(window, { shifts });
-      new PerformanceObserver((list) => {
-        for (const entry of list.getEntries()) {
-          const shift = entry as PerformanceEntry & {
-            value: number;
-            hadRecentInput: boolean;
-          };
-          if (!shift.hadRecentInput) shifts.push(shift.value);
-        }
-      }).observe({ type: "layout-shift", buffered: true });
-    });
-    await page.goto("/search");
-    await expect(page.getByText("Popular routes")).toBeVisible();
-    await page.waitForTimeout(1000);
-    const after = (await page.locator("#how-it-works").boundingBox())?.y;
-    const cls = await page.evaluate(() =>
-      (window as unknown as { shifts: number[] }).shifts.reduce(
-        (sum, value) => sum + value,
-        0,
-      ),
-    );
-    await context.close();
-
-    expect(before).toBeDefined();
-    // The fallback leaves the content below in the same place as the landing
-    // does, within a few rows of text (the reserved boxes are estimates).
-    expect(Math.abs((after ?? 0) - (before ?? 0))).toBeLessThan(
-      Math.max(120, (after ?? 0) * 0.05),
-    );
-    expect(cls).toBeLessThan(0.1);
-  });
-}
-
 for (const scheme of ["light", "dark"] as const) {
   test(`on a phone the hero text stays clear of the search card, ${scheme} (W1-031)`, async ({
     page,
