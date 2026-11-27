@@ -30,6 +30,16 @@ function hrefOf(reference: string, document: Document): string | null {
 }
 
 /**
+ * The request records the terms version shown when it is sent, not a separate
+ * tick, so the document says that (rule 9); the API's title is kept for the rest.
+ */
+function titleOf(document: Document): string {
+  return document.kind === "CANCELLATION_TERMS"
+    ? "Cancellation terms shown when you sent this request"
+    : document.title;
+}
+
+/**
  * The trip's documents (`GET /bookings/:reference/documents`): the printable
  * confirmation once confirmed, a receipt per payment received, and the
  * cancellation terms accepted with the request.
@@ -74,10 +84,10 @@ export function TripDocuments({ reference }: { reference: string }) {
               >
                 {href ? (
                   <Link href={href} className="text-accent hover:underline">
-                    {document.title}
+                    {titleOf(document)}
                   </Link>
                 ) : (
-                  <span className="text-muted">{document.title}</span>
+                  <span className="text-muted">{titleOf(document)}</span>
                 )}
                 <span className="text-caption text-muted">
                   {document.issuedAt

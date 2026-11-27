@@ -15,6 +15,7 @@ import { LoadError } from "@/components/shared/load-error";
 import { PriceLabel } from "@/components/shared/price-label";
 import { RecordNotFound } from "@/components/shared/record-not-found";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select } from "@/components/ui/select";
@@ -33,6 +34,7 @@ import {
 } from "@/lib/empty-legs/format";
 import type { EmptyLegDetail } from "@/lib/empty-legs/types";
 import { useAttemptKey } from "@/lib/idempotency";
+import { fewerNamedWarning } from "@/features/trips/passenger-count";
 import { newEstimateFrom, newTermsFrom } from "./request-flow";
 import {
   emptyLegRequestSchema,
@@ -176,7 +178,7 @@ function RequestForm({
     onSuccess: async ({ data }) => {
       await queryClient.invalidateQueries({ queryKey: queryKeys.tripsAll });
       await queryClient.invalidateQueries({ queryKey: queryKeys.emptyLegsAll });
-      router.push(`/account/trips/${data.reference}`);
+      router.push(`/account/trips/${data.reference}?sent=1`);
     },
     onError: async (failure, sent) => {
       if (!(failure instanceof ApiError && failure.status === 0)) {
@@ -309,6 +311,7 @@ function RequestForm({
           <>
             <p className="text-body-sm text-muted">
               Choose the lead passenger and up to {Math.max(count - 1, 0)} more.
+              The first person you choose is the lead.
             </p>
             <Controller
               control={control}
@@ -316,19 +319,31 @@ function RequestForm({
               render={({ field }) => (
                 <>
                   {people.map((person) => (
-                    <Checkbox
+                    <div
                       key={person.id}
-                      label={`${person.firstName} ${person.lastName}`}
-                      checked={field.value.includes(person.id)}
-                      onCheckedChange={(value) =>
-                        field.onChange(
-                          value === true
-                            ? [...field.value, person.id]
-                            : field.value.filter((pid) => pid !== person.id),
-                        )
-                      }
-                    />
+                      className="flex flex-wrap items-center gap-x-3"
+                    >
+                      <Checkbox
+                        label={`${person.firstName} ${person.lastName}`}
+                        checked={field.value.includes(person.id)}
+                        onCheckedChange={(value) =>
+                          field.onChange(
+                            value === true
+                              ? [...field.value, person.id]
+                              : field.value.filter((pid) => pid !== person.id),
+                          )
+                        }
+                      />
+                      {field.value[0] === person.id ? (
+                        <Badge tone="accent">Lead passenger</Badge>
+                      ) : null}
+                    </div>
                   ))}
+                  {fewerNamedWarning(count, field.value.length) ? (
+                    <p role="status" className="text-body-sm">
+                      {fewerNamedWarning(count, field.value.length)}
+                    </p>
+                  ) : null}
                 </>
               )}
             />

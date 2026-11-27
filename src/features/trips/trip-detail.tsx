@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { CancellationTerms } from "@/components/shared/cancellation-terms";
 import { LoadError } from "@/components/shared/load-error";
@@ -21,9 +22,11 @@ import { ChangeRequests } from "./change-request";
 import { TripDocuments } from "./documents";
 import { useBooking, useEvents, useQuotes } from "./hooks";
 import { Messages } from "./messages";
+import { passengerCountText } from "./passenger-count";
 import { canEditPassengers, PassengersDialog } from "./passengers-dialog";
 import { PaymentHistory } from "./payments";
 import { Quotes } from "./quotes";
+import { isAwaitingOperator, RequestSent } from "./request-sent";
 import { isInProgress } from "./status";
 import { buildTimeline } from "./timeline";
 
@@ -66,6 +69,8 @@ export function TripDetail({ reference }: { reference: string }) {
 function Loaded({ booking }: { booking: Booking }) {
   const [cancelling, setCancelling] = useState(false);
   const [editingPassengers, setEditingPassengers] = useState(false);
+  // Set by the request form on the way here: the first arrival after sending.
+  const sent = useSearchParams().get("sent") === "1";
   const { itinerary } = booking;
   // The API decides what is due now (W4-1); null hides Pay.
   const due = booking.amountDue;
@@ -79,6 +84,13 @@ function Loaded({ booking }: { booking: Booking }) {
   // Once an operator quote exists it is the price; the search estimate drops to a footnote.
   const estimateSuperseded =
     booking.price?.priceType === "ESTIMATE" && (quotes.data?.length ?? 0) > 0;
+
+  // A closed trip's estimate is history, not an offer (W1-016).
+  const closed = !isInProgress(booking.status);
+  const countText = passengerCountText(
+    itinerary.passengerCount,
+    booking.passengers.length,
+  );
 
   return (
     <div className="flex flex-col gap-8">
@@ -106,6 +118,8 @@ function Loaded({ booking }: { booking: Booking }) {
           </span>
         </div>
       </div>
+
+      <RequestSent status={booking.status} sent={sent} />
 
       {due ? (
         <Card className="flex flex-col gap-3" aria-label="Payment due">
@@ -197,13 +211,33 @@ function Loaded({ booking }: { booking: Booking }) {
               priceType={booking.price.priceType}
             />
           </div>
-        ) : booking.price ? (
+        ) : booking.price &&
+          closed &&
+          booking.price.priceType === "ESTIMATE" ? (
           <PriceLabel
             amountMinor={booking.price.amountMinor}
             currency={booking.price.currency}
             priceType={booking.price.priceType}
-            validUntil={booking.price.validUntil ?? undefined}
+            note="Estimate at the time of your request"
           />
+        ) : booking.price ? (
+          <>
+            <PriceLabel
+              amountMinor={booking.price.amountMinor}
+              currency={booking.price.currency}
+              priceType={booking.price.priceType}
+              validUntil={booking.price.validUntil ?? undefined}
+            />
+            {booking.price.validUntil &&
+            booking.price.priceType === "ESTIMATE" &&
+            isAwaitingOperator(booking.status) ? (
+              <p className="text-caption text-muted">
+                The price is checked again before you pay, so it can change. A
+                request the operator does not answer while the aircraft is held
+                closes by itself, and you can search again.
+              </p>
+            ) : null}
+          </>
         ) : (
           <p className="text-body">
             Price on request. The operator will send a quote.
@@ -237,6 +271,9 @@ function Loaded({ booking }: { booking: Booking }) {
           <h2 id="passengers-heading" className="text-title">
             Passengers
           </h2>
+          {countText ? (
+            <p className="text-body-sm text-muted">{countText}</p>
+          ) : null}
           {booking.passengers.length > 0 ? (
             <ul className="text-body-sm">
               {booking.passengers.map((p) => (

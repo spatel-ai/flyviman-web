@@ -52,3 +52,41 @@ export function linesNotInSummary(
   const lines = tierLines(tiers);
   return lines.every((line) => summary.includes(line)) ? [] : lines;
 }
+
+export interface TermsParts {
+  /** The words before the first tier. */
+  intro: string;
+  /** The tiers, in the API's wording, one per line. */
+  lines: string[];
+  /** The words after the last tier. */
+  outro: string;
+}
+
+/**
+ * A saved summary that words every tier, split so the tiers can be listed
+ * (when: charge) instead of read as one run-on paragraph. The wording is the
+ * summary's own; null when it does not word every tier in order.
+ */
+export function splitSummary(
+  summary: string,
+  tiers: readonly CancellationTier[],
+): TermsParts | null {
+  const lines = tierLines(tiers);
+  if (lines.length === 0) return null;
+  let cursor = 0;
+  let start = -1;
+  for (const line of lines) {
+    const at = summary.indexOf(line, cursor);
+    if (at < 0) return null;
+    if (start < 0) start = at;
+    cursor = at + line.length;
+  }
+  return {
+    intro: summary.slice(0, start).trim(),
+    lines,
+    outro: summary
+      .slice(cursor)
+      .replace(/^[.\s]+/, "")
+      .trim(),
+  };
+}
