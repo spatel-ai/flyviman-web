@@ -4,6 +4,7 @@ import { StickyActionBar } from "@/components/layout/sticky-action-bar";
 import { Magnetic } from "@/components/motion/magnetic";
 import { Reveal } from "@/components/motion/reveal";
 import type { SaleListing } from "@/content/aircraft-sales";
+import { shownValue } from "./listing-facts";
 
 /** One aircraft for sale: its details and specification, and one action. */
 export function SaleListingPage({ listing }: { listing: SaleListing }) {
@@ -41,7 +42,7 @@ export function SaleListingPage({ listing }: { listing: SaleListing }) {
             >
               <dt className="text-body-sm text-muted">{item.label}</dt>
               <dd className="text-right text-body-sm font-medium">
-                {item.value}
+                {shownValue(listing.details, item.label)}
               </dd>
             </div>
           ))}

@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { EnquiryLink } from "@/components/marketing/enquiry-link";
 import { buttonClasses } from "@/components/ui/button-classes";
@@ -7,28 +8,7 @@ import { SectionHeading } from "@/components/marketing/section-heading";
 import { Reveal } from "@/components/motion/reveal";
 import { TiltCard } from "@/components/motion/tilt-card";
 import { CHARTER } from "@/content/charter";
-
-/** Route-arc motif, the site's one illustration. */
-function Arc() {
-  return (
-    <svg
-      viewBox="0 0 400 120"
-      aria-hidden="true"
-      className="hidden w-full sm:block"
-    >
-      <path
-        d="M20 110 Q200 -40 380 110"
-        fill="none"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        vectorEffect="non-scaling-stroke"
-        className="stroke-border"
-      />
-      <circle cx="20" cy="110" r="4" className="fill-border" />
-      <circle cx="380" cy="110" r="4" className="fill-border" />
-    </svg>
-  );
-}
+import { IMAGES } from "@/content/image-credits";
 
 /**
  * The eight kinds of charter, each leading to an enquiry. Nothing here is
@@ -48,23 +28,35 @@ export function CharterPage() {
         <ul className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {kinds.map((kind, position) => {
             const body = (
-              <div className="flex h-full flex-col gap-4 rounded-xl bg-surface p-6 sm:gap-6">
-                <IconBadge icon={kind.icon} />
-                <Arc />
-                <div className="mt-auto">
-                  <h3 className="text-title">{kind.name}</h3>
-                  {kind.notice ? (
-                    <p className="mt-2 text-body-sm font-medium text-foreground">
-                      {kind.notice}
-                    </p>
-                  ) : null}
-                  <div className="mt-5">
-                    <EnquiryLink
-                      topic={kind.topic}
-                      label={`${action}: ${kind.name.toLowerCase()}`}
-                    >
-                      {action}
-                    </EnquiryLink>
+              <div className="flex h-full flex-col overflow-hidden rounded-xl bg-surface">
+                {/* Interim stock photograph, atmosphere only: the name below says what the card is. */}
+                <div className="relative aspect-3/2 w-full">
+                  <Image
+                    src={IMAGES[kind.image].src}
+                    alt=""
+                    fill
+                    placeholder="blur"
+                    sizes="(min-width: 1200px) 280px, (min-width: 640px) 45vw, 100vw"
+                    className="object-cover"
+                  />
+                </div>
+                <div className="flex flex-1 flex-col gap-4 p-6">
+                  <IconBadge icon={kind.icon} />
+                  <div className="mt-auto">
+                    <h3 className="text-title">{kind.name}</h3>
+                    {kind.notice ? (
+                      <p className="mt-2 text-body-sm font-medium text-foreground">
+                        {kind.notice}
+                      </p>
+                    ) : null}
+                    <div className="-ml-5 mt-5">
+                      <EnquiryLink
+                        topic={kind.topic}
+                        label={`${action}: ${kind.name.toLowerCase()}`}
+                      >
+                        {action}
+                      </EnquiryLink>
+                    </div>
                   </div>
                 </div>
               </div>

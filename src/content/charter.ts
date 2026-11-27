@@ -1,5 +1,6 @@
 import type { ConceptIcon } from "@/components/marketing/concept-icons";
 import type { EnquiryTopic } from "./contact";
+import type { IMAGES } from "./image-credits";
 
 /**
  * Charter page copy, imported from https://flyviman.com/book-charter/
@@ -11,6 +12,8 @@ export interface CharterKind {
   name: string;
   topic: EnquiryTopic;
   icon: ConceptIcon;
+  /** The card's photograph, from the credited list (image-credits.ts). */
+  image: keyof typeof IMAGES;
   /** Shown on the card, never animated (rule 7). */
   notice?: string;
 }
@@ -26,29 +29,53 @@ export const CHARTER = {
   note: "Tell us your route, dates and passengers. A charter is confirmed only once an operator accepts it.",
   action: "Send an enquiry",
   kinds: [
-    { name: "Private charter", icon: "plane", topic: "PRIVATE_CHARTER" },
+    {
+      name: "Private charter",
+      image: "charter",
+      icon: "plane",
+      topic: "PRIVATE_CHARTER",
+    },
     {
       name: "Celebrity charter",
+      image: "cabinCream",
       icon: "celebrity",
       topic: "CELEBRITY_CHARTER",
     },
-    { name: "Election charter", icon: "election", topic: "ELECTION_CHARTER" },
-    { name: "Marriage charter", icon: "marriage", topic: "MARRIAGE_CHARTER" },
+    {
+      name: "Election charter",
+      image: "jetNose",
+      icon: "election",
+      topic: "ELECTION_CHARTER",
+    },
+    {
+      name: "Marriage charter",
+      image: "cabinTan",
+      icon: "marriage",
+      topic: "MARRIAGE_CHARTER",
+    },
     {
       name: "Pilgrimage charter",
+      image: "emptyLeg",
       icon: "pilgrimage",
       topic: "PILGRIMAGE_CHARTER",
     },
     {
       name: "Medical charter",
+      image: "airAmbulance",
       icon: "ambulance",
       topic: "MEDICAL_CHARTER",
       notice:
         "In an emergency, call 112 or your local emergency services first.",
     },
-    { name: "Group charter", icon: "group", topic: "GROUP_CHARTER" },
+    {
+      name: "Group charter",
+      image: "scheduled",
+      icon: "group",
+      topic: "GROUP_CHARTER",
+    },
     {
       name: "Flower drop charter",
+      image: "helicopter",
       icon: "flowers",
       topic: "FLOWER_DROP_CHARTER",
     },
