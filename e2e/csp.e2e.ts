@@ -62,6 +62,32 @@ test("every page carries the enforced policy; Razorpay only on payment", async (
   );
 });
 
+for (const [account, path] of [
+  ["superAdmin", "/admin/operators"],
+  ["operatorAdmin", "/operator"],
+] as const) {
+  test(`${path} carries exactly one policy: the nonce one`, async ({
+    page,
+  }) => {
+    await signIn(page, account, path);
+    await expect(page).toHaveURL(new RegExp(path));
+    const response = await page.request.get(path, { maxRedirects: 0 });
+    expect(response.status()).toBe(200);
+    const policies = response
+      .headersArray()
+      .filter((h) => h.name.toLowerCase() === "content-security-policy");
+    expect(policies).toHaveLength(1);
+    const scriptSrc = policies[0].value
+      .split(";")
+      .map((d) => d.trim())
+      .find((d) => d.startsWith("script-src"));
+    expect(scriptSrc).toContain("'nonce-");
+    expect(scriptSrc).toContain("'strict-dynamic'");
+    expect(scriptSrc).not.toContain("'unsafe-inline'");
+    expect(response.headers()["x-frame-options"]).toBe("DENY");
+  });
+}
+
 test("the home page and its hero film run with no violations", async ({
   page,
 }, info) => {
