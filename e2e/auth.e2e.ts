@@ -50,9 +50,15 @@ test.describe("route protection", () => {
       page.getByRole("heading", { level: 1, name: "Company and documents" }),
     ).toBeVisible();
     await page.goto("/admin");
-    await expect(page).toHaveURL(/\/operator/);
+    await expect(page).toHaveURL("/operator/onboarding");
+    await expect(
+      page.getByRole("heading", { level: 1, name: "Company and documents" }),
+    ).toBeVisible();
     await page.goto("/account");
-    await expect(page).toHaveURL(/\/operator/);
+    await expect(page).toHaveURL("/operator/onboarding");
+    await expect(
+      page.getByRole("heading", { level: 1, name: "Company and documents" }),
+    ).toBeVisible();
   });
 
   test("a sign-in link cannot send the user to another site", async ({
