@@ -2,10 +2,9 @@ import type { Metadata } from "next";
 import dynamic from "next/dynamic";
 import { Suspense } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { AdministratorOnly } from "@/features/operator-staff/administrator-only";
+import { operatorGate } from "@/features/restrictions/operator-gates";
 import type { Schemas } from "@/lib/api/types";
 import { serverGet } from "@/lib/auth/server-api";
-import { can } from "@/lib/operator-access";
 
 export const metadata: Metadata = { title: "Availability" };
 
@@ -23,9 +22,13 @@ export default async function OperatorAvailabilityPage() {
     await serverGet<Schemas["OperatorMeResponseDto"]>("operator/me");
   // The timeline needs "manage availability", as the API does; staff see
   // only the aircraft assigned to them.
-  if (!can(operator.access, "MANAGE_AVAILABILITY")) {
-    return <AdministratorOnly title="Availability" />;
-  }
+  // Offering time is refused to an organisation that is not approved, and
+  // one that never was has no aircraft to show.
+  const locked = operatorGate(operator, "Availability", {
+    capability: "MANAGE_AVAILABILITY",
+    status: "live",
+  });
+  if (locked) return locked;
   return (
     <>
       <h1 className="text-h2">Availability</h1>

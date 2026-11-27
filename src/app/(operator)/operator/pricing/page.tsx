@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { OperatorPricingForm } from "@/features/operator-pricing/operator-pricing-form";
 import { OperatorRestrictions } from "@/features/restrictions/operator-restrictions";
-import { AdministratorOnly } from "@/features/operator-staff/administrator-only";
+import { operatorGate } from "@/features/restrictions/operator-gates";
 import type { Schemas } from "@/lib/api/types";
 import { serverGet } from "@/lib/auth/server-api";
 
@@ -10,9 +10,12 @@ export const metadata: Metadata = { title: "Pricing" };
 export default async function OperatorPricingPage() {
   const { data: operator } =
     await serverGet<Schemas["OperatorMeResponseDto"]>("operator/me");
-  if (operator.access.role !== "OPERATOR_ADMIN") {
-    return <AdministratorOnly title="Pricing" />;
-  }
+  // Changing rates needs an approved operator; reading stays open once live.
+  const locked = operatorGate(operator, "Pricing", {
+    adminOnly: true,
+    status: "live",
+  });
+  if (locked) return locked;
   return (
     <>
       <h1 className="text-h2">Pricing</h1>

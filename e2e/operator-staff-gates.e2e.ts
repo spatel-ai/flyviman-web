@@ -72,6 +72,43 @@ test("staff without the right see Managed by your administrator on the administr
   await context.close();
 });
 
+test("staff without the empty-legs right get the locked card, no form, and no page marked current", async ({
+  page,
+  browser,
+  isMobile,
+}) => {
+  test.skip(isMobile, "The navigation is a sheet on phones");
+  test.slow();
+  await approvedAircraft(page, browser);
+  const { context, staff } = await staffMember(browser, page, {
+    aircraftIds: [],
+    capabilities: ["MANAGE_BOOKINGS"],
+  });
+
+  for (const path of ["/operator/empty-legs", "/operator/empty-legs/new"]) {
+    await staff.goto(path);
+    const main = staff.getByRole("main");
+    await expect(
+      main.getByRole("heading", { name: "Managed by your administrator" }),
+      path,
+    ).toBeVisible();
+    await expect(main.getByText(/Manage empty legs permission/)).toBeVisible();
+    await expect(
+      main.getByRole("link", { name: "Back to dashboard" }),
+    ).toBeVisible();
+    // No red error, no Retry, no form, and the dashboard is not marked.
+    await expect(main.getByRole("alert")).toHaveCount(0);
+    await expect(main.getByRole("button", { name: "Retry" })).toHaveCount(0);
+    await expect(main.getByRole("form")).toHaveCount(0);
+    await expect(
+      staff
+        .getByRole("navigation", { name: "Operator navigation" })
+        .locator('[aria-current="page"]'),
+    ).toHaveCount(0);
+  }
+  await context.close();
+});
+
 test("staff with MANAGE_BOOKINGS on one aircraft see Requests and Bookings, and only that aircraft's", async ({
   page,
   browser,

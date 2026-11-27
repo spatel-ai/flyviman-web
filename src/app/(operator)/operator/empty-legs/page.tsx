@@ -2,10 +2,20 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { OfferList } from "@/features/operator-empty-legs/offers-list";
+import { operatorGate } from "@/features/restrictions/operator-gates";
+import type { Schemas } from "@/lib/api/types";
+import { serverGet } from "@/lib/auth/server-api";
 
 export const metadata: Metadata = { title: "Empty legs" };
 
-export default function OperatorEmptyLegsPage() {
+export default async function OperatorEmptyLegsPage() {
+  const { data: operator } =
+    await serverGet<Schemas["OperatorMeResponseDto"]>("operator/me");
+  // The list needs "manage empty legs", as the API does.
+  const locked = operatorGate(operator, "Empty legs", {
+    capability: "MANAGE_EMPTY_LEGS",
+  });
+  if (locked) return locked;
   return (
     <>
       <h1 className="text-h2">Empty legs</h1>

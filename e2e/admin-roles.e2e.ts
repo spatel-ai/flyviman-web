@@ -141,3 +141,66 @@ test("operations are not offered the roles page and are told who manages it", as
   ).toBeVisible();
   await expect(page.getByRole("table")).toHaveCount(0);
 });
+
+test("operations and finance are shown the locked card on a page their role lacks, with no Retry and nothing marked current", async ({
+  page,
+  isMobile,
+}) => {
+  test.skip(isMobile, "The navigation is a sheet on phones");
+  await signIn(page, "ops", "/admin");
+  await expect(page).toHaveURL("/admin");
+  await page.goto("/admin/payments");
+  let main = page.getByRole("main");
+  await expect(
+    main.getByRole("heading", { name: "Managed by finance" }),
+  ).toBeVisible();
+  await expect(
+    main.getByRole("link", { name: "Back to dashboard" }),
+  ).toBeVisible();
+  await expect(
+    page
+      .getByRole("navigation", { name: "Admin navigation" })
+      .locator('[aria-current="page"]'),
+  ).toHaveCount(0);
+
+  await page.context().clearCookies();
+  await signIn(page, "finance", "/admin");
+  await expect(page).toHaveURL("/admin");
+  await page.goto("/admin/users");
+  main = page.getByRole("main");
+  await expect(
+    main.getByRole("heading", { name: "Not part of your role" }),
+  ).toBeVisible();
+  await expect(main.getByRole("button", { name: "Retry" })).toHaveCount(0);
+  await expect(main.getByRole("searchbox")).toHaveCount(0);
+  await expect(main.getByText("You do not have access to this.")).toHaveCount(
+    0,
+  );
+  await expect(
+    page
+      .getByRole("navigation", { name: "Admin navigation" })
+      .locator('[aria-current="page"]'),
+  ).toHaveCount(0);
+});
+
+test("the admin sidebar fades at the bottom while more links are below, and at the top once scrolled", async ({
+  page,
+  isMobile,
+}) => {
+  test.skip(isMobile, "The navigation is a sheet on phones");
+  await page.setViewportSize({ width: 1280, height: 420 });
+  await signIn(page, "superAdmin", "/admin");
+  await expect(page).toHaveURL("/admin");
+  const bottom = page.getByTestId("sidebar-fade-bottom").first();
+  const top = page.getByTestId("sidebar-fade-top").first();
+  await expect(bottom).toHaveCSS("opacity", "1");
+  await expect(top).toHaveCSS("opacity", "0");
+
+  const nav = page
+    .getByRole("navigation", { name: "Admin navigation" })
+    .first();
+  await nav.evaluate((element) => element.scrollTo(0, element.scrollHeight));
+  await expect(top).toHaveCSS("opacity", "1");
+  await expect(bottom).toHaveCSS("opacity", "0");
+  await expect(page.getByText("Flyviman").first()).toBeInViewport();
+});

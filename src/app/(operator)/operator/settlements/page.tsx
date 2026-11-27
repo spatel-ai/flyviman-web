@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { OperatorSettlementsList } from "@/features/operator-settlements/settlements-list";
-import { AdministratorOnly } from "@/features/operator-staff/administrator-only";
+import { operatorGate } from "@/features/restrictions/operator-gates";
 import type { Schemas } from "@/lib/api/types";
 import { serverGet } from "@/lib/auth/server-api";
 
@@ -9,9 +9,8 @@ export const metadata: Metadata = { title: "Settlements" };
 export default async function OperatorSettlementsPage() {
   const { data: operator } =
     await serverGet<Schemas["OperatorMeResponseDto"]>("operator/me");
-  if (operator.access.role !== "OPERATOR_ADMIN") {
-    return <AdministratorOnly title="Settlements" />;
-  }
+  const locked = operatorGate(operator, "Settlements", { adminOnly: true });
+  if (locked) return locked;
   return (
     <>
       <h1 className="text-h2">Settlements</h1>
