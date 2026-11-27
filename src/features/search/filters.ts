@@ -112,3 +112,30 @@ export function priceBounds(
     ? { min: Math.min(...prices), max: Math.max(...prices) }
     : null;
 }
+
+/** Operators shown before "Show all". */
+export const OPERATOR_CAP = 8;
+
+/**
+ * The operator choices to list: most results first; collapsed, the first
+ * `OPERATOR_CAP` plus any selected; expanded, all that match the search. A
+ * selected operator is always listed.
+ */
+export function operatorOptions(
+  options: { value: string; count: number }[],
+  selected: string[],
+  expanded: boolean,
+  query: string,
+): { value: string; count: number }[] {
+  const ranked = [...options].sort(
+    (a, b) => b.count - a.count || a.value.localeCompare(b.value),
+  );
+  const needle = query.trim().toLowerCase();
+  const matching = expanded
+    ? ranked.filter((o) => o.value.toLowerCase().includes(needle))
+    : ranked.slice(0, OPERATOR_CAP);
+  const kept = ranked.filter(
+    (o) => selected.includes(o.value) && !matching.includes(o),
+  );
+  return [...matching, ...kept];
+}

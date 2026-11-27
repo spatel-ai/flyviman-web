@@ -4,6 +4,7 @@ import {
   applyFilters,
   facetCounts,
   NO_FILTERS,
+  operatorOptions,
   readFilters,
   writeFilters,
 } from "./filters";
@@ -109,4 +110,29 @@ it("counts each option", () => {
     { value: "LIGHT_JET", count: 2 },
     { value: "MIDSIZE_JET", count: 1 },
   ]);
+});
+
+describe("operatorOptions", () => {
+  const options = Array.from({ length: 12 }, (_, i) => ({
+    value: `Operator ${String.fromCharCode(65 + i)}`,
+    count: i === 11 ? 9 : 1,
+  }));
+
+  it("shows the 8 with most results first when collapsed", () => {
+    const shown = operatorOptions(options, [], false, "");
+    expect(shown).toHaveLength(8);
+    expect(shown[0].value).toBe("Operator L");
+  });
+
+  it("keeps a selected operator visible beyond the cap", () => {
+    const shown = operatorOptions(options, ["Operator K"], false, "");
+    expect(shown.map((o) => o.value)).toContain("Operator K");
+    expect(shown).toHaveLength(9);
+  });
+
+  it("shows all when expanded and narrows by the search, selected kept", () => {
+    expect(operatorOptions(options, [], true, "")).toHaveLength(12);
+    const found = operatorOptions(options, ["Operator A"], true, "operator k");
+    expect(found.map((o) => o.value)).toEqual(["Operator K", "Operator A"]);
+  });
 });
