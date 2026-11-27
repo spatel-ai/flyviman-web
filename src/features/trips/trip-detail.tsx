@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { buttonClasses } from "@/components/ui/button-classes";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { PayDeadline } from "@/features/payment/pay-deadline";
 import { isNotFoundError } from "@/lib/api/errors";
 import type { Schemas } from "@/lib/api/types";
 import { categoryLabel, formatDuration } from "@/lib/format/aircraft";
@@ -125,6 +126,7 @@ function Loaded({ booking }: { booking: Booking }) {
               This trip takes a deposit now and the balance later.
             </p>
           ) : null}
+          <PayDeadline holdExpiresAt={booking.holdExpiresAt} />
           {/* A full page load: only the payment page's policy allows the
               payment provider (lib/csp.ts). */}
           <a

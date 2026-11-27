@@ -36,6 +36,8 @@ import {
   WAIT_LIMIT_MS,
   type CheckoutState,
 } from "@/lib/payments/checkout-machine";
+import { PayDeadline } from "./pay-deadline";
+import { TripSummary } from "./trip-summary";
 
 type Booking = Schemas["BookingResponseDto"];
 type Revalidation = Schemas["BookingRevalidationDto"];
@@ -152,6 +154,7 @@ function Loaded({
           </span>
         </div>
       </div>
+      <TripSummary booking={booking} />
       <Step
         booking={booking}
         state={state}
@@ -364,6 +367,7 @@ function Due({
             The full price of the trip is paid now.
           </p>
         )}
+        <PayDeadline holdExpiresAt={booking.holdExpiresAt} />
       </Card>
 
       <CancellationTerms
@@ -402,9 +406,13 @@ function Due({
                 ? "Pay balance"
                 : "Pay now"}
           </Button>
+          {/* Rule 3: `pay()` calls `POST /bookings/:reference/revalidate` first. */}
+          <p className="text-caption text-muted">
+            When you pay, we check the price and availability again first.
+          </p>
           <p className="text-caption text-muted">
             Your booking is confirmed once the payment provider confirms the
-            payment, not when this window closes.
+            payment, not at the moment you pay.
           </p>
         </div>
       )}
