@@ -15,15 +15,18 @@
   --muted: #636366;
   --subtle: #6e6e73;
   --border: #d2d2d7;
-  --accent: #0b6bcb;
-  --accent-hover: #0a5fb4;
+  /* Outline of an input, select or textarea: 3:1 or more against its fill (WCAG 1.4.11). */
+  --border-control: #86868b;
+  /* Text tones are chosen so text reads at 4.5:1 or more on its own 12% tint. */
+  --accent: #0a64bd;
+  --accent-hover: #095aa8;
   /* Blue backgrounds (primary buttons, selected states) with white text. */
   --accent-fill: #0b6bcb;
   --accent-fill-hover: #0a5fb4;
   --accent-foreground: #ffffff;
-  --success: #1a7f45;
-  --warning: #9a5b00;
-  --danger: #c9302c;
+  --success: #16703c;
+  --warning: #8f5400;
+  --danger: #bb2b27;
   --danger-foreground: #ffffff;
   --info: #5b4bc4;
 }
@@ -37,16 +40,17 @@
   --muted: #a1a1a6;
   --subtle: #98989d;
   --border: #38383a;
-  --accent: #3b9bff;
-  --accent-hover: #62b0ff;
+  --border-control: #78787d;
+  --accent: #5aabff;
+  --accent-hover: #7dbdff;
   --accent-fill: #0a6fdc;
   --accent-fill-hover: #085cb8;
   --accent-foreground: #ffffff;
   --success: #34c26b;
   --warning: #f0a93b;
-  --danger: #ff6961;
+  --danger: #ff7a72;
   --danger-foreground: #2b0503;
-  --info: #9d8cff;
+  --info: #ae9fff;
 }
 
 @theme inline {
@@ -57,6 +61,7 @@
   --color-muted: var(--muted);
   --color-subtle: var(--subtle);
   --color-border: var(--border);
+  --color-border-control: var(--border-control);
   --color-accent: var(--accent);
   --color-accent-hover: var(--accent-hover);
   --color-accent-fill: var(--accent-fill);

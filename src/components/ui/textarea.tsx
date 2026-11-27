@@ -38,10 +38,10 @@ export function Textarea({
         aria-invalid={error ? true : undefined}
         aria-describedby={message ? messageId : undefined}
         className={cn(
-          "min-h-28 rounded-sm border border-border bg-surface px-3.5 py-3 text-body text-foreground",
+          "min-h-28 rounded-sm border border-border-control bg-surface px-3.5 py-3 text-body text-foreground",
           "placeholder:text-subtle",
           "transition-colors duration-150 ease-standard",
-          "disabled:cursor-not-allowed disabled:opacity-50",
+          "disabled:cursor-not-allowed disabled:border-border disabled:text-muted",
           error && "border-danger",
           className,
         )}

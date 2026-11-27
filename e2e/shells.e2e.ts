@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { signIn } from "./support/api";
 import { expectNotCovered } from "./support/phone";
 
 test.describe("customer home", () => {
@@ -256,4 +257,93 @@ test.describe("themes", () => {
 test("unknown pages answer 404", async ({ page }) => {
   const response = await page.goto("/no-such-page");
   expect(response?.status()).toBe(404);
+});
+
+/** Runs axe on the page as it is now and returns the failing rules. */
+async function axeViolations(
+  page: import("@playwright/test").Page,
+  rules: string[],
+) {
+  await page.addScriptTag({ path: require.resolve("axe-core") });
+  return page.evaluate(async (ruleIds) => {
+    const axe = (
+      window as unknown as {
+        axe: {
+          run: (
+            context: unknown,
+            options: unknown,
+          ) => Promise<{
+            violations: { id: string; nodes: { target: unknown[] }[] }[];
+          }>;
+        };
+      }
+    ).axe;
+    // The footer wordmark is a decorative watermark (aria-hidden) that fades
+    // in on scroll; axe still measures it at its starting opacity.
+    const result = await axe.run(
+      { exclude: [[".site-footer__wordmark"]] },
+      {
+        runOnly: { type: "rule", values: ruleIds },
+      },
+    );
+    return result.violations.map((violation) => ({
+      id: violation.id,
+      targets: violation.nodes.map((node) => String(node.target)),
+    }));
+  }, rules);
+}
+
+test.describe("accessibility (axe)", () => {
+  const ARIA = [
+    "aria-valid-attr-value",
+    "aria-required-children",
+    "aria-hidden-focus",
+  ];
+
+  test("operator tabs and the open account menu pass the ARIA rules", async ({
+    page,
+  }) => {
+    await signIn(page, "operatorAdmin", "/operator/availability");
+    await expect(page.getByRole("tab", { name: "Week" })).toBeVisible();
+    expect(await axeViolations(page, ARIA)).toEqual([]);
+
+    await expect(async () => {
+      await page.getByRole("button", { name: "Account menu" }).click();
+      await expect(page.getByRole("menu")).toBeVisible({ timeout: 2000 });
+    }).toPass();
+    expect(await axeViolations(page, ARIA)).toEqual([]);
+
+    // The theme choice stays a keyboard-operable part of the menu.
+    await page.getByRole("menuitemradio", { name: "Dark" }).focus();
+    await page.keyboard.press("Enter");
+    await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
+    await expect(page.getByRole("menu")).toBeVisible();
+  });
+
+  test("the sign-in tabs pass the ARIA rules and the panel is not a tab stop", async ({
+    page,
+  }) => {
+    await page.goto("/login");
+    await expect(page.getByRole("tab", { name: "Email" })).toBeVisible();
+    expect(await axeViolations(page, ARIA)).toEqual([]);
+    await expect(page.getByRole("tabpanel")).toHaveAttribute("tabindex", "-1");
+  });
+
+  for (const scheme of ["light", "dark"] as const) {
+    test(`badges, tabs, nav and the footer have readable text in ${scheme}`, async ({
+      page,
+    }) => {
+      await page.addInitScript((value) => {
+        localStorage.setItem("flyviman-theme", value);
+      }, scheme);
+      await signIn(page, "superAdmin", "/admin/operators");
+      await expect(page).toHaveURL(/\/admin\/operators$/);
+      await expect(page.getByRole("tab").first()).toBeVisible();
+      expect(await axeViolations(page, ["color-contrast"])).toEqual([]);
+
+      await page.goto("/");
+      await expect(page.getByRole("tab", { selected: true })).toBeVisible();
+      expect(await axeViolations(page, ["color-contrast"])).toEqual([]);
+    });
+  }
 });

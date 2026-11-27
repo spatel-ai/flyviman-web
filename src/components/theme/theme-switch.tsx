@@ -6,7 +6,7 @@ import { THEME_STORAGE_KEY } from "./theme-script";
 
 export type Theme = "light" | "dark";
 
-const OPTIONS: { value: Theme; label: string }[] = [
+export const THEME_OPTIONS: { value: Theme; label: string }[] = [
   { value: "light", label: "Light" },
   { value: "dark", label: "Dark" },
 ];
@@ -43,9 +43,14 @@ export function applyTheme(theme: Theme): void {
   window.dispatchEvent(new Event(EVENT));
 }
 
+/** The current theme; light until a visitor chooses dark. */
+export function useTheme(): Theme {
+  return useSyncExternalStore(subscribe, read, () => "light" as Theme);
+}
+
 /** Light is the default; a visitor can choose dark. */
 export function ThemeSwitch({ className }: { className?: string }) {
-  const theme = useSyncExternalStore(subscribe, read, () => "light" as Theme);
+  const theme = useTheme();
 
   return (
     <div
@@ -56,7 +61,7 @@ export function ThemeSwitch({ className }: { className?: string }) {
         className,
       )}
     >
-      {OPTIONS.map((option) => {
+      {THEME_OPTIONS.map((option) => {
         const selected = theme === option.value;
         return (
           <button
@@ -69,7 +74,7 @@ export function ThemeSwitch({ className }: { className?: string }) {
               "h-7 rounded-pill px-3 font-medium transition-colors duration-150 ease-standard",
               selected
                 ? "bg-surface-raised text-foreground shadow-sm"
-                : "text-muted hover:text-foreground",
+                : "text-foreground/80 hover:text-foreground",
             )}
           >
             {option.label}

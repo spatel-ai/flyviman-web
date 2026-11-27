@@ -2,7 +2,12 @@
 
 import { DropdownMenu } from "radix-ui";
 import Link from "next/link";
-import { ThemeSwitch } from "@/components/theme/theme-switch";
+import {
+  THEME_OPTIONS,
+  applyTheme,
+  useTheme,
+  type Theme,
+} from "@/components/theme/theme-switch";
 import { useSignOut } from "@/features/auth/use-sign-out";
 import type { Role } from "@/lib/api/types";
 import { ROLE_LABELS } from "@/lib/auth/roles";
@@ -20,10 +25,13 @@ const ITEM =
 /** Account menu shared by every surface: who is signed in, theme, sign out. */
 export function UserMenu({ name, role, links = [] }: UserMenuProps) {
   const { signOut, pending } = useSignOut();
+  const theme = useTheme();
   const initial = name.replace(/^\+/, "").charAt(0).toUpperCase() || "?";
 
   return (
-    <DropdownMenu.Root>
+    // Not modal: a modal menu hides the page with aria-hidden while its
+    // focusable controls stay in the tab order (axe aria-hidden-focus).
+    <DropdownMenu.Root modal={false}>
       <DropdownMenu.Trigger
         aria-label="Account menu"
         className="flex size-9 items-center justify-center rounded-full bg-accent/10 text-body-sm font-semibold text-accent transition-colors duration-150 ease-standard hover:bg-accent/20"
@@ -46,10 +54,35 @@ export function UserMenu({ name, role, links = [] }: UserMenuProps) {
               <Link href={link.href}>{link.label}</Link>
             </DropdownMenu.Item>
           ))}
-          <div className="flex items-center justify-between px-3 py-2">
-            <span className="text-body-sm text-muted">Theme</span>
-            <ThemeSwitch />
-          </div>
+          <DropdownMenu.Separator className="my-1 h-px bg-border/60" />
+          {/* Radio items, so the menu holds only menu roles. The menu stays
+              open after a choice, so the change is visible. */}
+          <DropdownMenu.Group aria-label="Theme">
+            <DropdownMenu.Label
+              aria-hidden="true"
+              className="px-3 pt-1 text-caption text-muted"
+            >
+              Theme
+            </DropdownMenu.Label>
+            <DropdownMenu.RadioGroup
+              value={theme}
+              onValueChange={(value) => applyTheme(value as Theme)}
+            >
+              {THEME_OPTIONS.map((option) => (
+                <DropdownMenu.RadioItem
+                  key={option.value}
+                  value={option.value}
+                  onSelect={(event) => event.preventDefault()}
+                  className={`${ITEM} justify-between data-[state=checked]:font-semibold`}
+                >
+                  {option.label}
+                  <DropdownMenu.ItemIndicator aria-hidden="true">
+                    ✓
+                  </DropdownMenu.ItemIndicator>
+                </DropdownMenu.RadioItem>
+              ))}
+            </DropdownMenu.RadioGroup>
+          </DropdownMenu.Group>
           <DropdownMenu.Separator className="my-1 h-px bg-border/60" />
           <DropdownMenu.Item
             className={ITEM}
