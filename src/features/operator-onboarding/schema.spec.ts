@@ -87,6 +87,18 @@ describe("companyDetailsSchema", () => {
     ).toEqual(["businessAddress.country"]);
   });
 
+  it("checks the GSTIN format, ignoring case and spaces", () => {
+    expect(issuePaths({ ...VALID, taxNumber: "not-a-gstin" })).toEqual([
+      "taxNumber",
+    ]);
+    expect(issuePaths({ ...VALID, taxNumber: "27AAPFU0939F1ZV1" })).toEqual([
+      "taxNumber",
+    ]);
+    expect(issuePaths({ ...VALID, taxNumber: " 27aapfu0939f1zv " })).toEqual(
+      [],
+    );
+  });
+
   it("saves a draft with no categories, registration number or address", () => {
     expect(
       issuePaths({
