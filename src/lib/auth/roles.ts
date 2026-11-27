@@ -59,10 +59,13 @@ export function destinationAfterLogin(
   }
   if (target.origin !== base) return home;
 
+  // Normalising can leave a path that begins `//` (for example `/.//host`),
+  // which the browser reads as another origin once assigned; refuse it.
+  const path = `${target.pathname}${target.search}${target.hash}`;
+  if (/^[/\\]{2}/.test(path)) return home;
+
   // Customer pages are for customers; portal pages for their own roles.
-  return surfaceOf(target.pathname) === surfaceFor(role)
-    ? `${target.pathname}${target.search}${target.hash}`
-    : home;
+  return surfaceOf(target.pathname) === surfaceFor(role) ? path : home;
 }
 
 export function hasRole(role: Role, allowed: readonly Role[]): boolean {

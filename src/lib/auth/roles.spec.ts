@@ -56,6 +56,21 @@ describe("roles", () => {
       expect(destinationAfterLogin("SUPER_ADMIN", next)).toBe("/admin");
     });
 
+    it.each([
+      "/.//evil.example",
+      "/./\\evil.example",
+      "/%2e//evil.example",
+      "/a/..//evil.example",
+    ])("ignores %j, which normalises to a protocol-relative path", (next) => {
+      expect(destinationAfterLogin("CUSTOMER", next)).toBe("/");
+    });
+
+    it("keeps the query and fragment of a legitimate path", () => {
+      expect(destinationAfterLogin("CUSTOMER", "/account/trips?x=1#y")).toBe(
+        "/account/trips?x=1#y",
+      );
+    });
+
     it("falls back to home when there is nowhere to return to", () => {
       expect(destinationAfterLogin("OPS", null)).toBe("/admin");
       expect(destinationAfterLogin("CUSTOMER")).toBe("/");
