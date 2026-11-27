@@ -429,7 +429,7 @@ test.describe("portal navigation categories", () => {
     await expect(nav.getByRole("link", { name: "Locations" })).toHaveCount(0);
   });
 
-  test("opening another category closes the first and marks where the page is", async ({
+  test("several categories stay open until closed by hand, and the current one is marked when closed", async ({
     page,
     isMobile,
   }) => {
@@ -439,9 +439,13 @@ test.describe("portal navigation categories", () => {
     await expect(fleet).toHaveAttribute("aria-expanded", "true");
 
     await toggle(category(nav, "Finance"), true);
-    await expect(fleet).toHaveAttribute("aria-expanded", "false");
+    await expect(fleet).toHaveAttribute("aria-expanded", "true");
     await expect(nav.getByRole("link", { name: "Payments" })).toBeVisible();
+    await expect(nav.getByRole("link", { name: "Locations" })).toBeVisible();
+
+    await toggle(fleet, false);
     await expect(nav.getByRole("link", { name: "Locations" })).toHaveCount(0);
+    await expect(nav.getByRole("link", { name: "Payments" })).toBeVisible();
     // The closed category that holds the current page says so.
     await expect(
       nav.getByRole("button", {
@@ -454,7 +458,44 @@ test.describe("portal navigation categories", () => {
     await expect(nav.getByRole("link", { name: "Payments" })).toHaveCount(0);
   });
 
-  test("following a link opens its category and closes the previous one", async ({
+  test("open categories survive a reload", async ({ page, isMobile }) => {
+    await signIn(page, "superAdmin", "/admin/locations");
+    let nav = await adminNav(page, isMobile);
+    await toggle(category(nav, "Finance"), true);
+    await toggle(category(nav, "Pricing"), true);
+    await page.reload();
+    if (isMobile) await page.keyboard.press("Escape");
+    nav = await adminNav(page, isMobile);
+    for (const name of ["Operators and fleet", "Finance", "Pricing"]) {
+      await expect(category(nav, name)).toHaveAttribute(
+        "aria-expanded",
+        "true",
+      );
+    }
+    await expect(category(nav, "Operations")).toHaveAttribute(
+      "aria-expanded",
+      "false",
+    );
+  });
+
+  test("under reduced motion a category opens and closes at once", async ({
+    page,
+    isMobile,
+  }) => {
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await signIn(page, "superAdmin", "/admin");
+    const nav = await adminNav(page, isMobile);
+    const operations = category(nav, "Operations");
+    await toggle(operations, true);
+    const first = nav.getByRole("link", { name: "Bookings" });
+    await expect(first).toBeVisible();
+    const panel = nav.locator(".nav-panel").first();
+    await expect(panel).not.toHaveCSS("transition-duration", "0.25s");
+    await toggle(operations, false);
+    await expect(first).toHaveCount(0);
+  });
+
+  test("following a link opens its category and leaves the others", async ({
     page,
     isMobile,
   }) => {

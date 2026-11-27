@@ -717,3 +717,59 @@ body {
     display: none;
   }
 }
+
+/*
+ * Portal navigation categories (motion level 2): the panel's height eases
+ * between 0fr and 1fr, its links fade in and slide 4 px, the chevron turns.
+ * Nothing moves until the navigation is `data-ready` (after the stored open
+ * categories were applied), and not at all under reduced motion. Closed
+ * panels are `visibility: hidden` (set inline, delayed until the close ends).
+ */
+.nav-panel {
+  display: grid;
+  grid-template-rows: 0fr;
+}
+
+.nav-panel[data-open="true"] {
+  grid-template-rows: 1fr;
+}
+
+.nav-panel__inner {
+  min-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  transform: translateY(-4px);
+}
+
+.nav-panel[data-open="true"] > .nav-panel__inner {
+  opacity: 1;
+  transform: none;
+}
+
+.nav-chevron[data-open="true"] {
+  transform: rotate(90deg);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  [data-nav-ready="true"] .nav-panel {
+    transition:
+      grid-template-rows 250ms var(--ease-in-out),
+      visibility 0s linear 250ms;
+  }
+
+  [data-nav-ready="true"] .nav-panel[data-open="true"] {
+    transition:
+      grid-template-rows 250ms var(--ease-in-out),
+      visibility 0s linear 0s;
+  }
+
+  [data-nav-ready="true"] .nav-panel__inner {
+    transition:
+      opacity 250ms var(--ease-in-out),
+      transform 250ms var(--ease-in-out);
+  }
+
+  [data-nav-ready="true"] .nav-chevron {
+    transition: transform 250ms var(--ease-in-out);
+  }
+}

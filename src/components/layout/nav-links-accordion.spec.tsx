@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { NavLinks, type NavItem } from "./nav-links";
 
@@ -29,6 +29,7 @@ const ITEMS: NavItem[] = [
 ];
 
 beforeEach(() => {
+  sessionStorage.clear();
   pathname = "/admin/locations";
   unread = 0;
 });
@@ -63,23 +64,55 @@ describe("NavLinks categories", () => {
     );
   });
 
-  it("opens another category and closes the first; a click on an open one closes it", () => {
+  it("opens another category and keeps the first open; each closes on its own", () => {
     render(<NavLinks items={ITEMS} />);
     fireEvent.click(category(/^Finance/));
     expect(category(/^Finance/)).toHaveAttribute("aria-expanded", "true");
     expect(category(/^Operators and fleet/)).toHaveAttribute(
       "aria-expanded",
-      "false",
+      "true",
     );
     expect(screen.getByRole("link", { name: "Payments" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Locations" })).toBeInTheDocument();
     fireEvent.click(category(/^Finance/));
     expect(category(/^Finance/)).toHaveAttribute("aria-expanded", "false");
+    expect(category(/^Operators and fleet/)).toHaveAttribute(
+      "aria-expanded",
+      "true",
+    );
+  });
+
+  it("applies stored open categories after mount and remembers changes", () => {
+    sessionStorage.setItem(
+      "flyviman:nav-open:admin",
+      JSON.stringify(["Finance", "Nonsense"]),
+    );
+    render(<NavLinks items={ITEMS} />);
+    expect(category(/^Finance/)).toHaveAttribute("aria-expanded", "true");
+    expect(category(/^Operators and fleet/)).toHaveAttribute(
+      "aria-expanded",
+      "true",
+    );
+    expect(category(/^Platform/)).toHaveAttribute("aria-expanded", "false");
+  });
+
+  it("writes the open categories to the session", async () => {
+    render(<NavLinks items={ITEMS} />);
+    await waitFor(() =>
+      expect(document.querySelector("[data-nav-ready=true]")).not.toBeNull(),
+    );
+    fireEvent.click(category(/^Finance/));
+    await waitFor(() =>
+      expect(
+        JSON.parse(sessionStorage.getItem("flyviman:nav-open:admin") ?? "[]"),
+      ).toEqual(["Operators and fleet", "Finance"]),
+    );
   });
 
   it("marks a closed category that holds the current page, for sight and assistive tech", () => {
     render(<NavLinks items={ITEMS} />);
     expect(screen.queryByTestId("nav-current-dot")).toBeNull();
-    fireEvent.click(category("Finance"));
+    fireEvent.click(category("Operators and fleet"));
     expect(screen.getByTestId("nav-current-dot")).toBeInTheDocument();
     expect(
       category("Operators and fleet, contains current page"),
@@ -97,15 +130,17 @@ describe("NavLinks categories", () => {
     expect(category("Platform")).not.toHaveTextContent("4");
   });
 
-  it("follows the route when the pathname changes", () => {
+  it("opens the new page's category on navigation and leaves the others as they were", () => {
     const { rerender } = render(<NavLinks items={ITEMS} />);
+    fireEvent.click(category(/^Platform/));
     pathname = "/admin/settlements";
     rerender(<NavLinks items={ITEMS} />);
     expect(category(/^Finance/)).toHaveAttribute("aria-expanded", "true");
     expect(category(/^Operators and fleet/)).toHaveAttribute(
       "aria-expanded",
-      "false",
+      "true",
     );
+    expect(category(/^Platform/)).toHaveAttribute("aria-expanded", "true");
   });
 
   it("gives a role with one category the flat list, with no buttons", () => {
