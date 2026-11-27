@@ -250,7 +250,14 @@ export function BookingsList() {
                           <TableCell className="whitespace-nowrap">
                             {formatDateTime(row.departureAt)}
                           </TableCell>
-                          <TableCell className="break-all">
+                          <TableCell
+                            className="max-w-56 truncate"
+                            title={
+                              row.customer.email ??
+                              row.customer.phone ??
+                              undefined
+                            }
+                          >
                             {row.customer.email ?? row.customer.phone ?? "-"}
                           </TableCell>
                           <TableCell className="whitespace-nowrap">

@@ -177,7 +177,12 @@ function OperatorRow({ operator }: { operator: OperatorSummary }) {
       </TableCell>
       <TableCell>
         <p>{operator.contactName}</p>
-        <p className="text-caption text-muted">{operator.contactEmail}</p>
+        <p
+          className="max-w-56 truncate text-caption text-muted"
+          title={operator.contactEmail}
+        >
+          {operator.contactEmail}
+        </p>
       </TableCell>
       <TableCell>
         {operator.serviceCategories.length > 0 ? (

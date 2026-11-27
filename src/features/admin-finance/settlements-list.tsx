@@ -10,6 +10,7 @@ import { Select } from "@/components/ui/select";
 import { listSettlements, type AdminSettlement } from "@/lib/api/payments";
 import { queryKeys } from "@/lib/api/query-keys";
 import { formatDateTime } from "@/lib/format/date";
+import { words } from "@/lib/format/labels";
 import { PAGE_SIZE } from "./filters";
 import { Paged } from "./refunds-queue";
 import { SETTLEMENT_ACTIONS } from "./settlement-schema";
@@ -94,7 +95,7 @@ export function SettlementsList() {
             row.operatorName,
             <span key="status" className="flex flex-col items-start gap-1">
               <Badge tone={badge?.tone ?? "neutral"}>
-                {badge?.label ?? row.status}
+                {badge?.label ?? words(row.status)}
               </Badge>
               {row.notDueReason ? (
                 <span className="max-w-xs whitespace-normal text-body-sm text-muted">

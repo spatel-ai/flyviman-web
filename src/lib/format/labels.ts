@@ -10,7 +10,7 @@ const SERVICES: Record<Schemas["ServiceCategory"], string> = {
 };
 
 /** "SOME_NEW_VALUE" becomes "Some new value". */
-function words(value: string): string {
+export function words(value: string): string {
   const text = value
     .replace(/[_\s]+/g, " ")
     .trim()

@@ -28,6 +28,7 @@ import {
 import { queryKeys } from "@/lib/api/query-keys";
 import { cn } from "@/lib/utils";
 import { formatDateTime } from "@/lib/format/date";
+import { words } from "@/lib/format/labels";
 import { PAGE_SIZE } from "./filters";
 import { RefundDialog } from "./refund-dialog";
 
@@ -90,7 +91,7 @@ function DueTab() {
         rowKey={(row) => `${row.paymentReference}-${row.kind}`}
         cells={(row) => [
           formatDateTime(row.since),
-          DUE_KIND[row.kind] ?? row.kind,
+          DUE_KIND[row.kind] ?? words(row.kind),
           row.bookingReference,
           row.paymentReference,
           <MoneyAmount
@@ -170,7 +171,7 @@ function HistoryTab() {
             currency={row.currency}
           />,
           <Badge key="status" tone={status?.tone ?? "neutral"}>
-            {status?.label ?? row.status}
+            {status?.label ?? words(row.status)}
           </Badge>,
           <StatusBadge
             key="payment"

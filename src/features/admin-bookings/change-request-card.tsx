@@ -23,6 +23,7 @@ import { ApiError } from "@/lib/api/errors";
 import { applyApiError, messageFor } from "@/lib/api/messages";
 import type { Schemas } from "@/lib/api/types";
 import { formatDateTime } from "@/lib/format/date";
+import { words } from "@/lib/format/labels";
 import { decideSchema, type DecideValues } from "./schema";
 
 type ChangeRequest = Schemas["ChangeRequestResponseDto"];
@@ -62,7 +63,7 @@ export function ChangeRequestCard({
         <p className="font-medium">
           {Object.hasOwn(KIND, request.kind)
             ? KIND[request.kind]
-            : request.kind}
+            : words(request.kind)}
         </p>
         <Badge tone={status.tone}>{status.label}</Badge>
         <span className="text-caption text-muted">
