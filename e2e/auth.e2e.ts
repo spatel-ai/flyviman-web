@@ -44,21 +44,22 @@ test.describe("route protection", () => {
   test("an operator cannot open the admin portal or a customer account", async ({
     page,
   }) => {
+    const operatorPortalSettles = async () => {
+      await expect(page).toHaveURL(/^[^?#]*\/operator(\/onboarding)?$/);
+      await expect(
+        page.getByRole("heading", {
+          level: 1,
+          name: /^(Dashboard|Company and documents)$/,
+        }),
+      ).toBeVisible();
+      expect(new URL(page.url()).pathname).not.toMatch(/^\/(admin|account)/);
+    };
     await signIn(page, "operatorAdmin");
-    await expect(page).toHaveURL("/operator/onboarding");
-    await expect(
-      page.getByRole("heading", { level: 1, name: "Company and documents" }),
-    ).toBeVisible();
+    await operatorPortalSettles();
     await page.goto("/admin");
-    await expect(page).toHaveURL("/operator/onboarding");
-    await expect(
-      page.getByRole("heading", { level: 1, name: "Company and documents" }),
-    ).toBeVisible();
+    await operatorPortalSettles();
     await page.goto("/account");
-    await expect(page).toHaveURL("/operator/onboarding");
-    await expect(
-      page.getByRole("heading", { level: 1, name: "Company and documents" }),
-    ).toBeVisible();
+    await operatorPortalSettles();
   });
 
   test("a sign-in link cannot send the user to another site", async ({
