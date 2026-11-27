@@ -10,6 +10,7 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
+  Pagination,
   Table,
   TableBody,
   TableCell,
@@ -22,6 +23,8 @@ import {
   type ReconciliationReport as Report,
 } from "@/lib/api/payments";
 import { queryKeys } from "@/lib/api/query-keys";
+import { indiaToday } from "@/lib/format/expiry";
+import { PAGE_SIZE } from "./filters";
 
 /** The API's longest period. */
 const MAX_DAYS = 92;
@@ -41,18 +44,23 @@ const KIND: Record<string, string> = {
   SETTLEMENT_REFERENCE_REUSED: "Payout reference used twice",
 };
 
-/** A UTC day as `YYYY-MM-DD`. */
-function day(date: Date): string {
-  return date.toISOString().slice(0, 10);
+/** A kind's label; one this page does not know is turned into words. */
+function kindLabel(kind: string): string {
+  if (KIND[kind]) return KIND[kind];
+  const words = kind.toLowerCase().replaceAll("_", " ");
+  return words.charAt(0).toUpperCase() + words.slice(1);
 }
 
-/** The period for two UTC days, the second included; null when not valid. */
+/** Days are Indian days (IST, UTC+05:30), as the rest of the app shows them. */
+const IST_OFFSET = "+05:30";
+
+/** The period for two IST days, the second included; null when not valid. */
 function periodOf(
   fromDay: string,
   toDay: string,
 ): { from: string; to: string } | null {
-  const from = Date.parse(`${fromDay}T00:00:00.000Z`);
-  const to = Date.parse(`${toDay}T00:00:00.000Z`) + DAY_MS;
+  const from = Date.parse(`${fromDay}T00:00:00.000${IST_OFFSET}`);
+  const to = Date.parse(`${toDay}T00:00:00.000${IST_OFFSET}`) + DAY_MS;
   if (Number.isNaN(from) || Number.isNaN(to)) return null;
   if (to <= from || to - from > MAX_DAYS * DAY_MS) return null;
   return { from: new Date(from).toISOString(), to: new Date(to).toISOString() };
@@ -64,11 +72,8 @@ function periodOf(
  * record only; the gateway is not asked.
  */
 export function ReconciliationReport() {
-  const today = new Date();
-  const [fromDay, setFromDay] = useState(
-    day(new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), 1))),
-  );
-  const [toDay, setToDay] = useState(day(today));
+  const [fromDay, setFromDay] = useState(() => `${indiaToday().slice(0, 8)}01`);
+  const [toDay, setToDay] = useState(() => indiaToday());
   const period = periodOf(fromDay, toDay);
   const query = useQuery({
     queryKey: queryKeys.adminReconciliation(period ?? {}),
@@ -80,14 +85,15 @@ export function ReconciliationReport() {
     <div className="mt-6 flex flex-col gap-6">
       <div className="flex flex-wrap gap-4">
         <Input
-          label="From (UTC)"
+          label="From (IST)"
           type="date"
           value={fromDay}
           onChange={(event) => setFromDay(event.target.value)}
           className="h-10"
         />
         <Input
-          label="To (UTC, included)"
+          label="To (IST, included)"
+          hint="Whole Indian days, midnight to midnight."
           type="date"
           value={toDay}
           onChange={(event) => setToDay(event.target.value)}
@@ -108,13 +114,18 @@ export function ReconciliationReport() {
       ) : query.isPending ? (
         <Skeleton className="h-96" />
       ) : (
-        <ReportView report={query.data} />
+        <ReportView key={query.data.generatedAt} report={query.data} />
       )}
     </div>
   );
 }
 
 function ReportView({ report }: { report: Report }) {
+  const [page, setPage] = useState(1);
+  const shown = report.mismatches.slice(
+    (page - 1) * PAGE_SIZE,
+    page * PAGE_SIZE,
+  );
   return (
     <>
       {report.totals.length === 0 ? (
@@ -201,10 +212,12 @@ function ReportView({ report }: { report: Report }) {
               </TableRow>
             </TableHead>
             <TableBody>
-              {report.mismatches.map((row, index) => (
-                <TableRow key={`${row.kind}-${row.bookingReference}-${index}`}>
+              {shown.map((row, index) => (
+                <TableRow
+                  key={`${row.kind}-${row.bookingReference}-${(page - 1) * PAGE_SIZE + index}`}
+                >
                   <TableCell className="whitespace-nowrap">
-                    {KIND[row.kind] ?? row.kind}
+                    {kindLabel(row.kind)}
                   </TableCell>
                   <TableCell className="whitespace-nowrap">
                     {row.bookingReference ?? "—"}
@@ -230,6 +243,14 @@ function ReportView({ report }: { report: Report }) {
             </TableBody>
           </Table>
         )}
+        {report.mismatches.length > PAGE_SIZE ? (
+          <Pagination
+            page={page}
+            pageSize={PAGE_SIZE}
+            total={report.mismatches.length}
+            onPageChange={setPage}
+          />
+        ) : null}
       </section>
     </>
   );
