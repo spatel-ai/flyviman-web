@@ -29,6 +29,29 @@ const BY_STATUS: Record<OperatorStatus, OperatorAction[]> = {
   SUSPENDED: ["reinstate"],
 };
 
+const REQUIRED_DOCUMENTS = [
+  ["AOC", "air operator certificate"],
+  ["INSURANCE", "insurance certificate"],
+] as const;
+
+/**
+ * Why Approve cannot be used yet, or `null`. Both required documents need a
+ * verified copy (D-025); the API refuses otherwise, this just says so first.
+ */
+export function approvalBlocker(
+  documents: readonly { type: string; verificationStatus: string }[],
+): string | null {
+  const waiting = REQUIRED_DOCUMENTS.filter(
+    ([type]) =>
+      !documents.some(
+        (document) =>
+          document.type === type && document.verificationStatus === "VERIFIED",
+      ),
+  ).map(([, label]) => label);
+  if (waiting.length === 0) return null;
+  return `Verify the ${waiting.join(" and the ")} before approving.`;
+}
+
 /** The decisions a viewer can take on an operator, primary action first. */
 export function availableActions(
   status: OperatorStatus,

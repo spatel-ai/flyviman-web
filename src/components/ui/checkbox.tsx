@@ -41,7 +41,7 @@ export function Checkbox({
           aria-describedby={message ? messageId : undefined}
           className={cn(
             "flex size-5 shrink-0 items-center justify-center rounded-sm border border-border bg-surface text-accent-foreground",
-            "transition-colors duration-150 ease-standard",
+            "transition duration-150 ease-standard active:scale-90 motion-reduce:active:scale-100",
             "aria-checked:border-accent-fill aria-checked:bg-accent-fill",
             "disabled:cursor-not-allowed disabled:opacity-50",
             error && "border-danger",

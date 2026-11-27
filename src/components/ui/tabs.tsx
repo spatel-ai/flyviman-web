@@ -38,7 +38,7 @@ export function TabsTrigger({ className, ...props }: TabsTriggerProps) {
     <TabsPrimitive.Trigger
       className={cn(
         "-mb-px inline-flex h-11 items-center border-b-2 border-transparent text-body-sm font-medium whitespace-nowrap text-muted",
-        "transition-colors duration-250 ease-standard hover:text-foreground",
+        "transition duration-250 ease-standard hover:text-foreground active:scale-97 motion-reduce:active:scale-100",
         "aria-selected:border-accent aria-selected:text-foreground",
         "disabled:cursor-not-allowed disabled:opacity-50",
         className,

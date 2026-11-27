@@ -24,12 +24,15 @@ export function AppShell({ surface, nav, user, children }: AppShellProps) {
       >
         Skip to content
       </a>
-      <aside className="hidden w-60 shrink-0 flex-col border-r border-border/60 bg-surface-raised md:flex">
-        <div className="flex h-14 items-center gap-2 px-5">
+      <aside className="sticky top-0 hidden h-screen w-60 shrink-0 flex-col self-start overflow-y-auto border-r border-border/60 bg-surface-raised md:flex">
+        <div className="flex h-14 shrink-0 items-center gap-2 px-5">
           <span className="text-title tracking-tight">Flyviman</span>
           <span className="text-caption text-muted">{surface}</span>
         </div>
-        <nav aria-label={`${surface} navigation`} className="flex-1 px-3 py-2">
+        <nav
+          aria-label={`${surface} navigation`}
+          className="flex-1 px-3 pb-6 pt-2"
+        >
           <NavLinks items={nav} />
         </nav>
       </aside>

@@ -21,6 +21,7 @@ import { formatDateTime } from "@/lib/format/date";
 import {
   actionErrorMessage,
   ACTIONS,
+  approvalBlocker,
   availableActions,
   canReadRates,
   canReview,
@@ -197,6 +198,7 @@ function DecisionActions({
   });
 
   const actions = availableActions(operator.status, role);
+  const blocker = approvalBlocker(operator.documents);
   const dialog = open ? ACTIONS[open] : null;
 
   if (actions.length === 0 && !problem) return null;
@@ -209,6 +211,7 @@ function DecisionActions({
               key={action}
               variant={ACTIONS[action].primary ? "primary" : "secondary"}
               className="h-10"
+              disabled={action === "approve" && blocker !== null}
               onClick={() => {
                 setProblem(null);
                 setOpen(action);
@@ -218,6 +221,9 @@ function DecisionActions({
             </Button>
           ))}
         </div>
+      ) : null}
+      {actions.includes("approve") && blocker ? (
+        <p className="text-body-sm text-muted sm:text-right">{blocker}</p>
       ) : null}
       {problem ? (
         <p role="alert" className="text-body-sm text-danger">

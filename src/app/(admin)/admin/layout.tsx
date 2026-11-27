@@ -17,95 +17,152 @@ const INTERNAL: Role[] = ["OPS", "FINANCE_ADMIN", "SUPER_ADMIN"];
 // only hides links a role cannot use; the API decides what it may do.
 const NAV: (NavItem & { roles: Role[] })[] = [
   { href: "/admin", label: "Dashboard", roles: INTERNAL },
-  { href: "/admin/bookings", label: "Bookings", roles: INTERNAL },
+  { href: "/admin/reports", label: "Reports", roles: INTERNAL },
+  {
+    href: "/admin/bookings",
+    label: "Bookings",
+    group: "Operations",
+    roles: INTERNAL,
+  },
   {
     href: "/admin/change-requests",
     label: "Change requests",
+    group: "Operations",
     roles: ["OPS", "SUPER_ADMIN"],
   },
-  { href: "/admin/operators", label: "Operators", roles: INTERNAL },
-  { href: "/admin/aircraft", label: "Aircraft", roles: ["OPS", "SUPER_ADMIN"] },
   {
-    href: "/admin/locations",
-    label: "Locations",
+    href: "/admin/air-ambulance",
+    label: "Air ambulance",
+    group: "Operations",
     roles: ["OPS", "SUPER_ADMIN"],
   },
   {
     href: "/admin/empty-legs",
     label: "Empty legs",
+    group: "Operations",
+    roles: ["OPS", "SUPER_ADMIN"],
+  },
+  {
+    href: "/admin/enquiries",
+    label: "Enquiries",
+    group: "Operations",
+    roles: ["OPS", "SUPER_ADMIN"],
+  },
+  {
+    href: "/admin/operators",
+    label: "Operators",
+    group: "Operators and fleet",
+    roles: INTERNAL,
+  },
+  {
+    href: "/admin/aircraft",
+    label: "Aircraft",
+    group: "Operators and fleet",
     roles: ["OPS", "SUPER_ADMIN"],
   },
   {
     href: "/admin/documents",
     label: "Expiring documents",
+    group: "Operators and fleet",
+    roles: ["OPS", "SUPER_ADMIN"],
+  },
+  {
+    href: "/admin/locations",
+    label: "Locations",
+    group: "Operators and fleet",
     roles: ["OPS", "SUPER_ADMIN"],
   },
   {
     href: "/admin/pricing/rules",
     label: "Pricing rules",
+    group: "Pricing",
     roles: ["FINANCE_ADMIN", "SUPER_ADMIN"],
   },
   {
     href: "/admin/promotions",
     label: "Promotions",
+    group: "Pricing",
     roles: ["FINANCE_ADMIN", "SUPER_ADMIN"],
   },
   {
     href: "/admin/matching-limits",
     label: "Matching limits",
+    group: "Pricing",
     roles: INTERNAL,
   },
   {
     href: "/admin/pricing/calculations",
     label: "Price calculations",
+    group: "Pricing",
     roles: INTERNAL,
-  },
-  {
-    href: "/admin/air-ambulance",
-    label: "Air ambulance",
-    roles: ["OPS", "SUPER_ADMIN"],
   },
   {
     href: "/admin/payments",
     label: "Payments",
+    group: "Finance",
     roles: ["FINANCE_ADMIN", "SUPER_ADMIN"],
   },
   {
     href: "/admin/refunds",
     label: "Refunds",
+    group: "Finance",
     roles: ["FINANCE_ADMIN", "SUPER_ADMIN"],
   },
   {
     href: "/admin/settlements",
     label: "Settlements",
+    group: "Finance",
     roles: ["FINANCE_ADMIN", "SUPER_ADMIN"],
   },
   {
     href: "/admin/reconciliation",
     label: "Reconciliation",
+    group: "Finance",
     roles: ["FINANCE_ADMIN", "SUPER_ADMIN"],
   },
   {
-    href: "/admin/enquiries",
-    label: "Enquiries",
+    href: "/admin/users",
+    label: "Users",
+    group: "Platform",
     roles: ["OPS", "SUPER_ADMIN"],
   },
-  { href: "/admin/content", label: "Content", roles: ["OPS", "SUPER_ADMIN"] },
-  { href: "/admin/category-config", label: "Categories", roles: INTERNAL },
-  { href: "/admin/users", label: "Users", roles: ["OPS", "SUPER_ADMIN"] },
-  { href: "/admin/roles", label: "Roles", roles: ["SUPER_ADMIN"] },
-  { href: "/admin/reports", label: "Reports", roles: INTERNAL },
-  { href: "/admin/audit-logs", label: "Audit log", roles: INTERNAL },
+  {
+    href: "/admin/roles",
+    label: "Roles",
+    group: "Platform",
+    roles: ["SUPER_ADMIN"],
+  },
+  {
+    href: "/admin/content",
+    label: "Content",
+    group: "Platform",
+    roles: ["OPS", "SUPER_ADMIN"],
+  },
+  {
+    href: "/admin/category-config",
+    label: "Categories",
+    group: "Platform",
+    roles: INTERNAL,
+  },
   {
     href: "/admin/notifications",
     label: "Notifications",
+    group: "Platform",
     roles: ["OPS", "SUPER_ADMIN"],
+  },
+  {
+    href: "/admin/audit-logs",
+    label: "Audit log",
+    group: "Platform",
+    roles: INTERNAL,
   },
 ];
 
 async function AdminShell({ children }: { children: React.ReactNode }) {
   const session = await requireRole(INTERNAL, "/admin");
-  const nav = NAV.filter((item) => item.roles.includes(session.role));
+  const nav: NavItem[] = NAV.filter((item) =>
+    item.roles.includes(session.role),
+  ).map(({ href, label, group }) => ({ href, label, group }));
   return (
     <AppShell
       surface="Admin"

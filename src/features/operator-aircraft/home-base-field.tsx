@@ -4,7 +4,7 @@ import { useState } from "react";
 import { LocationField } from "@/components/shared/location-field";
 
 /** The home base for the plain create form: submits `homeBaseId`. */
-export function HomeBaseField() {
+export function HomeBaseField({ error }: { error?: string }) {
   const [chosen, setChosen] = useState("");
   return (
     <>
@@ -14,6 +14,7 @@ export function HomeBaseField() {
         searchLabel="Find the home base"
         value={chosen}
         onChange={setChosen}
+        error={error}
       />
     </>
   );

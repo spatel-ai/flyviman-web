@@ -37,28 +37,56 @@ export function can(
 export interface PortalLink {
   href: string;
   label: string;
+  group?: string;
 }
 
 const DASHBOARD = { href: "/operator", label: "Dashboard" };
-const REQUESTS = { href: "/operator/requests", label: "Requests" };
-const BOOKINGS = { href: "/operator/bookings", label: "Bookings" };
-const FLEET = { href: "/operator/aircraft", label: "Fleet" };
-const AVAILABILITY = { href: "/operator/availability", label: "Availability" };
-const EMPTY_LEGS = { href: "/operator/empty-legs", label: "Empty legs" };
+const REQUESTS = {
+  href: "/operator/requests",
+  label: "Requests",
+  group: "Requests and bookings",
+};
+const BOOKINGS = {
+  href: "/operator/bookings",
+  label: "Bookings",
+  group: "Requests and bookings",
+};
+const FLEET = { href: "/operator/aircraft", label: "Fleet", group: "Fleet" };
+const AVAILABILITY = {
+  href: "/operator/availability",
+  label: "Availability",
+  group: "Fleet",
+};
+const EMPTY_LEGS = {
+  href: "/operator/empty-legs",
+  label: "Empty legs",
+  group: "Fleet",
+};
 const AIR_AMBULANCE = {
   href: "/operator/air-ambulance",
   label: "Air ambulance",
+  group: "Fleet",
 };
-const TEAM = { href: "/operator/team", label: "Team" };
+const TEAM = { href: "/operator/team", label: "Team", group: "Account" };
 const NOTIFICATIONS = {
   href: "/operator/notifications",
   label: "Notifications",
+  group: "Account",
 };
-const PRICING = { href: "/operator/pricing", label: "Pricing" };
-const SETTLEMENTS = { href: "/operator/settlements", label: "Settlements" };
+const PRICING = {
+  href: "/operator/pricing",
+  label: "Pricing",
+  group: "Business",
+};
+const SETTLEMENTS = {
+  href: "/operator/settlements",
+  label: "Settlements",
+  group: "Business",
+};
 const APPLICATION = {
   href: "/operator/onboarding",
   label: "Company and documents",
+  group: "Account",
 };
 
 /**

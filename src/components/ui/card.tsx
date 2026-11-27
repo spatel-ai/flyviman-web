@@ -7,7 +7,7 @@ const VARIANTS: Record<Variant, string> = {
   flat: "bg-surface",
   raised: "bg-surface-raised shadow-sm",
   interactive:
-    "bg-surface-raised shadow-sm transition-shadow duration-150 ease-standard hover:shadow-md",
+    "bg-surface-raised shadow-sm transition duration-150 ease-standard hover:shadow-md active:scale-99 motion-reduce:active:scale-100",
 };
 
 export interface CardProps extends HTMLAttributes<HTMLDivElement> {

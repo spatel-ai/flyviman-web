@@ -96,20 +96,23 @@ test("an operator registers, completes its application, and operations approve i
   ).toBeVisible();
 
   // Approval is refused until the required documents are verified.
-  await staff.page
-    .getByRole("button", { name: "Approve", exact: true })
-    .click();
-  await staff.page.getByRole("button", { name: "Approve operator" }).click();
+  // Approval is off until both required documents are verified, and says why.
   await expect(
-    staff.page
-      .getByText("Verify the required documents first", { exact: true })
-      .first(),
+    staff.page.getByRole("button", { name: "Approve", exact: true }),
+  ).toBeDisabled();
+  await expect(
+    staff.page.getByText(
+      "Verify the air operator certificate and the insurance certificate before approving.",
+    ),
   ).toBeVisible();
 
   await staff.page
     .getByRole("button", { name: /^Verify Air operator certificate/ })
     .click();
   await expect(staff.page.getByText("Document verified").first()).toBeVisible();
+  await expect(
+    staff.page.getByRole("button", { name: "Approve", exact: true }),
+  ).toBeDisabled();
   await staff.page
     .getByRole("button", { name: /^Verify Insurance certificate/ })
     .click();

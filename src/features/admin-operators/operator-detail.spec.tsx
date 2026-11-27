@@ -233,11 +233,44 @@ describe("OperatorDetail", () => {
     ).not.toBeInTheDocument();
   });
 
+  it("keeps Approve off until both required documents are verified", async () => {
+    serve("SUPER_ADMIN");
+    setup();
+
+    expect(
+      await screen.findByRole("button", { name: "Approve" }),
+    ).toBeDisabled();
+    expect(
+      screen.getByText(
+        "Verify the air operator certificate and the insurance certificate before approving.",
+      ),
+    ).toBeInTheDocument();
+  });
+
   it("says to verify the documents when approval is refused for that", async () => {
-    serve("SUPER_ADMIN", {
-      [`admin/operators/${ID}/approve`]: () =>
-        Promise.reject(new ApiError(422, "OPERATOR_DOCUMENTS_UNVERIFIED", "x")),
-    });
+    // The screen thinks both are verified, but the API disagrees (stale data).
+    const verified = {
+      ...operator,
+      documents: [
+        { ...operator.documents[0], verificationStatus: "VERIFIED" },
+        {
+          ...operator.documents[0],
+          id: "doc-2",
+          type: "INSURANCE",
+          verificationStatus: "VERIFIED",
+        },
+      ],
+    };
+    serve(
+      "SUPER_ADMIN",
+      {
+        [`admin/operators/${ID}/approve`]: () =>
+          Promise.reject(
+            new ApiError(422, "OPERATOR_DOCUMENTS_UNVERIFIED", "x"),
+          ),
+      },
+      () => Promise.resolve(ok(verified)),
+    );
     const user = setup();
 
     await user.click(await screen.findByRole("button", { name: "Approve" }));

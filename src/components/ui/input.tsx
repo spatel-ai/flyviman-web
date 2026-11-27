@@ -23,7 +23,7 @@ export function Input({
   const message = error ?? hint;
 
   return (
-    <div className="flex flex-col gap-1.5">
+    <div className="flex min-w-0 max-w-full flex-col gap-1.5">
       <label
         htmlFor={inputId}
         className="text-body-sm font-medium text-foreground"

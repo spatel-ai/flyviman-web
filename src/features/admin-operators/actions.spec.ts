@@ -3,6 +3,7 @@ import { ApiError } from "@/lib/api/errors";
 import type { OperatorStatus, Role } from "@/lib/api/types";
 import {
   actionErrorMessage,
+  approvalBlocker,
   availableActions,
   canReadRates,
   canReview,
@@ -87,5 +88,37 @@ describe("canReadRates", () => {
     expect(canReadRates("SUPER_ADMIN")).toBe(true);
     expect(canReadRates("OPS")).toBe(false);
     expect(canReadRates(undefined)).toBe(false);
+  });
+});
+
+describe("approvalBlocker", () => {
+  const doc = (type: string, verificationStatus: string) => ({
+    type,
+    verificationStatus,
+  });
+
+  it("names the documents still to verify", () => {
+    expect(approvalBlocker([])).toBe(
+      "Verify the air operator certificate and the insurance certificate before approving.",
+    );
+    expect(
+      approvalBlocker([doc("AOC", "VERIFIED"), doc("INSURANCE", "PENDING")]),
+    ).toBe("Verify the insurance certificate before approving.");
+  });
+
+  it("does not count a rejected copy or another document type", () => {
+    expect(
+      approvalBlocker([
+        doc("AOC", "REJECTED"),
+        doc("INSURANCE", "VERIFIED"),
+        doc("OTHER", "VERIFIED"),
+      ]),
+    ).toBe("Verify the air operator certificate before approving.");
+  });
+
+  it("allows approval once both are verified", () => {
+    expect(
+      approvalBlocker([doc("AOC", "VERIFIED"), doc("INSURANCE", "VERIFIED")]),
+    ).toBeNull();
   });
 });
