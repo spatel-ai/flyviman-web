@@ -439,6 +439,11 @@ function RequestForm({
             Send request
           </Button>
         )}
+        {newTerms ? null : (
+          <p className="text-body-sm">
+            By sending this request you accept the cancellation terms above.
+          </p>
+        )}
         <p className="text-caption text-muted">
           This sends a request. Nothing is booked or charged. The operator
           confirms the flight and the price first.

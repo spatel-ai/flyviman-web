@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 import { signIn } from "./support/api";
+import { approvedOperator } from "./support/operators";
 import { expectNotCovered } from "./support/phone";
 
 test.describe("customer home", () => {
@@ -319,8 +320,13 @@ test.describe("accessibility (axe)", () => {
 
   test("operator tabs and the open account menu pass the ARIA rules", async ({
     page,
+    browser,
   }) => {
-    await signIn(page, "operatorAdmin", "/operator/availability");
+    test.slow();
+    // Its own approved operator: the seeded one's approval state depends on
+    // the database, and an unapproved one sees the locked card, not the tabs.
+    await approvedOperator(page, browser);
+    await page.goto("/operator/availability");
     await expect(page.getByRole("tab", { name: "Week" })).toBeVisible();
     expect(await axeViolations(page, ARIA)).toEqual([]);
 

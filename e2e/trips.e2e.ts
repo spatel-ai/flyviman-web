@@ -54,6 +54,12 @@ test("a customer requests a priced flight from a result, finds it in trips and c
   // The lead passenger is required.
   const send = page.getByRole("button", { name: "Send request" });
   await expect(send).toBeEnabled();
+  // Sending accepts the terms, and the form says so beside the button.
+  await expect(
+    main.getByText(
+      "By sending this request you accept the cancellation terms above.",
+    ),
+  ).toBeVisible();
   await send.click();
   await expect(
     page.getByText("Choose at least the lead passenger."),
@@ -85,9 +91,7 @@ test("a customer requests a priced flight from a result, finds it in trips and c
   await expect(
     main.getByText("2 passengers, 1 named", { exact: true }),
   ).toBeVisible();
-  await expect(
-    main.getByText("Cancellation terms shown when you sent this request"),
-  ).toBeVisible();
+  await expect(main.getByText("Cancellation terms you accepted")).toBeVisible();
   // Booking and payment status are two badges.
   await expect(
     main.getByText("Awaiting operator", { exact: true }),

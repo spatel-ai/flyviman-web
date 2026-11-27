@@ -185,6 +185,7 @@ export function LocationsList() {
                                 ? formatMoney(
                                     location.charges.categories[0].landingMinor,
                                     location.charges.currency,
+                                    { dropZeroDecimals: true },
                                   )
                                 : "—"}
                             </TableCell>

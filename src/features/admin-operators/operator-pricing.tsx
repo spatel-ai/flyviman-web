@@ -22,7 +22,9 @@ type AircraftRate = OperatorPricing["aircraft"][number];
 
 /** "₹1,80,000", or "Not set". */
 function money(amountMinor: number | null, currency: string): string {
-  return amountMinor == null ? "Not set" : formatMoney(amountMinor, currency);
+  return amountMinor == null
+    ? "Not set"
+    : formatMoney(amountMinor, currency, { dropZeroDecimals: true });
 }
 
 /** The operator-wide defaults as label and value pairs, in a fixed order. */
@@ -92,17 +94,17 @@ export function describeRate(aircraft: AircraftRate): string {
     case "SECTOR":
       return aircraft.sectorRateMinor == null
         ? "No sector rate: price on request"
-        : `${formatMoney(aircraft.sectorRateMinor, c)} per sector`;
+        : `${formatMoney(aircraft.sectorRateMinor, c, { dropZeroDecimals: true })} per sector`;
     case "FIXED_ROUTE": {
       const routes = aircraft.fixedRoutes ?? [];
       return routes.length === 0
         ? "No routes: price on request"
-        : `${routes.length} route${routes.length === 1 ? "" : "s"}, from ${formatMoney(Math.min(...routes.map((r) => r.amountMinor)), c)}`;
+        : `${routes.length} route${routes.length === 1 ? "" : "s"}, from ${formatMoney(Math.min(...routes.map((r) => r.amountMinor)), c, { dropZeroDecimals: true })}`;
     }
     case "HOURLY":
       return aircraft.hourlyRateMinor == null
         ? "No hourly rate: price on request"
-        : `${formatMoney(aircraft.hourlyRateMinor, c)} per hour`;
+        : `${formatMoney(aircraft.hourlyRateMinor, c, { dropZeroDecimals: true })} per hour`;
     default:
       return "—";
   }

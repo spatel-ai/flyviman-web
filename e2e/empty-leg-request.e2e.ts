@@ -116,6 +116,12 @@ test("a customer with no saved passengers adds one on the request page and sends
     await send.boundingBox(),
   ];
   expect(termsBox!.y).toBeLessThan(sendBox!.y);
+  // Sending accepts the terms, and the form says so beside the button.
+  await expect(
+    main.getByText(
+      "By sending this request you accept the cancellation terms above.",
+    ),
+  ).toBeVisible();
 
   await send.click();
   await expect(customer).toHaveURL(
