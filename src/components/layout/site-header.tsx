@@ -58,7 +58,7 @@ async function Account() {
 /** Customer-surface navigation: translucent, sticky, minimal. */
 export function SiteHeader() {
   return (
-    <header className="site-header material-bar sticky top-0 z-40 border-b">
+    <header className="site-header material-bar print:hidden sticky top-0 z-40 border-b">
       <HeaderScrollState />
       <div className="mx-auto flex h-(--header-height) max-w-wide items-center justify-between px-4 md:px-6 lg:px-8">
         <div className="flex items-center gap-1 md:gap-6">

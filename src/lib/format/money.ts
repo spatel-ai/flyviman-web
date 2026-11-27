@@ -2,11 +2,26 @@ const LOCALES: Record<string, string> = {
   INR: "en-IN",
 };
 
+export interface FormatMoneyOptions {
+  /**
+   * Drop ".00" from a whole amount ("₹5,21,796"). Only for estimates, "from"
+   * prices and configured rates: an amount that is charged, paid, refunded,
+   * settled or invoiced always shows its minor units. An amount that is not
+   * whole keeps its decimals either way.
+   */
+  dropZeroDecimals?: boolean;
+}
+
 /**
  * Formats an amount held in minor units (paise for INR) for display.
- * Whole amounts are shown without decimals: 52179600 INR -> "₹5,21,796".
+ * The rule (W3-019): exact amounts always show two decimals, 52179600 INR ->
+ * "₹5,21,796.00"; with `dropZeroDecimals` a whole amount is "₹5,21,796".
  */
-export function formatMoney(amountMinor: number, currency: string): string {
+export function formatMoney(
+  amountMinor: number,
+  currency: string,
+  { dropZeroDecimals = false }: FormatMoneyOptions = {},
+): string {
   if (!Number.isInteger(amountMinor)) {
     throw new TypeError("Money amounts must be whole minor units.");
   }
@@ -17,14 +32,37 @@ export function formatMoney(amountMinor: number, currency: string): string {
       currency,
     }).resolvedOptions().maximumFractionDigits ?? 2;
   const divisor = 10 ** fractionDigits;
-  const isWhole = amountMinor % divisor === 0;
+  const drop = dropZeroDecimals && amountMinor % divisor === 0;
 
   return new Intl.NumberFormat(LOCALES[currency] ?? "en", {
     style: "currency",
     currency,
-    minimumFractionDigits: isWhole ? 0 : fractionDigits,
-    maximumFractionDigits: isWhole ? 0 : fractionDigits,
+    minimumFractionDigits: drop ? 0 : fractionDigits,
+    maximumFractionDigits: drop ? 0 : fractionDigits,
   }).format(amountMinor / divisor);
+}
+
+/**
+ * Rupees as typed in a form ("180000", "2500.5") as a formatted helper for
+ * beside the field ("₹1,80,000.00"), or null while the field is empty or not
+ * an amount. Display only: what the field submits is unchanged.
+ */
+export function formatTypedRupees(
+  input: string,
+  currency = "INR",
+): string | null {
+  try {
+    const paise = rupeesToPaise(input);
+    return paise === null ? null : formatMoney(paise, currency);
+  } catch {
+    return null;
+  }
+}
+
+/** A field's hint with what was typed, formatted, after it: "… Reads as ₹1,80,000.00." */
+export function hintWithTyped(base: string, input: string | undefined): string {
+  const typed = formatTypedRupees(input ?? "");
+  return typed ? `${base} Reads as ${typed}.` : base;
 }
 
 /** ₹10 crore in paise: the most any pricing input takes (the API's ceiling). */

@@ -65,6 +65,11 @@ export function PriceLabel({
   const presentation = PRESENTATION[priceType];
   const { label, tone } = presentation;
   const note = noteOverride ?? presentation.note;
+  // An estimate or a "from" price may drop ".00"; quotes, live fares and
+  // confirmed prices are exact (design-system.md, money).
+  const amount = formatMoney(amountMinor, currency, {
+    dropZeroDecimals: priceType === "ESTIMATE" || Boolean(lead),
+  });
 
   if (variant === "compact") {
     return (
@@ -77,7 +82,7 @@ export function PriceLabel({
           )}
         >
           {lead ? `${lead} ` : null}
-          {formatMoney(amountMinor, currency)}
+          {amount}
         </span>
       </span>
     );
@@ -92,7 +97,7 @@ export function PriceLabel({
           expired && "text-muted line-through",
         )}
       >
-        {formatMoney(amountMinor, currency)}
+        {amount}
       </p>
       <p className="text-caption text-muted">
         {expired

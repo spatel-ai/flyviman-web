@@ -210,6 +210,14 @@ test("finance refunds a paid trip the customer cancelled, from Due to History", 
     main.getByRole("heading", { level: 1, name: "Payment receipt" }),
   ).toBeVisible();
   await expect(main.getByText(/not a GST tax invoice/)).toBeVisible();
+  // Issued is when the payment was confirmed, not when it is viewed (W1-026).
+  const issued = main.locator("dt", { hasText: /^Issued$/ }).locator("+ dd");
+  const paid = main.locator("dt", { hasText: /^Paid$/ }).locator("+ dd");
+  await expect(issued).not.toHaveText("—");
+  await expect(issued).toHaveText((await paid.textContent()) ?? "");
+  await expect(
+    main.locator("header").getByRole("button", { name: "Print" }),
+  ).toBeVisible();
   await main.getByRole("link", { name: `Back to trip ${reference}` }).click();
 
   // The customer cancels after seeing the conditions.
