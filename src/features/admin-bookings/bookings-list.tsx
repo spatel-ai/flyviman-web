@@ -284,7 +284,7 @@ export function BookingsList() {
                         <div className="flex flex-wrap items-center justify-between gap-2">
                           <Link
                             href={`/admin/bookings/${row.reference}`}
-                            className="font-medium text-accent hover:underline"
+                            className="-my-[0.1875rem] py-[0.1875rem] font-medium text-accent hover:underline"
                           >
                             {row.reference}
                           </Link>
