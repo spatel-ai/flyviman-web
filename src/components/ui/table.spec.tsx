@@ -9,6 +9,8 @@ import {
   TableHead,
   TableHeaderCell,
   TableRow,
+  TruncatedCell,
+  TruncatedText,
   type SortDirection,
 } from "./table";
 
@@ -189,5 +191,31 @@ describe("Table overflow", () => {
       fireEvent.scroll(region);
     });
     expect(screen.getByTestId("table-shadow-end")).toHaveClass("opacity-0");
+  });
+});
+
+describe("TruncatedCell and TruncatedText", () => {
+  const long = "Chhatrapati Shivaji Maharaj International Airport to Goa";
+
+  it("a truncated cell shows the text on one line with the full value in title", () => {
+    render(
+      <table>
+        <tbody>
+          <tr>
+            <TruncatedCell title={long}>{long}</TruncatedCell>
+          </tr>
+        </tbody>
+      </table>,
+    );
+    const cell = screen.getByRole("cell", { name: long });
+    expect(cell).toHaveAttribute("title", long);
+    expect(cell).toHaveClass("truncate");
+  });
+
+  it("truncated text shows the short form with the full value in title", () => {
+    render(<TruncatedText title={long}>Mumbai → Goa</TruncatedText>);
+    const text = screen.getByText("Mumbai → Goa");
+    expect(text).toHaveAttribute("title", long);
+    expect(text).toHaveClass("block", "truncate");
   });
 });

@@ -121,7 +121,7 @@ function GatewayReference({ id }: { id: string | null }) {
   return (
     <button
       type="button"
-      title="Copy gateway reference"
+      title={`Copy gateway reference ${id}`}
       aria-label={`Copy gateway reference ${id}`}
       className="block max-w-40 truncate font-mono text-caption hover:underline"
       onClick={() => void navigator.clipboard?.writeText(id)}
