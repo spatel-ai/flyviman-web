@@ -224,6 +224,12 @@ test("checking an offer shows a changed price, a sold-out flight and a confirmed
   const dialog = page.getByRole("dialog");
   await expect(dialog.getByText("Name changes.")).toBeVisible();
   await expect(dialog.getByText("Not refundable")).toBeVisible();
+  // A fee is plain money, not a priced fare (W1-004).
+  await expect(dialog.getByText("Live fare", { exact: true })).toHaveCount(1);
+  // Said before the check, not after (W1-024).
+  await expect(
+    dialog.getByText(/Online booking of scheduled flights is not open yet/),
+  ).toBeVisible();
   await dialog.getByRole("button", { name: "Check price and seats" }).click();
   await expect(dialog.getByText("The price has changed")).toBeVisible();
   await expect(dialog.getByText("₹4,500")).toBeVisible();
@@ -373,7 +379,7 @@ test("a scheduled search against the real API returns labelled live fares and re
   // The mock turns about one offer in eleven sold out on a check, keyed by
   // the offer (so by the date searched): take the first that is not.
   const dialog = page.getByRole("dialog");
-  const confirmed = dialog.getByText("Price and seats confirmed");
+  const confirmed = dialog.getByText("Price and seats checked");
   const changed = dialog.getByText("The price has changed");
   const soldOut = dialog.getByText("No seats left on this fare");
   let open = async () => {};
@@ -435,4 +441,17 @@ test("airlines that do not answer give a partial notice", async ({
   } finally {
     await behaviour("NORMAL");
   }
+});
+
+test("the scheduled service has its own headline and no charter popular routes", async ({
+  page,
+}) => {
+  await page.goto("/search?service=flights");
+  await expect(
+    page.getByRole("heading", { level: 1, name: "Compare airline flights" }),
+  ).toBeVisible();
+  await expect(page.getByText("Fly private, on your schedule")).toHaveCount(0);
+  await expect(
+    page.getByRole("heading", { name: "Popular routes" }),
+  ).toHaveCount(0);
 });

@@ -23,7 +23,7 @@ import { FormAlert } from "@/components/shared/form-alert";
 import { ChangeRequests } from "./change-requests";
 import { HoldTime } from "./hold-time";
 import { RequestActions } from "./request-actions";
-import { quoteStatusLabel } from "./status";
+import { quoteStatusLabel, requestPriceCopy, showsHold } from "./status";
 import { useAct } from "./use-act";
 
 type Detail = Schemas["OperatorBookingRequestDetailDto"];
@@ -108,6 +108,7 @@ function Loaded({
     request.cancellationTerms.summary,
     request.cancellationTerms.charges,
   );
+  const priceCopy = requestPriceCopy(request);
   return (
     <div className="mt-4 flex flex-col gap-6">
       <div className="flex flex-wrap items-center gap-3">
@@ -148,14 +149,14 @@ function Loaded({
             <dd>{request.passengerCount}</dd>
           </div>
           <div className="col-span-2">
-            <dt className="text-muted">Proposed price</dt>
+            <dt className="text-muted">{priceCopy.name}</dt>
             <dd>
               {request.price ? (
                 <PriceLabel
                   amountMinor={request.price.amountMinor}
                   currency={request.price.currency}
                   priceType={request.price.priceType}
-                  note="Flyviman's estimate from the customer's search. The operator's quote sets the price."
+                  note={priceCopy.note}
                 />
               ) : (
                 <span className="font-medium">
@@ -164,12 +165,14 @@ function Loaded({
               )}
             </dd>
           </div>
-          <div className="col-span-2">
-            <dt className="text-muted">Hold on your aircraft</dt>
-            <dd>
-              <HoldTime expiresAt={request.holdExpiresAt} />
-            </dd>
-          </div>
+          {showsHold(request) ? (
+            <div className="col-span-2">
+              <dt className="text-muted">Hold on your aircraft</dt>
+              <dd>
+                <HoldTime expiresAt={request.holdExpiresAt} />
+              </dd>
+            </div>
+          ) : null}
         </dl>
       </Card>
 

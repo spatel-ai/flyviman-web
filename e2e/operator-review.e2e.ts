@@ -109,12 +109,20 @@ test("an operator registers, completes its application, and operations approve i
   await staff.page
     .getByRole("button", { name: /^Verify Air operator certificate/ })
     .click();
+  await staff.page
+    .getByRole("dialog", { name: "Verify this document?" })
+    .getByRole("button", { name: "Verify document" })
+    .click();
   await expect(staff.page.getByText("Document verified").first()).toBeVisible();
   await expect(
     staff.page.getByRole("button", { name: "Approve", exact: true }),
   ).toBeDisabled();
   await staff.page
     .getByRole("button", { name: /^Verify Insurance certificate/ })
+    .click();
+  await staff.page
+    .getByRole("dialog", { name: "Verify this document?" })
+    .getByRole("button", { name: "Verify document" })
     .click();
   await expect(
     staff.page.getByRole("button", { name: /^Verify / }),

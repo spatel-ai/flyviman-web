@@ -27,7 +27,7 @@ describe("PriceLabel", () => {
     );
 
     expect(
-      screen.getByText("Final price confirmed by the operator"),
+      screen.getByText("The operator confirms the final price"),
     ).toBeInTheDocument();
   });
 

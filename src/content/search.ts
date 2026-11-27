@@ -79,6 +79,12 @@ export const SEARCH_LANDING = {
     title: "Fly private, on your schedule",
     lead: "Compare approved aircraft for your trip, each with a clear estimate. The operator confirms the final price.",
   },
+  /** The hero while "Scheduled flights" is the chosen service. */
+  scheduledHero: {
+    overline: "Scheduled flights",
+    title: "Compare airline flights",
+    lead: "Search live fares from scheduled airlines. Online booking of scheduled flights is not open yet; you can check a price and send us an enquiry.",
+  },
   calendarLegend:
     "Lowest estimates per day, for departures at 10:00. The operator confirms the final price.",
   calendarLegendRoundTrip:

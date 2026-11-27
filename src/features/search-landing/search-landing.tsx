@@ -60,7 +60,11 @@ export function SearchLanding() {
     widget.current?.scrollIntoView({ block: "start", behavior: "smooth" });
   }
 
-  const { hero, popularRoutes, aircraft } = SEARCH_LANDING;
+  const { popularRoutes, aircraft } = SEARCH_LANDING;
+  // Scheduled flights are not private charter: own headline, and no charter
+  // estimates in the popular routes (W1-005).
+  const scheduled = initial.service === "flights";
+  const hero = scheduled ? SEARCH_LANDING.scheduledHero : SEARCH_LANDING.hero;
 
   return (
     <>
@@ -106,31 +110,33 @@ export function SearchLanding() {
         </div>
       </section>
 
-      <section
-        aria-labelledby="popular-routes"
-        className="mx-auto w-full max-w-wide px-4 pt-20 md:px-6"
-      >
-        <h2 id="popular-routes" className="text-h2">
-          {popularRoutes.title}
-        </h2>
-        <p className="mt-2 text-body text-muted">{popularRoutes.lead}</p>
-        <ul className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {popularRoutes.routes.map((route, index) => (
-            <li key={`${route.from}-${route.to}`}>
-              <Reveal index={index % 3} className="h-full">
-                <RouteCard
-                  from={route.from}
-                  to={route.to}
-                  image={route.image}
-                  onChoose={(originId, destinationId) =>
-                    prefill({ service: "charter", originId, destinationId })
-                  }
-                />
-              </Reveal>
-            </li>
-          ))}
-        </ul>
-      </section>
+      {scheduled ? null : (
+        <section
+          aria-labelledby="popular-routes"
+          className="mx-auto w-full max-w-wide px-4 pt-20 md:px-6"
+        >
+          <h2 id="popular-routes" className="text-h2">
+            {popularRoutes.title}
+          </h2>
+          <p className="mt-2 text-body text-muted">{popularRoutes.lead}</p>
+          <ul className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {popularRoutes.routes.map((route, index) => (
+              <li key={`${route.from}-${route.to}`}>
+                <Reveal index={index % 3} className="h-full">
+                  <RouteCard
+                    from={route.from}
+                    to={route.to}
+                    image={route.image}
+                    onChoose={(originId, destinationId) =>
+                      prefill({ service: "charter", originId, destinationId })
+                    }
+                  />
+                </Reveal>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       <section
         aria-labelledby="aircraft-classes"

@@ -144,11 +144,28 @@ test("an operator lists an aircraft and operations reject, then approve it", asy
       .getByRole("button", { name: "Mark verified" })
       .first()
       .click();
+    // A confirm step names the document before anything is saved (W3-033).
+    const verify = staff.page.getByRole("dialog", {
+      name: "Mark this document verified?",
+    });
+    await expect(verify).toBeVisible();
+    await verify.getByRole("button", { name: "Mark verified" }).click();
+    await expect(verify).toBeHidden();
     await expect(
       staff.page.getByRole("button", { name: "Mark verified" }),
     ).toHaveCount(left - 1);
   }
   await staff.page.getByRole("button", { name: "Approve" }).click();
+  const approve = staff.page.getByRole("dialog", {
+    name: "Approve this aircraft?",
+  });
+  await approve.getByRole("button", { name: "Cancel" }).click();
+  await expect(listingStatus(staff.page)).toHaveAttribute(
+    "data-status",
+    "PENDING_REVIEW",
+  );
+  await staff.page.getByRole("button", { name: "Approve" }).click();
+  await approve.getByRole("button", { name: "Approve" }).click();
   await expect(listingStatus(staff.page)).toHaveAttribute(
     "data-status",
     "APPROVED",

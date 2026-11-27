@@ -101,10 +101,10 @@ export function holdMinutesLeft(expiresAt: string, now: number): number {
   return Math.floor((Date.parse(expiresAt) - now) / 60_000);
 }
 
-/** "5 h 20 min left", "12 min left" or "Lapsed". */
+/** "5 h 20 min left", "12 min left" or "Expired". */
 export function holdLabel(expiresAt: string, now: number): string {
   const minutes = holdMinutesLeft(expiresAt, now);
-  if (minutes <= 0) return "Lapsed";
+  if (minutes <= 0) return "Expired";
   const hours = Math.floor(minutes / 60);
   if (hours >= 48) return `${Math.floor(hours / 24)} days left`;
   return hours > 0
@@ -113,3 +113,32 @@ export function holdLabel(expiresAt: string, now: number): string {
 }
 
 export type { BookingStatus };
+
+/** The answer-by hold only matters while the operator has not answered. */
+export function showsHold(request: Pick<Detail, "status">): boolean {
+  return request.status === "OPERATOR_PENDING";
+}
+
+/**
+ * The field name and caption of the request's price, from the status and the
+ * API's own price type (never a type of our choosing). `note` undefined
+ * keeps the price type's standard note.
+ */
+export function requestPriceCopy(
+  request: Pick<Detail, "status" | "price">,
+): { name: string; note?: string } {
+  const type = request.price?.priceType;
+  if (type === "CONFIRMED") {
+    return { name: "Agreed price", note: "The price agreed for this trip." };
+  }
+  if (type === "ESTIMATE") {
+    return {
+      name: "Proposed price",
+      note:
+        request.status === "OPERATOR_PENDING"
+          ? "Flyviman's estimate from the customer's search. The operator's quote sets the price."
+          : "Flyviman's estimate from the customer's search. It was not confirmed.",
+    };
+  }
+  return { name: "Price" };
+}

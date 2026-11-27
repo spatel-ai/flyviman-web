@@ -82,6 +82,16 @@ const nextConfig: NextConfig = {
   partialPrefetching: true,
   reactCompiler: true,
   poweredByHeader: false,
+  // Notifications and emails sent before the fix link to the old address.
+  async redirects() {
+    return [
+      {
+        source: "/air-ambulance/requests/:reference",
+        destination: "/account/air-ambulance/:reference",
+        permanent: true,
+      },
+    ];
+  },
   async headers() {
     return [
       { source: "/:path*", headers: SECURITY_HEADERS },

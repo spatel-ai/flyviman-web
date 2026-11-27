@@ -305,6 +305,7 @@ function Documents({
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const [rejecting, setRejecting] = useState<OperatorDocument | null>(null);
+  const [verifying, setVerifying] = useState<OperatorDocument | null>(null);
   const [problem, setProblem] = useState<string | null>(null);
 
   const verification = useMutation({
@@ -337,6 +338,7 @@ function Documents({
         queryKey: queryKeys.adminOperator(operator.id),
       });
       setRejecting(null);
+      setVerifying(null);
       toast({
         title:
           updated.verificationStatus === "REJECTED"
@@ -347,6 +349,7 @@ function Documents({
     },
     onError: (error) => {
       setRejecting(null);
+      setVerifying(null);
       setProblem(actionErrorMessage(error));
       if (isStale(error)) {
         void queryClient.invalidateQueries({
@@ -464,7 +467,7 @@ function Documents({
                     disabled={busy}
                     onClick={() => {
                       setProblem(null);
-                      verification.mutate({ document });
+                      setVerifying(document);
                     }}
                   >
                     Verify
@@ -489,6 +492,19 @@ function Documents({
           );
         })}
       </ul>
+      {verifying ? (
+        <ConfirmDialog
+          open
+          onOpenChange={(next) => {
+            if (!next && !busy) setVerifying(null);
+          }}
+          title="Verify this document?"
+          description={`${documentTypeLabel(verifying.type)} (${verifying.fileName}). You confirm you have checked it. It counts towards approving the operator.`}
+          confirmLabel="Verify document"
+          loading={busy}
+          onConfirm={() => verification.mutate({ document: verifying })}
+        />
+      ) : null}
       {rejecting ? (
         <ConfirmDialog
           open
