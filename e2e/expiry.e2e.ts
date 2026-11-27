@@ -94,7 +94,10 @@ test("an expiring document is flagged to the operator and listed for operations"
   const finance = await asStaff(browser, "finance");
   await finance.page.goto("/admin");
   await expect(
-    finance.page.getByRole("link", { name: "Expiring documents" }),
+    finance.page.getByRole("link", {
+      name: "Expiring documents",
+      includeHidden: true,
+    }),
   ).toHaveCount(0);
   await finance.context.close();
   await ops.context.close();

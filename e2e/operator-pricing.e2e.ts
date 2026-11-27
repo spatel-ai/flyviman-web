@@ -1,6 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 import { expectNoSidewaysScroll } from "./support/api";
 import { approvedAircraft } from "./support/operators";
+import { openNav } from "./support/nav";
 
 /** Operator pricing inputs (M5 slice 2). */
 
@@ -14,10 +15,9 @@ test("an operator administrator sets pricing defaults and an aircraft's rate", a
   // Defaults, from the portal navigation (behind the menu on phones).
   if (test.info().project.name === "desktop") {
     await page.goto("/operator");
-    await page
-      .getByRole("navigation", { name: "Operator navigation" })
-      .getByRole("link", { name: "Pricing" })
-      .click();
+    const nav = page.getByRole("navigation", { name: "Operator navigation" });
+    await openNav(nav, "Business");
+    await nav.getByRole("link", { name: "Pricing" }).click();
   } else {
     await page.goto("/operator/pricing");
   }

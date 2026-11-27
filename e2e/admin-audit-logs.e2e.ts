@@ -1,6 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 import { API_URL, signIn } from "./support/api";
 import { csrf } from "./support/operators";
+import { openNav } from "./support/nav";
 
 /**
  * The audit log viewer (M10). Finance changes a commission, which writes a
@@ -114,6 +115,7 @@ test("operations is offered the audit log in the navigation", async ({
     await page.getByRole("button", { name: "Open navigation" }).click();
   }
   const nav = page.getByRole("navigation", { name: "Admin navigation" });
+  await openNav(nav, "Platform");
   await nav.getByRole("link", { name: "Audit log" }).click();
   await expect(page).toHaveURL("/admin/audit-logs");
   await expect(

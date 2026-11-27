@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import { expect, test, type Page } from "@playwright/test";
 import { expectNoSidewaysScroll, signIn } from "./support/api";
 import { approvedOperator, asStaff, PDF } from "./support/operators";
+import { openNav } from "./support/nav";
 
 /** The listing's status badge beside the page heading. */
 function listingStatus(page: Page) {
@@ -186,8 +187,11 @@ test("finance staff are not offered the aircraft review", async ({
     await page.getByRole("button", { name: "Open navigation" }).click();
   }
   const nav = page.getByRole("navigation", { name: "Admin navigation" });
+  await openNav(nav, "Operators and fleet");
   await expect(nav.getByRole("link", { name: "Operators" })).toBeVisible();
-  await expect(nav.getByRole("link", { name: "Aircraft" })).toHaveCount(0);
+  await expect(
+    nav.getByRole("link", { name: "Aircraft", includeHidden: true }),
+  ).toHaveCount(0);
 });
 
 test("operations release a registration claimed by a draft aircraft", async ({

@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { expect, test } from "@playwright/test";
 import { API_URL, signIn, uniqueEmail } from "./support/api";
+import { openNav } from "./support/nav";
 
 /** Sends an enquiry the way the contact page does; returns its message. */
 async function sendEnquiry(
@@ -64,8 +65,11 @@ test("finance is not offered the enquiries section", async ({
     await page.getByRole("button", { name: "Open navigation" }).click();
   }
   const nav = page.getByRole("navigation", { name: "Admin navigation" });
+  await openNav(nav, "Operators and fleet");
   await expect(nav.getByRole("link", { name: "Operators" })).toBeVisible();
-  await expect(nav.getByRole("link", { name: "Enquiries" })).toHaveCount(0);
+  await expect(
+    nav.getByRole("link", { name: "Enquiries", includeHidden: true }),
+  ).toHaveCount(0);
 });
 
 test("an enquiry that does not exist says so", async ({ page }) => {

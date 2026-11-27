@@ -9,6 +9,7 @@ import {
 } from "./support/api";
 import { axeViolations, waitForAnimations } from "./support/axe";
 import { csrf } from "./support/operators";
+import { openNav } from "./support/nav";
 
 /** Opens the admin navigation (a sheet on phones) and returns it. */
 async function adminNav(page: Page, isMobile: boolean) {
@@ -88,11 +89,9 @@ test("a super administrator reads the roles and permissions page", async ({
 }) => {
   await signIn(page, "superAdmin", "/admin");
   await expect(page).toHaveURL("/admin");
-  await (
-    await adminNav(page, isMobile)
-  )
-    .getByRole("link", { name: "Roles" })
-    .click();
+  const nav = await adminNav(page, isMobile);
+  await openNav(nav, "Platform");
+  await nav.getByRole("link", { name: "Roles" }).click();
   await expect(
     page.getByRole("heading", { level: 1, name: "Roles and permissions" }),
   ).toBeVisible();
@@ -131,8 +130,11 @@ test("operations are not offered the roles page and are told who manages it", as
   await signIn(page, "ops", "/admin");
   await expect(page).toHaveURL("/admin");
   const nav = await adminNav(page, isMobile);
+  await openNav(nav, "Platform");
   await expect(nav.getByRole("link", { name: "Users" })).toBeVisible();
-  await expect(nav.getByRole("link", { name: "Roles" })).toHaveCount(0);
+  await expect(
+    nav.getByRole("link", { name: "Roles", includeHidden: true }),
+  ).toHaveCount(0);
 
   await page.goto("/admin/roles");
   await expect(
@@ -194,6 +196,14 @@ test("the admin sidebar fades at the bottom while more links are below, and at t
   await expect(page).toHaveURL("/admin");
   const bottom = page.getByTestId("sidebar-fade-bottom").first();
   const top = page.getByTestId("sidebar-fade-top").first();
+  // Closed, the categories fit and nothing is below.
+  await expect(bottom).toHaveCSS("opacity", "0");
+  await expect(top).toHaveCSS("opacity", "0");
+  // Opening one makes the list taller than the sidebar: the fade follows.
+  await openNav(
+    page.getByRole("navigation", { name: "Admin navigation" }).first(),
+    "Platform",
+  );
   await expect(bottom).toHaveCSS("opacity", "1");
   await expect(top).toHaveCSS("opacity", "0");
 

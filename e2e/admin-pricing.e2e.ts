@@ -409,9 +409,9 @@ test("operations cannot change pricing rules", async ({ page }) => {
     await expect(
       nav.getByRole("link", { name: "Price calculations" }),
     ).toBeVisible();
-    await expect(nav.getByRole("link", { name: "Pricing rules" })).toHaveCount(
-      0,
-    );
+    await expect(
+      nav.getByRole("link", { name: "Pricing rules", includeHidden: true }),
+    ).toHaveCount(0);
   }
   await page.goto("/admin/pricing/rules");
   await expect(

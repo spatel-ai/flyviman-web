@@ -5,6 +5,7 @@ import {
   signIn,
   uniqueEmail,
 } from "./support/api";
+import { openNav } from "./support/nav";
 
 test.describe("route protection", () => {
   for (const path of ["/admin", "/admin/operators", "/operator", "/account"]) {
@@ -195,13 +196,12 @@ test.describe("signing in", () => {
 });
 
 /** Follows a portal link, from the drawer on a phone. */
-async function openPortalLink(page: Page, name: string) {
+async function openPortalLink(page: Page, name: string, category: string) {
   const menu = page.getByRole("button", { name: "Open navigation" });
   if (await menu.isVisible()) await menu.click();
-  await page
-    .getByRole("navigation", { name: "Admin navigation" })
-    .getByRole("link", { name })
-    .click();
+  const nav = page.getByRole("navigation", { name: "Admin navigation" });
+  await openNav(nav, category);
+  await nav.getByRole("link", { name }).click();
 }
 
 test.describe("an idle session", () => {
@@ -270,7 +270,7 @@ test.describe("an idle session", () => {
   }) => {
     // The links' prefetches may still be on their way; the click must win
     // whatever they do.
-    await openPortalLink(page, "Users");
+    await openPortalLink(page, "Users", "Platform");
     await expect(page).toHaveURL("/admin/users");
     await expect(
       page.getByRole("heading", { level: 1, name: "Users" }),
@@ -389,6 +389,7 @@ test.describe("the admin shell", () => {
       "page",
     );
 
+    await openNav(nav, "Operators and fleet");
     await nav.getByRole("link", { name: "Operators" }).click();
     await expect(page).toHaveURL("/admin/operators");
     await expect(

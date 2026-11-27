@@ -6,6 +6,7 @@ import {
   uniqueEmail,
 } from "./support/api";
 import { addDraftAircraft, approvedAircraft } from "./support/operators";
+import { openNav } from "./support/nav";
 
 /** The invitee follows the emailed link, chooses a password and signs in. */
 async function acceptInvitation(browser: Browser, email: string) {
@@ -77,13 +78,21 @@ test("an operator invites a staff member, who manages only the aircraft assigned
     await staff.getByRole("button", { name: "Open navigation" }).click();
   }
   const nav = staff.getByRole("navigation", { name: "Operator navigation" });
+  await openNav(nav, "Fleet");
   await expect(nav.getByRole("link", { name: "Fleet" })).toBeVisible();
   await expect(nav.getByRole("link", { name: "Availability" })).toBeVisible();
-  await expect(nav.getByRole("link", { name: "Team" })).toHaveCount(0);
-  // Without "Manage bookings" there is no Requests item, and the page says so.
-  await expect(nav.getByRole("link", { name: "Requests" })).toHaveCount(0);
   await expect(
-    nav.getByRole("link", { name: "Company and documents" }),
+    nav.getByRole("link", { name: "Team", includeHidden: true }),
+  ).toHaveCount(0);
+  // Without "Manage bookings" there is no Requests item, and the page says so.
+  await expect(
+    nav.getByRole("link", { name: "Requests", includeHidden: true }),
+  ).toHaveCount(0);
+  await expect(
+    nav.getByRole("link", {
+      name: "Company and documents",
+      includeHidden: true,
+    }),
   ).toHaveCount(0);
 
   await staff.goto("/operator/requests");

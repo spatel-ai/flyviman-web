@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 import { expectNoSidewaysScroll, signIn, uniqueEmail } from "./support/api";
+import { openNav } from "./support/nav";
 
 test("operations can add a landing site and deactivate it from search", async ({
   page,
@@ -59,11 +60,9 @@ test("operations can add a landing site and deactivate it from search", async ({
   if (isMobile) {
     await page.getByRole("button", { name: "Open navigation" }).click();
   }
-  await expect(
-    page
-      .getByRole("navigation", { name: "Admin navigation" })
-      .getByRole("link", { name: "Locations" }),
-  ).toBeVisible();
+  const nav = page.getByRole("navigation", { name: "Admin navigation" });
+  await openNav(nav, "Operators and fleet");
+  await expect(nav.getByRole("link", { name: "Locations" })).toBeVisible();
 });
 
 test("finance staff are not offered the locations section", async ({
@@ -75,8 +74,11 @@ test("finance staff are not offered the locations section", async ({
     await page.getByRole("button", { name: "Open navigation" }).click();
   }
   const nav = page.getByRole("navigation", { name: "Admin navigation" });
+  await openNav(nav, "Operators and fleet");
   await expect(nav.getByRole("link", { name: "Operators" })).toBeVisible();
-  await expect(nav.getByRole("link", { name: "Locations" })).toHaveCount(0);
+  await expect(
+    nav.getByRole("link", { name: "Locations", includeHidden: true }),
+  ).toHaveCount(0);
 });
 
 test("charges for one aircraft category never land on another", async ({

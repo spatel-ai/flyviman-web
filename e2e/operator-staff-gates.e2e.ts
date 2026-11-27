@@ -8,6 +8,7 @@ import {
 } from "./support/api";
 import { addDraftAircraft, approvedAircraft, csrf } from "./support/operators";
 import { requestedTrip } from "./support/requests";
+import { openNav } from "./support/nav";
 
 /**
  * What operator staff may open (D-211): the administrator's pages say so,
@@ -133,9 +134,12 @@ test("staff with MANAGE_BOOKINGS on one aircraft see Requests and Bookings, and 
   const nav = mine.staff.getByRole("navigation", {
     name: "Operator navigation",
   });
+  await openNav(nav, "Requests and bookings");
   await expect(nav.getByRole("link", { name: "Requests" })).toBeVisible();
   await expect(nav.getByRole("link", { name: "Bookings" })).toBeVisible();
-  await expect(nav.getByRole("link", { name: "Team" })).toHaveCount(0);
+  await expect(
+    nav.getByRole("link", { name: "Team", includeHidden: true }),
+  ).toHaveCount(0);
 
   // The request is on the first staff member's aircraft, not the second's.
   await mine.staff.goto("/operator/requests");

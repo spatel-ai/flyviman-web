@@ -344,7 +344,7 @@ async function portalNav(page: Page): Promise<string[]> {
   if (!(await navigation.count())) return [];
   return navigation
     .first()
-    .getByRole("link")
+    .locator("a")
     .evaluateAll((links) =>
       links.map((link) => link.getAttribute("href") ?? ""),
     );

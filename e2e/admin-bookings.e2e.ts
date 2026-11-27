@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
 import { expectNoSidewaysScroll, signIn } from "./support/api";
 import { requestedTrip } from "./support/requests";
+import { openNav } from "./support/nav";
 
 /**
  * The admin portal's bookings (M8, W3-8): search, open, assign, note,
@@ -183,10 +184,11 @@ test("finance read a booking without passenger details or actions", async ({
     await page.getByRole("button", { name: "Open navigation" }).click();
   }
   const nav = page.getByRole("navigation", { name: "Admin navigation" });
+  await openNav(nav, "Operations");
   await expect(nav.getByRole("link", { name: "Bookings" })).toBeVisible();
-  await expect(nav.getByRole("link", { name: "Change requests" })).toHaveCount(
-    0,
-  );
+  await expect(
+    nav.getByRole("link", { name: "Change requests", includeHidden: true }),
+  ).toHaveCount(0);
 });
 
 test("a booking that does not exist says so", async ({ page }) => {

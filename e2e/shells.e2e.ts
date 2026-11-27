@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Locator, type Page } from "@playwright/test";
 import { signIn } from "./support/api";
 import { approvedOperator } from "./support/operators";
 import { expectNotCovered } from "./support/phone";
@@ -379,4 +379,151 @@ test.describe("accessibility (axe)", () => {
       expect(await axeViolations(page, ["color-contrast"])).toEqual([]);
     });
   }
+});
+
+test.describe("portal navigation categories", () => {
+  /** The admin navigation: a sidebar, or the drawer on a phone. */
+  async function adminNav(page: Page, isMobile: boolean) {
+    if (isMobile) {
+      await page.getByRole("button", { name: "Open navigation" }).click();
+    }
+    return page.getByRole("navigation", { name: "Admin navigation" });
+  }
+
+  const category = (nav: Locator, name: string) =>
+    nav.getByRole("button", { name: new RegExp(`^${name}`) });
+
+  /** A click before the page is interactive is lost: retry until it took. */
+  async function toggle(button: Locator, expanded: boolean) {
+    await expect(async () => {
+      if ((await button.getAttribute("aria-expanded")) !== String(expanded)) {
+        await button.click();
+      }
+      await expect(button).toHaveAttribute("aria-expanded", String(expanded), {
+        timeout: 1000,
+      });
+    }).toPass();
+  }
+
+  test("the current page's category is open after a direct visit, and no other", async ({
+    page,
+    isMobile,
+  }) => {
+    await signIn(page, "superAdmin", "/admin/settlements");
+    const nav = await adminNav(page, isMobile);
+    await expect(category(nav, "Finance")).toHaveAttribute(
+      "aria-expanded",
+      "true",
+    );
+    await expect(
+      nav.getByRole("link", { name: "Settlements" }),
+    ).toHaveAttribute("aria-current", "page");
+    for (const other of ["Operations", "Operators and fleet", "Pricing"]) {
+      await expect(category(nav, other)).toHaveAttribute(
+        "aria-expanded",
+        "false",
+      );
+    }
+    // Dashboard and Reports stay plain links; nothing under a closed category shows.
+    await expect(nav.getByRole("link", { name: "Reports" })).toBeVisible();
+    await expect(nav.getByRole("link", { name: "Locations" })).toHaveCount(0);
+  });
+
+  test("opening another category closes the first and marks where the page is", async ({
+    page,
+    isMobile,
+  }) => {
+    await signIn(page, "superAdmin", "/admin/locations");
+    const nav = await adminNav(page, isMobile);
+    const fleet = category(nav, "Operators and fleet");
+    await expect(fleet).toHaveAttribute("aria-expanded", "true");
+
+    await toggle(category(nav, "Finance"), true);
+    await expect(fleet).toHaveAttribute("aria-expanded", "false");
+    await expect(nav.getByRole("link", { name: "Payments" })).toBeVisible();
+    await expect(nav.getByRole("link", { name: "Locations" })).toHaveCount(0);
+    // The closed category that holds the current page says so.
+    await expect(
+      nav.getByRole("button", {
+        name: "Operators and fleet, contains current page",
+      }),
+    ).toBeVisible();
+    await expect(nav.getByTestId("nav-current-dot")).toHaveCount(1);
+
+    await toggle(category(nav, "Finance"), false);
+    await expect(nav.getByRole("link", { name: "Payments" })).toHaveCount(0);
+  });
+
+  test("following a link opens its category and closes the previous one", async ({
+    page,
+    isMobile,
+  }) => {
+    await signIn(page, "superAdmin", "/admin");
+    const nav = await adminNav(page, isMobile);
+    await toggle(category(nav, "Finance"), true);
+    await nav.getByRole("link", { name: "Payments" }).click();
+    await expect(page).toHaveURL("/admin/payments");
+    if (isMobile) {
+      await expect(page.getByRole("dialog")).toHaveCount(0);
+      await page.getByRole("button", { name: "Open navigation" }).click();
+    }
+    await expect(category(nav, "Finance")).toHaveAttribute(
+      "aria-expanded",
+      "true",
+    );
+    await expect(nav.getByRole("link", { name: "Payments" })).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
+  });
+
+  test("a category opens with Enter and Space, and closed links are skipped by Tab", async ({
+    page,
+    isMobile,
+  }) => {
+    await signIn(page, "superAdmin", "/admin");
+    const nav = await adminNav(page, isMobile);
+    const operations = category(nav, "Operations");
+    await expect(async () => {
+      await operations.focus();
+      await page.keyboard.press("Enter");
+      await expect(operations).toHaveAttribute("aria-expanded", "true", {
+        timeout: 1000,
+      });
+    }).toPass();
+    await page.keyboard.press("Space");
+    await expect(operations).toHaveAttribute("aria-expanded", "false");
+
+    // Closed: the next stop is the next category, not a link inside this one.
+    await operations.focus();
+    await page.keyboard.press("Tab");
+    await expect(category(nav, "Operators and fleet")).toBeFocused();
+
+    await page.keyboard.press("Enter");
+    await page.keyboard.press("Tab");
+    await expect(nav.getByRole("link", { name: "Operators" })).toBeFocused();
+  });
+
+  test("the navigation passes the ARIA and contrast rules with a category open and with all closed", async ({
+    page,
+    isMobile,
+  }) => {
+    await signIn(page, "superAdmin", "/admin/locations");
+    const nav = await adminNav(page, isMobile);
+    const fleet = category(nav, "Operators and fleet");
+    await expect(fleet).toHaveAttribute("aria-expanded", "true");
+    await waitForAnimations(page);
+    const rules = [
+      "aria-valid-attr-value",
+      "aria-required-children",
+      "aria-hidden-focus",
+      "color-contrast",
+    ];
+    expect(await axeViolations(page, rules)).toEqual([]);
+
+    await toggle(fleet, false);
+    await expect(nav.getByRole("link", { name: "Locations" })).toHaveCount(0);
+    await waitForAnimations(page);
+    expect(await axeViolations(page, rules)).toEqual([]);
+  });
 });

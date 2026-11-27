@@ -7,6 +7,7 @@ import {
   signIn,
   uniqueEmail,
 } from "./support/api";
+import { openNav } from "./support/nav";
 
 test("a super administrator invites a staff member, who sets a password and signs in", async ({
   page,
@@ -51,8 +52,11 @@ test("a super administrator invites a staff member, who sets a password and sign
     await invitee.getByRole("button", { name: "Open navigation" }).click();
   }
   const nav = invitee.getByRole("navigation", { name: "Admin navigation" });
+  await openNav(nav, "Operators and fleet");
   await expect(nav.getByRole("link", { name: "Operators" })).toBeVisible();
-  await expect(nav.getByRole("link", { name: "Users" })).toHaveCount(0);
+  await expect(
+    nav.getByRole("link", { name: "Users", includeHidden: true }),
+  ).toHaveCount(0);
   await context.close();
 });
 

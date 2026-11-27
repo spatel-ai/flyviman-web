@@ -146,7 +146,9 @@ test("operations do not see promotions", async ({ page }) => {
     0,
   );
   await expect(
-    page.getByRole("navigation").getByRole("link", { name: "Promotions" }),
+    page
+      .getByRole("navigation")
+      .getByRole("link", { name: "Promotions", includeHidden: true }),
   ).toHaveCount(0);
 });
 
