@@ -410,9 +410,13 @@ test.describe("the admin shell", () => {
   test("the theme can be forced and is remembered", async ({ page }) => {
     // A click before the page is interactive is lost; retry opening the menu.
     await expect(async () => {
-      if (!(await page.getByRole("menuitemradio", { name: "Dark" }).isVisible()))
+      if (
+        !(await page.getByRole("menuitemradio", { name: "Dark" }).isVisible())
+      )
         await page.getByRole("button", { name: "Account menu" }).click();
-      await expect(page.getByRole("menuitemradio", { name: "Dark" })).toBeVisible({
+      await expect(
+        page.getByRole("menuitemradio", { name: "Dark" }),
+      ).toBeVisible({
         timeout: 2000,
       });
     }).toPass();
