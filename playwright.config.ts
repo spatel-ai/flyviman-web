@@ -56,8 +56,12 @@ export default defineConfig({
         MESSAGING_PROVIDER: "mock",
         PORT: String(API_PORT),
         WEB_ORIGIN: ORIGIN,
+        // Counters live in Redis and outlast a restart, so each run counts
+        // under its own prefix rather than inheriting the last run's counts.
+        RATE_LIMIT_KEY_PREFIX: `e2e-web-${Date.now().toString(36)}`,
         // Tests sign in and request codes far more often than a person does.
         RATE_LIMIT_AUTH_PER_MINUTE: "100000",
+        RATE_LIMIT_BOOKING_PER_WINDOW: "100000",
         RATE_LIMIT_DEFAULT_PER_MINUTE: "100000",
         RATE_LIMIT_ENQUIRY_PER_WINDOW: "100000",
         RATE_LIMIT_SEARCH_PER_MINUTE: "100000",
