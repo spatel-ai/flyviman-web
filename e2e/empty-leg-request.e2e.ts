@@ -118,7 +118,9 @@ test("a customer with no saved passengers adds one on the request page and sends
   expect(termsBox!.y).toBeLessThan(sendBox!.y);
 
   await send.click();
-  await expect(customer).toHaveURL(/\/account\/trips\/FLY-BK-[A-Z0-9]+$/);
+  await expect(customer).toHaveURL(
+    /\/account\/trips\/FLY-BK-[A-Z0-9]+\?sent=1$/,
+  );
   await expect(
     main.getByText("Awaiting operator", { exact: true }),
   ).toBeVisible();

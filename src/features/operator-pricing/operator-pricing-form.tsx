@@ -51,7 +51,12 @@ export function OperatorPricingForm() {
     queryKey: queryKeys.operatorPricing,
     queryFn: () => apiFetch<Pricing>("operator/pricing"),
   });
-  if (pricing.isPending) return <Skeleton className="mt-6 h-96" />;
+  if (pricing.isPending)
+    return (
+      <div role="status" aria-label="Loading your pricing">
+        <Skeleton className="mt-6 h-[150rem]" />
+      </div>
+    );
   if (pricing.isError) {
     return (
       <LoadError

@@ -55,7 +55,7 @@ test("on a quoted trip the customer changes passengers and reads the timeline, d
   // Documents: the accepted terms, and no confirmation yet.
   const documents = page.getByRole("region", { name: "Documents" });
   await expect(
-    documents.getByText("Cancellation terms you accepted"),
+    documents.getByText("Cancellation terms shown when you sent this request"),
   ).toBeVisible();
   await expect(
     documents.getByText("Available once the booking is confirmed"),

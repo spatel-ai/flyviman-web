@@ -18,7 +18,7 @@ export default function Page({
 }: PageProps<"/account/trips/[reference]">) {
   return (
     <PageTransition>
-      <Suspense fallback={<Skeleton className="h-96" />}>
+      <Suspense fallback={<Skeleton className="h-[60rem]" />}>
         <Detail params={params} />
       </Suspense>
     </PageTransition>

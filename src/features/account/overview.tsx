@@ -101,7 +101,7 @@ export function AccountOverview() {
   if (trips.isPending) {
     return (
       <div role="status" aria-label="Loading your overview">
-        <Skeleton className="h-40" />
+        <Skeleton className="h-[50rem] md:h-[27rem]" />
       </div>
     );
   }

@@ -113,7 +113,11 @@ export function RequestFlow({
   });
 
   if (result.isPending || passengers.isPending) {
-    return <Skeleton className="h-96" />;
+    return (
+      <div role="status" aria-label="Loading the request form">
+        <Skeleton className="h-[75rem] md:h-[64rem]" />
+      </div>
+    );
   }
   if (result.isError) {
     return isNotFoundError(result.error) ? (

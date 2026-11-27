@@ -83,7 +83,15 @@ export function SearchResults({ searchId }: { searchId: string }) {
       apiFetch<SearchResponse>(`search/${encodeURIComponent(searchId)}`),
   });
 
-  if (search.isPending) return <Skeleton className="h-96" />;
+  // Final height of the results block, so the footer does not jump (R17).
+  if (search.isPending) {
+    return (
+      <div role="status">
+        <span className="sr-only">Loading results</span>
+        <Skeleton className="h-[52rem] md:h-[26rem]" />
+      </div>
+    );
+  }
   if (search.isError) {
     return isNotFoundError(search.error) ? (
       <RecordNotFound
