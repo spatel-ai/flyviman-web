@@ -116,6 +116,13 @@ export async function approvedOperator(page: Page, browser: Browser) {
     /^Verify Insurance certificate/,
   ]) {
     await staff.page.getByRole("button", { name }).click();
+    await staff.page
+      .getByRole("dialog", { name: "Verify this document?" })
+      .getByRole("button", { name: "Verify document" })
+      .click();
+    await expect(
+      staff.page.getByRole("dialog", { name: "Verify this document?" }),
+    ).toBeHidden();
   }
   await expect(
     staff.page.getByRole("button", { name: /^Verify / }),

@@ -4,7 +4,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { useState } from "react";
 import { LoadError } from "@/components/shared/load-error";
-import { PriceLabel, type PriceType } from "@/components/shared/price-label";
+import { PriceLabel } from "@/components/shared/price-label";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { buttonClasses } from "@/components/ui/button-classes";
@@ -14,6 +14,7 @@ import { apiFetch } from "@/lib/api/client";
 import { messageFor } from "@/lib/api/messages";
 import { queryKeys } from "@/lib/api/query-keys";
 import { formatDuration } from "@/lib/format/aircraft";
+import { formatMoney } from "@/lib/format/money";
 import {
   clock,
   enquiryHref,
@@ -28,51 +29,34 @@ import type { FareRules, RevalidateResult, ScheduledOffer } from "./types";
 
 const SEARCH_AGAIN = "/search?service=flights";
 
-/** A fee from the fare rules, labelled with the fare's price type (rule 1). */
+/** A fee is not a fare: plain money with its label, no price type. */
 function FeeAmount({
   feeMinor,
   currency,
-  priceType,
 }: {
   feeMinor: number;
   currency: string;
-  priceType: PriceType;
 }) {
-  return (
-    <PriceLabel
-      amountMinor={feeMinor}
-      currency={currency}
-      priceType={priceType}
-      variant="compact"
-      className="inline-flex flex-row items-center gap-2 align-middle"
-    />
-  );
+  return <span className="font-medium">{formatMoney(feeMinor, currency)}</span>;
 }
 
 function Fee({
   allowed,
   feeMinor,
   currency,
-  priceType,
 }: {
   allowed: boolean;
   feeMinor?: number;
   currency: string;
-  priceType: PriceType;
 }) {
   if (!allowed) return <>Not allowed</>;
   return feeMinor ? (
     <>
-      Allowed for{" "}
-      <FeeAmount
-        feeMinor={feeMinor}
-        currency={currency}
-        priceType={priceType}
-      />{" "}
+      Allowed, change fee <FeeAmount feeMinor={feeMinor} currency={currency} />{" "}
       per passenger, plus any fare difference
     </>
   ) : (
-    <>Allowed, no fee</>
+    <>Allowed, no change fee</>
   );
 }
 
@@ -151,7 +135,7 @@ function Outcome({
       className="flex flex-col gap-3 rounded-md bg-surface p-4"
     >
       <p className="text-title">
-        {changed ? "The price has changed" : "Price and seats confirmed"}
+        {changed ? "The price has changed" : "Price and seats checked"}
       </p>
       {changed ? (
         <div className="grid grid-cols-2 gap-3">
@@ -301,11 +285,10 @@ export function OfferDetail({
                   {rules.data.data.cancellation.refundable ? (
                     rules.data.data.cancellation.feeMinor ? (
                       <>
-                        Refundable, fee{" "}
+                        Refundable, cancellation fee{" "}
                         <FeeAmount
                           feeMinor={rules.data.data.cancellation.feeMinor}
                           currency={offer.fare.currency}
-                          priceType={offer.fare.priceType}
                         />
                       </>
                     ) : (
@@ -321,7 +304,6 @@ export function OfferDetail({
                     allowed={rules.data.data.change.allowed}
                     feeMinor={rules.data.data.change.feeMinor}
                     currency={offer.fare.currency}
-                    priceType={offer.fare.priceType}
                   />
                 </dd>
               </dl>
@@ -349,6 +331,10 @@ export function OfferDetail({
           />
         ) : (
           <div className="flex flex-col gap-3 border-t border-border pt-4">
+            <p className="text-body-sm text-muted">
+              Online booking of scheduled flights is not open yet. You can check
+              the price and seats, then send us an enquiry.
+            </p>
             <div className="flex items-center justify-between gap-3">
               <PriceLabel
                 amountMinor={offer.fare.amountMinor}

@@ -6,6 +6,8 @@ import {
   listQuery,
   parseFilter,
   quoteStatusLabel,
+  requestPriceCopy,
+  showsHold,
   serialiseFilter,
 } from "./status";
 
@@ -63,7 +65,7 @@ describe("labels", () => {
   it("counts down the hold", () => {
     expect(holdLabel("2030-01-10T11:20:00Z", now)).toBe("5 h 20 min left");
     expect(holdLabel("2030-01-10T06:12:00Z", now)).toBe("12 min left");
-    expect(holdLabel("2030-01-10T05:00:00Z", now)).toBe("Lapsed");
+    expect(holdLabel("2030-01-10T05:00:00Z", now)).toBe("Expired");
   });
 
   it("shows an unknown quote status as it is", () => {
@@ -72,5 +74,31 @@ describe("labels", () => {
       label: "NEW_THING",
       tone: "neutral",
     });
+  });
+});
+
+describe("price copy and hold by status", () => {
+  const confirmed = { ...(price as object), priceType: "CONFIRMED" } as never;
+  it("shows the hold only while the operator has not answered", () => {
+    expect(showsHold({ status: "OPERATOR_PENDING" })).toBe(true);
+    expect(showsHold({ status: "AWAITING_PAYMENT" })).toBe(false);
+    expect(showsHold({ status: "EXPIRED" })).toBe(false);
+  });
+  it("words a pending estimate as a proposal", () => {
+    const copy = requestPriceCopy({ status: "OPERATOR_PENDING", price });
+    expect(copy.name).toBe("Proposed price");
+    expect(copy.note).toMatch(/quote sets the price/);
+  });
+  it("calls a confirmed price agreed, and never says estimate for it", () => {
+    const copy = requestPriceCopy({
+      status: "AWAITING_PAYMENT",
+      price: confirmed,
+    });
+    expect(copy.name).toBe("Agreed price");
+    expect(copy.note).not.toMatch(/estimate/i);
+  });
+  it("does not say a closed estimate is awaiting a quote", () => {
+    const copy = requestPriceCopy({ status: "EXPIRED", price });
+    expect(copy.note).toMatch(/not confirmed/);
   });
 });

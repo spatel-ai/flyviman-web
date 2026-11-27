@@ -21,7 +21,8 @@ import { formatDay } from "@/lib/format/date";
 
 type Detail = Schemas["AdminAircraftDetailDto"];
 type Action =
-  | { kind: "reject" | "suspend" | "release" }
+  | { kind: "reject" | "suspend" | "release" | "approve" | "reinstate" }
+  | { kind: "verifyDocument"; documentId: string; label: string }
   | { kind: "rejectDocument"; documentId: string }
   | null;
 
@@ -49,7 +50,10 @@ export function AircraftReview({ id }: { id: string }) {
         queryKey: queryKeys.adminAircraftAll,
       });
     },
-    onError: (failure) => setError(messageFor(failure)),
+    onError: (failure) => {
+      setAction(null);
+      setError(messageFor(failure));
+    },
   });
   // The aircraft no longer exists after a release, so leave the page before
   // refreshing the queue, rather than refetching this detail into a 404.
@@ -144,9 +148,10 @@ export function AircraftReview({ id }: { id: string }) {
                   variant="secondary"
                   size="sm"
                   onClick={() =>
-                    decide.mutate({
-                      path: documentPath(document.id),
-                      body: { decision: "VERIFIED" },
+                    setAction({
+                      kind: "verifyDocument",
+                      documentId: document.id,
+                      label: `${aircraftDocumentLabel(document.type)} (${document.fileName})`,
                     })
                   }
                 >
@@ -174,10 +179,7 @@ export function AircraftReview({ id }: { id: string }) {
       <div className="flex flex-wrap gap-3">
         {item.listingStatus === "PENDING_REVIEW" ? (
           <>
-            <Button
-              onClick={() => decide.mutate({ path: `${base}/approve` })}
-              loading={decide.isPending}
-            >
+            <Button onClick={() => setAction({ kind: "approve" })}>
               Approve
             </Button>
             <Button
@@ -197,10 +199,7 @@ export function AircraftReview({ id }: { id: string }) {
           </Button>
         ) : null}
         {item.listingStatus === "SUSPENDED" ? (
-          <Button
-            onClick={() => decide.mutate({ path: `${base}/reinstate` })}
-            loading={decide.isPending}
-          >
+          <Button onClick={() => setAction({ kind: "reinstate" })}>
             Reinstate
           </Button>
         ) : null}
@@ -213,6 +212,48 @@ export function AircraftReview({ id }: { id: string }) {
           </Button>
         ) : null}
       </div>
+      {/* The API takes no reason for these three, so they only confirm. */}
+      <ConfirmDialog
+        open={action?.kind === "approve" || action?.kind === "reinstate"}
+        onOpenChange={(open) => {
+          if (!open) setAction(null);
+        }}
+        title={
+          action?.kind === "reinstate"
+            ? "Reinstate this aircraft?"
+            : "Approve this aircraft?"
+        }
+        description="The aircraft becomes bookable by customers. You can suspend it again later."
+        confirmLabel={action?.kind === "reinstate" ? "Reinstate" : "Approve"}
+        loading={decide.isPending}
+        onConfirm={() => {
+          if (action?.kind !== "approve" && action?.kind !== "reinstate") {
+            return;
+          }
+          decide.mutate({ path: `${base}/${action.kind}` });
+        }}
+      />
+      <ConfirmDialog
+        open={action?.kind === "verifyDocument"}
+        onOpenChange={(open) => {
+          if (!open) setAction(null);
+        }}
+        title="Mark this document verified?"
+        description={
+          action?.kind === "verifyDocument"
+            ? `${action.label}. You confirm you have checked it.`
+            : ""
+        }
+        confirmLabel="Mark verified"
+        loading={decide.isPending}
+        onConfirm={() => {
+          if (action?.kind !== "verifyDocument") return;
+          decide.mutate({
+            path: documentPath(action.documentId),
+            body: { decision: "VERIFIED" },
+          });
+        }}
+      />
       <ConfirmDialog
         open={action?.kind === "reject" || action?.kind === "suspend"}
         onOpenChange={(open) => {

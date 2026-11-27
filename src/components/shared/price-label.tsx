@@ -12,7 +12,7 @@ const PRESENTATION: Record<
   ESTIMATE: {
     label: "Estimate",
     tone: "warning",
-    note: "Final price confirmed by the operator",
+    note: "The operator confirms the final price",
   },
   LIVE_FARE: {
     label: "Live fare",

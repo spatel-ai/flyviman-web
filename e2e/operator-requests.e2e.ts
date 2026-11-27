@@ -46,6 +46,10 @@ test("an operator sees a request with its special requests, accepts it and adds 
     main.getByText("Awaiting payment", { exact: true }).first(),
   ).toBeVisible();
   await expect(main.getByText("Confirmed price").first()).toBeVisible();
+  // Once answered: the field is the agreed price and no answer-by hold shows.
+  await expect(main.getByText("Agreed price", { exact: true })).toBeVisible();
+  await expect(main.getByText("Hold on your aircraft")).toHaveCount(0);
+  await expect(main.getByText(/Flyviman's estimate from/)).toHaveCount(0);
   await expect(
     page.getByRole("button", { name: "Accept", exact: true }),
   ).toHaveCount(0);
