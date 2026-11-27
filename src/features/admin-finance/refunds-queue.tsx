@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useState, type ReactNode } from "react";
 import { EmptyState } from "@/components/shared/empty-state";
 import { LoadError } from "@/components/shared/load-error";
-import { PriceLabel } from "@/components/shared/price-label";
+import { MoneyAmount } from "@/components/shared/money-amount";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { Badge, type Tone } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -26,6 +26,7 @@ import {
   type RefundDue,
 } from "@/lib/api/payments";
 import { queryKeys } from "@/lib/api/query-keys";
+import { cn } from "@/lib/utils";
 import { formatDateTime } from "@/lib/format/date";
 import { PAGE_SIZE } from "./filters";
 import { RefundDialog } from "./refund-dialog";
@@ -85,18 +86,17 @@ function DueTab() {
             "Money owed back after a cancellation, or paid when it was not due, appears here.",
         }}
         columns={["Due since", "Why", "Booking", "Payment", "Refund due", ""]}
+        numeric={["Refund due"]}
         rowKey={(row) => `${row.paymentReference}-${row.kind}`}
         cells={(row) => [
           formatDateTime(row.since),
           DUE_KIND[row.kind] ?? row.kind,
           row.bookingReference,
           row.paymentReference,
-          <PriceLabel
+          <MoneyAmount
             key="due"
             amountMinor={row.dueMinor}
             currency={row.currency}
-            priceType="CONFIRMED"
-            variant="compact"
           />,
           <Button
             key="action"
@@ -146,6 +146,7 @@ function HistoryTab() {
         title: "No refunds yet",
         description: "Refunds appear here once finance starts one.",
       }}
+      numeric={["Amount"]}
       columns={[
         "Started",
         "Booking",
@@ -163,12 +164,10 @@ function HistoryTab() {
           formatDateTime(row.createdAt),
           row.bookingReference,
           row.paymentReference,
-          <PriceLabel
+          <MoneyAmount
             key="amount"
             amountMinor={row.amountMinor}
             currency={row.currency}
-            priceType="CONFIRMED"
-            variant="compact"
           />,
           <Badge key="status" tone={status?.tone ?? "neutral"}>
             {status?.label ?? row.status}
@@ -188,6 +187,28 @@ function HistoryTab() {
   );
 }
 
+/** Alignment and sticky edges of one cell of a paged table. */
+function pagedCellClass(
+  columns: string[],
+  index: number,
+  numeric: string[],
+  stickyFirst: boolean,
+  header: boolean,
+) {
+  const column = columns[index];
+  return cn(
+    !header && "whitespace-nowrap",
+    numeric.includes(column) && "text-right",
+    // The row action stays in view; the first column too when asked.
+    (!column || (stickyFirst && index === 0)) &&
+      cn(
+        "sticky",
+        header ? "z-30 bg-surface-raised" : "z-[5] bg-background",
+        column ? "left-0" : "right-0",
+      ),
+  );
+}
+
 /** A paged table with its loading, empty and error states. */
 export function Paged<T>({
   query,
@@ -196,6 +217,8 @@ export function Paged<T>({
   what,
   empty,
   columns,
+  numeric = [],
+  stickyFirst = false,
   rowKey,
   cells,
 }: {
@@ -211,6 +234,10 @@ export function Paged<T>({
   what: string;
   empty: { title: string; description: string };
   columns: string[];
+  /** Column headings holding amounts: right-aligned. */
+  numeric?: string[];
+  /** Keep the first column in view while the rest scrolls sideways. */
+  stickyFirst?: boolean;
   rowKey: (row: T) => string;
   cells: (row: T) => ReactNode[];
 }) {
@@ -227,8 +254,17 @@ export function Paged<T>({
       <Table aria-busy={isPending || undefined}>
         <TableHead>
           <TableRow>
-            {columns.map((column) => (
-              <TableHeaderCell key={column || "action"}>
+            {columns.map((column, index) => (
+              <TableHeaderCell
+                key={column || "action"}
+                className={pagedCellClass(
+                  columns,
+                  index,
+                  numeric,
+                  stickyFirst,
+                  true,
+                )}
+              >
                 {column ? column : <span className="sr-only">Action</span>}
               </TableHeaderCell>
             ))}
@@ -250,7 +286,13 @@ export function Paged<T>({
                   {cells(row).map((cell, index) => (
                     <TableCell
                       key={columns[index] || "action"}
-                      className="whitespace-nowrap"
+                      className={pagedCellClass(
+                        columns,
+                        index,
+                        numeric,
+                        stickyFirst,
+                        false,
+                      )}
                     >
                       {cell}
                     </TableCell>

@@ -1,6 +1,6 @@
-import { render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   Pagination,
   Table,
@@ -126,5 +126,68 @@ describe("Pagination", () => {
     expect(screen.getByText("No results")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Previous" })).toBeDisabled();
     expect(screen.getByRole("button", { name: "Next" })).toBeDisabled();
+  });
+});
+
+describe("Table overflow", () => {
+  function fakeLayout(scrollWidth: number, clientWidth: number) {
+    vi.stubGlobal(
+      "ResizeObserver",
+      class {
+        observe() {}
+        disconnect() {}
+      },
+    );
+    Object.defineProperty(HTMLElement.prototype, "scrollWidth", {
+      configurable: true,
+      get: () => scrollWidth,
+    });
+    Object.defineProperty(HTMLElement.prototype, "clientWidth", {
+      configurable: true,
+      get: () => clientWidth,
+    });
+  }
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    // @ts-expect-error remove the stubbed instance properties
+    delete HTMLElement.prototype.scrollWidth;
+    // @ts-expect-error remove the stubbed instance properties
+    delete HTMLElement.prototype.clientWidth;
+  });
+
+  it("is not a focusable region while the table fits", () => {
+    fakeLayout(500, 500);
+    renderTable();
+
+    const wrapper = screen.getByRole("table").parentElement!;
+    expect(wrapper).not.toHaveAttribute("tabindex");
+    expect(screen.queryByRole("region")).not.toBeInTheDocument();
+    expect(screen.getByTestId("table-shadow-end")).toHaveClass("opacity-0");
+  });
+
+  it("becomes a named, focusable region and shows an edge cue when wider", () => {
+    fakeLayout(900, 400);
+    renderTable();
+
+    const region = screen.getByRole("region", {
+      name: "Table, scrolls sideways",
+    });
+    expect(region).toHaveAttribute("tabindex", "0");
+    expect(screen.getByTestId("table-shadow-end")).toHaveClass("opacity-100");
+    expect(screen.getByTestId("table-shadow-start")).toHaveClass("opacity-0");
+
+    act(() => {
+      region.scrollLeft = 200;
+      fireEvent.scroll(region);
+    });
+    expect(screen.getByTestId("table-shadow-start")).toHaveClass("opacity-100");
+    expect(screen.getByTestId("table-shadow-end")).toHaveClass("opacity-100");
+
+    act(() => {
+      region.scrollLeft = 500;
+      fireEvent.scroll(region);
+    });
+    expect(screen.getByTestId("table-shadow-end")).toHaveClass("opacity-0");
   });
 });

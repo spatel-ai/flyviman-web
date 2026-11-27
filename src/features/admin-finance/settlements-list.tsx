@@ -2,7 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
-import { PriceLabel } from "@/components/shared/price-label";
+import { MoneyAmount } from "@/components/shared/money-amount";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { Badge, type Tone } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -31,17 +31,6 @@ const STATUS_OPTIONS = [
   { value: "ON_HOLD", label: "On hold" },
   { value: "PAID", label: "Paid" },
 ];
-
-function Money({ amount, currency }: { amount: number; currency: string }) {
-  return (
-    <PriceLabel
-      amountMinor={amount}
-      currency={currency}
-      priceType="CONFIRMED"
-      variant="compact"
-    />
-  );
-}
 
 /**
  * What Flyviman owes operators, one record per completed booking, newest
@@ -80,40 +69,29 @@ export function SettlementsList() {
             "A settlement appears a few minutes after a booking is completed with money kept.",
         }}
         columns={[
-          "Created",
           "Booking",
           "Operator",
-          "Kept",
+          "Status",
           "Payable",
+          "Kept",
           "Commission",
           "Tax",
-          "Status",
+          "Created",
           "Payout",
           "",
         ]}
+        numeric={["Payable", "Kept", "Commission", "Tax"]}
+        stickyFirst
         rowKey={(row) => row.id}
         cells={(row) => {
           const badge = SETTLEMENT_STATUS[row.status];
           const actions = SETTLEMENT_ACTIONS[row.status] ?? [];
           return [
-            formatDateTime(row.createdAt),
-            <span key="booking" className="flex flex-col gap-1">
+            <span key="booking" className="flex flex-col items-start gap-1">
               {row.bookingReference}
               <StatusBadge kind="booking" status={row.bookingStatus} />
             </span>,
             row.operatorName,
-            <Money key="kept" amount={row.keptMinor} currency={row.currency} />,
-            <Money
-              key="payable"
-              amount={row.payableMinor}
-              currency={row.currency}
-            />,
-            <Money
-              key="commission"
-              amount={row.commissionMinor}
-              currency={row.currency}
-            />,
-            <Money key="tax" amount={row.taxMinor} currency={row.currency} />,
             <span key="status" className="flex flex-col items-start gap-1">
               <Badge tone={badge?.tone ?? "neutral"}>
                 {badge?.label ?? row.status}
@@ -124,6 +102,27 @@ export function SettlementsList() {
                 </span>
               ) : null}
             </span>,
+            <MoneyAmount
+              key="payable"
+              amountMinor={row.payableMinor}
+              currency={row.currency}
+            />,
+            <MoneyAmount
+              key="kept"
+              amountMinor={row.keptMinor}
+              currency={row.currency}
+            />,
+            <MoneyAmount
+              key="commission"
+              amountMinor={row.commissionMinor}
+              currency={row.currency}
+            />,
+            <MoneyAmount
+              key="tax"
+              amountMinor={row.taxMinor}
+              currency={row.currency}
+            />,
+            formatDateTime(row.createdAt),
             row.paidAt ? (
               <span key="payout" className="flex flex-col">
                 {row.paymentReference}

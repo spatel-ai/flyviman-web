@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { EmptyState } from "@/components/shared/empty-state";
 import { LoadError } from "@/components/shared/load-error";
-import { PriceLabel } from "@/components/shared/price-label";
+import { MoneyAmount } from "@/components/shared/money-amount";
 import { Badge, type Tone } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -19,6 +19,7 @@ import {
 import { listOperatorSettlements } from "@/lib/api/payments";
 import { queryKeys } from "@/lib/api/query-keys";
 import { formatDateTime } from "@/lib/format/date";
+import { cn } from "@/lib/utils";
 
 const PAGE_SIZE = 20;
 
@@ -29,16 +30,18 @@ const STATUS: Record<string, { label: string; tone: Tone }> = {
   PAID: { label: "Paid", tone: "success" },
 };
 
+// Payable and status first: on a phone they are what the operator looks for.
 const COLUMNS = [
-  "Created",
   "Booking",
+  "Payable to you",
+  "Status",
   "Kept by Flyviman",
   "Commission",
   "Tax",
-  "Payable to you",
-  "Status",
+  "Created",
   "Payout",
 ];
+const NUMERIC = ["Payable to you", "Kept by Flyviman", "Commission", "Tax"];
 
 /** What Flyviman owes the organisation per completed booking, newest first. */
 export function OperatorSettlementsList() {
@@ -74,7 +77,15 @@ export function OperatorSettlementsList() {
         <TableHead>
           <TableRow>
             {COLUMNS.map((column) => (
-              <TableHeaderCell key={column}>{column}</TableHeaderCell>
+              <TableHeaderCell
+                key={column}
+                className={cn(
+                  NUMERIC.includes(column) && "text-right",
+                  column === COLUMNS[0] && "left-0 z-20",
+                )}
+              >
+                {column}
+              </TableHeaderCell>
             ))}
           </TableRow>
         </TableHead>
@@ -93,39 +104,35 @@ export function OperatorSettlementsList() {
                 const status = STATUS[row.status];
                 return (
                   <TableRow key={row.id}>
-                    <TableCell className="whitespace-nowrap">
-                      {formatDateTime(row.createdAt)}
-                    </TableCell>
-                    <TableCell className="whitespace-nowrap">
+                    <TableCell className="sticky left-0 z-[5] bg-background whitespace-nowrap">
                       {row.bookingReference}
                     </TableCell>
-                    {[row.keptMinor, row.commissionMinor, row.taxMinor].map(
-                      (amount, index) => (
-                        <TableCell
-                          key={COLUMNS[index + 2]}
-                          className="whitespace-nowrap"
-                        >
-                          <PriceLabel
-                            amountMinor={amount}
-                            currency={row.currency}
-                            priceType="CONFIRMED"
-                            variant="compact"
-                          />
-                        </TableCell>
-                      ),
-                    )}
-                    <TableCell className="whitespace-nowrap">
-                      <PriceLabel
+                    <TableCell className="text-right whitespace-nowrap">
+                      <MoneyAmount
                         amountMinor={row.payableMinor}
                         currency={row.currency}
-                        priceType="CONFIRMED"
-                        variant="compact"
                       />
                     </TableCell>
                     <TableCell>
                       <Badge tone={status?.tone ?? "neutral"}>
                         {status?.label ?? row.status}
                       </Badge>
+                    </TableCell>
+                    {[row.keptMinor, row.commissionMinor, row.taxMinor].map(
+                      (amount, index) => (
+                        <TableCell
+                          key={COLUMNS[index + 3]}
+                          className="text-right whitespace-nowrap"
+                        >
+                          <MoneyAmount
+                            amountMinor={amount}
+                            currency={row.currency}
+                          />
+                        </TableCell>
+                      ),
+                    )}
+                    <TableCell className="whitespace-nowrap">
+                      {formatDateTime(row.createdAt)}
                     </TableCell>
                     <TableCell className="whitespace-nowrap">
                       {row.paidAt ? (

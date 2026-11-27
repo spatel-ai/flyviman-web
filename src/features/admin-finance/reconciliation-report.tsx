@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { EmptyState } from "@/components/shared/empty-state";
 import { LoadError } from "@/components/shared/load-error";
+import { MoneyAmount } from "@/components/shared/money-amount";
 import { PriceLabel } from "@/components/shared/price-label";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -195,7 +196,7 @@ function ReportView({ report }: { report: Report }) {
                 <TableHeaderCell>What</TableHeaderCell>
                 <TableHeaderCell>Booking</TableHeaderCell>
                 <TableHeaderCell>Payment or refund</TableHeaderCell>
-                <TableHeaderCell>Amount</TableHeaderCell>
+                <TableHeaderCell className="text-right">Amount</TableHeaderCell>
                 <TableHeaderCell>Detail</TableHeaderCell>
               </TableRow>
             </TableHead>
@@ -211,13 +212,11 @@ function ReportView({ report }: { report: Report }) {
                   <TableCell className="whitespace-nowrap">
                     {row.refundReference ?? row.paymentReference ?? "—"}
                   </TableCell>
-                  <TableCell className="whitespace-nowrap">
+                  <TableCell className="text-right whitespace-nowrap">
                     {row.amountMinor !== null && row.currency ? (
-                      <PriceLabel
+                      <MoneyAmount
                         amountMinor={row.amountMinor}
                         currency={row.currency}
-                        priceType="CONFIRMED"
-                        variant="compact"
                       />
                     ) : (
                       "—"
