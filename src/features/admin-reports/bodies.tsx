@@ -121,6 +121,7 @@ export function SearchBody({ data }: { data: S["SearchReportDto"] }) {
           "Requests",
           "Conversion",
         ]}
+        definitions={["Conversion: booking requests ÷ searches."]}
         rows={[
           row("All", data.totals),
           ...data.byCategory.map((c) => row(serviceLabel(c.category), c)),
@@ -203,6 +204,7 @@ export function BookingsBody({ data }: { data: S["BookingReportDto"] }) {
             "Confirmation rate",
             ...(t.finance ? ["Confirmed value", "Revenue"] : []),
           ]}
+          definitions={["Confirmation rate: confirmed ÷ requests made."]}
           rows={data.byCategory.map((c) => row(serviceLabel(c.category), c))}
         />
       </Section>
@@ -413,6 +415,10 @@ export function OperatorsBody({ data }: { data: S["OperatorReportDto"] }) {
             "Expired",
             "Confirmed",
             "Cancelled",
+          ]}
+          definitions={[
+            "Response rate: responded ÷ requests.",
+            "Decline rate: declined ÷ requests.",
           ]}
           rows={data.operators.map((o) => ({
             key: o.operatorId,

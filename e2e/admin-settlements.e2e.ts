@@ -122,15 +122,15 @@ test("finance opens the reconciliation for a period", async ({ page }) => {
   await expect(
     main.getByRole("heading", { level: 1, name: "Reconciliation" }),
   ).toBeVisible();
-  await expect(main.getByLabel("From (UTC)")).toBeVisible();
-  await main.getByLabel("From (UTC)").fill("2026-01-01");
-  await main.getByLabel("To (UTC, included)").fill("2026-03-01");
+  await expect(main.getByLabel("From (IST)")).toBeVisible();
+  await main.getByLabel("From (IST)").fill("2026-01-01");
+  await main.getByLabel("To (IST, included)").fill("2026-03-01");
   await expect(
     main.getByRole("heading", { name: /^Mismatches \(\d+/ }),
   ).toBeVisible();
 
   // Over 92 days is refused in words.
-  await main.getByLabel("To (UTC, included)").fill("2026-11-01");
+  await main.getByLabel("To (IST, included)").fill("2026-11-01");
   await expect(main.getByText(/at most 92 days/)).toBeVisible();
 });
 
@@ -165,4 +165,20 @@ test("a table wider than its box is a named, focusable region (payments and role
     page.getByRole("main").getByRole("heading", { level: 1 }),
   ).toBeVisible();
   await expectScrollersReachable(page);
+});
+
+test("the reconciliation dates are Indian days and mismatches are paged", async ({
+  page,
+}) => {
+  await signIn(page, "finance", "/admin/reconciliation");
+  const main = page.getByRole("main");
+  await expect(main.getByLabel("From (IST)")).toBeVisible();
+  await expect(
+    main.getByText("Whole Indian days, midnight to midnight."),
+  ).toBeVisible();
+  await expect(
+    main.getByRole("heading", { name: /^Mismatches \(\d+/ }),
+  ).toBeVisible();
+  const rows = await main.getByRole("table").getByRole("row").count();
+  expect(rows).toBeLessThanOrEqual(21);
 });

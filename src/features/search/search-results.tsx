@@ -26,6 +26,7 @@ import { RecordNotFound } from "@/components/shared/record-not-found";
 import { Button } from "@/components/ui/button";
 import { buttonClasses } from "@/components/ui/button-classes";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Reveal } from "@/components/motion/reveal";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -43,6 +44,8 @@ import {
   applyFilters,
   facetCounts,
   NO_FILTERS,
+  OPERATOR_CAP,
+  operatorOptions,
   priceBounds,
   readFilters,
   writeFilters,
@@ -431,6 +434,14 @@ function FilterPanel({
 }) {
   const classes = facetCounts(results, (r) => r.aircraft.category);
   const operators = facetCounts(results, (r) => r.operatorName);
+  const [showAll, setShowAll] = useState(false);
+  const [operatorQuery, setOperatorQuery] = useState("");
+  const listed = operatorOptions(
+    operators,
+    filters.operators,
+    showAll,
+    operatorQuery,
+  );
   const bounds = priceBounds(results);
   const toggle = (list: string[], value: string) =>
     list.includes(value) ? list.filter((v) => v !== value) : [...list, value];
@@ -541,7 +552,7 @@ function FilterPanel({
       {operators.length > 1 ? (
         <fieldset className="flex flex-col gap-2">
           <legend className="mb-2 text-body-sm font-medium">Operator</legend>
-          {operators.map(({ value, count }) => (
+          {listed.map(({ value, count }) => (
             <Checkbox
               key={value}
               label={`${value} (${count})`}
@@ -554,6 +565,33 @@ function FilterPanel({
               }
             />
           ))}
+          {showAll && listed.length === 0 ? (
+            <p className="text-body-sm text-muted">No operator matches.</p>
+          ) : null}
+          {operators.length > OPERATOR_CAP ? (
+            <>
+              <button
+                type="button"
+                aria-expanded={showAll}
+                onClick={() => {
+                  setShowAll(!showAll);
+                  setOperatorQuery("");
+                }}
+                className="self-start text-body-sm text-accent hover:underline"
+              >
+                {showAll ? "Show fewer" : `Show all (${operators.length})`}
+              </button>
+              {showAll ? (
+                <Input
+                  label="Search operators"
+                  type="search"
+                  value={operatorQuery}
+                  onChange={(event) => setOperatorQuery(event.target.value)}
+                  className="h-10"
+                />
+              ) : null}
+            </>
+          ) : null}
         </fieldset>
       ) : null}
     </div>
