@@ -14,6 +14,8 @@ const PUBLIC = new Set(["/operator/register"]);
 /** What a dynamic segment is replaced with: no such record exists. */
 const PLACEHOLDER = "00000000-0000-4000-8000-000000000000";
 const REFERENCE = "FLYNOSUCH0";
+/** Well-formed but unused, so an air ambulance page passes its format check and has something to refuse. */
+const AIR_AMBULANCE_REFERENCE = "FLY-AA-ZZZZZZ";
 
 function pageFiles(dir: string): string[] {
   return readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
@@ -45,7 +47,11 @@ export function protectedRoutes(): ProtectedRoute[] {
     .map((pattern) => ({
       pattern,
       path: pattern.replace(/\[(\w+)\]/g, (_, name: string) =>
-        name === "reference" ? REFERENCE : PLACEHOLDER,
+        name !== "reference"
+          ? PLACEHOLDER
+          : pattern.includes("/air-ambulance/")
+            ? AIR_AMBULANCE_REFERENCE
+            : REFERENCE,
       ),
       surface: pattern.startsWith("/admin")
         ? "admin"

@@ -263,6 +263,10 @@ interface Visit {
   nav: string[];
   /** Statuses of the browser's calls to the API's admin and operator routes. */
   api: string[];
+  /** Statuses of every call to the API (`/api/v1`), the session's own included. */
+  calls: string[];
+  /** The page shows the app's error boundary or a load failure. */
+  errored: boolean;
 }
 
 async function visit(
@@ -277,8 +281,11 @@ async function visit(
   try {
     const page = await context.newPage();
     const api: string[] = [];
+    const calls: string[] = [];
     page.on("response", (response) => {
       const url = new URL(response.url());
+      const all = /\/api\/v1\/(.*)$/.exec(url.pathname);
+      if (all) calls.push(`${response.status()} ${all[1]}`);
       const match = /\/api\/v1\/((?:admin|operator)\/.*)$/.exec(url.pathname);
       if (match) api.push(`${response.status()} ${match[1]}`);
     });
@@ -308,17 +315,26 @@ async function visit(
         .slice(0, 3000),
       nav: await portalNav(page),
       api,
+      calls,
+      errored: ERROR_SHOWN.test(
+        (await page
+          .locator("body")
+          .innerText()
+          .catch(() => "")) ?? "",
+      ),
     };
   } finally {
     await context.close();
   }
 }
 
+/** The app's error boundary (`app/error.tsx`, `global-error.tsx`) and `LoadError`. */
+const ERROR_SHOWN = /Something went wrong|We could not load/;
+
+/** Waits until the page's data calls are done; a page that never settles fails the test. */
 async function settle(page: Page) {
   await page.waitForLoadState("load");
-  await page
-    .waitForLoadState("networkidle", { timeout: 8_000 })
-    .catch(() => undefined);
+  await page.waitForLoadState("networkidle", { timeout: 15_000 });
 }
 
 async function portalNav(page: Page): Promise<string[]> {
@@ -336,9 +352,9 @@ async function portalNav(page: Page): Promise<string[]> {
 
 // ------------------------------------------------------------------ tests
 
-/** The wording the portals use where a role has no use for a page. */
+/** The wording the portals use where a role has no use for a page (not "not found"). */
 const NO_ACCESS =
-  /do not have access|managed by|handled by|for your administrator|not available|not found|403/i;
+  /do not have access|managed by|handled by|for your administrator/i;
 
 /** What a page says to a role it does not admit (not "not found": a list can be empty). */
 const DENIED_NOTE =
@@ -429,10 +445,16 @@ test.describe("access matrix", () => {
 
           if (permitted) {
             expect(result.landed).toBe(route.path);
+            expect(result.errored, "an error page is not an allowed page").toBe(
+              false,
+            );
             if (!dynamic) {
               expect(result.heading, "the page's heading").not.toBe("");
               // The page's own data calls all succeed for a role it admits.
               expect(result.api.filter(refused)).toEqual([]);
+              if (route.surface === "customer") {
+                expect(result.calls.filter(refused)).toEqual([]);
+              }
               // ...and the page is the working page, not its no-access note.
               expect(result.main).not.toMatch(DENIED_NOTE);
             }
@@ -456,12 +478,17 @@ test.describe("access matrix", () => {
             ),
             "successful data calls",
           ).toEqual([]);
-          expect(result.main, "a no-access note, or the API's refusal").toMatch(
-            NO_ACCESS,
-          );
+          // Positive evidence of refusal: the API answered 403, or the page
+          // says so in its own words. "Not found" proves nothing: a missing
+          // role gate on a placeholder id looks the same.
+          const apiRefused = result.api.some((call) => call.startsWith("403 "));
+          expect(
+            apiRefused || NO_ACCESS.test(result.main),
+            `the API's 403 or a no-access note (page said: ${result.main.slice(0, 120)})`,
+          ).toBe(true);
           test.info().annotations.push({
             type: "ui",
-            description: result.api.some((call) => call.startsWith("403"))
+            description: apiRefused
               ? "API refused (403), page shows its error"
               : "page shows its own no-access note, no data call",
           });
