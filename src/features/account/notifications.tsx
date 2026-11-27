@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Pagination } from "@/components/ui/table";
 import { apiFetch } from "@/lib/api/client";
+import { useUnreadCount } from "@/lib/api/notifications";
 import { queryKeys } from "@/lib/api/query-keys";
 import type { Schemas } from "@/lib/api/types";
 import { formatDateTime } from "@/lib/format/date";
@@ -35,6 +36,13 @@ export function Notifications() {
     onSuccess: () =>
       queryClient.invalidateQueries({ queryKey: queryKeys.notificationsAll }),
   });
+
+  const markAll = useMutation({
+    mutationFn: () => apiFetch("me/notifications/read-all", { method: "POST" }),
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: queryKeys.notificationsAll }),
+  });
+  const unreadTotal = useUnreadCount();
 
   if (notifications.isPending) {
     return (
@@ -70,6 +78,19 @@ export function Notifications() {
 
   return (
     <>
+      {unreadTotal > 0 ? (
+        <div className="mb-4 flex items-center justify-between gap-3">
+          <p className="text-body-sm text-muted">{unreadTotal} unread</p>
+          <Button
+            variant="secondary"
+            size="sm"
+            loading={markAll.isPending}
+            onClick={() => markAll.mutate()}
+          >
+            Mark all as read
+          </Button>
+        </div>
+      ) : null}
       <ul aria-label="Notifications" className="flex flex-col gap-3">
         {data.map((notification) => {
           const unread = notification.readAt === null;

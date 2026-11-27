@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { UnreadBadge } from "@/components/shared/unread-badge";
+import { unreadLabel, useUnreadCount } from "@/lib/api/notifications";
 import { cn } from "@/lib/utils";
 
 const ITEMS = [
@@ -16,6 +18,7 @@ const ITEMS = [
 
 export function AccountNav() {
   const pathname = usePathname();
+  const unread = useUnreadCount();
   const scroller = useRef<HTMLElement>(null);
   const [more, setMore] = useState({ start: false, end: false });
 
@@ -65,6 +68,11 @@ export function AccountNav() {
                 <Link
                   href={item.href}
                   aria-current={current ? "page" : undefined}
+                  aria-label={
+                    item.href === "/account/notifications"
+                      ? unreadLabel(item.label, unread)
+                      : undefined
+                  }
                   className={cn(
                     "flex h-11 items-center border-b-2 text-body-sm font-medium whitespace-nowrap transition-colors duration-150 ease-standard",
                     current
@@ -73,6 +81,9 @@ export function AccountNav() {
                   )}
                 >
                   {item.label}
+                  {item.href === "/account/notifications" ? (
+                    <UnreadBadge unread={unread} />
+                  ) : null}
                 </Link>
               </li>
             );

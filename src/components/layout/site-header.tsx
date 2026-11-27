@@ -16,8 +16,10 @@ const LINK =
 const CUSTOMER_LINKS = [
   { href: "/account", label: "Overview" },
   { href: "/account/profile", label: "Profile" },
+  { href: "/account/trips", label: "Trips" },
   { href: "/account/passengers", label: "Saved passengers" },
   { href: "/account/notifications", label: "Notifications" },
+  { href: "/account/air-ambulance", label: "Air ambulance" },
 ];
 
 function SignedOut() {
