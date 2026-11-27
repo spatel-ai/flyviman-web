@@ -164,7 +164,7 @@ export function Queue({ viewerId }: { viewerId: string }) {
                             {row.reference}
                           </Link>
                         </TableCell>
-                        <TableCell className="w-full max-w-0 min-w-40">
+                        <TableCell className="w-full max-w-0 min-w-28">
                           <RouteText
                             origin={row.originName ?? "Unknown"}
                             destination={row.destinationName ?? "unknown"}
