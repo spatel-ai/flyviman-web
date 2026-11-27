@@ -268,6 +268,34 @@ describe("DateField through Input type=date", () => {
       });
     }
 
+    for (const desktop of [true, false]) {
+      it(`after a jump through the chooser, Escape closes only the picker (${desktop ? "popover" : "sheet"})`, async () => {
+        stubScreen(desktop);
+        const user = userEvent.setup();
+        render(<InDialog />);
+        await user.click(screen.getByRole("button", { name: "Start date" }));
+        await user.click(
+          await screen.findByRole("button", { name: /choose month and year/ }),
+        );
+        await user.click(screen.getByRole("button", { name: "2027" }));
+        await user.click(screen.getByRole("button", { name: "March" }));
+        // The keyboard keeps its place: on the same day of the new month.
+        expect(
+          screen.getByRole("button", { name: "Tue, 16 Mar 2027" }),
+        ).toHaveFocus();
+        await user.keyboard("{Escape}");
+        await waitFor(() =>
+          expect(
+            screen.queryByRole("dialog", { name: "Start date" }),
+          ).toBeNull(),
+        );
+        expect(
+          screen.getByRole("dialog", { name: "Block time" }),
+        ).toBeInTheDocument();
+        expect(screen.queryByText("Discard changes?")).toBeNull();
+      });
+    }
+
     it("changing month or opening the chooser leaves it clean; a choice marks it dirty", async () => {
       const user = userEvent.setup();
       render(<InDialog />);

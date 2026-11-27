@@ -104,14 +104,15 @@ export function Calendar({
   const outside = (day: string) =>
     Boolean((min && day < min) || (max && day > max));
 
-  // Keyboard moves land focus on the new day once it is drawn.
+  // Keyboard moves, and a month picked in the chooser, land focus on the
+  // day once it is drawn.
   useEffect(() => {
     if (!moved.current) return;
     moved.current = false;
     grid.current
       ?.querySelector<HTMLButtonElement>(`[data-day="${focused}"]`)
       ?.focus();
-  }, [focused]);
+  }, [focused, chooser]);
 
   // The chooser opens with the shown year in the middle of its list.
   useEffect(() => {
@@ -260,6 +261,7 @@ export function Calendar({
                   aria-pressed={current}
                   disabled={off}
                   onClick={() => {
+                    moved.current = true;
                     showMonth(
                       `${year}-${String(index + 1).padStart(2, "0")}-01`,
                     );
