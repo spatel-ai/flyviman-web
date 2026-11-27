@@ -103,7 +103,7 @@ test("a customer requests a priced flight from a result, finds it in trips and c
   ).toHaveCount(0);
 
   await page.goto("/account/trips");
-  await page.getByRole("tab", { name: "Past" }).click();
+  await page.getByRole("tab", { name: "Past and closed" }).click();
   await expect(
     page.getByRole("link", { name: new RegExp(reference) }),
   ).toBeVisible();
@@ -198,5 +198,34 @@ test("a customer answers the operator's question and asks for a change", async (
   await expect(
     page.getByRole("textbox", { name: "Ask for a change" }),
   ).toHaveCount(0);
+  await operator.close();
+});
+
+test("upcoming trips list the soonest departure first, whatever order they were requested in", async ({
+  browser,
+}) => {
+  test.slow();
+  const { operator, aircraftId } = await listedJet(browser, true);
+  const { page, passengerId } = await newCustomer(browser);
+  // The sooner trip is requested first, so it is the older one.
+  const sooner = await requestThroughApi(
+    page,
+    await searchFor(page, aircraftId, 4),
+    passengerId,
+  );
+  const later = await requestThroughApi(
+    page,
+    await searchFor(page, aircraftId, 5),
+    passengerId,
+  );
+
+  await page.goto("/account/trips");
+  const rows = page
+    .getByRole("list")
+    .filter({ hasText: sooner })
+    .getByRole("link");
+  await expect(rows).toHaveCount(2);
+  await expect(rows.nth(0)).toContainText(sooner);
+  await expect(rows.nth(1)).toContainText(later);
   await operator.close();
 });

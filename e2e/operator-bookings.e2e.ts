@@ -1,6 +1,12 @@
 import { expect, test, type Browser } from "@playwright/test";
 import { API_URL, expectNoSidewaysScroll } from "./support/api";
 import { asStaff, csrf } from "./support/operators";
+import {
+  listedJet,
+  newCustomer,
+  requestThroughApi,
+  searchFor,
+} from "./support/bookings";
 import { requestedTrip } from "./support/requests";
 
 /**
@@ -109,4 +115,44 @@ test("an operator cancels a booking with a reason and the customer is charged no
   await expect(
     main.getByRole("button", { name: "Cancel booking" }),
   ).toHaveCount(0);
+});
+
+test("the operator's upcoming trips list the soonest departure first", async ({
+  browser,
+}) => {
+  test.slow();
+  const { operator, aircraftId } = await listedJet(browser, true);
+  const { page, passengerId } = await newCustomer(browser);
+  // The sooner trip is requested first, so it is the older one.
+  const sooner = await requestThroughApi(
+    page,
+    await searchFor(page, aircraftId, 4),
+    passengerId,
+  );
+  const later = await requestThroughApi(
+    page,
+    await searchFor(page, aircraftId, 5),
+    passengerId,
+  );
+  const ops = await asStaff(browser);
+  for (const reference of [sooner, later]) {
+    const moved = await ops.page.request.patch(
+      `${API_URL}admin/bookings/${reference}/status`,
+      {
+        headers: await csrf(ops.page),
+        data: { status: "CONFIRMED", reason: "Confirmed with the operator" },
+      },
+    );
+    expect(moved.status()).toBe(200);
+  }
+  await ops.context.close();
+
+  await operator.goto("/operator/bookings");
+  const links = operator
+    .getByRole("main")
+    .getByRole("link", { name: /^FLY-BK-/ });
+  await expect(links).toHaveCount(2);
+  await expect(links.nth(0)).toHaveText(sooner);
+  await expect(links.nth(1)).toHaveText(later);
+  await operator.close();
 });

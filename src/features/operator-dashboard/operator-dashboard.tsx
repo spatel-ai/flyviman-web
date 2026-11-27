@@ -13,6 +13,7 @@ import { apiFetch } from "@/lib/api/client";
 import { queryKeys } from "@/lib/api/query-keys";
 import type { Schemas } from "@/lib/api/types";
 import { formatDateTime } from "@/lib/format/date";
+import { sortByDeparture } from "@/lib/sort/departure-order";
 
 type Dashboard = Schemas["OperatorDashboardResponseDto"];
 
@@ -106,7 +107,7 @@ export function OperatorDashboard() {
             value={fleet.approved}
             caption={
               fleet.pendingReview > 0
-                ? `${fleet.pendingReview} under review`
+                ? `${plural(fleet.pendingReview, "aircraft", "aircraft")} under review`
                 : fleet.other > 0
                   ? `${fleet.other} not listed`
                   : undefined
@@ -116,20 +117,20 @@ export function OperatorDashboard() {
         {fleet ? (
           <StatTile
             href="/operator/aircraft"
-            label="Aircraft documents"
+            label="Aircraft documents needing attention"
             value={documentIssues}
             caption={
               documentIssues === 0
                 ? "Nothing needs attention"
                 : [
                     fleet.documentsExpired > 0
-                      ? `${fleet.documentsExpired} expired`
+                      ? `${plural(fleet.documentsExpired, "document")} expired`
                       : null,
                     fleet.documentsExpiring > 0
-                      ? `${fleet.documentsExpiring} expiring within 30 days`
+                      ? `${plural(fleet.documentsExpiring, "document")} expiring within 30 days`
                       : null,
                     fleet.documentsPending > 0
-                      ? `${fleet.documentsPending} under review`
+                      ? `${plural(fleet.documentsPending, "document")} under review`
                       : null,
                   ]
                     .filter(Boolean)
@@ -202,27 +203,32 @@ export function OperatorDashboard() {
             </p>
           ) : (
             <ul className="mt-4 flex flex-col gap-3">
-              {trips.upcoming.map((trip) => (
-                <li key={trip.reference}>
-                  <Link
-                    href={`/operator/requests/${trip.reference}`}
-                    className="flex flex-col gap-2 rounded-lg bg-surface p-4 transition-colors duration-150 ease-standard hover:bg-surface-raised md:flex-row md:items-center md:justify-between"
-                  >
-                    <span className="flex min-w-0 flex-col gap-1">
-                      <span className="text-title">
-                        {trip.originName} to {trip.destinationName}
+              {sortByDeparture(trips.upcoming, (trip) => trip.departureAt).map(
+                (trip) => (
+                  <li key={trip.reference}>
+                    <Link
+                      href={`/operator/requests/${trip.reference}`}
+                      className="flex flex-col gap-2 rounded-lg bg-surface p-4 transition-colors duration-150 ease-standard hover:bg-surface-raised md:flex-row md:items-center md:justify-between"
+                    >
+                      <span className="flex min-w-0 flex-col gap-1">
+                        <span className="text-title">
+                          {trip.originName} to {trip.destinationName}
+                        </span>
+                        <span className="text-body-sm text-muted">
+                          {formatDateTime(trip.departureAt)} · {trip.reference}
+                        </span>
                       </span>
-                      <span className="text-body-sm text-muted">
-                        {formatDateTime(trip.departureAt)} · {trip.reference}
+                      <span className="flex flex-wrap gap-2">
+                        <StatusBadge kind="booking" status={trip.status} />
+                        <StatusBadge
+                          kind="payment"
+                          status={trip.paymentStatus}
+                        />
                       </span>
-                    </span>
-                    <span className="flex flex-wrap gap-2">
-                      <StatusBadge kind="booking" status={trip.status} />
-                      <StatusBadge kind="payment" status={trip.paymentStatus} />
-                    </span>
-                  </Link>
-                </li>
-              ))}
+                    </Link>
+                  </li>
+                ),
+              )}
             </ul>
           )}
         </Card>

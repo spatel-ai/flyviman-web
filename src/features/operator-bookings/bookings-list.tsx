@@ -17,6 +17,7 @@ import { apiFetch } from "@/lib/api/client";
 import { queryKeys } from "@/lib/api/query-keys";
 import type { Schemas } from "@/lib/api/types";
 import { formatDateTime } from "@/lib/format/date";
+import { sortByDeparture } from "@/lib/sort/departure-order";
 import {
   type BookingFilter,
   DEFAULT_FILTER,
@@ -54,7 +55,15 @@ export function BookingsList() {
     );
   }
 
-  const rows = data?.data ?? [];
+  // The API pages by creation time and has no sort option: this orders the
+  // fetched page only. Finished trips read newest first, the rest soonest first.
+  const rows = sortByDeparture(
+    data?.data ?? [],
+    (row) => row.legs[0]?.departureAt,
+    filter.status === "COMPLETED" || filter.status === "CANCELLED"
+      ? "latest"
+      : "soonest",
+  );
   const filtered = isFiltered(filter);
 
   return (

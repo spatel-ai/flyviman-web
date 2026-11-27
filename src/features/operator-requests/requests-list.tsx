@@ -18,6 +18,7 @@ import { apiFetch } from "@/lib/api/client";
 import { queryKeys } from "@/lib/api/query-keys";
 import type { Schemas } from "@/lib/api/types";
 import { formatDateTime } from "@/lib/format/date";
+import { sortByDeparture } from "@/lib/sort/departure-order";
 import { HoldTime } from "./hold-time";
 import {
   listQuery,
@@ -57,7 +58,12 @@ export function RequestsList() {
     );
   }
 
-  const rows = data?.data ?? [];
+  // The API pages by creation time and has no sort option: this orders the
+  // fetched page only, soonest departure first.
+  const rows = sortByDeparture(
+    data?.data ?? [],
+    (row) => row.legs[0]?.departureAt,
+  );
   const filtered = filter.tab !== "waiting" || filter.aircraftId !== "";
 
   return (
