@@ -1,9 +1,11 @@
 import { expect, test, type Page } from "@playwright/test";
+import { registerOperator } from "./support/operators";
 import {
   API_URL,
   PASSWORD,
   latestCode,
   signIn,
+  unique,
   uniqueEmail,
   type AccountName,
 } from "./support/api";
@@ -26,6 +28,10 @@ interface Shot {
   account?: AccountName;
   /** Sign in as a customer registered for this shot, with nothing booked. */
   freshCustomer?: boolean;
+  /** Sign in as an operator admin registered for this shot: always a new Draft operator. */
+  freshOperator?: boolean;
+  /** Extra areas masked: values that differ for each registered account. */
+  mask?: (page: Page) => ReturnType<Page["locator"]>[];
   /** Only the light baseline is kept. */
   lightOnly?: boolean;
   /** Answers an API call with fixed figures, so live numbers never differ. */
@@ -131,7 +137,13 @@ const SHOTS: Shot[] = [
   {
     name: "operator",
     path: "/operator",
-    account: "operatorAdmin",
+    freshOperator: true,
+    // The new operator's company name, contact name and email are its own.
+    mask: (page) => [
+      page.getByRole("textbox", { name: "Legal name" }),
+      page.getByRole("textbox", { name: "Contact name" }),
+      page.getByRole("textbox", { name: "Contact email" }),
+    ],
     ready: (page) => page.getByRole("heading", { level: 1 }),
   },
   {
@@ -192,6 +204,15 @@ for (const scheme of ["light", "dark"] as const) {
           // Verifying the address signs the new customer in.
           await freshCustomer(page);
           await page.goto(shot.path);
+        } else if (shot.freshOperator) {
+          // Registering and verifying signs the new operator admin in.
+          await registerOperator(
+            page,
+            unique("Visual Aviation"),
+            uniqueEmail("visual-operator"),
+          );
+          await page.goto(shot.path);
+          await page.waitForURL("**/operator/onboarding");
         } else if (shot.account) {
           await signIn(page, shot.account, shot.path);
           await page.waitForURL((url) => !url.pathname.startsWith("/login"));
@@ -230,7 +251,7 @@ for (const scheme of ["light", "dark"] as const) {
           fullPage: true,
           animations: "disabled",
           maxDiffPixelRatio: 0.01,
-          mask: masks(page),
+          mask: [...masks(page), ...(shot.mask?.(page) ?? [])],
         });
       });
     }
