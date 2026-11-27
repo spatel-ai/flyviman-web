@@ -34,6 +34,9 @@ export const documentTypeLabel = operatorDocumentLabel;
 /** The same pattern the API checks (E.164). */
 const E164 = /^\+[1-9]\d{7,14}$/;
 const POSTAL_CODE = /^[A-Za-z0-9 -]{3,12}$/;
+const GSTIN = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/;
+const GSTIN_MESSAGE =
+  "Enter a valid 15-character GSTIN, for example 27AAPFU0939F1ZV.";
 const COUNTRY = /^[A-Za-z]{2}$/;
 
 export const MAX_REGIONS = 50;
@@ -98,7 +101,11 @@ export const companyDetailsSchema = z
       .string()
       .trim()
       .max(50, "Use 50 characters or fewer."),
-    taxNumber: z.string().trim().max(50, "Use 50 characters or fewer."),
+    taxNumber: z
+      .string()
+      .trim()
+      .toUpperCase()
+      .refine((value) => value === "" || GSTIN.test(value), GSTIN_MESSAGE),
     contactName: z
       .string()
       .trim()
@@ -256,7 +263,7 @@ export function toUpdateBody(
     tradingName: orNull(values.tradingName),
     serviceCategories: values.serviceCategories,
     registrationNumber: orNull(values.registrationNumber),
-    taxNumber: orNull(values.taxNumber),
+    taxNumber: orNull(values.taxNumber)?.toUpperCase() ?? null,
     ...body,
   };
 }
