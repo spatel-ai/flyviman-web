@@ -1,6 +1,7 @@
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { Card } from "@/components/ui/card";
 import {
+  Pagination,
   Table,
   TableBody,
   TableCell,
@@ -92,35 +93,67 @@ export function Section({
   );
 }
 
-/** A small table; `rows` are already formatted cells. */
+/** Rows shown at once; totals sit above the tables, and the CSV has every row. */
+export const REPORT_PAGE_SIZE = 25;
+
+/**
+ * A small table; `rows` are already formatted cells. A long one is paged,
+ * and `definitions` say what each percentage column divides by what.
+ */
 export function DataTable({
   columns,
   rows,
   empty = "Nothing in this period.",
+  definitions,
 }: {
   columns: string[];
   rows: { key: string; cells: ReactNode[] }[];
   empty?: string;
+  definitions?: string[];
 }) {
+  const [page, setPage] = useState(1);
   if (rows.length === 0) return <p className="text-muted">{empty}</p>;
+  const lastPage = Math.max(1, Math.ceil(rows.length / REPORT_PAGE_SIZE));
+  const current = Math.min(page, lastPage);
+  const shown = rows.slice(
+    (current - 1) * REPORT_PAGE_SIZE,
+    current * REPORT_PAGE_SIZE,
+  );
   return (
-    <Table>
-      <TableHead>
-        <TableRow>
-          {columns.map((column) => (
-            <TableHeaderCell key={column}>{column}</TableHeaderCell>
+    <div className="flex flex-col gap-3">
+      {definitions ? (
+        <ul className="flex flex-col gap-0.5 text-body-sm text-muted">
+          {definitions.map((line) => (
+            <li key={line}>{line}</li>
           ))}
-        </TableRow>
-      </TableHead>
-      <TableBody>
-        {rows.map((row) => (
-          <TableRow key={row.key}>
-            {row.cells.map((cell, index) => (
-              <TableCell key={columns[index]}>{cell}</TableCell>
+        </ul>
+      ) : null}
+      <Table>
+        <TableHead>
+          <TableRow>
+            {columns.map((column) => (
+              <TableHeaderCell key={column}>{column}</TableHeaderCell>
             ))}
           </TableRow>
-        ))}
-      </TableBody>
-    </Table>
+        </TableHead>
+        <TableBody>
+          {shown.map((row) => (
+            <TableRow key={row.key}>
+              {row.cells.map((cell, index) => (
+                <TableCell key={columns[index]}>{cell}</TableCell>
+              ))}
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+      {rows.length > REPORT_PAGE_SIZE ? (
+        <Pagination
+          page={current}
+          pageSize={REPORT_PAGE_SIZE}
+          total={rows.length}
+          onPageChange={setPage}
+        />
+      ) : null}
+    </div>
   );
 }

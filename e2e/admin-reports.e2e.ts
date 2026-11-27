@@ -83,3 +83,18 @@ test("finance sees money tiles and Revenue and Payments, every amount labelled",
   await expect(main.getByText("Collected", { exact: true })).toBeVisible();
   await expect(main.getByText("Confirmed price").first()).toBeVisible();
 });
+
+test("a report table never lists more than 25 rows and percentages are defined", async ({
+  page,
+}) => {
+  await signIn(page, "ops", "/admin/reports?report=operators");
+  const main = page.getByRole("main");
+  await expect(
+    main.getByText("Response rate: responded ÷ requests."),
+  ).toBeVisible();
+  await expect(
+    main.getByText("Decline rate: declined ÷ requests."),
+  ).toBeVisible();
+  const performance = main.getByRole("table").nth(1);
+  expect(await performance.getByRole("row").count()).toBeLessThanOrEqual(26);
+});
