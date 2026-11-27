@@ -241,7 +241,7 @@ export function UsersList() {
                     <TableHeaderCell
                       key={column}
                       className={
-                        column === "Created" ? HIDE_UNDER_2XL : undefined
+                        column === "Created" ? `px-2 ${HIDE_UNDER_2XL}` : "px-2"
                       }
                     >
                       {column}
@@ -265,7 +265,7 @@ export function UsersList() {
                       const who = user.email ?? user.phone ?? "this user";
                       return (
                         <TableRow key={user.id}>
-                          <TableCell className="w-full max-w-0 min-w-36">
+                          <TableCell className="w-full max-w-0 min-w-32 px-2">
                             <TruncatedText
                               className="font-medium"
                               title={
@@ -283,15 +283,15 @@ export function UsersList() {
                               </TruncatedText>
                             ) : null}
                           </TableCell>
-                          <TableCell>
+                          <TableCell className="px-2">
                             {Object.hasOwn(ROLE_LABELS, user.role)
                               ? ROLE_LABELS[user.role]
                               : user.role}
                           </TableCell>
-                          <TableCell className="whitespace-nowrap">
+                          <TableCell className="px-2 whitespace-nowrap">
                             <StatusBadge kind="user" status={user.status} />
                           </TableCell>
-                          <TableCell className="whitespace-nowrap">
+                          <TableCell className="px-2 whitespace-nowrap">
                             {user.lastLoginAt ? (
                               formatDateTime(user.lastLoginAt)
                             ) : (
@@ -299,12 +299,12 @@ export function UsersList() {
                             )}
                           </TableCell>
                           <TableCell
-                            className={`whitespace-nowrap ${HIDE_UNDER_2XL}`}
+                            className={`px-2 whitespace-nowrap ${HIDE_UNDER_2XL}`}
                           >
                             {formatDateTime(user.createdAt)}
                           </TableCell>
                           {manages ? (
-                            <TableCell>
+                            <TableCell className="px-2">
                               <div className="flex gap-2">
                                 {action ? (
                                   <Button
