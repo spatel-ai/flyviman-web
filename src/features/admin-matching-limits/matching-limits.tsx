@@ -27,6 +27,7 @@ import {
   TableHead,
   TableHeaderCell,
   TableRow,
+  TruncatedCell,
 } from "@/components/ui/table";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
@@ -200,14 +201,22 @@ export function MatchingLimits({ canEdit }: { canEdit: boolean }) {
                   ))
                 : rules.map((rule) => (
                     <TableRow key={rule.id}>
-                      <TableCell className="font-medium">
+                      <TruncatedCell
+                        className="max-w-56 font-medium whitespace-nowrap"
+                        title={appliesTo(rule)}
+                      >
                         {appliesTo(rule)}
-                      </TableCell>
-                      <TableCell>{describeLimits(rule.config)}</TableCell>
+                      </TruncatedCell>
+                      <TruncatedCell
+                        className="w-full max-w-0 min-w-40 whitespace-nowrap"
+                        title={describeLimits(rule.config)}
+                      >
+                        {describeLimits(rule.config)}
+                      </TruncatedCell>
                       <TableCell className="tabular-nums">
                         {rule.version}
                       </TableCell>
-                      <TableCell>{formatDateTime(rule.validFrom)}</TableCell>
+                      <TableCell className="whitespace-nowrap">{formatDateTime(rule.validFrom)}</TableCell>
                       {view === "history" ? (
                         <TableCell>
                           {rule.inForce
@@ -218,7 +227,7 @@ export function MatchingLimits({ canEdit }: { canEdit: boolean }) {
                         </TableCell>
                       ) : canEdit && rule.editable ? (
                         <TableCell>
-                          <div className="flex flex-wrap gap-2">
+                          <div className="flex gap-2">
                             <Button
                               variant="secondary"
                               className="h-10"

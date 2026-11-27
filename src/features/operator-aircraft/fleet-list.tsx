@@ -6,6 +6,7 @@ import { EmptyState } from "@/components/shared/empty-state";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { buttonClasses } from "@/components/ui/button-classes";
 import { Card } from "@/components/ui/card";
+import { TruncatedText } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
 import { apiFetch } from "@/lib/api/client";
 import { messageFor } from "@/lib/api/messages";
@@ -76,20 +77,24 @@ export function FleetList() {
                 variant="raised"
                 className="flex flex-wrap items-center justify-between gap-3"
               >
-                <div>
+                <div className="min-w-0 flex-1">
                   <Link
                     href={`/operator/aircraft/${encodeURIComponent(item.id)}`}
-                    className="text-title text-accent hover:underline"
+                    title={item.registration}
+                    className="block truncate text-title text-accent hover:underline"
                   >
                     {item.registration}
                   </Link>
-                  <p className="text-body-sm text-muted">
+                  <TruncatedText
+                    title={`${item.manufacturer} ${item.model} · ${item.passengerCapacity} passengers${item.homeBase ? ` · ${item.homeBase.code ?? item.homeBase.name}` : ""}`}
+                    className="text-body-sm text-muted"
+                  >
                     {item.manufacturer} {item.model} · {item.passengerCapacity}{" "}
                     passengers
                     {item.homeBase
                       ? ` · ${item.homeBase.code ?? item.homeBase.name}`
                       : ""}
-                  </p>
+                  </TruncatedText>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   <StatusBadge kind="aircraft" status={item.listingStatus} />

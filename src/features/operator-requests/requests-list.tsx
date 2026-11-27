@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Select } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Pagination } from "@/components/ui/table";
+import { Pagination, RouteText, TruncatedText } from "@/components/ui/table";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { apiFetch } from "@/lib/api/client";
 import { queryKeys } from "@/lib/api/query-keys";
@@ -162,7 +162,7 @@ function RequestRow({ row }: { row: Row }) {
       variant="interactive"
       className="grid gap-3 p-4 md:grid-cols-[1.4fr_1fr_1fr] md:p-5"
     >
-      <div className="flex flex-col gap-1">
+      <div className="flex min-w-0 flex-col gap-1">
         <div className="flex flex-wrap items-center gap-2">
           <Link
             href={`/operator/requests/${encodeURIComponent(row.reference)}`}
@@ -172,17 +172,22 @@ function RequestRow({ row }: { row: Row }) {
           </Link>
           <StatusBadge kind="booking" status={row.status} />
         </div>
-        <p className="text-body-sm">
-          {first.originName} to {last.destinationName}
-          {row.legs.length > 1 ? " and back" : ""}
-        </p>
+        <RouteText
+          className="text-body-sm"
+          origin={first.originName}
+          destination={last.destinationName}
+          roundTrip={row.legs.length > 1}
+        />
         <p className="text-caption text-muted">
           {formatDateTime(first.departureAt)}, {row.passengerCount} passengers
         </p>
-        <p className="text-caption text-muted">
+        <TruncatedText
+          title={`${row.aircraft.registration}, ${row.aircraft.manufacturer} ${row.aircraft.model}`}
+          className="text-caption text-muted"
+        >
           {row.aircraft.registration}, {row.aircraft.manufacturer}{" "}
           {row.aircraft.model}
-        </p>
+        </TruncatedText>
       </div>
       <div className="flex flex-col gap-2">
         {row.price ? (

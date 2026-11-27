@@ -12,7 +12,7 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Pagination } from "@/components/ui/table";
+import { Pagination, RouteText, TruncatedText } from "@/components/ui/table";
 import { apiFetch } from "@/lib/api/client";
 import { queryKeys } from "@/lib/api/query-keys";
 import type { Schemas } from "@/lib/api/types";
@@ -192,17 +192,22 @@ function BookingRow({ row }: { row: Row }) {
           <StatusBadge kind="booking" status={row.status} />
           <StatusBadge kind="payment" status={row.paymentStatus} />
         </div>
-        <p className="text-body-sm">
-          {first.originName} to {last.destinationName}
-          {row.legs.length > 1 ? " and back" : ""}
-        </p>
+        <RouteText
+          className="text-body-sm"
+          origin={first.originName}
+          destination={last.destinationName}
+          roundTrip={row.legs.length > 1}
+        />
         <p className="text-caption text-muted">
           {formatDateTime(first.departureAt)}, {row.passengerCount} passengers
         </p>
-        <p className="text-caption text-muted">
+        <TruncatedText
+          title={`${row.aircraft.registration}, ${row.aircraft.manufacturer} ${row.aircraft.model}`}
+          className="text-caption text-muted"
+        >
           {row.aircraft.registration}, {row.aircraft.manufacturer}{" "}
           {row.aircraft.model}
-        </p>
+        </TruncatedText>
       </div>
       <div className="flex flex-col gap-2">
         {row.price ? (

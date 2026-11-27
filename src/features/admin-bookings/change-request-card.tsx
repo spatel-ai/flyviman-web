@@ -16,6 +16,7 @@ import {
   DialogContent,
   DialogFooter,
 } from "@/components/ui/dialog";
+import { cn } from "@/lib/utils";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/toast";
 import { apiFetch } from "@/lib/api/client";
@@ -79,7 +80,14 @@ export function ChangeRequestCard({
         ) : null}
       </div>
       {request.details ? (
-        <p className="whitespace-pre-wrap break-words text-body-sm">
+        <p
+          title={linkToBooking ? request.details : undefined}
+          className={cn(
+            "whitespace-pre-wrap break-words text-body-sm",
+            // In the list the booking page, which links from here, shows it in full.
+            linkToBooking && "line-clamp-3",
+          )}
+        >
           {request.details}
         </p>
       ) : (
@@ -88,7 +96,10 @@ export function ChangeRequestCard({
         </p>
       )}
       {request.decisionNote ? (
-        <p className="text-body-sm text-muted">
+        <p
+          title={linkToBooking ? request.decisionNote : undefined}
+          className={cn("text-body-sm text-muted", linkToBooking && "line-clamp-2")}
+        >
           Note to the customer: {request.decisionNote}
         </p>
       ) : null}

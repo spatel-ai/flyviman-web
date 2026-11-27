@@ -102,16 +102,23 @@ export function Notifications() {
                 unread ? "bg-surface-raised" : "bg-surface",
               )}
             >
-              <div>
-                <h2 className="text-title">
-                  {notification.title}
+              <div className="min-w-0">
+                <h2 className="flex items-baseline gap-2 text-title">
+                  <span title={notification.title} className="truncate">
+                    {notification.title}
+                  </span>
                   {unread ? (
-                    <span className="ml-2 text-caption font-medium text-accent">
+                    <span className="shrink-0 text-caption font-medium text-accent">
                       New
                     </span>
                   ) : null}
                 </h2>
-                <p className="text-body-sm text-muted">{notification.body}</p>
+                <p
+                  title={notification.body}
+                  className="line-clamp-2 text-body-sm text-muted"
+                >
+                  {notification.body}
+                </p>
                 <p className="mt-1 text-caption text-subtle">
                   {formatDateTime(notification.createdAt)}
                 </p>

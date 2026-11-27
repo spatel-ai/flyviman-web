@@ -24,6 +24,7 @@ import {
   TableHead,
   TableHeaderCell,
   TableRow,
+  TruncatedCell,
 } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/toast";
@@ -119,7 +120,12 @@ export function ItemsTab({ path, noun, titleLabel, bodyLabel }: Props) {
           <TableBody>
             {rows.map((item) => (
               <TableRow key={item.id}>
-                <TableCell>{item.title}</TableCell>
+                <TruncatedCell
+                  className="w-full max-w-0 min-w-40"
+                  title={item.title}
+                >
+                  {item.title}
+                </TruncatedCell>
                 <TableCell>{item.sortOrder}</TableCell>
                 <TableCell className="whitespace-nowrap">
                   {item.publishedAt ? (
@@ -129,7 +135,7 @@ export function ItemsTab({ path, noun, titleLabel, bodyLabel }: Props) {
                   )}
                 </TableCell>
                 <TableCell>
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex gap-2">
                     <Button
                       variant="secondary"
                       className="h-9"

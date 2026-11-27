@@ -10,8 +10,8 @@ import { StatusBadge } from "@/components/shared/status-badge";
 import { buttonClasses } from "@/components/ui/button-classes";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Pagination } from "@/components/ui/table";
-import { routeLabel, windowLabel } from "@/lib/empty-legs/format";
+import { Pagination, RouteText, TruncatedText } from "@/components/ui/table";
+import { placeLabel, windowLabel } from "@/lib/empty-legs/format";
 import type { OperatorEmptyLeg } from "@/lib/empty-legs/types";
 import { apiFetch } from "@/lib/api/client";
 import { isForbiddenError } from "@/lib/api/errors";
@@ -73,17 +73,23 @@ export function OfferList() {
                   variant="raised"
                   className="flex flex-wrap items-center justify-between gap-3"
                 >
-                  <div>
+                  <div className="min-w-0 flex-1">
                     <Link
                       href={`/operator/empty-legs/${encodeURIComponent(item.id)}`}
-                      className="text-title text-accent hover:underline"
+                      className="block text-title text-accent hover:underline"
                     >
-                      {routeLabel(item)}
+                      <RouteText
+                        origin={placeLabel(item.origin)}
+                        destination={placeLabel(item.destination)}
+                      />
                     </Link>
-                    <p className="text-body-sm text-muted">
+                    <TruncatedText
+                      title={`${item.reference} · ${item.aircraft.type} · ${windowLabel(item)}`}
+                      className="text-body-sm text-muted"
+                    >
                       {item.reference} · {item.aircraft.type} ·{" "}
                       {windowLabel(item)}
-                    </p>
+                    </TruncatedText>
                     <p className="text-body-sm text-muted">
                       {item.seatsAvailable} seats
                     </p>

@@ -10,12 +10,12 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ConfirmDialog } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Pagination } from "@/components/ui/table";
+import { Pagination, RouteText, TruncatedText } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/components/ui/toast";
 import {
   aircraftLabel,
-  routeLabel,
+  placeLabel,
   validUntilLabel,
   windowLabel,
 } from "@/lib/empty-legs/format";
@@ -123,12 +123,19 @@ export function EmptyLegsQueue() {
               <li key={item.id}>
                 <Card variant="raised" className="flex flex-col gap-4">
                   <div className="flex flex-wrap items-start justify-between gap-3">
-                    <div className="flex flex-col gap-1">
-                      <p className="text-title">{routeLabel(item)}</p>
-                      <p className="text-body-sm text-muted">
+                    <div className="flex min-w-0 flex-1 flex-col gap-1">
+                      <RouteText
+                        className="text-title"
+                        origin={placeLabel(item.origin)}
+                        destination={placeLabel(item.destination)}
+                      />
+                      <TruncatedText
+                        title={`${item.reference} · ${item.operatorName} · ${item.aircraft.registration} · ${aircraftLabel(item)}`}
+                        className="text-body-sm text-muted"
+                      >
                         {item.reference} · {item.operatorName} ·{" "}
                         {item.aircraft.registration} · {aircraftLabel(item)}
-                      </p>
+                      </TruncatedText>
                       <p className="text-body-sm">{windowLabel(item)}</p>
                       <p className="text-body-sm text-muted">
                         {item.seatsAvailable} seats · {validUntilLabel(item)}

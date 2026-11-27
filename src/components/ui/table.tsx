@@ -269,13 +269,16 @@ export function TruncatedText({
 export function RouteText({
   origin,
   destination,
+  roundTrip = false,
   className,
 }: {
   origin: string;
   destination: string;
+  /** Adds "and back" after the destination. */
+  roundTrip?: boolean;
   className?: string;
 }) {
-  const full = `${origin} to ${destination}`;
+  const full = `${origin} to ${destination}${roundTrip ? " and back" : ""}`;
   return (
     <span
       title={full}
@@ -291,6 +294,11 @@ export function RouteText({
       <span aria-hidden="true" className="min-w-0 flex-[0_1_auto] truncate">
         {shortPlaceName(destination)}
       </span>
+      {roundTrip ? (
+        <span aria-hidden="true" className="shrink-0 text-muted">
+          and back
+        </span>
+      ) : null}
     </span>
   );
 }
