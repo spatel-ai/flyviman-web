@@ -216,7 +216,9 @@ export function MatchingLimits({ canEdit }: { canEdit: boolean }) {
                       <TableCell className="tabular-nums">
                         {rule.version}
                       </TableCell>
-                      <TableCell className="whitespace-nowrap">{formatDateTime(rule.validFrom)}</TableCell>
+                      <TableCell className="whitespace-nowrap">
+                        {formatDateTime(rule.validFrom)}
+                      </TableCell>
                       {view === "history" ? (
                         <TableCell>
                           {rule.inForce

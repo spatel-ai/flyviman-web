@@ -253,7 +253,7 @@ export function BookingsList() {
                               </Badge>
                             ) : null}
                           </TableCell>
-                          <TableCell className="w-[55%] max-w-0 min-w-32">
+                          <TableCell className="w-[60%] max-w-0 min-w-44">
                             <RouteText
                               origin={row.originName}
                               destination={row.destinationName}
@@ -269,7 +269,7 @@ export function BookingsList() {
                             {formatDateTime(row.departureAt)}
                           </TableCell>
                           <TruncatedCell
-                            className="w-[35%] max-w-0 min-w-20"
+                            className="w-[40%] max-w-0 min-w-24"
                             title={
                               row.customer.email ?? row.customer.phone ?? "-"
                             }

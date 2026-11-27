@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   Pagination,
+  RouteText,
   Table,
   TableBody,
   TableCell,
@@ -217,5 +218,29 @@ describe("TruncatedCell and TruncatedText", () => {
     const text = screen.getByText("Mumbai → Goa");
     expect(text).toHaveAttribute("title", long);
     expect(text).toHaveClass("block", "truncate");
+  });
+});
+
+describe("RouteText", () => {
+  it("shows both ends, each truncating alone, with the full route in title and as the name", () => {
+    render(
+      <RouteText
+        origin="Chhatrapati Shivaji Maharaj International Airport"
+        destination="Goa Dabolim Airport"
+        roundTrip
+      />,
+    );
+    const full =
+      "Chhatrapati Shivaji Maharaj International Airport to Goa Dabolim Airport and back";
+    expect(screen.getByTitle(full)).toBeInTheDocument();
+    expect(screen.getByText(full)).toHaveClass("sr-only");
+    const origin = screen.getByText("Chhatrapati Shivaji Maharaj");
+    const destination = screen.getByText("Goa Dabolim");
+    expect(origin).toHaveClass("truncate", "min-w-0");
+    expect(destination).toHaveClass("truncate", "min-w-0");
+    expect(screen.getByText("→")).toHaveClass("shrink-0");
+    expect(
+      screen.getByText("and back", { selector: "[aria-hidden]" }),
+    ).toBeInTheDocument();
   });
 });

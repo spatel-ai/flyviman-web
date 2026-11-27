@@ -1,5 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
-import { signIn } from "./support/api";
+import { randomUUID } from "node:crypto";
+import { API_URL, signIn, uniqueEmail } from "./support/api";
+import { asStaff, csrf } from "./support/operators";
 import { requestedTrip } from "./support/requests";
 import { completedPaidBooking, settlementFor } from "./support/paid-booking";
 
@@ -33,6 +35,10 @@ const ADMIN = [
   "pricing/calculations",
   "audit-logs",
   "locations",
+  "notifications",
+  "matching-limits",
+  "content",
+  "roles",
 ];
 const OPERATOR = [
   "bookings",
@@ -42,6 +48,7 @@ const OPERATOR = [
   "settlements",
   "air-ambulance",
   "team",
+  "notifications",
 ];
 
 export interface TableFit {
@@ -69,6 +76,20 @@ export async function measureTables(page: Page): Promise<TableFit[]> {
   );
 }
 
+/** A card list: no card wraps long text into a runaway stack or spills sideways. */
+const MAX_CARD = 180;
+
+export async function measureCards(page: Page) {
+  return page.evaluate(() =>
+    [...document.querySelectorAll<HTMLElement>("main ul > li")]
+      .filter((li) => li.offsetParent !== null && li.offsetHeight > 40)
+      .map((li) => ({
+        overflow: li.scrollWidth - li.clientWidth,
+        height: li.offsetHeight,
+      })),
+  );
+}
+
 const results: string[] = [];
 
 test.describe.configure({ mode: "serial" });
@@ -80,12 +101,93 @@ test("portal list tables fit at common desktop widths", async ({
 }) => {
   test.slow();
   test.setTimeout(900_000);
-  const { reference } = await completedPaidBooking(browser);
+  // The first operator has a completed, settled booking; the second has an
+  // open request (and, with its customer's change request, one for admin).
+  const { reference, operator: paidOperator } = await completedPaidBooking(
+    browser,
+    { keepOperator: true },
+  );
   const operatorPage = await browser.newPage();
   await requestedTrip(operatorPage, browser, {
     priced: true,
     withPassenger: true,
+    changeRequest: "Please move the departure two hours later, and add a stop",
   });
+
+  // Long values on the pages that only show the problem with data.
+  for (const operator of [operatorPage, paidOperator]) {
+    const invited = await operator.request.post(`${API_URL}operator/staff`, {
+      headers: await csrf(operator),
+      data: {
+        email: uniqueEmail("long-team-member"),
+        allAircraft: true,
+        aircraftIds: [],
+        capabilities: [
+          "MANAGE_AIRCRAFT",
+          "MANAGE_AVAILABILITY",
+          "MANAGE_EMPTY_LEGS",
+          "MANAGE_BOOKINGS",
+        ],
+      },
+    });
+    expect(invited.status()).toBe(201);
+  }
+
+  const finance = await asStaff(browser, "finance");
+  const day = 86_400_000;
+  const promotion = await finance.page.request.post(
+    `${API_URL}admin/promotions`,
+    {
+      headers: await csrf(finance.page),
+      data: {
+        code: `LONG${randomUUID().replace(/-/g, "").slice(0, 8).toUpperCase()}`,
+        name: "Monsoon festival launch offer for returning charter flyers",
+        kind: "PERCENT",
+        percent: 5,
+        currency: "INR",
+        startsAt: new Date(Date.now() - 60_000).toISOString(),
+        endsAt: new Date(Date.now() + 30 * day).toISOString(),
+        reason: "Table fit test",
+      },
+    },
+  );
+  expect(promotion.status()).toBe(201);
+  await finance.context.close();
+
+  // An air ambulance request, seen in the admin queue.
+  const customerContext = await browser.newContext();
+  const customerPage = await customerContext.newPage();
+  await signIn(customerPage, "customer", "/account");
+  await expect(customerPage).toHaveURL(/\/account/);
+  const places = (
+    await (await customerPage.request.get(`${API_URL}locations`)).json()
+  ).data as { id: string }[];
+  const ambulance = await customerPage.request.post(
+    `${API_URL}air-ambulance/requests`,
+    {
+      headers: {
+        ...(await csrf(customerPage)),
+        "Idempotency-Key": randomUUID(),
+      },
+      data: {
+        contactName: "Asha Rao",
+        contactPhone: "+919800000001",
+        originLocationId: places[0].id,
+        destinationLocationId: places[1].id,
+        preferredAt: new Date(Date.now() + 2 * day).toISOString(),
+        patientCount: 1,
+        accompanyingPersons: 0,
+        medical: {
+          patientCondition: "Needs transfer for ongoing care",
+          mobility: "NON_AMBULATORY",
+          stretcherRequired: true,
+          oxygenRequired: false,
+        },
+      },
+    },
+  );
+  expect(ambulance.status()).toBe(201);
+  await customerContext.close();
 
   const failures: string[] = [];
   async function sweep(p: Page, surface: string, paths: string[]) {
@@ -100,6 +202,17 @@ test("portal list tables fit at common desktop widths", async ({
           const line = `${surface}/${path} @${width}: no table (${(await p.getByRole("main").innerText()).slice(0, 60).replace(/\s+/g, " ")})`;
           results.push(line);
           console.log(line);
+        }
+        const cards = await measureCards(p);
+        if (cards.length > 0) {
+          const line = `${surface}/${path} @${width} cards: ${cards.length}, widest overflow ${Math.max(...cards.map((c) => c.overflow))}, tallest ${Math.max(...cards.map((c) => c.height))}px`;
+          results.push(line);
+          console.log(line);
+          if (
+            cards.some((c) => c.overflow > 1 || c.height > MAX_CARD) &&
+            (await measureTables(p)).length === 0
+          )
+            failures.push(line);
         }
         for (const fit of await measureTables(p)) {
           const line = `${surface}/${path} @${width} "${fit.name}": overflow ${fit.overflow}, tallest row ${fit.tallestRow}px, ${fit.rows} rows`;
@@ -116,5 +229,6 @@ test("portal list tables fit at common desktop widths", async ({
   await settlementFor(page, reference);
   await sweep(page, "admin", ADMIN);
   await sweep(operatorPage, "operator", OPERATOR);
+  await sweep(paidOperator, "operator", OPERATOR);
   expect(failures).toEqual([]);
 });

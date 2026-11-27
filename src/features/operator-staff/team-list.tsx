@@ -6,6 +6,7 @@ import { EmptyState } from "@/components/shared/empty-state";
 import { LoadError } from "@/components/shared/load-error";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import {
   ConfirmDialog,
   Dialog,
@@ -259,7 +260,14 @@ export function TeamList({ approved }: { approved: boolean }) {
             <TableHead>
               <TableRow>
                 {COLUMNS.map((column) => (
-                  <TableHeaderCell key={column}>{column}</TableHeaderCell>
+                  <TableHeaderCell
+                    key={column}
+                    className={cn(
+                      column === "Last sign-in" && "hidden 2xl:table-cell",
+                    )}
+                  >
+                    {column}
+                  </TableHeaderCell>
                 ))}
               </TableRow>
             </TableHead>
@@ -305,7 +313,7 @@ export function TeamList({ approved }: { approved: boolean }) {
                             </p>
                           ) : null}
                         </TableCell>
-                        <TableCell className="whitespace-nowrap">
+                        <TableCell className="hidden whitespace-nowrap 2xl:table-cell">
                           {member.lastLoginAt ? (
                             formatDateTime(member.lastLoginAt)
                           ) : (

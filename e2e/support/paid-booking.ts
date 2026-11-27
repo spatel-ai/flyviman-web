@@ -14,13 +14,16 @@ import { csrf } from "./operators";
  * marked completed by operations, ready for the settlement job. Used by the
  * reports and settlements journeys, which need real money in the records.
  */
-export async function completedPaidBooking(browser: Browser) {
+export async function completedPaidBooking(
+  browser: Browser,
+  { keepOperator = false }: { keepOperator?: boolean } = {},
+) {
   const { operator, aircraftId } = await listedJet(browser, true);
   const { page, passengerId } = await newCustomer(browser);
   const searched = await searchFor(page, aircraftId);
   const reference = await requestThroughApi(page, searched, passengerId);
   await acceptRequest(operator, reference);
-  await operator.close();
+  if (!keepOperator) await operator.close();
 
   const main = page.getByRole("main");
   await page.goto(`/account/trips/${reference}/pay`);
@@ -47,7 +50,7 @@ export async function completedPaidBooking(browser: Browser) {
   );
   expect(done.status()).toBe(200);
   await ops.close();
-  return { reference };
+  return { reference, operator };
 }
 
 /** Runs the settlement job until a settlement exists for the booking. */

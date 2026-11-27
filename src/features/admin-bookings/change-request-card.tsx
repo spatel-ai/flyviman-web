@@ -98,7 +98,10 @@ export function ChangeRequestCard({
       {request.decisionNote ? (
         <p
           title={linkToBooking ? request.decisionNote : undefined}
-          className={cn("text-body-sm text-muted", linkToBooking && "line-clamp-2")}
+          className={cn(
+            "text-body-sm text-muted",
+            linkToBooking && "line-clamp-2",
+          )}
         >
           Note to the customer: {request.decisionNote}
         </p>
