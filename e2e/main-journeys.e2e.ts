@@ -7,6 +7,7 @@ import {
 } from "./support/api";
 import { newCustomer } from "./support/bookings";
 import { approvedAircraft, asStaff, csrf, PDF } from "./support/operators";
+import { setDate, setTime } from "./support/pickers";
 
 /**
  * The main journeys, each one test that drives the browser through every
@@ -380,15 +381,15 @@ test("empty leg: posted by the operator, requested with terms shown, gone from t
     const from = inIndia(6, 10);
     const to = inIndia(6, 18);
     const valid = inIndia(5, 18);
-    await form.getByLabel("Earliest departure, day").fill(from.day);
-    await form.getByLabel("Earliest departure, time").fill(from.time);
-    await form.getByLabel("Latest departure, day").fill(to.day);
-    await form.getByLabel("Latest departure, time").fill(to.time);
+    await setDate(form, "Earliest departure, day", from.day);
+    await setTime(form, "Earliest departure, time", from.time);
+    await setDate(form, "Latest departure, day", to.day);
+    await setTime(form, "Latest departure, time", to.time);
     await form.getByLabel("Seats available").fill("5");
     // An odd price, so the customer's filtered list holds only this offer.
     await form.getByLabel("Price (₹)").fill("1,23,000");
-    await form.getByLabel("Offer valid until, day").fill(valid.day);
-    await form.getByLabel("Offer valid until, time").fill(valid.time);
+    await setDate(form, "Offer valid until, day", valid.day);
+    await setTime(form, "Offer valid until, time", valid.time);
     await form.getByLabel("Conditions").fill(CONDITIONS);
     await operator.getByRole("button", { name: "Save draft" }).click();
     await expect(operator).toHaveURL(/\/operator\/empty-legs\/[0-9a-f-]{36}$/);
@@ -572,8 +573,8 @@ test("air ambulance: a request, operations' quotation, the operator admin sees t
     await form
       .getByRole("textbox", { name: "Collection address (optional)" })
       .fill(PICKUP);
-    await form.getByLabel("Preferred date").fill("2030-01-15");
-    await form.getByLabel("Preferred time (India time)").fill("09:30");
+    await setDate(form, "Preferred date", "2030-01-15");
+    await setTime(form, "Preferred time (India time)", "09:30");
     await form
       .getByRole("textbox", { name: "Patient's condition" })
       .fill(CONDITION);

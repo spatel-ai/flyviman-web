@@ -202,7 +202,7 @@ describe("DateField through Input type=date", () => {
       "Choose a date.",
     );
     expect(field).toHaveAttribute("aria-invalid", "true");
-    expect(field).toHaveFocus();
+    await waitFor(() => expect(field).toHaveFocus());
 
     await user.click(field);
     expect(
@@ -216,6 +216,12 @@ describe("DateField through Input type=date", () => {
     await user.click(screen.getByRole("button", { name: "Fri, 20 Nov 2026" }));
     expect(screen.queryByRole("alert")).toBeNull();
     expect(field).not.toHaveAttribute("aria-invalid");
+
+    // A form reset to the empty value does not bring the complaint back.
+    act(() => {
+      document.querySelector("form")!.reset();
+    });
+    expect(screen.queryByRole("alert")).toBeNull();
   });
 
   it("is disabled with its input", () => {

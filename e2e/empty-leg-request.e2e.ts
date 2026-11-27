@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
 import { API_URL, PASSWORD, latestCode, uniqueEmail } from "./support/api";
 import { approvedAircraft, asStaff, csrf } from "./support/operators";
+import { setDate } from "./support/pickers";
 
 /** Requesting a published empty leg, adding the passenger on the page (D-210, D-213). */
 
@@ -99,7 +100,7 @@ test("a customer with no saved passengers adds one on the request page and sends
   const dialog = customer.getByRole("dialog");
   await dialog.getByRole("textbox", { name: "First name" }).fill("Aditi");
   await dialog.getByRole("textbox", { name: "Last name" }).fill("Nair");
-  await dialog.getByLabel("Date of birth").fill("1991-05-05");
+  await setDate(dialog, "Date of birth", "1991-05-05");
   await dialog.getByRole("button", { name: "Save passenger" }).click();
   await expect(dialog).toHaveCount(0);
   await expect(customer).toHaveURL(/\/book\/empty-leg\//);

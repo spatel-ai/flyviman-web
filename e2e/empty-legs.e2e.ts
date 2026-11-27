@@ -1,6 +1,7 @@
 import { expect, test, type Browser, type Page } from "@playwright/test";
 import { API_URL, signIn } from "./support/api";
 import { approvedAircraft, asStaff, csrf } from "./support/operators";
+import { setDate, setTime } from "./support/pickers";
 
 /**
  * Empty legs (M7 web). The API server runs with review required
@@ -145,14 +146,14 @@ test("an operator adds an offer, operations approve it, customers see it, the op
   const from = inIndia(6, 10);
   const to = inIndia(6, 18);
   const valid = inIndia(5, 18);
-  await form.getByLabel("Earliest departure, day").fill(from.day);
-  await form.getByLabel("Earliest departure, time").fill(from.time);
-  await form.getByLabel("Latest departure, day").fill(to.day);
-  await form.getByLabel("Latest departure, time").fill(to.time);
+  await setDate(form, "Earliest departure, day", from.day);
+  await setTime(form, "Earliest departure, time", from.time);
+  await setDate(form, "Latest departure, day", to.day);
+  await setTime(form, "Latest departure, time", to.time);
   await form.getByLabel("Seats available").fill("5");
   await form.getByLabel("Price (₹)").fill("1,85,000");
-  await form.getByLabel("Offer valid until, day").fill(valid.day);
-  await form.getByLabel("Offer valid until, time").fill(valid.time);
+  await setDate(form, "Offer valid until, day", valid.day);
+  await setTime(form, "Offer valid until, time", valid.time);
   await form.getByLabel("Conditions").fill(CONDITIONS);
   await page.getByRole("button", { name: "Save draft" }).click();
   await expect(page).toHaveURL(/\/operator\/empty-legs\/[0-9a-f-]{36}$/);

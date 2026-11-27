@@ -170,8 +170,10 @@ export function PickerField({
   // The browser's complaint about an empty or out-of-range value, shown as
   // the field's error until the value changes.
   const [invalid, setInvalid] = useState<{ value: string; text: string }>();
-  const shownError =
-    error ?? (invalid && invalid.value === value ? invalid.text : undefined);
+  // Gone for good once the value changes: a form reset back to the same
+  // value (an upload done) must not bring the old complaint back.
+  if (invalid && invalid.value !== value) setInvalid(undefined);
+  const shownError = error ?? invalid?.text;
   const message = shownError ?? hint;
 
   function setOpenAndBlur(next: boolean) {
@@ -232,7 +234,11 @@ export function PickerField({
               element.willValidate &&
               !element.validity.valid,
           );
-          if (!first || first === target) button.current?.focus();
+          // Later: when another required field of the form (a file input)
+          // does not cancel its own `invalid`, Chrome then focuses that one.
+          if (!first || first === target) {
+            setTimeout(() => button.current?.focus(), 0);
+          }
         }}
       />
       <ResponsivePicker

@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import { expect, test, type Browser } from "@playwright/test";
 import { API_URL, expectNoSidewaysScroll, signIn } from "./support/api";
 import { approvedAircraft, asStaff, csrf } from "./support/operators";
+import { setDate } from "./support/pickers";
 
 /**
  * M10 (W4-7): finance's promotion codes, a customer trying one on a result,
@@ -104,13 +105,13 @@ test("finance creates a promotion code and ends it", async ({ page }) => {
   await dialog.getByRole("textbox", { name: "Code" }).fill(promo.toLowerCase());
   await dialog.getByRole("textbox", { name: "Name" }).fill("Web offer");
   await dialog.getByRole("textbox", { name: "Percentage off" }).fill("5");
-  await dialog
-    .getByLabel("Last day")
-    .fill(
-      new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Kolkata" }).format(
-        inDays(30),
-      ),
-    );
+  await setDate(
+    dialog,
+    "Last day",
+    new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Kolkata" }).format(
+      inDays(30),
+    ),
+  );
   await dialog.getByRole("textbox", { name: "Reason" }).fill("Web campaign");
   await dialog.getByRole("button", { name: "Create promotion" }).click();
   await expect(

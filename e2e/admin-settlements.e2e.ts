@@ -1,6 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 import { signIn } from "./support/api";
 import { completedPaidBooking, settlementFor } from "./support/paid-booking";
+import { setDate } from "./support/pickers";
 
 /**
  * Operator settlements and reconciliation in the admin portal (M9, D-197,
@@ -122,15 +123,17 @@ test("finance opens the reconciliation for a period", async ({ page }) => {
   await expect(
     main.getByRole("heading", { level: 1, name: "Reconciliation" }),
   ).toBeVisible();
-  await expect(main.getByLabel("From (IST)")).toBeVisible();
-  await main.getByLabel("From (IST)").fill("2026-01-01");
-  await main.getByLabel("To (IST, included)").fill("2026-03-01");
+  await expect(
+    main.getByRole("button", { name: "From (IST)", exact: true }),
+  ).toBeVisible();
+  await setDate(main, "From (IST)", "2026-01-01");
+  await setDate(main, "To (IST, included)", "2026-03-01");
   await expect(
     main.getByRole("heading", { name: /^Mismatches \(\d+/ }),
   ).toBeVisible();
 
   // Over 92 days is refused in words.
-  await main.getByLabel("To (IST, included)").fill("2026-11-01");
+  await setDate(main, "To (IST, included)", "2026-11-01");
   await expect(main.getByText(/at most 92 days/)).toBeVisible();
 });
 
@@ -172,7 +175,9 @@ test("the reconciliation dates are Indian days and mismatches are paged", async 
 }) => {
   await signIn(page, "finance", "/admin/reconciliation");
   const main = page.getByRole("main");
-  await expect(main.getByLabel("From (IST)")).toBeVisible();
+  await expect(
+    main.getByRole("button", { name: "From (IST)", exact: true }),
+  ).toBeVisible();
   await expect(
     main.getByText("Whole Indian days, midnight to midnight."),
   ).toBeVisible();
