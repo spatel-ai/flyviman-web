@@ -100,6 +100,56 @@ interface LoadOptions {
   keep: { x: number; width: number };
   /** Called as each frame becomes drawable. */
   onLoad: (index: number) => void;
+  /**
+   * Nothing is fetched until this settles (the page has painted and is
+   * idle). Omitted: fetching starts at once.
+   */
+  startAfter?: Promise<unknown>;
+  /**
+   * Frames after the first `eager` wait for this (the visitor has begun to
+   * scroll), so a visitor who never scrolls downloads only the first few.
+   */
+  bulkAfter?: Promise<unknown>;
+}
+
+/** Resolves once the page has loaded and the browser has a moment to spare. */
+export function afterIdle(): Promise<void> {
+  return new Promise((resolve) => {
+    // Safari has no requestIdleCallback.
+    const idle = () =>
+      typeof window.requestIdleCallback === "function"
+        ? window.requestIdleCallback(() => resolve(), { timeout: 2000 })
+        : window.setTimeout(resolve, 200);
+    if (document.readyState === "complete") idle();
+    else window.addEventListener("load", idle, { once: true });
+  });
+}
+
+let intent: Promise<void> | undefined;
+const INTENT_EVENTS = [
+  "scroll",
+  "wheel",
+  "touchstart",
+  "keydown",
+  "pointerdown",
+];
+
+/**
+ * Resolves when the visitor first scrolls, touches or presses a key, or at
+ * once when the page opened part-way down. Shared by every film of the
+ * page view, so resizing across a set's limit does not wait again.
+ */
+export function afterIntent(): Promise<void> {
+  intent ??= new Promise((resolve) => {
+    if (window.scrollY > 0) return resolve();
+    const done = () => {
+      for (const name of INTENT_EVENTS) window.removeEventListener(name, done);
+      resolve();
+    };
+    for (const name of INTENT_EVENTS)
+      window.addEventListener(name, done, { passive: true });
+  });
+  return intent;
 }
 
 /**
@@ -179,8 +229,12 @@ export function loadFrames(options: LoadOptions): FrameStore {
     if (near(index)) await decode(index);
   }
 
+  let taken = 0;
   async function worker() {
     while (alive) {
+      if (taken >= options.eager) await options.bulkAfter;
+      if (!alive) return;
+      taken += 1;
       const index = queue.shift();
       if (index === undefined) return;
       try {
@@ -190,7 +244,9 @@ export function loadFrames(options: LoadOptions): FrameStore {
       }
     }
   }
-  for (let i = 0; i < options.concurrency; i += 1) void worker();
+  void Promise.resolve(options.startAfter).then(() => {
+    for (let i = 0; i < options.concurrency; i += 1) void worker();
+  });
 
   return {
     keep,

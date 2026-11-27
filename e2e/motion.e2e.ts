@@ -168,6 +168,8 @@ test.describe("home page hero", () => {
     const size = page.viewportSize()!;
     return size.width < 744 || size.height < 600;
   };
+  /** Frames fetched before the visitor scrolls (HERO.loading.eager). */
+  const HERO_EAGER = 10;
   /** The desktop sequence's last frame (src/features/home/hero-frames.json). */
   const LAST_FRAME = 95;
   /**
@@ -687,6 +689,51 @@ test.describe("home page hero", () => {
 
     await expectStill(page);
     expect(frames).toHaveLength(0);
+  });
+
+  test("the first poster is the page's largest paint and is fetched first, at high priority (L-004)", async ({
+    page,
+  }) => {
+    await page.goto("/");
+    const poster = page.locator(".hero-poster--first");
+    await expect(poster).toHaveAttribute("fetchpriority", "high");
+    await expect(poster).not.toHaveAttribute("loading", "lazy");
+    const lcp = await page.evaluate(
+      () =>
+        new Promise<string>((resolve) => {
+          new PerformanceObserver((list) => {
+            resolve(
+              (list.getEntries().at(-1) as PerformanceEntry & { url: string })
+                .url,
+            );
+          }).observe({ type: "largest-contentful-paint", buffered: true });
+        }),
+    );
+    expect(lcp).toContain("/hero/desktop/poster-first.webp");
+  });
+
+  test("the film's frames wait for the visitor to scroll (L-001)", async ({
+    page,
+  }) => {
+    const sets = frameRequests(page);
+    const posters: string[] = [];
+    page.on("request", (request) => {
+      if (/poster-last/.test(request.url())) posters.push(request.url());
+    });
+    await page.goto("/");
+    await expect(root(page)).toHaveAttribute("data-hero-film", "");
+    await expect(canvas(page)).toHaveAttribute("data-frame", "0");
+    await page.waitForLoadState("networkidle");
+    await page.waitForTimeout(500);
+
+    // Only the first few, for the opening frame; the still is not fetched.
+    const before = sets.length;
+    expect(before).toBeGreaterThan(0);
+    expect(before).toBeLessThanOrEqual(HERO_EAGER);
+    expect(posters).toHaveLength(0);
+
+    await scrollHero(page, 0.5);
+    await expect.poll(() => sets.length).toBeGreaterThan(before);
   });
 
   test.describe("without JavaScript", () => {
