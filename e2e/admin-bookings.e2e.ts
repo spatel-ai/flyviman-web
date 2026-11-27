@@ -213,3 +213,56 @@ test("a reference link in the bookings table is at least 24px tall", async ({
   const box = await link.boundingBox();
   expect(box!.height).toBeGreaterThanOrEqual(24);
 });
+
+for (const [width, height] of [
+  [1280, 800],
+  [1680, 1000],
+] as const) {
+  test(`the bookings table fits at ${width} px with a long operator and airport names`, async ({
+    page,
+    browser,
+    isMobile,
+  }) => {
+    test.skip(isMobile, "Cards show on phones");
+    test.slow();
+    // The operator is "Skyline Aviation-<uuid>" and the airports have long names.
+    const trip = await requestedTrip(await browser.newPage(), browser, {
+      priced: true,
+      withPassenger: true,
+    });
+    await page.setViewportSize({ width, height });
+    await signIn(page, "ops", `/admin/bookings?q=${trip.reference}`);
+    const table = page.getByRole("table", { name: "Bookings" });
+    await expect(
+      table.getByRole("link", { name: trip.reference }),
+    ).toBeVisible();
+
+    const fit = await table.evaluate((el) => {
+      const box = el.parentElement!;
+      return {
+        overflow: box.scrollWidth - box.clientWidth,
+        tallestRow: Math.max(
+          ...[...el.querySelectorAll<HTMLElement>("tbody tr")].map(
+            (row) => row.offsetHeight,
+          ),
+        ),
+      };
+    });
+    expect(fit.overflow).toBeLessThanOrEqual(1);
+    expect(fit.tallestRow).toBeLessThanOrEqual(80);
+
+    // The price header and the first row's price are on screen, with the label.
+    const inView = async (locator: ReturnType<typeof page.locator>) => {
+      const box = await locator.boundingBox();
+      expect(box).not.toBeNull();
+      expect(box!.x).toBeGreaterThanOrEqual(0);
+      expect(box!.x + box!.width).toBeLessThanOrEqual(width);
+    };
+    await inView(table.getByRole("columnheader", { name: "Price" }));
+    const price = table.getByText("Estimate").first();
+    await expect(price).toBeVisible();
+    await inView(price);
+    // The route is one cut line with the full names in its title.
+    await expect(table.locator('span[title*=" to "]').first()).toBeVisible();
+  });
+}

@@ -83,6 +83,8 @@ export function SettlementsList() {
         ]}
         numeric={["Payable", "Kept", "Commission", "Tax"]}
         stickyFirst
+        flexible={["Operator"]}
+        secondary={["Created"]}
         rowKey={(row) => row.id}
         cells={(row) => {
           const badge = SETTLEMENT_STATUS[row.status];
@@ -98,7 +100,10 @@ export function SettlementsList() {
                 {badge?.label ?? words(row.status)}
               </Badge>
               {row.notDueReason ? (
-                <span className="max-w-xs whitespace-normal text-body-sm text-muted">
+                <span
+                  title={row.notDueReason}
+                  className="block max-w-48 truncate text-body-sm text-muted"
+                >
                   {row.notDueReason}
                 </span>
               ) : null}
@@ -125,8 +130,13 @@ export function SettlementsList() {
             />,
             formatDateTime(row.createdAt),
             row.paidAt ? (
-              <span key="payout" className="flex flex-col">
-                {row.paymentReference}
+              <span key="payout" className="flex max-w-32 flex-col">
+                <span
+                  title={row.paymentReference ?? undefined}
+                  className="truncate"
+                >
+                  {row.paymentReference}
+                </span>
                 <span className="text-body-sm text-muted">
                   {formatDateTime(row.paidAt)}
                 </span>

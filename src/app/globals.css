@@ -134,6 +134,7 @@
   --container-reading: 680px;
   --container-content: 980px;
   --container-wide: 1200px;
+  --container-portal: 1600px;
 }
 
 body {

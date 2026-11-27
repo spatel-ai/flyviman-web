@@ -73,6 +73,14 @@ test("finance holds, releases and pays a settlement; the amounts add up", async 
   await expectScrollersReachable(page);
   await page.setViewportSize({ width: 1280, height: 800 });
   await expectScrollersReachable(page);
+  // The table fits its box: no sideways scroll at a common desktop width.
+  const overflow = await main
+    .getByRole("table")
+    .first()
+    .evaluate(
+      (el) => el.parentElement!.scrollWidth - el.parentElement!.clientWidth,
+    );
+  expect(overflow).toBeLessThanOrEqual(1);
   await expect(
     row.getByRole("button", { name: `Update the settlement for ${reference}` }),
   ).toBeInViewport();

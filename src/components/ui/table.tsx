@@ -24,7 +24,7 @@ export interface TableProps extends TableHTMLAttributes<HTMLTableElement> {
 /**
  * Portal table. Wide tables scroll inside their own wrapper, so the page
  * never scrolls sideways. Only when the table really overflows does the
- * wrapper become a keyboard-focusable region, and an edge shadow marks the
+ * wrapper become a keyboard-focusable region, and an edge fade marks the
  * side that has more columns hidden.
  */
 export function Table({
@@ -97,7 +97,7 @@ export function Table({
         aria-hidden="true"
         data-testid="table-shadow-start"
         className={cn(
-          "pointer-events-none absolute inset-y-0 left-0 z-20 w-6 bg-linear-to-r from-foreground/15 to-transparent transition-opacity duration-150",
+          "pointer-events-none absolute inset-y-0 left-0 z-20 w-8 bg-linear-to-r from-surface/90 to-transparent transition-opacity duration-150",
           more.start ? "opacity-100" : "opacity-0",
         )}
       />
@@ -105,7 +105,7 @@ export function Table({
         aria-hidden="true"
         data-testid="table-shadow-end"
         className={cn(
-          "pointer-events-none absolute inset-y-0 right-0 z-20 w-6 bg-linear-to-l from-foreground/15 to-transparent transition-opacity duration-150",
+          "pointer-events-none absolute inset-y-0 right-0 z-20 w-8 bg-linear-to-l from-surface/90 to-transparent transition-opacity duration-150",
           more.end ? "opacity-100" : "opacity-0",
         )}
       />
@@ -173,7 +173,7 @@ export function TableHeaderCell({
       scope={scope}
       aria-sort={sort ? ARIA_SORT[sort] : undefined}
       className={cn(
-        "sticky top-0 z-10 border-b border-border bg-surface-raised px-4 py-3 text-caption font-medium whitespace-nowrap text-muted",
+        "sticky top-0 z-10 border-b border-border bg-surface-raised px-3 py-3 text-caption font-medium whitespace-nowrap text-muted",
         className,
       )}
       {...props}
@@ -207,9 +207,54 @@ export function TableCell({
 }: TdHTMLAttributes<HTMLTableCellElement>) {
   return (
     <td
-      className={cn("px-4 py-3 align-middle text-foreground", className)}
+      className={cn("px-3 py-3 align-middle text-foreground", className)}
       {...props}
     />
+  );
+}
+
+export interface TruncatedCellProps extends TdHTMLAttributes<HTMLTableCellElement> {
+  /** The full value, shown on hover and read by assistive technology. */
+  title: string;
+}
+
+/**
+ * A cell for long text (names, emails, notes, routes): one line, cut with an
+ * ellipsis at `max-w-56` (override with a `max-w-*` class), the full value in
+ * `title`. Never for money, status, dates or references. For a cell with
+ * two lines of text, use `TruncatedText` for each line inside a `TableCell`.
+ */
+export function TruncatedCell({
+  title,
+  className,
+  children,
+  ...props
+}: TruncatedCellProps) {
+  return (
+    <TableCell
+      title={title}
+      className={cn("max-w-56 truncate", className)}
+      {...props}
+    >
+      {children}
+    </TableCell>
+  );
+}
+
+/** One truncated line inside a cell, with the full text in `title`. */
+export function TruncatedText({
+  title,
+  className,
+  children,
+}: {
+  title: string;
+  className?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <span title={title} className={cn("block truncate", className)}>
+      {children}
+    </span>
   );
 }
 

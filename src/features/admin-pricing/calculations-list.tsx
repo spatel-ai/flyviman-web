@@ -16,6 +16,7 @@ import {
   TableHead,
   TableHeaderCell,
   TableRow,
+  TruncatedCell,
 } from "@/components/ui/table";
 import { apiFetch } from "@/lib/api/client";
 import { queryKeys } from "@/lib/api/query-keys";
@@ -129,14 +130,21 @@ export function CalculationsList() {
                             {formatDateTime(row.createdAt)}
                           </Link>
                         </TableCell>
-                        <TableCell className="tabular-nums">
+                        <TruncatedCell
+                          className="tabular-nums"
+                          title={row.aircraftLabel ?? "Unknown aircraft"}
+                        >
                           {row.aircraftLabel ?? "Unknown aircraft"}
-                        </TableCell>
-                        <TableCell>
+                        </TruncatedCell>
+                        <TruncatedCell
+                          title={row.operatorName ?? "Unknown operator"}
+                        >
                           {row.operatorName ?? "Unknown operator"}
-                        </TableCell>
-                        <TableCell>
+                        </TruncatedCell>
+                        <TableCell className="whitespace-nowrap py-2">
                           <PriceLabel
+                            variant="compact"
+                            className="items-start"
                             amountMinor={row.totalMinor}
                             currency={row.currency}
                             priceType={row.priceType}
@@ -144,7 +152,9 @@ export function CalculationsList() {
                             expired={Date.parse(row.validUntil) < openedAt}
                           />
                         </TableCell>
-                        <TableCell>{formatDateTime(row.validUntil)}</TableCell>
+                        <TableCell className="whitespace-nowrap">
+                          {formatDateTime(row.validUntil)}
+                        </TableCell>
                         <TableCell className="tabular-nums">
                           {row.warningCount || "—"}
                         </TableCell>

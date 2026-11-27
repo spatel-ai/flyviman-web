@@ -123,7 +123,7 @@ function GatewayReference({ id }: { id: string | null }) {
       type="button"
       title="Copy gateway reference"
       aria-label={`Copy gateway reference ${id}`}
-      className="font-mono text-caption break-all hover:underline"
+      className="block max-w-40 truncate font-mono text-caption hover:underline"
       onClick={() => void navigator.clipboard?.writeText(id)}
     >
       {id}
@@ -148,6 +148,7 @@ function HistoryTab() {
         description: "Refunds appear here once finance starts one.",
       }}
       numeric={["Amount"]}
+      flexible={["Reason"]}
       columns={[
         "Started",
         "Booking",
@@ -178,9 +179,7 @@ function HistoryTab() {
             kind="payment"
             status={row.paymentStatus}
           />,
-          <span key="reason" className="line-clamp-2 max-w-xs">
-            {row.reason}
-          </span>,
+          row.reason,
           <GatewayReference key="gateway" id={row.providerRefundId} />,
         ];
       }}
@@ -195,11 +194,18 @@ function pagedCellClass(
   numeric: string[],
   stickyFirst: boolean,
   header: boolean,
+  flexible: string[],
+  secondary: string[],
 ) {
   const column = columns[index];
   return cn(
     !header && "whitespace-nowrap",
-    numeric.includes(column) && "text-right",
+    // Long text: takes the width that is left, one line, cut with an ellipsis.
+    !header && flexible.includes(column) && "w-full max-w-0 min-w-20 truncate",
+    // Shown only where there is room: from 1,536 px.
+    secondary.includes(column) && "hidden 2xl:table-cell",
+    numeric.includes(column) && "px-2 text-right",
+    !column && "px-2",
     // The row action stays in view; the first column too when asked.
     (!column || (stickyFirst && index === 0)) &&
       cn(
@@ -220,6 +226,8 @@ export function Paged<T>({
   columns,
   numeric = [],
   stickyFirst = false,
+  flexible = [],
+  secondary = [],
   rowKey,
   cells,
 }: {
@@ -239,6 +247,10 @@ export function Paged<T>({
   numeric?: string[];
   /** Keep the first column in view while the rest scrolls sideways. */
   stickyFirst?: boolean;
+  /** Headings of long-text columns: one line, an ellipsis, the text in `title`. */
+  flexible?: string[];
+  /** Headings of columns that give way first: hidden below 1,536 px. */
+  secondary?: string[];
   rowKey: (row: T) => string;
   cells: (row: T) => ReactNode[];
 }) {
@@ -264,6 +276,8 @@ export function Paged<T>({
                   numeric,
                   stickyFirst,
                   true,
+                  flexible,
+                  secondary,
                 )}
               >
                 {column ? column : <span className="sr-only">Action</span>}
@@ -293,7 +307,15 @@ export function Paged<T>({
                         numeric,
                         stickyFirst,
                         false,
+                        flexible,
+                        secondary,
                       )}
+                      title={
+                        flexible.includes(columns[index]) &&
+                        typeof cell === "string"
+                          ? cell
+                          : undefined
+                      }
                     >
                       {cell}
                     </TableCell>

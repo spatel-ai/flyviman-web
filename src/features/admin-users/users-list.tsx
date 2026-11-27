@@ -19,6 +19,7 @@ import {
   TableHead,
   TableHeaderCell,
   TableRow,
+  TruncatedText,
 } from "@/components/ui/table";
 import { useToast } from "@/components/ui/toast";
 import { apiFetch } from "@/lib/api/client";
@@ -55,6 +56,9 @@ import {
 import { useMe } from "@/lib/api/use-me";
 
 type AdminUser = Schemas["AdminUserResponseDto"];
+
+/** The least useful column gives way first: it shows from 1,536 px. */
+const HIDE_UNDER_2XL = "hidden 2xl:table-cell";
 
 const COLUMNS = ["Email / phone", "Role", "Status", "Last sign-in", "Created"];
 
@@ -234,7 +238,14 @@ export function UsersList() {
               <TableHead>
                 <TableRow>
                   {columns.map((column) => (
-                    <TableHeaderCell key={column}>{column}</TableHeaderCell>
+                    <TableHeaderCell
+                      key={column}
+                      className={
+                        column === "Created" ? HIDE_UNDER_2XL : undefined
+                      }
+                    >
+                      {column}
+                    </TableHeaderCell>
                   ))}
                 </TableRow>
               </TableHead>
@@ -254,17 +265,22 @@ export function UsersList() {
                       const who = user.email ?? user.phone ?? "this user";
                       return (
                         <TableRow key={user.id}>
-                          <TableCell>
-                            <p
-                              className="max-w-72 truncate font-medium"
-                              title={user.email ?? user.phone ?? undefined}
+                          <TableCell className="w-full max-w-0 min-w-36">
+                            <TruncatedText
+                              className="font-medium"
+                              title={
+                                who === "this user" ? "No contact details" : who
+                              }
                             >
                               {user.email ?? user.phone ?? "No contact details"}
-                            </p>
+                            </TruncatedText>
                             {user.email && user.phone ? (
-                              <p className="text-caption text-muted">
+                              <TruncatedText
+                                title={user.phone}
+                                className="text-caption text-muted"
+                              >
                                 {user.phone}
-                              </p>
+                              </TruncatedText>
                             ) : null}
                           </TableCell>
                           <TableCell>
@@ -282,12 +298,14 @@ export function UsersList() {
                               <span className="text-muted">Never</span>
                             )}
                           </TableCell>
-                          <TableCell className="whitespace-nowrap">
+                          <TableCell
+                            className={`whitespace-nowrap ${HIDE_UNDER_2XL}`}
+                          >
                             {formatDateTime(user.createdAt)}
                           </TableCell>
                           {manages ? (
                             <TableCell>
-                              <div className="flex flex-wrap gap-2">
+                              <div className="flex gap-2">
                                 {action ? (
                                   <Button
                                     variant={

@@ -49,7 +49,7 @@ export function AppShell({ surface, nav, user, children }: AppShellProps) {
         <main
           id="main-content"
           tabIndex={-1}
-          className="mx-auto focus:outline-none w-full max-w-wide flex-1 px-4 py-8 md:px-6 lg:px-8"
+          className="mx-auto focus:outline-none w-full max-w-portal flex-1 px-4 py-8 md:px-6 lg:px-8"
         >
           {children}
         </main>

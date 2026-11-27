@@ -22,11 +22,14 @@ import {
   TableHead,
   TableHeaderCell,
   TableRow,
+  TruncatedCell,
+  TruncatedText,
 } from "@/components/ui/table";
 import { apiFetch } from "@/lib/api/client";
 import { queryKeys } from "@/lib/api/query-keys";
 import type { Schemas } from "@/lib/api/types";
 import { formatDateTime } from "@/lib/format/date";
+import { routeLabel } from "@/lib/format/place";
 import {
   bookingListQuery,
   CATEGORY_OPTIONS,
@@ -62,7 +65,7 @@ function Price({ booking }: { booking: Booking }) {
       currency={booking.price.currency}
       priceType={booking.price.priceType}
       variant="compact"
-      className="items-start"
+      className="items-end"
     />
   ) : (
     <span className="text-muted">Price on request</span>
@@ -98,7 +101,7 @@ export function BookingsList() {
         initial={filter.q}
         onSearch={(q) => show({ ...filter, q, page: 1 })}
       />
-      <div className="flex flex-wrap items-end gap-3">
+      <div className="grid grid-cols-1 items-end gap-3 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-6">
         <Select
           label="Status"
           options={STATUS_OPTIONS}
@@ -110,7 +113,7 @@ export function BookingsList() {
               page: 1,
             })
           }
-          className="h-10 w-52 max-w-full"
+          className="h-10 w-full"
         />
         <Select
           label="Payment"
@@ -123,7 +126,7 @@ export function BookingsList() {
               page: 1,
             })
           }
-          className="h-10 w-44 max-w-full"
+          className="h-10 w-full"
         />
         <Select
           label="Category"
@@ -136,7 +139,7 @@ export function BookingsList() {
               page: 1,
             })
           }
-          className="h-10 w-48 max-w-full"
+          className="h-10 w-full"
         />
         <Select
           label="Escalation"
@@ -145,7 +148,7 @@ export function BookingsList() {
           onValueChange={(value) =>
             show({ ...filter, escalated: value === "ESCALATED", page: 1 })
           }
-          className="h-10 w-44 max-w-full"
+          className="h-10 w-full"
         />
         <Input
           label="Requested from"
@@ -155,7 +158,7 @@ export function BookingsList() {
           onChange={(event) =>
             show({ ...filter, from: event.target.value, page: 1 })
           }
-          className="h-10 w-44 max-w-full"
+          className="h-10 w-full"
         />
         <Input
           label="Requested to"
@@ -165,7 +168,7 @@ export function BookingsList() {
           onChange={(event) =>
             show({ ...filter, to: event.target.value, page: 1 })
           }
-          className="h-10 w-44 max-w-full"
+          className="h-10 w-full"
         />
       </div>
 
@@ -216,7 +219,16 @@ export function BookingsList() {
                     <TableHead>
                       <TableRow>
                         {COLUMNS.map((column) => (
-                          <TableHeaderCell key={column}>
+                          <TableHeaderCell
+                            key={column}
+                            className={
+                              column === "Price"
+                                ? "text-right"
+                                : column === "Departs" || column === "Payment"
+                                  ? "px-2"
+                                  : undefined
+                            }
+                          >
                             {column}
                           </TableHeaderCell>
                         ))}
@@ -241,35 +253,40 @@ export function BookingsList() {
                               </Badge>
                             ) : null}
                           </TableCell>
-                          <TableCell>
-                            {row.originName} to {row.destinationName}
-                            <span className="block text-caption text-muted">
+                          <TableCell className="w-[55%] max-w-0 min-w-32">
+                            <TruncatedText
+                              title={`${row.originName} to ${row.destinationName}`}
+                            >
+                              {routeLabel(row.originName, row.destinationName)}
+                            </TruncatedText>
+                            <TruncatedText
+                              title={row.operator?.name ?? "No operator yet"}
+                              className="text-caption text-muted"
+                            >
                               {row.operator?.name ?? "No operator yet"}
-                            </span>
+                            </TruncatedText>
                           </TableCell>
-                          <TableCell className="whitespace-nowrap">
+                          <TableCell className="whitespace-nowrap px-2">
                             {formatDateTime(row.departureAt)}
                           </TableCell>
-                          <TableCell
-                            className="max-w-56 truncate"
+                          <TruncatedCell
+                            className="w-[35%] max-w-0 min-w-20"
                             title={
-                              row.customer.email ??
-                              row.customer.phone ??
-                              undefined
+                              row.customer.email ?? row.customer.phone ?? "-"
                             }
                           >
                             {row.customer.email ?? row.customer.phone ?? "-"}
-                          </TableCell>
+                          </TruncatedCell>
                           <TableCell className="whitespace-nowrap">
                             <StatusBadge kind="booking" status={row.status} />
                           </TableCell>
-                          <TableCell className="whitespace-nowrap">
+                          <TableCell className="whitespace-nowrap px-2">
                             <StatusBadge
                               kind="payment"
                               status={row.paymentStatus}
                             />
                           </TableCell>
-                          <TableCell>
+                          <TableCell className="whitespace-nowrap py-2 text-right">
                             <Price booking={row} />
                           </TableCell>
                         </TableRow>
