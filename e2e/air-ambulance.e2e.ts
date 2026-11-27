@@ -1,5 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 import { expectNoSidewaysScroll, signIn } from "./support/api";
+import { axeViolations } from "./support/axe";
 import { approvedAircraft, asStaff, PDF } from "./support/operators";
 
 /**
@@ -152,6 +153,10 @@ test("a request goes from the customer through operations to the operator, confi
   await expect(opsMain.getByText(/Shown only to the request/)).toBeVisible();
   await opsMain.getByRole("button", { name: "Take request" }).click();
   await expect(opsMain.getByText(CONDITION)).toBeVisible();
+  // The details are valid description lists (W1-029, W2-035).
+  expect(await axeViolations(ops.page, ["definition-list", "dlitem"])).toEqual(
+    [],
+  );
   await opsMain.getByRole("button", { name: "Start sourcing" }).click();
   await opsMain
     .getByRole("button", { name: "Start feasibility check" })
@@ -202,6 +207,7 @@ test("a request goes from the customer through operations to the operator, confi
     main.getByText("Quote accepted, request pending").first(),
   ).toBeVisible();
   await expect(main.getByText("Confirmed", { exact: true })).toHaveCount(0);
+  expect(await axeViolations(page, ["definition-list", "dlitem"])).toEqual([]);
 
   // Operations confirm, with the checklist complete.
   await ops.page.reload();
@@ -222,6 +228,9 @@ test("a request goes from the customer through operations to the operator, confi
   await expect(operator).toHaveURL(`/operator/air-ambulance/${reference}`);
   await expect(operatorMain.getByText(CONDITION)).toBeVisible();
   await expect(operatorMain.getByText(PICKUP)).toBeVisible();
+  expect(await axeViolations(operator, ["definition-list", "dlitem"])).toEqual(
+    [],
+  );
   await expect(
     operatorMain.getByRole("list", { name: "Medical documents" }),
   ).toContainText("discharge-summary.pdf");

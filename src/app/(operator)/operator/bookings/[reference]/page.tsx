@@ -2,7 +2,14 @@ import type { Metadata } from "next";
 import { BookingDetail } from "@/features/operator-bookings/booking-detail";
 import { BookingsAccess } from "@/features/operator-bookings/bookings-access";
 
-export const metadata: Metadata = { title: "Booking" };
+export async function generateMetadata({
+  params,
+}: PageProps<"/operator/bookings/[reference]">): Promise<Metadata> {
+  const { reference } = await params;
+  return {
+    title: `Booking ${reference}`,
+  };
+}
 
 export default async function OperatorBookingPage({
   params,

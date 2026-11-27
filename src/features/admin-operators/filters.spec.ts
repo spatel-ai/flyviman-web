@@ -76,7 +76,7 @@ describe("operatorListQuery", () => {
 describe("emptyTitle", () => {
   it("names the tab that is empty", () => {
     expect(emptyTitle({ status: "PENDING_REVIEW", q: "", page: 1 })).toBe(
-      "No operators waiting for review",
+      "No operators under review",
     );
   });
 

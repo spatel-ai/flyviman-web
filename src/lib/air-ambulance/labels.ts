@@ -20,8 +20,8 @@ const STATUS: Record<AirAmbulanceStatus, { label: string; tone: Tone }> = {
   ACCEPTED: { label: "Quote accepted, request pending", tone: "warning" },
   CONFIRMED: { label: "Confirmed", tone: "success" },
   COMPLETED: { label: "Completed", tone: "success" },
-  DECLINED: { label: "Declined", tone: "neutral" },
-  CANCELLED: { label: "Cancelled", tone: "neutral" },
+  DECLINED: { label: "Declined", tone: "danger" },
+  CANCELLED: { label: "Cancelled", tone: "danger" },
 };
 
 export function statusPresentation(status: string): {

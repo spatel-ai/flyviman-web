@@ -23,6 +23,7 @@ import { apiFetch } from "@/lib/api/client";
 import { queryKeys } from "@/lib/api/query-keys";
 import { formatDateTime } from "@/lib/format/date";
 import { AuditDetailSheet, type AuditLog } from "./audit-detail-sheet";
+import { entityTypeLabel, shortId } from "./labels";
 import {
   auditListQuery,
   EMPTY_FILTER,
@@ -85,27 +86,28 @@ export function AuditList() {
           label="Action"
           name="action"
           defaultValue={filter.action}
-          placeholder="pricing_rule.change"
+          placeholder="e.g. pricing_rule.change"
           maxLength={100}
         />
         <Input
           label="Entity type"
           name="entityType"
           defaultValue={filter.entityType}
-          placeholder="PricingRule"
+          placeholder="e.g. PricingRule"
           maxLength={100}
         />
         <Input
           label="Entity ID"
           name="entityId"
           defaultValue={filter.entityId}
+          placeholder="e.g. a booking or rule ID"
           maxLength={100}
         />
         <Input
           label="Actor ID"
           name="actorId"
           defaultValue={filter.actorId}
-          placeholder="User ID"
+          placeholder="e.g. a staff or customer ID"
           maxLength={36}
         />
         <Input
@@ -196,9 +198,12 @@ export function AuditList() {
                           {row.action}
                         </TableCell>
                         <TableCell>
-                          {row.entityType}
-                          <span className="block text-caption break-all text-muted">
-                            {row.entityId}
+                          {entityTypeLabel(row.entityType)}
+                          <span
+                            className="block text-caption break-all text-muted"
+                            title={row.entityId}
+                          >
+                            {shortId(row.entityId)}
                           </span>
                         </TableCell>
                         <TableCell className="whitespace-nowrap">

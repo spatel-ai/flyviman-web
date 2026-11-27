@@ -1,6 +1,6 @@
 "use client";
 
-import { Menu } from "lucide-react";
+import { Menu, Search, Ticket } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -11,22 +11,29 @@ import {
 } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import { activeHref } from "./nav-links";
-import { MORE_NAV } from "./site-nav";
+import { CHARTER_HREF, MORE_NAV, SEARCH_NAV } from "./site-nav";
 
-/** The "More" pages as a bottom sheet, opened from a header icon on phones. */
+/** Search and the charter request sit in the header on wider screens. */
+const SHEET_NAV = [
+  { ...SEARCH_NAV, icon: Search },
+  { href: CHARTER_HREF, label: "Request a charter", icon: Ticket },
+  ...MORE_NAV,
+];
+
+/** The site's pages as a bottom sheet, opened from a header icon on phones. */
 export function MoreSheetView({ active }: { active: string | null }) {
   return (
     <Sheet>
       <SheetTrigger
-        aria-label="More"
+        aria-label="Menu"
         className="flex size-11 items-center justify-center rounded-pill text-foreground transition-colors duration-150 ease-standard hover:bg-surface"
       >
         <Menu size={20} strokeWidth={1.5} aria-hidden="true" />
       </SheetTrigger>
-      <SheetContent title="More" side="left">
-        <nav aria-label="More">
+      <SheetContent title="Menu" side="left">
+        <nav aria-label="Menu">
           <ul className="flex flex-col gap-1">
-            {MORE_NAV.map(({ href, label, icon: Icon }) => (
+            {SHEET_NAV.map(({ href, label, icon: Icon }) => (
               <li key={href}>
                 <SheetClose asChild>
                   <Link
@@ -62,5 +69,9 @@ export function MoreSheetView({ active }: { active: string | null }) {
  * rendered inside `<Suspense>` with `MoreSheetView` as the fallback.
  */
 export function MoreSheet() {
-  return <MoreSheetView active={activeHref(usePathname(), MORE_NAV)} />;
+  return (
+    <MoreSheetView
+      active={activeHref(usePathname(), [SEARCH_NAV, ...MORE_NAV])}
+    />
+  );
 }

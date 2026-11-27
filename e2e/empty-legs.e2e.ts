@@ -103,7 +103,7 @@ test("the filters are kept in the address and can match nothing", async ({
 
 test("Empty legs is in the More menu", async ({ page }) => {
   await page.goto("/about");
-  await page.getByRole("button", { name: "More", exact: true }).click();
+  await page.getByRole("button", { name: /^(More|Menu)$/ }).click();
   await expect(
     page
       .getByRole("menuitem", { name: "Empty legs", exact: true })

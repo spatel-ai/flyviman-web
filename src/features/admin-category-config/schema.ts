@@ -37,6 +37,11 @@ export const bookingModeLabel = (value: string) =>
 export const paymentModelLabel = (value: string) =>
   label(PAYMENT_MODEL_LABELS, value);
 
+/** The deposit applies only under model C; the others are paid in full. */
+export function depositText(paymentModel: string, depositPercent: number) {
+  return paymentModel === "C_DEPOSIT" ? `${depositPercent}%` : "Not used";
+}
+
 const BOOKING_MODES = Object.keys(BOOKING_MODE_LABELS) as BookingMode[];
 const PAYMENT_MODELS = Object.keys(PAYMENT_MODEL_LABELS) as PaymentModel[];
 

@@ -4,7 +4,7 @@ import { Suspense } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { VerifyForm } from "@/features/auth/verify-form";
 
-export const metadata: Metadata = { title: "Verify" };
+export const metadata: Metadata = { title: "Verify your code" };
 
 export default function Page() {
   return (

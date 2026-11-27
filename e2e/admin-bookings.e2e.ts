@@ -195,3 +195,19 @@ test("a booking that does not exist says so", async ({ page }) => {
   await page.goto("/admin/bookings/FLY-BK-ZZZZZZ");
   await expect(page.getByText("Booking not found")).toBeVisible();
 });
+
+test("a reference link in the bookings table is at least 24px tall", async ({
+  page,
+}) => {
+  await signIn(page, "ops", "/admin/bookings");
+  await expect(
+    page.getByRole("heading", { level: 1, name: "Bookings" }),
+  ).toBeVisible();
+  const link = page.locator("main tbody tr td a").first();
+  test.skip(
+    !(await link.isVisible({ timeout: 5000 }).catch(() => false)),
+    "no bookings listed",
+  );
+  const box = await link.boundingBox();
+  expect(box!.height).toBeGreaterThanOrEqual(24);
+});

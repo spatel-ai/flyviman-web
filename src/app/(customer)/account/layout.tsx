@@ -4,7 +4,11 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { AccountNav } from "@/features/account/account-nav";
 import { requireRole } from "@/lib/auth/session";
 
-export const metadata: Metadata = { title: "Your account" };
+export const metadata: Metadata = {
+  // A page of this section with a dynamic title (a trip's reference) needs
+  // the template here: it does not reach it from the root layout.
+  title: { default: "Your account", template: "%s · Flyviman" },
+};
 
 async function CustomersOnly({ children }: { children: React.ReactNode }) {
   await requireRole(["CUSTOMER"], "/account");

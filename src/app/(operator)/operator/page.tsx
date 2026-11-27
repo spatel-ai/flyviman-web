@@ -1,7 +1,13 @@
+import type { Metadata } from "next";
 import { ClientRedirect } from "@/components/shared/client-redirect";
 import { OperatorDashboard } from "@/features/operator-dashboard/operator-dashboard";
 import type { Schemas } from "@/lib/api/types";
 import { serverGet } from "@/lib/auth/server-api";
+
+export const metadata: Metadata = {
+  // The layout's title template does not apply to the page of its own segment.
+  title: { absolute: "Dashboard · Operator · Flyviman" },
+};
 
 export default async function OperatorDashboardPage() {
   const { data: operator } =

@@ -5,10 +5,15 @@ import { EmergencyNotice } from "@/components/shared/air-ambulance/emergency-not
 import { RequestDetail } from "@/features/air-ambulance/request-detail";
 import { isAirAmbulanceReference } from "@/lib/air-ambulance/labels";
 
-export const metadata: Metadata = {
-  title: "Air ambulance request",
-  robots: { index: false },
-};
+export async function generateMetadata({
+  params,
+}: PageProps<"/account/air-ambulance/[reference]">): Promise<Metadata> {
+  const { reference } = await params;
+  return {
+    title: `Air ambulance request ${reference}`,
+    robots: { index: false },
+  };
+}
 
 export default async function Page({
   params,

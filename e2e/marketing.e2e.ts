@@ -67,9 +67,11 @@ for (const { path, heading } of [...PAGES, ...MORE_PAGES]) {
 
 /** The header's More menu on desktop, its bottom sheet on a phone. */
 async function openMore(page: Page, mobile: boolean) {
-  await page.getByRole("button", { name: "More", exact: true }).click();
+  await page
+    .getByRole("button", { name: mobile ? "Menu" : "More", exact: true })
+    .click();
   return mobile
-    ? page.getByRole("navigation", { name: "More" })
+    ? page.getByRole("navigation", { name: "Menu" })
     : page.getByRole("menu");
 }
 
@@ -339,10 +341,29 @@ test("the header fits a 320 px wide phone", async ({ page }) => {
       document.documentElement.clientWidth,
   );
   expect(overflow).toBeLessThanOrEqual(0);
-  await expect(page.getByRole("button", { name: "More" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Menu" })).toBeVisible();
   await expect(
     page
       .getByRole("navigation", { name: "Primary" })
       .getByRole("link", { name: "Sign in" }),
   ).toBeVisible();
+});
+
+test("on a phone the menu button is 'Menu' and its sheet has Search and the charter request", async ({
+  page,
+}, info) => {
+  test.skip(info.project.name !== "mobile", "phones only");
+  await page.goto("/about");
+  await expect(
+    page.getByRole("button", { name: "More", exact: true }),
+  ).toHaveCount(0);
+  await page.getByRole("button", { name: "Menu", exact: true }).click();
+  const sheet = page.getByRole("navigation", { name: "Menu" });
+  await expect(sheet.getByRole("link", { name: "Search" })).toHaveAttribute(
+    "href",
+    "/search",
+  );
+  await expect(
+    sheet.getByRole("link", { name: "Request a charter" }),
+  ).toHaveAttribute("href", "/search?service=charter");
 });

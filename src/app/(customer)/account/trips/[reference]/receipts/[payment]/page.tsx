@@ -3,10 +3,15 @@ import { Suspense } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Receipt } from "@/features/trips/receipt";
 
-export const metadata: Metadata = {
-  title: "Receipt",
-  robots: { index: false },
-};
+export async function generateMetadata({
+  params,
+}: PageProps<"/account/trips/[reference]/receipts/[payment]">): Promise<Metadata> {
+  const { reference } = await params;
+  return {
+    title: `Receipt ${reference}`,
+    robots: { index: false },
+  };
+}
 
 async function Content({
   params,

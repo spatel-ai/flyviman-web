@@ -163,7 +163,7 @@ export function Queue({ viewerId }: { viewerId: string }) {
                             {row.reference}
                           </Link>
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="min-w-56">
                           {row.originName ?? "Unknown"} to{" "}
                           {row.destinationName ?? "unknown"}
                         </TableCell>

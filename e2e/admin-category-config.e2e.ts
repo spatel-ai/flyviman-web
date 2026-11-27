@@ -103,3 +103,18 @@ for (const account of ["ops", "finance"] as const) {
     await expect(main.getByRole("button", { name: /^Change / })).toHaveCount(0);
   });
 }
+
+test("the deposit is shown only for categories paid by deposit", async ({
+  page,
+}) => {
+  await signIn(page, "superAdmin", "/admin/category-config");
+  const rows = page.getByRole("main").locator("tbody tr");
+  await expect(rows.first()).toBeVisible();
+  for (const row of await rows.all()) {
+    const cells = row.getByRole("cell");
+    const payment = (await cells.nth(4).innerText()).trim();
+    const deposit = (await cells.nth(5).innerText()).trim();
+    if (payment.startsWith("C:")) expect(deposit).toMatch(/^\d+%$/);
+    else expect(deposit, payment).toBe("Not used");
+  }
+});

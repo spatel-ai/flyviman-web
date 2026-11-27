@@ -9,7 +9,12 @@ import {
 import type { Role } from "@/lib/api/types";
 import { requireRole } from "@/lib/auth/session";
 
-export const metadata: Metadata = { title: "Admin portal" };
+export const metadata: Metadata = {
+  title: {
+    default: "Admin",
+    template: "%s · Admin · Flyviman",
+  },
+};
 
 const INTERNAL: Role[] = ["OPS", "FINANCE_ADMIN", "SUPER_ADMIN"];
 
