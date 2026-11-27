@@ -72,3 +72,18 @@ for (const { pattern, signedIn, loadsRecord } of dynamicRoutes()) {
     await expect(page.getByRole("heading", { level: 1 })).toHaveText(NOT_FOUND);
   });
 }
+
+test("the not-found page has the site header, footer, theme switch and exits", async ({
+  page,
+}) => {
+  await page.goto("/no-such-page");
+  await expect(page).toHaveTitle("Page not found · Flyviman");
+  await expect(page.getByRole("banner")).toBeVisible();
+  await expect(page.getByRole("contentinfo")).toBeVisible();
+  await expect(
+    page.getByRole("link", { name: "Go to the home page" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("link", { name: "Search flights" }),
+  ).toHaveAttribute("href", "/search");
+});
