@@ -6725,6 +6725,11 @@ export interface components {
       /** @description What is due now (the same rule `POST /bookings/:reference/payments` applies), or null when nothing is: not awaiting payment, price not confirmed, operator not yet accepted (model B), paid, or past departure for a balance (W4-1). */
       amountDue: components["schemas"]["BookingAmountDueDto"] | null;
       /**
+       * Format: date-time
+       * @description When the booking’s hold on the aircraft lapses: an unpaid `AWAITING_PAYMENT` booking is closed as `EXPIRED` by the hold-expiry job after this time (a payment waiting at the gateway delays the close). Null when the booking holds no aircraft. Read-only; the owner sees it.
+       */
+      holdExpiresAt: string | null;
+      /**
        * @description As resolved when the booking was made.
        * @enum {string}
        */

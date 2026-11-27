@@ -264,3 +264,48 @@ test("finance refunds a paid trip the customer cancelled, from Due to History", 
   ).toBeVisible();
   await finance.context.close();
 });
+
+test("the payment page says what is paid for and by when, and Pay now clears the tab bar on a phone", async ({
+  browser,
+}) => {
+  test.slow();
+  const { page, reference } = await tripAwaitingPayment(browser);
+  const main = page.getByRole("main");
+
+  // The trip page's card carries the deadline too.
+  await page.goto(`/account/trips/${reference}`);
+  await expect(
+    main.getByLabel("Payment due").getByText(/^Pay by .* IST$/),
+  ).toBeVisible();
+
+  await page.goto(`/account/trips/${reference}/pay`);
+  const summary = main.getByLabel("Trip summary");
+  await expect(summary.getByText(/ to /).first()).toBeVisible();
+  await expect(summary.getByText(/ IST/).first()).toBeVisible();
+  await expect(summary.getByText("Passengers")).toBeVisible();
+  await expect(summary.getByText(reference)).toBeVisible();
+  const due = main.getByLabel("Amount due now");
+  await expect(due.getByText(/^Pay by .* IST$/)).toBeVisible();
+  await expect(due.getByText(/(day|hour|minute)s? .*left|left$/)).toBeVisible();
+  await expect(
+    main.getByText(/check the price and availability again/),
+  ).toBeVisible();
+  await expect(due.getByRole("status")).toHaveCount(0);
+
+  // A real 390 x 844 viewport: scrolled to the end, the button is clear of
+  // the fixed tab bar.
+  await page.setViewportSize({ width: 390, height: 844 });
+  const pay = main.getByRole("button", { name: /^Pay (now|deposit)$/ });
+  await pay.scrollIntoViewIfNeeded();
+  await page.evaluate(() =>
+    window.scrollTo(0, document.documentElement.scrollHeight),
+  );
+  const bar = await page
+    .getByRole("navigation", { name: "Primary" })
+    .boundingBox();
+  const button = await pay.boundingBox();
+  expect(bar).not.toBeNull();
+  expect(button).not.toBeNull();
+  expect(button!.y + button!.height).toBeLessThanOrEqual(bar!.y);
+  await page.close();
+});
