@@ -45,7 +45,7 @@ export function RequestsList() {
         <p role="status" className="sr-only">
           Loading your requests
         </p>
-        <Skeleton className="h-40" />
+        <Skeleton className="h-80" />
       </>
     );
   }

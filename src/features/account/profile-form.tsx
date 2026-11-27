@@ -148,7 +148,7 @@ export function ProfileForm() {
         aria-label="Loading your profile"
         className="max-w-reading"
       >
-        <Skeleton className="h-64" />
+        <Skeleton className="h-[100rem] md:h-[70rem]" />
       </div>
     );
   }

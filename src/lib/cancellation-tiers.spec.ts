@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   linesNotInSummary,
   noticeLabel,
+  splitSummary,
   tierLines,
 } from "./cancellation-tiers";
 
@@ -48,5 +49,23 @@ describe("linesNotInSummary", () => {
     expect(linesNotInSummary("Operator terms apply.", STARTING)).toEqual(
       tierLines(STARTING),
     );
+  });
+});
+
+describe("splitSummary", () => {
+  const summary = `Flyviman's cancellation terms, the same for every operator. ${tierLines(STARTING).join(". ")}. A charge is taken only from a confirmed price.`;
+
+  it("splits a summary that words every tier into intro, one line per tier and outro", () => {
+    const parts = splitSummary(summary, STARTING);
+    expect(parts?.intro).toBe(
+      "Flyviman's cancellation terms, the same for every operator.",
+    );
+    expect(parts?.lines).toEqual(tierLines(STARTING));
+    expect(parts?.outro).toBe("A charge is taken only from a confirmed price.");
+  });
+
+  it("is null when the summary does not word the tiers, or there are none", () => {
+    expect(splitSummary("Operator terms apply.", STARTING)).toBeNull();
+    expect(splitSummary(summary, [])).toBeNull();
   });
 });

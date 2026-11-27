@@ -28,7 +28,7 @@ export default function AccountLayout({ children }: LayoutProps<"/account">) {
       </div>
       {/* Shown once the session and role are confirmed. The pages get
           their data from the API, which checks the role on every request. */}
-      <Suspense fallback={<Skeleton className="h-64" />}>
+      <Suspense fallback={<Skeleton className="h-[40rem]" />}>
         <CustomersOnly>{children}</CustomersOnly>
       </Suspense>
     </div>

@@ -42,6 +42,13 @@ test("a customer requests a priced flight from a result, finds it in trips and c
       .filter({ visible: true })
       .first(),
   ).toBeVisible();
+  // The cancellation tiers are a list: when, then the charge (rule 9).
+  await expect(
+    main
+      .getByRole("listitem")
+      .filter({ hasText: /before departure: \d+% of the price/ })
+      .first(),
+  ).toBeVisible();
   await expectNoSidewaysScroll(page);
 
   // The lead passenger is required.
@@ -52,15 +59,35 @@ test("a customer requests a priced flight from a result, finds it in trips and c
     page.getByText("Choose at least the lead passenger."),
   ).toBeVisible();
   await page.getByRole("checkbox", { name: "Kavya Ramaswamy" }).click();
+  // The lead is labelled, and fewer names than seats is said before sending.
+  await expect(main.getByText("Lead passenger", { exact: true })).toBeVisible();
+  await expect(
+    main.getByText(
+      "2 seats requested, 1 passenger named. You can add the rest later from the trip page.",
+    ),
+  ).toBeVisible();
   await page
     .getByRole("textbox", { name: /Special requests/ })
     .fill("Two bags and a stroller");
   await send.click();
 
-  await expect(page).toHaveURL(/\/account\/trips\/FLY-BK-[A-Z0-9]+$/);
+  await expect(page).toHaveURL(/\/account\/trips\/FLY-BK-[A-Z0-9]+\?sent=1$/);
   await expect(page.getByRole("heading", { level: 1 })).toContainText(
     "FLY-BK-",
   );
+  // First arrival: the request was sent, nothing is booked, and what comes next.
+  const sent = main.getByRole("region", { name: "Your request has been sent" });
+  await expect(sent).toBeVisible();
+  await expect(
+    sent.getByText(/Nothing is booked or charged yet/),
+  ).toBeVisible();
+  await expect(sent.getByRole("listitem")).toHaveCount(4);
+  await expect(
+    main.getByText("2 passengers, 1 named", { exact: true }),
+  ).toBeVisible();
+  await expect(
+    main.getByText("Cancellation terms shown when you sent this request"),
+  ).toBeVisible();
   // Booking and payment status are two badges.
   await expect(
     main.getByText("Awaiting operator", { exact: true }),
@@ -75,7 +102,7 @@ test("a customer requests a priced flight from a result, finds it in trips and c
     main.getByText("Special requests: Two bags and a stroller"),
   ).toBeVisible();
   await expectNoSidewaysScroll(page);
-  const reference = page.url().split("/").pop()!;
+  const reference = page.url().split("/").pop()!.split("?")[0];
 
   // It is listed under upcoming trips.
   await page.goto("/account/trips");
@@ -100,6 +127,14 @@ test("a customer requests a priced flight from a result, finds it in trips and c
   await expect(main.getByText("Cancelled", { exact: true })).toBeVisible();
   await expect(
     page.getByRole("button", { name: "Cancel this trip" }),
+  ).toHaveCount(0);
+  // A closed trip's estimate is history, not an offer.
+  await expect(
+    main.getByText("Estimate at the time of your request"),
+  ).toBeVisible();
+  await expect(main.getByText(/Valid until/)).toHaveCount(0);
+  await expect(
+    main.getByRole("region", { name: "Waiting for the operator" }),
   ).toHaveCount(0);
 
   await page.goto("/account/trips");

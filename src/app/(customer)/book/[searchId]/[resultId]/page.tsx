@@ -21,7 +21,7 @@ export default function Page({
 }: PageProps<"/book/[searchId]/[resultId]">) {
   return (
     <PageTransition>
-      <Suspense fallback={<Skeleton className="h-96" />}>
+      <Suspense fallback={<Skeleton className="h-[75rem] md:h-[64rem]" />}>
         <Flow params={params} />
       </Suspense>
     </PageTransition>
