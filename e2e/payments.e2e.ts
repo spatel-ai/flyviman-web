@@ -279,6 +279,13 @@ test("the payment page says what is paid for and by when, and Pay now clears the
   test.slow();
   const { page, reference } = await tripAwaitingPayment(browser);
   const main = page.getByRole("main");
+  // Both pages load cold: no page error (a hydration mismatch, D-254) and
+  // no console error.
+  const errors: string[] = [];
+  page.on("pageerror", (error) => errors.push(`pageerror: ${error.message}`));
+  page.on("console", (message) => {
+    if (message.type() === "error") errors.push(`console: ${message.text()}`);
+  });
 
   // The trip page's card carries the deadline too.
   await page.goto(`/account/trips/${reference}`);
@@ -299,6 +306,9 @@ test("the payment page says what is paid for and by when, and Pay now clears the
     main.getByText(/check the price and availability again/),
   ).toBeVisible();
   await expect(due.getByRole("status")).toHaveCount(0);
+  // Settled: anything the pages throw after their data arrives counts.
+  await page.waitForLoadState("networkidle");
+  expect(errors).toEqual([]);
 
   // A real 390 x 844 viewport: scrolled to the end, the button is clear of
   // the fixed tab bar.

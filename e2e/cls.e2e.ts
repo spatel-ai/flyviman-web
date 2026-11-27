@@ -1,16 +1,21 @@
 import { expect, test, type Page } from "@playwright/test";
+import { API_URL } from "./support/api";
 import {
+  acceptRequest,
   listedJet,
   newCustomer,
   requestThroughApi,
   searchFor,
 } from "./support/bookings";
+import { csrf } from "./support/operators";
 
 /**
  * Cumulative layout shift of the pages that loaded their data into a smaller
  * placeholder (UX audit L-002, R17). Production build, measured after the
  * network goes idle; "good" is under 0.1. Run on the desktop and mobile
- * projects.
+ * projects. Each page is loaded cold with representative data (several
+ * trips, saved passengers and notifications, a trip awaiting payment), and
+ * a page error, such as a hydration mismatch, fails it too (D-254).
  */
 
 interface Shift {
@@ -67,7 +72,18 @@ function worstWindow(shifts: Shift[]): number {
   return worst;
 }
 
+/** Page errors and console errors, from the moment it is called. */
+function watchErrors(page: Page) {
+  const errors: string[] = [];
+  page.on("pageerror", (error) => errors.push(`pageerror: ${error.message}`));
+  page.on("console", (message) => {
+    if (message.type() === "error") errors.push(`console: ${message.text()}`);
+  });
+  return errors;
+}
+
 async function measure(page: Page, path: string, ready: () => Promise<void>) {
+  const errors = watchErrors(page);
   await page.goto(path);
   await page.waitForLoadState("networkidle");
   await ready();
@@ -79,7 +95,24 @@ async function measure(page: Page, path: string, ready: () => Promise<void>) {
   console.log(
     `CLS ${path} ${cls.toFixed(3)} ${JSON.stringify(shifts.filter((s) => s.value > 0.005))}`,
   );
-  return cls;
+  page.removeAllListeners("pageerror");
+  page.removeAllListeners("console");
+  return { cls, errors };
+}
+
+/** Another saved passenger for the signed-in customer. */
+async function savePassenger(page: Page, firstName: string) {
+  const response = await page.request.post(`${API_URL}me/passengers`, {
+    headers: await csrf(page),
+    data: {
+      firstName,
+      lastName: "Rao",
+      dateOfBirth: "1988-02-03",
+      gender: "MALE",
+      nationality: "IN",
+    },
+  });
+  expect(response.status()).toBe(201);
 }
 
 test("pages that load client data keep layout shift under 0.1", async ({
@@ -90,6 +123,23 @@ test("pages that load client data keep layout shift under 0.1", async ({
   const { page, passengerId } = await newCustomer(browser);
   const searched = await searchFor(page, aircraftId);
   const reference = await requestThroughApi(page, searched, passengerId);
+  // Several trips (one awaiting payment), passengers and notifications: the
+  // lists replace their loading state with more than a skeleton's height.
+  // An aircraft takes one request at a time, so each trip has its own jet.
+  let awaiting = reference;
+  for (let trip = 0; trip < 2; trip++) {
+    const other = await listedJet(browser, true);
+    awaiting = await requestThroughApi(
+      page,
+      await searchFor(page, other.aircraftId),
+      passengerId,
+    );
+    if (trip === 1) await acceptRequest(other.operator, awaiting);
+    await other.operator.close();
+  }
+  for (const name of ["Rohan", "Meera", "Vikram"]) {
+    await savePassenger(page, name);
+  }
   await watchShifts(page);
   await watchShifts(operator);
 
@@ -113,11 +163,31 @@ test("pages that load client data keep layout shift under 0.1", async ({
           main.getByRole("heading", { name: `Trip ${reference}` }),
         ).toBeVisible(),
     ],
+    [
+      `/account/trips/${awaiting}`,
+      () => expect(main.getByLabel("Payment due")).toBeVisible(),
+    ],
+    [
+      `/account/trips/${awaiting}/pay`,
+      () => expect(main.getByLabel("Amount due now")).toBeVisible(),
+    ],
+    [
+      "/account/trips",
+      () => expect(main.getByText(awaiting).first()).toBeVisible(),
+    ],
+    [
+      "/account/passengers",
+      () => expect(main.getByText("Vikram Rao").first()).toBeVisible(),
+    ],
+    [
+      "/account/notifications",
+      () => expect(main.getByRole("listitem").nth(1)).toBeVisible(),
+    ],
     ["/account/air-ambulance", () => expect(main).toBeVisible()],
     ["/account", () => expect(main).toBeVisible()],
     ["/account/profile", () => expect(main).toBeVisible()],
   ];
-  const results: Record<string, number> = {};
+  const results: Record<string, { cls: number; errors: string[] }> = {};
   for (const [path, ready] of pages) {
     results[path] = await measure(page, path, ready);
   }
@@ -128,8 +198,9 @@ test("pages that load client data keep layout shift under 0.1", async ({
   );
 
   info.annotations.push({ type: "cls", description: JSON.stringify(results) });
-  for (const [path, cls] of Object.entries(results)) {
-    expect(cls, `layout shift on ${path}`).toBeLessThan(0.1);
+  for (const [path, { cls, errors }] of Object.entries(results)) {
+    expect.soft(errors, `errors on ${path}`).toEqual([]);
+    expect.soft(cls, `layout shift on ${path}`).toBeLessThan(0.1);
   }
 });
 

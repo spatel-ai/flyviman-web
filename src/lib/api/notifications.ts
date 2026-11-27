@@ -3,6 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { apiFetch } from "@/lib/api/client";
 import { queryKeys } from "@/lib/api/query-keys";
+import { useHydrated } from "@/lib/use-hydrated";
 
 /** "Notifications, 3 unread": the name of an entry that carries the count. */
 export function unreadLabel(label: string, unread: number): string {
@@ -24,5 +25,9 @@ export function useUnreadCount(): number {
     refetchOnWindowFocus: true,
     retry: false,
   });
-  return query.data?.data.unread ?? 0;
+  // The server renders no count. Several components share this query, so
+  // one that hydrates after another has fetched it would otherwise render
+  // the count on its first pass and differ from the server's HTML (#418).
+  const hydrated = useHydrated();
+  return hydrated ? (query.data?.data.unread ?? 0) : 0;
 }
