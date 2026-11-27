@@ -160,7 +160,7 @@ export function AircraftReview({ id }: { id: string }) {
               )}
               {document.verificationStatus === "REJECTED" ? null : (
                 <Button
-                  variant="ghost"
+                  variant="danger"
                   size="sm"
                   onClick={() =>
                     setAction({
@@ -183,7 +183,7 @@ export function AircraftReview({ id }: { id: string }) {
               Approve
             </Button>
             <Button
-              variant="secondary"
+              variant="danger"
               onClick={() => setAction({ kind: "reject" })}
             >
               Reject
@@ -192,7 +192,7 @@ export function AircraftReview({ id }: { id: string }) {
         ) : null}
         {item.listingStatus === "APPROVED" ? (
           <Button
-            variant="secondary"
+            variant="danger"
             onClick={() => setAction({ kind: "suspend" })}
           >
             Suspend

@@ -1,6 +1,8 @@
 "use client";
 
 import {
+  createContext,
+  useContext,
   useId,
   useRef,
   useState,
@@ -11,9 +13,77 @@ import {
 import { Dialog as DialogPrimitive } from "radix-ui";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useFocusReturn } from "./focus-return";
 
-/** Controlled (`open`, `onOpenChange`) or uncontrolled with a DialogTrigger. */
-export const Dialog = DialogPrimitive.Root;
+interface Guard {
+  markDirty: () => void;
+  asking: boolean;
+  keepEditing: () => void;
+  discard: () => void;
+}
+
+const GuardContext = createContext<Guard | null>(null);
+
+/**
+ * Controlled (`open`, `onOpenChange`) or uncontrolled with a DialogTrigger.
+ *
+ * Once something has been typed or changed inside, a close the visitor asks
+ * for (Escape, a click outside, the close button, Cancel) first asks
+ * "Discard changes?" in the dialog. A close the caller makes by setting
+ * `open` to false, for example after a save, is never intercepted.
+ */
+export function Dialog({
+  open: openProp,
+  defaultOpen = false,
+  onOpenChange,
+  children,
+  ...props
+}: ComponentProps<typeof DialogPrimitive.Root>) {
+  const [innerOpen, setInnerOpen] = useState(defaultOpen);
+  const open = openProp ?? innerOpen;
+  const [dirty, setDirty] = useState(false);
+  const [asking, setAsking] = useState(false);
+
+  // A closed dialog starts clean the next time it opens.
+  if (!open && (dirty || asking)) {
+    setDirty(false);
+    setAsking(false);
+  }
+
+  const change = (next: boolean) => {
+    if (!next && asking) {
+      // Escape or a click outside while the question is showing: keep editing.
+      setAsking(false);
+      return;
+    }
+    if (!next && dirty) {
+      setAsking(true);
+      return;
+    }
+    if (openProp === undefined) setInnerOpen(next);
+    onOpenChange?.(next);
+  };
+
+  const guard: Guard = {
+    markDirty: () => setDirty(true),
+    asking,
+    keepEditing: () => setAsking(false),
+    discard: () => {
+      setAsking(false);
+      setDirty(false);
+      if (openProp === undefined) setInnerOpen(false);
+      onOpenChange?.(false);
+    },
+  };
+
+  return (
+    <GuardContext.Provider value={guard}>
+      <DialogPrimitive.Root open={open} onOpenChange={change} {...props}>
+        {children}
+      </DialogPrimitive.Root>
+    </GuardContext.Provider>
+  );
+}
 
 /** Use `asChild` to make an existing Button the trigger. */
 export const DialogTrigger = DialogPrimitive.Trigger;
@@ -40,9 +110,13 @@ export function DialogContent({
   className,
   children,
   onKeyDown,
+  onOpenAutoFocus,
+  onCloseAutoFocus,
   ...props
 }: DialogContentProps) {
   const closeButton = useRef<HTMLButtonElement>(null);
+  const focusReturn = useFocusReturn(onOpenAutoFocus, onCloseAutoFocus);
+  const guard = useContext(GuardContext);
   return (
     <DialogPrimitive.Portal>
       <DialogPrimitive.Overlay className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-scrim p-4 transition-opacity duration-250 ease-standard starting:opacity-0">
@@ -55,6 +129,9 @@ export function DialogContent({
             className,
           )}
           {...props}
+          {...focusReturn}
+          onInput={guard?.markDirty}
+          onChange={guard?.markDirty}
           onKeyDown={(event) => {
             onKeyDown?.(event);
             // Radix lets only the most recently opened layer react to
@@ -66,17 +143,44 @@ export function DialogContent({
             }
           }}
         >
-          <div className="flex flex-col gap-1.5 pr-10">
-            <DialogPrimitive.Title className="text-title">
-              {title}
-            </DialogPrimitive.Title>
-            {description ? (
-              <DialogPrimitive.Description className="text-body-sm text-muted">
-                {description}
-              </DialogPrimitive.Description>
-            ) : null}
+          <div className="contents" inert={guard?.asking || undefined}>
+            <div className="flex flex-col gap-1.5 pr-10">
+              <DialogPrimitive.Title className="text-title">
+                {title}
+              </DialogPrimitive.Title>
+              {description ? (
+                <DialogPrimitive.Description className="text-body-sm text-muted">
+                  {description}
+                </DialogPrimitive.Description>
+              ) : null}
+            </div>
+            {children}
           </div>
-          {children}
+          {guard?.asking ? (
+            <div
+              role="alert"
+              className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-4 rounded-lg bg-surface-raised p-6 text-center"
+            >
+              <div className="flex flex-col gap-1">
+                <p className="text-title">Discard changes?</p>
+                <p className="text-body-sm text-muted">
+                  What you entered will be lost.
+                </p>
+              </div>
+              <DialogFooter>
+                <Button
+                  variant="secondary"
+                  autoFocus
+                  onClick={guard.keepEditing}
+                >
+                  Keep editing
+                </Button>
+                <Button variant="destructive" onClick={guard.discard}>
+                  Discard
+                </Button>
+              </DialogFooter>
+            </div>
+          ) : null}
           <DialogPrimitive.Close
             ref={closeButton}
             aria-label="Close"

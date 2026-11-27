@@ -194,7 +194,7 @@ export function RulesList() {
                               </Button>
                               {canEnd(rule) ? (
                                 <Button
-                                  variant="ghost"
+                                  variant="danger"
                                   className="h-10"
                                   onClick={() => setEnding(rule)}
                                   aria-label={`End ${ruleLabel(rule.type).toLowerCase()} for ${appliesTo(rule).toLowerCase()}`}

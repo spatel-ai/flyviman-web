@@ -3,6 +3,7 @@
 import { useRef, type ComponentProps } from "react";
 import { Dialog as SheetPrimitive } from "radix-ui";
 import { cn } from "@/lib/utils";
+import { useFocusReturn } from "./focus-return";
 
 type Side = "right" | "left";
 
@@ -47,9 +48,12 @@ export function SheetContent({
   className,
   children,
   onKeyDown,
+  onOpenAutoFocus,
+  onCloseAutoFocus,
   ...props
 }: SheetContentProps) {
   const closeButton = useRef<HTMLButtonElement>(null);
+  const focusReturn = useFocusReturn(onOpenAutoFocus, onCloseAutoFocus);
   return (
     <SheetPrimitive.Portal>
       <SheetPrimitive.Overlay className="fixed inset-0 z-50 bg-scrim transition-opacity duration-250 ease-standard starting:opacity-0" />
@@ -65,6 +69,7 @@ export function SheetContent({
           className,
         )}
         {...props}
+        {...focusReturn}
         onKeyDown={(event) => {
           onKeyDown?.(event);
           // See DialogContent: Escape closes the sheet even while a toast,

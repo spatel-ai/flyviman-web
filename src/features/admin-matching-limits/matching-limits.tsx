@@ -229,7 +229,7 @@ export function MatchingLimits({ canEdit }: { canEdit: boolean }) {
                             </Button>
                             {rule.scope === "CATEGORY" ? (
                               <Button
-                                variant="ghost"
+                                variant="danger"
                                 className="h-10"
                                 onClick={() => setEnding(rule)}
                                 aria-label={`End limits for ${appliesTo(rule).toLowerCase()}`}

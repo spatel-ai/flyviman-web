@@ -219,7 +219,7 @@ function TiersForm({
                 {...register(`tiers.${index}.chargePercent`)}
               />
               <Button
-                variant="secondary"
+                variant="danger"
                 className="h-10 sm:mt-7"
                 disabled={fields.length === 1}
                 onClick={() => remove(index)}

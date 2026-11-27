@@ -219,7 +219,7 @@ function Editor({
               <div>
                 <Button
                   type="button"
-                  variant="ghost"
+                  variant="danger"
                   onClick={() => routes.remove(index)}
                 >
                   Remove route {index + 1}

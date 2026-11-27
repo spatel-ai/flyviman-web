@@ -108,10 +108,7 @@ export function EntrySheet({
                     Change
                   </Button>
                 ) : null}
-                <Button
-                  variant="destructive"
-                  onClick={() => setConfirming(true)}
-                >
+                <Button variant="danger" onClick={() => setConfirming(true)}>
                   Remove
                 </Button>
               </div>

@@ -282,7 +282,7 @@ export function AircraftEditor({ id }: { id: string }) {
               <ExpiryBadge expiresAt={document.expiresAt} />
               {mayRemoveDocument(document) ? (
                 <Button
-                  variant="ghost"
+                  variant="danger"
                   size="sm"
                   className="h-7 px-2"
                   onClick={() => setRemovingDocument(document)}

@@ -105,7 +105,7 @@ export function BookingActions({ booking }: { booking: Detail }) {
         ) : null}
         {actions.cancel ? (
           <Button
-            variant="secondary"
+            variant="danger"
             className="h-11"
             onClick={() => show("cancel")}
           >

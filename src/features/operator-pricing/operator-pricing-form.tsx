@@ -6,6 +6,7 @@ import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { FormAlert } from "@/components/shared/form-alert";
 import { LoadError } from "@/components/shared/load-error";
+import { useUnsavedChangesWarning } from "@/components/shared/use-unsaved-changes-warning";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -78,6 +79,7 @@ function Editor({ initial }: { initial: OperatorPricingValues }) {
     resolver: zodResolver(operatorPricingSchema),
     defaultValues: initial,
   });
+  useUnsavedChangesWarning(isDirty);
   const save = useMutation({
     mutationFn: (values: OperatorPricingValues) =>
       apiFetch<Pricing>("operator/pricing", {

@@ -155,15 +155,17 @@ export function ReportsView({ role }: { role: Role }) {
         <div className="flex flex-col gap-8">{render(filter.report, data)}</div>
       )}
 
-      <div>
-        <a
-          href={apiUrl(`admin/reports/${filter.report}/export`, query)}
-          download
-          className={buttonClasses({ variant: "secondary", size: "md" })}
-        >
-          Download CSV
-        </a>
-      </div>
+      {isError ? null : (
+        <div>
+          <a
+            href={apiUrl(`admin/reports/${filter.report}/export`, query)}
+            download
+            className={buttonClasses({ variant: "secondary", size: "md" })}
+          >
+            Download CSV
+          </a>
+        </div>
+      )}
     </div>
   );
 }

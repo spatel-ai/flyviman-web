@@ -165,7 +165,7 @@ export function DocumentsSection({ editable }: { editable: boolean }) {
                   </Button>
                   {editable ? (
                     <Button
-                      variant="ghost"
+                      variant="danger"
                       size="sm"
                       aria-label={`Remove ${label}, ${document.fileName}`}
                       onClick={() => {

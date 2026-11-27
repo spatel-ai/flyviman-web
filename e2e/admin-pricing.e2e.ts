@@ -125,6 +125,7 @@ test("finance adds, changes and ends a category commission", async ({
   ).toBeVisible();
   // The open dialog hides the page from the accessibility tree: look after.
   await change.getByRole("button", { name: "Cancel" }).click();
+  await change.getByRole("button", { name: "Discard" }).click();
   await expect(row).toContainText("7%, added on top");
   await page
     .getByRole("button", { name: `Change commission for ${name}` })

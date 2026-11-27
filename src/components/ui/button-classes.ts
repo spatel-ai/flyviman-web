@@ -3,13 +3,18 @@ import { cn } from "@/lib/utils";
 // Kept apart from button.tsx, which is a client component: server
 // components style links as buttons with this function.
 
-export type Variant = "primary" | "secondary" | "ghost" | "destructive";
+export type Variant =
+  "primary" | "secondary" | "ghost" | "destructive" | "danger";
 export type Size = "sm" | "md" | "lg";
 
 const VARIANTS: Record<Variant, string> = {
   primary: "bg-accent-fill text-accent-foreground hover:bg-accent-fill-hover",
-  secondary: "bg-surface text-foreground hover:bg-border/60",
+  secondary:
+    "border border-border bg-surface text-foreground hover:bg-border/60",
   ghost: "text-accent hover:bg-accent/10",
+  // The trigger of a destructive action (Suspend, Remove, Withdraw): outlined in
+  // the danger tone. The confirming button inside the dialog is `destructive`.
+  danger: "border border-danger/40 bg-surface text-danger hover:bg-danger/10",
   destructive: "bg-danger text-danger-foreground hover:bg-danger/90",
 };
 
