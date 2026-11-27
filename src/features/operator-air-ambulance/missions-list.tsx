@@ -24,7 +24,7 @@ import { formatDateTime } from "@/lib/format/date";
 type Row = Schemas["OperatorAirAmbulanceSummaryDto"];
 
 const PAGE_SIZE = 20;
-const COLUMNS = ["Reference", "Route", "Preferred", "Patients", "Status"];
+const COLUMNS = ["Reference", "Status", "Route", "Preferred", "Patients"];
 
 /** Missions this operator was selected for, from the customer's acceptance. */
 export function MissionsList() {
@@ -74,7 +74,12 @@ export function MissionsList() {
         <TableHead>
           <TableRow>
             {COLUMNS.map((column) => (
-              <TableHeaderCell key={column}>{column}</TableHeaderCell>
+              <TableHeaderCell
+                key={column}
+                className={column === "Patients" ? "text-right" : undefined}
+              >
+                {column}
+              </TableHeaderCell>
             ))}
           </TableRow>
         </TableHead>
@@ -89,6 +94,9 @@ export function MissionsList() {
                   {row.reference}
                 </Link>
               </TableCell>
+              <TableCell className="whitespace-nowrap">
+                <AirAmbulanceStatusBadge status={row.status} />
+              </TableCell>
               <TableCell>
                 {row.originName ?? "Unknown"} to{" "}
                 {row.destinationName ?? "unknown"}
@@ -96,10 +104,7 @@ export function MissionsList() {
               <TableCell className="whitespace-nowrap">
                 {formatDateTime(row.preferredAt)}
               </TableCell>
-              <TableCell>{row.patientCount}</TableCell>
-              <TableCell className="whitespace-nowrap">
-                <AirAmbulanceStatusBadge status={row.status} />
-              </TableCell>
+              <TableCell className="text-right">{row.patientCount}</TableCell>
             </TableRow>
           ))}
         </TableBody>

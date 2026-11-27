@@ -1,5 +1,11 @@
-import type {
-  HTMLAttributes,
+"use client";
+
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type HTMLAttributes,
   TableHTMLAttributes,
   TdHTMLAttributes,
   ThHTMLAttributes,
@@ -17,17 +23,91 @@ export interface TableProps extends TableHTMLAttributes<HTMLTableElement> {
 
 /**
  * Portal table. Wide tables scroll inside their own wrapper, so the page
- * never scrolls sideways.
+ * never scrolls sideways. Only when the table really overflows does the
+ * wrapper become a keyboard-focusable region, and an edge shadow marks the
+ * side that has more columns hidden.
  */
-export function Table({ containerClassName, className, ...props }: TableProps) {
+export function Table({
+  containerClassName,
+  className,
+  "aria-label": ariaLabel,
+  ...props
+}: TableProps) {
+  const scroller = useRef<HTMLDivElement>(null);
+  const [overflow, setOverflow] = useState(false);
+  const [more, setMore] = useState({ start: false, end: false });
+
+  const measure = useCallback(() => {
+    const el = scroller.current;
+    if (!el) return;
+    const wide = el.scrollWidth > el.clientWidth + 1;
+    const tall = el.scrollHeight > el.clientHeight + 1;
+    setOverflow(wide || tall);
+    // scrollLeft is negative in right-to-left layouts: use its size.
+    const left = Math.abs(el.scrollLeft);
+    const next = {
+      start: wide && left > 1,
+      end: wide && left + el.clientWidth < el.scrollWidth - 1,
+    };
+    setMore((prev) =>
+      prev.start === next.start && prev.end === next.end ? prev : next,
+    );
+  }, []);
+
+  useEffect(() => {
+    const el = scroller.current;
+    if (!el) return;
+    measure();
+    if (typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver(measure);
+    observer.observe(el);
+    if (el.firstElementChild) observer.observe(el.firstElementChild);
+    return () => observer.disconnect();
+  }, [measure]);
+
   return (
-    <div className={cn("w-full overflow-auto", containerClassName)}>
-      <table
+    <div className="relative w-full">
+      <div
+        ref={scroller}
+        onScroll={measure}
+        {...(overflow
+          ? {
+              role: "region",
+              tabIndex: 0,
+              "aria-label": ariaLabel
+                ? `${ariaLabel}, scrolls`
+                : "Table, scrolls sideways",
+            }
+          : {})}
         className={cn(
-          "w-full border-collapse text-left text-body-sm tabular-nums",
-          className,
+          "w-full overflow-auto focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent",
+          containerClassName,
         )}
-        {...props}
+      >
+        <table
+          aria-label={ariaLabel}
+          className={cn(
+            "w-full border-collapse text-left text-body-sm tabular-nums",
+            className,
+          )}
+          {...props}
+        />
+      </div>
+      <span
+        aria-hidden="true"
+        data-testid="table-shadow-start"
+        className={cn(
+          "pointer-events-none absolute inset-y-0 left-0 z-20 w-6 bg-linear-to-r from-foreground/15 to-transparent transition-opacity duration-150",
+          more.start ? "opacity-100" : "opacity-0",
+        )}
+      />
+      <span
+        aria-hidden="true"
+        data-testid="table-shadow-end"
+        className={cn(
+          "pointer-events-none absolute inset-y-0 right-0 z-20 w-6 bg-linear-to-l from-foreground/15 to-transparent transition-opacity duration-150",
+          more.end ? "opacity-100" : "opacity-0",
+        )}
       />
     </div>
   );

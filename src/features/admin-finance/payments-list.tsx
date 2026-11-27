@@ -5,7 +5,7 @@ import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { EmptyState } from "@/components/shared/empty-state";
 import { LoadError } from "@/components/shared/load-error";
-import { PriceLabel } from "@/components/shared/price-label";
+import { MoneyAmount } from "@/components/shared/money-amount";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/dialog";
@@ -146,7 +146,12 @@ export function PaymentsList() {
             <TableHead>
               <TableRow>
                 {COLUMNS.map((column) => (
-                  <TableHeaderCell key={column}>{column}</TableHeaderCell>
+                  <TableHeaderCell
+                    key={column}
+                    className={column === "Amount" ? "text-right" : undefined}
+                  >
+                    {column}
+                  </TableHeaderCell>
                 ))}
               </TableRow>
             </TableHead>
@@ -173,12 +178,10 @@ export function PaymentsList() {
                         {row.bookingReference}
                       </TableCell>
                       <TableCell>{purposeLabel(row.purpose)}</TableCell>
-                      <TableCell className="whitespace-nowrap">
-                        <PriceLabel
+                      <TableCell className="text-right whitespace-nowrap">
+                        <MoneyAmount
                           amountMinor={row.price.amountMinor}
                           currency={row.price.currency}
-                          priceType={row.price.priceType}
-                          variant="compact"
                         />
                       </TableCell>
                       <TableCell className="whitespace-nowrap">
